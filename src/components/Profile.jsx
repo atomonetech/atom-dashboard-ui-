@@ -429,7 +429,7 @@
 // src/components/Profile.jsx
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, Phone, MapPin, Edit, Save, Camera, Check, Upload, X } from 'lucide-react';
+import { User, Mail, Edit, Save, Camera, Check, Upload, X } from 'lucide-react';
 import Sidebar from './Sidebar';
 
 export default function Profile({ onLogout }) {

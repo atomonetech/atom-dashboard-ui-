@@ -3310,7 +3310,7 @@
 
 
 import React, { useState, useRef, useMemo } from 'react';
-import { ArrowLeft, Edit, Save, Printer, X, Database, CheckCircle, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Edit, Save, Printer, X, Database, ClipboardList } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // --- 1. HARDCODED DATABASE ---

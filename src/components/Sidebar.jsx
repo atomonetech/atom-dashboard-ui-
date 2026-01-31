@@ -1019,9 +1019,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Factory, 
-  Zap, 
-  LayoutDashboard, 
-  Users, 
+  LayoutDashboard,
   LogOut,
   Settings,
   User,
