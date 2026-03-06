@@ -386,7 +386,6 @@ import PatrolInspection from './components/qms/PatrolInspection';
 import InspectionForm from './components/qms/InspectionForm'; 
 import ReportsDashboard from './components/qms/ReportsDashboard';
 import RawMaterialForm from './components/qms/RawMaterialForm'; 
-// ✅ NEW IMPORT: PDI Form Added Here
 import PdiReportForm from './components/qms/PdiReportForm';
 
 import './App.css';
@@ -432,23 +431,20 @@ function App() {
 
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard onLogout={handleLogout} /></ProtectedRoute>} />
 
-          {/* ========== QMS ROUTES ========== */}
-          <Route path="/qms" element={<ProtectedRoute><QMSDashboard onLogout={handleLogout} /></ProtectedRoute>} />
+          {/* ========== QMS ROUTES (SAB COVER HO GAYE HAIN) ========== */}
+          <Route path="/qms" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} />
+          <Route path="/ReportsDashboard" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} /> {/* ✅ Naya route add kar diya */}
+          <Route path="/qms/reports-dashboard" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} />
+          
           <Route path="/qms-dashboard" element={<ProtectedRoute><QMSDashboard onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/quality-management" element={<ProtectedRoute><QMSDashboard onLogout={handleLogout} /></ProtectedRoute>} />
-
-          <Route path="/qms/reports-dashboard" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} />
 
           {/* QMS REPORT ROUTES */}
           <Route path="/qms/report/:reportId" element={<ProtectedRoute><ReportDetail /></ProtectedRoute>} />
           <Route path="/qms/report/:reportId/edit" element={<ProtectedRoute><ReportEditor /></ProtectedRoute>} />
-          
           <Route path="/qms/patrol-inspection" element={<ProtectedRoute><PatrolInspection /></ProtectedRoute>} />
           <Route path="/qms/inspection-form" element={<ProtectedRoute><InspectionForm /></ProtectedRoute>} />
-          
           <Route path="/qms/raw-material-form" element={<ProtectedRoute><RawMaterialForm /></ProtectedRoute>} />
-          
-          {/* ✅ PDI FORM ROUTE ADDED HERE */}
           <Route path="/qms/pdi-report-form" element={<ProtectedRoute><PdiReportForm /></ProtectedRoute>} />
 
           {/* ========== PLANT ROUTES ========== */}

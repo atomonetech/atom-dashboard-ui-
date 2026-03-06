@@ -1104,7 +1104,7 @@ export default function Sidebar({ onLogout }) {
     {
       label: 'QMS',
       icon: ShieldCheck,
-      path: '/qms',
+      path: '/ReportsDashboard',
       color: 'yellow',
       badge: 'New'
     },
