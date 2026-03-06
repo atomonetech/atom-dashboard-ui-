@@ -1569,3 +1569,5 @@ const ReportDetail = () => {
 };
 
 export default ReportDetail;
+
+

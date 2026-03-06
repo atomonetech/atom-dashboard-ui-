@@ -570,7 +570,6 @@ import {
   FileText, 
   Printer,
   Search,
-  Calendar,
   Building2
 } from 'lucide-react';
 import Sidebar from './Sidebar';
