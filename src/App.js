@@ -35,7 +35,11 @@ import PdiReportForm from './components/qms/PdiReportForm';
 // import HrSafetyHub from './components/All_Deperments_Hub/HrSafetyHub/HrSafetyHub';
 
 import MaintenanceHub from './components/All_Deperments_Hub/MaintenanceHub/MaintenanceHub';
+// ========== QaHub IMPORTS ==========
 import QaHub from './components/All_Deperments_Hub/QaHub/QaHub';
+import IncomingMaterialInsp from './components/All_Deperments_Hub/QaHub/IncomingMaterialInsp';
+import RedbinAttendance from './components/All_Deperments_Hub/QaHub/RedbinAttendance';
+
 import ProductionHub from './components/All_Deperments_Hub/ProductionHub/ProductionHub';
 import HrSafetyHub from './components/All_Deperments_Hub/HrSafetyHub/HrSafetyHub';
 import './App.css';
@@ -125,6 +129,8 @@ function App() {
           {/* 🔥 SIDEBAR HUB ROUTES 🔥 */}
           <Route path="/maintenance-hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
           <Route path="/qa-hub" element={<ProtectedRoute><QaHub /></ProtectedRoute>} />
+          <Route path="/Incoming-Material" element={<IncomingMaterialInsp />} />
+          <Route path="/Redbin-Attendance" element={<RedbinAttendance />} />
           <Route path="/production-hub" element={<ProtectedRoute><ProductionHub /></ProtectedRoute>} />
           <Route path="/hiring-departments" element={<ProtectedRoute><HrSafetyHub /></ProtectedRoute>} />
 
