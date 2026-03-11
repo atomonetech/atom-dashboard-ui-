@@ -19,7 +19,16 @@ const QaHub = () => {
         { id: 12, title: 'Goods Receipt Note (GRN)', formNo: 'Not Reqd.', resp: 'Store Incharge', icon: 'bi-receipt', color: '#06b6d4', bg: '#cffafe' },
         { id: 13, title: 'Pre Dispatch Insp. (PDIR)', formNo: 'AOT/F/QA/40', resp: 'Quality Engineer', icon: 'bi-truck', color: '#10b981', bg: '#d1fae5' }
     ];
-
+   const handleCardClick = (id, title) => {
+     if (id === 1) {
+        navigate('/Incoming-Material');
+    } else if (id === 4) {
+        // You can add Scrap Note navigation here later
+        navigate('/Redbin-Attendance'); 
+    } else {
+        alert(`The form for "${title}" is currently under development.`);
+    }
+};
     return (
         <div className="hub-wrapper">
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -41,7 +50,7 @@ const QaHub = () => {
                 <div className="row g-4">
                     {qaReports.map((r) => (
                         <div className="col-md-6 col-lg-4" key={r.id}>
-                            <div className="card-custom" onClick={() => alert(`Opening QA Form: ${r.title}`)}>
+                            <div className="card-custom" onClick={() => handleCardClick(r.id, r.title)}>
                                 <div style={{width: '50px', height: '50px', borderRadius: '12px', background: r.bg, color: r.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', marginBottom: '1rem'}}><i className={r.icon}></i></div>
                                 <h5 style={{fontWeight: 800, fontSize: '1rem', color: '#0f172a', marginBottom: '1rem'}}>{r.title}</h5>
                                 <div className="meta-tag"><i className="bi bi-file-earmark-text text-muted"></i>Form: <span style={{color:'#0f172a'}}>{r.formNo}</span></div>
