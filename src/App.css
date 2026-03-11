@@ -49,7 +49,7 @@
 
 /* Optional: agar kahin App-header use ho raha ho to basic style */
 .App-header {
-  background-color: #020617;
+  /* background-color: #020617; */
   min-height: 100vh;
   display: flex;
   flex-direction: column;

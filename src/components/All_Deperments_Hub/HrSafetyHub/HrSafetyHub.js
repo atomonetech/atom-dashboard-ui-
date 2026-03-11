@@ -12,7 +12,17 @@ const HrSafetyHub = () => {
         { id: 5, title: 'Induction Training Form', formNo: 'AOT/F/HR/13', resp: 'HR Asst./Dy Manager', icon: 'bi-person-bounding-box', color: '#f59e0b', bg: '#fef3c7' },
         { id: 6, title: 'On Job Training (OJT)', formNo: 'AOT/F/TR/02C', resp: 'HR Engineer', icon: 'bi-briefcase', color: '#10b981', bg: '#d1fae5' }
     ];
+     
 
+const handleCardClick = (id, title) => {
+    if (id === 3) {
+        // Navigate to Training Feedback Form
+        navigate('/training-feedback');
+    } 
+    else {
+        alert(`The form for "${title}" is currently under development.`);
+    }
+};
     return (
         <div className="hub-wrapper">
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -33,8 +43,8 @@ const HrSafetyHub = () => {
             <div className="main-container">
                 <div className="row g-4">
                     {hrReports.map((r) => (
-                        <div className="col-md-6 col-lg-4" key={r.id}>
-                            <div className="card-custom" onClick={() => alert(`Opening HR Form: ${r.title}`)}>
+                        <div className="col-md-6 col-lg-4" onClick={() => handleCardClick(r.id, r.title)}>
+                            <div className="card-custom" >
                                 <div style={{width: '50px', height: '50px', borderRadius: '12px', background: r.bg, color: r.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', margin: '0 auto 1rem auto'}}><i className={r.icon}></i></div>
                                 <h5 style={{fontWeight: 800, fontSize: '1.1rem', color: '#0f172a', textAlign:'center', marginBottom: '1rem'}}>{r.title}</h5>
                                 <div className="meta-tag justify-content-center"><i className="bi bi-file-earmark-text text-muted"></i> <span style={{color:'#0f172a'}}>{r.formNo}</span></div>
