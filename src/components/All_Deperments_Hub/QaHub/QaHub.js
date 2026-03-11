@@ -19,16 +19,33 @@ const QaHub = () => {
         { id: 12, title: 'Goods Receipt Note (GRN)', formNo: 'Not Reqd.', resp: 'Store Incharge', icon: 'bi-receipt', color: '#06b6d4', bg: '#cffafe' },
         { id: 13, title: 'Pre Dispatch Insp. (PDIR)', formNo: 'AOT/F/QA/40', resp: 'Quality Engineer', icon: 'bi-truck', color: '#10b981', bg: '#d1fae5' }
     ];
-   const handleCardClick = (id, title) => {
-     if (id === 1) {
-        navigate('/Incoming-Material');
-    } else if (id === 4) {
-        // You can add Scrap Note navigation here later
-        navigate('/Redbin-Attendance'); 
-    } else {
-        alert(`The form for "${title}" is currently under development.`);
-    }
-};
+
+    const handleCardClick = (id, title) => {
+        // 🟢 NAYE LINKS YAHAN ADD KIYE GAYE HAIN
+        switch (id) {
+            case 1:
+                navigate('/Incoming-Material');
+                break;
+            case 2:
+                navigate('/RedBin-Form');
+                break;
+            case 3:
+                navigate('/Scrap-Note');
+                break;
+            case 4:
+                navigate('/Redbin-Attendance');
+                break;
+            case 5:
+                navigate('/Poka-Yoke');
+                break;
+            case 12:
+                navigate('/Good-Receipt');
+                break;
+            default:
+                alert(`The form for "${title}" is currently under development.`);
+        }
+    };
+
     return (
         <div className="hub-wrapper">
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
