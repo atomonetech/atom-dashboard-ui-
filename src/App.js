@@ -27,21 +27,23 @@ import InspectionForm from './components/qms/InspectionForm';
 import ReportsDashboard from './components/qms/ReportsDashboard';
 import RawMaterialForm from './components/qms/RawMaterialForm'; 
 import PdiReportForm from './components/qms/PdiReportForm';
-
-// 🔥 YAHAN PATH FIX KIYA GAYA HAI (/qms/ ADD KIYA HAI) 🔥
-// import MaintenanceHub from './components/All_Deperments_Hub/MaintenanceHub/MaintenanceHub';
-// import QaHub from './components/All_Deperments_Hub/QaHub/QaHub';
-// import ProductionHub from './components/All_Deperments_Hub/ProductionHub/ProductionHub';
-// import HrSafetyHub from './components/All_Deperments_Hub/HrSafetyHub/HrSafetyHub';
-
 import MaintenanceHub from './components/All_Deperments_Hub/MaintenanceHub/MaintenanceHub';
+
 // ========== QaHub IMPORTS ==========
 import QaHub from './components/All_Deperments_Hub/QaHub/QaHub';
 import IncomingMaterialInsp from './components/All_Deperments_Hub/QaHub/IncomingMaterialInsp';
 import RedbinAttendance from './components/All_Deperments_Hub/QaHub/RedbinAttendance';
+import RedBinForm from './components/All_Deperments_Hub/QaHub/RedBinForm';
+import ScrapNote from "./components/All_Deperments_Hub/QaHub/ScrapNoteForm";
+import GoodReceiptFrom from './components/All_Deperments_Hub/QaHub/GoodReceiptFrom';
+import PokaYokeChecksheet from './components/All_Deperments_Hub/QaHub/PokaYokeChecksheet';
 
+// ========== ProductionHub & HrSafetyHub IMPORTS ==========
 import ProductionHub from './components/All_Deperments_Hub/ProductionHub/ProductionHub';
 import HrSafetyHub from './components/All_Deperments_Hub/HrSafetyHub/HrSafetyHub';
+import InductionTrainingForm from './components/All_Deperments_Hub/HrSafetyHub/InductionTrainingForm';
+import TrainingHistoryCard from './components/All_Deperments_Hub/HrSafetyHub/TrainingHistoryCard';
+
 import './App.css';
 
 function App() {
@@ -128,11 +130,23 @@ function App() {
 
           {/* 🔥 SIDEBAR HUB ROUTES 🔥 */}
           <Route path="/maintenance-hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+          
+          {/* ----- QaHub Pages ----- */}
           <Route path="/qa-hub" element={<ProtectedRoute><QaHub /></ProtectedRoute>} />
-          <Route path="/Incoming-Material" element={<IncomingMaterialInsp />} />
-          <Route path="/Redbin-Attendance" element={<RedbinAttendance />} />
-          <Route path="/production-hub" element={<ProtectedRoute><ProductionHub /></ProtectedRoute>} />
+          <Route path="/Incoming-Material" element={<ProtectedRoute><IncomingMaterialInsp /></ProtectedRoute>} />
+          <Route path="/Redbin-Attendance" element={<ProtectedRoute><RedbinAttendance /></ProtectedRoute>} />
+          <Route path="/RedBin-Form" element={<ProtectedRoute><RedBinForm /></ProtectedRoute>} />
+          <Route path="/Scrap-Note" element={<ProtectedRoute><ScrapNote /></ProtectedRoute>} />
+          <Route path="/Good-Receipt" element={<ProtectedRoute><GoodReceiptFrom /></ProtectedRoute>} />
+          <Route path="/Poka-Yoke" element={<ProtectedRoute><PokaYokeChecksheet /></ProtectedRoute>} />
+
+          {/* ----- HrSafetyHub Pages ----- */}
           <Route path="/hiring-departments" element={<ProtectedRoute><HrSafetyHub /></ProtectedRoute>} />
+          <Route path="/Induction-Training" element={<ProtectedRoute><InductionTrainingForm /></ProtectedRoute>} />
+          <Route path="/Training-History" element={<ProtectedRoute><TrainingHistoryCard /></ProtectedRoute>} />
+
+          {/* ----- ProductionHub Pages ----- */}
+          <Route path="/production-hub" element={<ProtectedRoute><ProductionHub /></ProtectedRoute>} />
 
           {/* ========== 404 NOT FOUND ========== */}
           <Route 
