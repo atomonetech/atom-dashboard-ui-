@@ -45,6 +45,7 @@ const QaHub = () => {
                 alert(`The form for "${title}" is currently under development.`);
         }
     };
+    
 
     return (
         <div className="hub-wrapper">

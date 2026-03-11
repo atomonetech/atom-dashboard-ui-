@@ -65,7 +65,8 @@ const ScrapNoteForm = () => {
               d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
             />
           </svg>
-          Back to QA Hub
+           {/* Back to QAhub Page */}
+          Back to QAHub
         </button>
 
         <div className="text-right">
@@ -260,3 +261,4 @@ const ScrapNoteForm = () => {
 };
 
 export default ScrapNoteForm;
+// ----- //
