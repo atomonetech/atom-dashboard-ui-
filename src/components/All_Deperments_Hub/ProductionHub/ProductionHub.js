@@ -15,6 +15,8 @@ const ProductionHub = () => {
         { id: 8, title: '4M Change tracking sheet', formNo: 'AOT-F-4M-05', resp: 'Production Engineer', icon: 'bi-signpost-split', color: '#ef4444', bg: '#fef2f2' },
         { id: 9, title: '4M Change display board', formNo: 'ATO-F-4M-08', resp: 'Production Engineer', icon: 'bi-easel2', color: '#ef4444', bg: '#fef2f2' }
     ];
+
+
    
       const handleCardClick = (id, title) => {
         // 🟢 NAYE LINKS YAHAN ADD KIYE GAYE HAIN
@@ -26,7 +28,7 @@ const ProductionHub = () => {
                 navigate('/Setup-Patrol-Ins-Form');
                 break;
             case 3:
-                navigate('/Operator-5s-Checklist-Form');
+                navigate('/Operator5S');
                 break;
             case 4:
                 navigate('/Bin-Trolly-Cleaning-Form');
@@ -37,6 +39,7 @@ const ProductionHub = () => {
             case 12:
                 navigate('/Good-Receipt');
                 break;
+
             default:
                 alert(`The form for "${title}" is currently under development.`);
         }

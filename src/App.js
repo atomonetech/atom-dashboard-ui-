@@ -37,9 +37,11 @@ import RedBinForm from './components/All_Deperments_Hub/QaHub/RedBinForm';
 import ScrapNote from "./components/All_Deperments_Hub/QaHub/ScrapNoteForm";
 import GoodReceiptFrom from './components/All_Deperments_Hub/QaHub/GoodReceiptFrom';
 import PokaYokeChecksheet from './components/All_Deperments_Hub/QaHub/PokaYokeChecksheet';
+import ReworkRepair from './components/All_Deperments_Hub/QaHub/Rework_Repair';
 
 // ========== ProductionHub & HrSafetyHub IMPORTS ==========
 import ProductionHub from './components/All_Deperments_Hub/ProductionHub/ProductionHub';
+import Operator5S from './components/All_Deperments_Hub/ProductionHub/Operator_5s';
 import HrSafetyHub from './components/All_Deperments_Hub/HrSafetyHub/HrSafetyHub';
 import InductionTrainingForm from './components/All_Deperments_Hub/HrSafetyHub/InductionTrainingForm';
 import TrainingHistoryCard from './components/All_Deperments_Hub/HrSafetyHub/TrainingHistoryCard';
@@ -142,6 +144,7 @@ function App() {
           <Route path="/Scrap-Note" element={<ProtectedRoute><ScrapNote /></ProtectedRoute>} />
           <Route path="/Good-Receipt" element={<ProtectedRoute><GoodReceiptFrom /></ProtectedRoute>} />
           <Route path="/Poka-Yoke" element={<ProtectedRoute><PokaYokeChecksheet /></ProtectedRoute>} />
+          <Route path="/Rework" element={<protectedRoute><ReworkRepair/></protectedRoute>}/>
 
           {/* ----- HrSafetyHub Pages ----- */}
           <Route path="/hiring-departments" element={<ProtectedRoute><HrSafetyHub /></ProtectedRoute>} />
@@ -150,6 +153,8 @@ function App() {
 
           {/* ----- ProductionHub Pages ----- */}
           <Route path="/production-hub" element={<ProtectedRoute><ProductionHub /></ProtectedRoute>} />
+
+          <Route path="/Operator5S" element={<ProtectedRoute><Operator5S/></ProtectedRoute>}/>
            <Route path="/Daily-Prod-Plan-Form" element={<ProtectedRoute><DailyProdForm /></ProtectedRoute>} />
              <Route path="/Bin-Trolly-Cleaning-Form" element={<ProtectedRoute><BinTrollingForm /></ProtectedRoute>} />
                <Route path="/Tip-Change-Monitor-Form" element={<ProtectedRoute><TipChangeMonitorForm /></ProtectedRoute>} />

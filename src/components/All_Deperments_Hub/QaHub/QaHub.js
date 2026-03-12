@@ -37,6 +37,9 @@ const QaHub = () => {
             case 5:
                 navigate('/Poka-Yoke');
                 break;
+            case 8:
+                navigate('/Rework')    
+                break;
             case 12:
                 navigate('/Good-Receipt');
                 break;
