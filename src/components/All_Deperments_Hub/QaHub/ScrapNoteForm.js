@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
-// Comprehensive Data extracted from the provided PDF [cite: 1, 2, 3, 4, 5, 6, 7]
+// Comprehensive Data extracted from the provided PDF 
 const PART_DATABASE = [
   { name: "Flange NO. 2", number: "71T00-FLP02S", defects: ["Heavy Dent", "Drop Area", "BlankShort", "Groove NG", "Thread Damage", "Dimple shift", "Dimple Height NG", "Thickness NG", "Damage", "Centre Punch Out"] },
   { name: "Flange Outlet", number: "75T00-FLP11S", defects: ["Heavy Dent", "Drop Area", "BlankShort", "Groove NG", "Thread Damage", "Thickness NG", "Damage", "Centre Punch Out"] },
@@ -80,17 +80,13 @@ const ScrapNoteForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    console.log("Saving Scrap Entry:", formData);
     alert("Scrap Entry Saved Successfully!");
+    // Reset form data after submit
     setFormData(initialState);
   };
 
   const handleClear = () => setFormData(initialState);
-
-  // Styling for the select box itself
-  const getSelectClass = (value) => 
-    `w-full bg-white border border-slate-200 rounded p-2 text-sm outline-none focus:border-red-500 font-bold transition-colors appearance-none ${
-      value ? "text-red-600" : "text-slate-400"
-    }`;
 
   return (
     <div className="min-h-screen bg-slate-50 p-2 md:p-6 font-sans text-slate-800">
@@ -125,74 +121,69 @@ const ScrapNoteForm = () => {
           </div>
           <div className="bg-white border border-red-100 rounded p-1.5 px-3 flex flex-col items-center shadow-sm">
             <span className="text-[9px] font-black text-red-600 uppercase">Entry Date</span>
-            <input type="date" name="date" value={formData.date} onChange={handleChange} className="text-xs font-bold text-red-600 outline-none cursor-pointer bg-transparent accent-red-600" />
+            <input type="date" name="date" value={formData.date} onChange={handleChange} className="text-xs font-bold text-slate-700 outline-none cursor-pointer bg-transparent" />
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5">
-          {/* Apply a global accent color to the form so dropdowns use red focus in supported browsers */}
-          <div style={{ accentColor: '#f04343' }}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-[10px] font-black text-slate-500 mb-1 uppercase">Part Name</label>
-                <div className="relative">
-                  <select
-                    name="partName"
-                    value={formData.partName}
-                    onChange={handlePartChange}
-                    className={getSelectClass(formData.partName)}
-                    required
-                  >
-                    <option value="" className="text-slate-400 font-normal">-- Select Part --</option>
-                    {PART_DATABASE.map((part, idx) => (
-                      <option key={idx} value={part.name} className="text-slate-800">{part.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-500 mb-1 uppercase">Part Number</label>
-                <input
-                  name="partNo"
-                  value={formData.partNo}
-                  readOnly
-                  className="w-full bg-slate-50 border border-slate-200 rounded p-2 text-sm text-red-600 font-black cursor-not-allowed placeholder-slate-300"
-                  placeholder="Auto-filled"
-                />
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 mb-1 uppercase">Part Name</label>
+              <select
+                name="partName"
+                value={formData.partName}
+                onChange={handlePartChange}
+                className="w-full bg-white border border-slate-200 rounded p-2 text-sm outline-none focus:border-red-400 font-bold"
+                required
+              >
+                <option value="">-- Select Part --</option>
+                {PART_DATABASE.map((part, idx) => (
+                  <option key={idx} value={part.name}>{part.name}</option>
+                ))}
+              </select>
             </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 mb-1 uppercase">Part Number</label>
+              <input
+                name="partNo"
+                value={formData.partNo}
+                readOnly
+                className="w-full bg-slate-50 border border-slate-200 rounded p-2 text-sm text-slate-500 font-black cursor-not-allowed"
+                placeholder="Auto-filled"
+              />
+            </div>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-[10px] font-black text-slate-500 mb-1 uppercase">Defect Detail</label>
-                <select
-                  name="defect"
-                  value={formData.defect}
-                  onChange={handleChange}
-                  className={getSelectClass(formData.defect)}
-                  required
-                  disabled={!formData.partName}
-                >
-                  <option value="" className="text-slate-400 font-normal">{formData.partName ? "Select Defect" : "Choose Part First"}</option>
-                  {availableDefects.map((d, index) => (
-                    <option key={index} value={d} className="text-slate-800">{d}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-500 mb-1 uppercase">Quantity (NOS)</label>
-                <div className="flex">
-                  <input 
-                    name="qty" 
-                    value={formData.qty} 
-                    onChange={handleChange} 
-                    type="number" 
-                    className={`w-full border border-slate-200 rounded-l p-2 text-sm font-bold text-center outline-none ${formData.qty ? 'text-red-600' : 'text-slate-400'}`}
-                    placeholder="0" 
-                    required 
-                  />
-                  <span className="bg-slate-100 px-3 py-2 border border-l-0 border-slate-200 rounded-r text-slate-600 font-black text-[10px] flex items-center">NOS</span>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 mb-1 uppercase">Defect Detail</label>
+              <select
+                name="defect"
+                value={formData.defect}
+                onChange={handleChange}
+                className="w-full border border-slate-200 bg-white rounded p-2 text-sm focus:border-slate-400 font-semibold outline-none"
+                required
+                disabled={!formData.partName}
+              >
+                <option value="">{formData.partName ? "Select Defect" : "Choose Part First"}</option>
+                {availableDefects.map((d, index) => (
+                  <option key={index} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 mb-1 uppercase">Quantity (NOS)</label>
+              <div className="flex">
+                <input 
+                  name="qty" 
+                  value={formData.qty} 
+                  onChange={handleChange} 
+                  type="number" 
+                  className="w-full border border-slate-200 rounded-l p-2 text-sm font-bold text-center outline-none" 
+                  placeholder="0" 
+                  required 
+                />
+                <span className="bg-slate-100 px-3 py-2 border border-l-0 border-slate-200 rounded-r text-slate-600 font-black text-[10px] flex items-center">NOS</span>
               </div>
             </div>
           </div>
@@ -204,7 +195,7 @@ const ScrapNoteForm = () => {
               value={formData.remark} 
               onChange={handleChange} 
               rows="1" 
-              className={`w-full border border-slate-200 bg-white rounded p-2 text-sm font-medium outline-none focus:border-slate-400 ${formData.remark ? 'text-red-600' : 'text-slate-800'}`}
+              className="w-full border border-slate-200 bg-white rounded p-2 text-sm font-medium outline-none focus:border-slate-400" 
               placeholder="Additional notes..."
             ></textarea>
           </div>

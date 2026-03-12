@@ -43,6 +43,9 @@ import ProductionHub from './components/All_Deperments_Hub/ProductionHub/Product
 import HrSafetyHub from './components/All_Deperments_Hub/HrSafetyHub/HrSafetyHub';
 import InductionTrainingForm from './components/All_Deperments_Hub/HrSafetyHub/InductionTrainingForm';
 import TrainingHistoryCard from './components/All_Deperments_Hub/HrSafetyHub/TrainingHistoryCard';
+import BinTrollingForm from './components/All_Deperments_Hub/ProductionHub/BinTrollingForm';
+import DailyProdForm from './components/All_Deperments_Hub/ProductionHub/DailyProdForm';
+import TipChangeMonitorForm from './components/All_Deperments_Hub/ProductionHub/TipChangeMonitorForm';
 
 import './App.css';
 
@@ -147,6 +150,9 @@ function App() {
 
           {/* ----- ProductionHub Pages ----- */}
           <Route path="/production-hub" element={<ProtectedRoute><ProductionHub /></ProtectedRoute>} />
+           <Route path="/Daily-Prod-Plan-Form" element={<ProtectedRoute><DailyProdForm /></ProtectedRoute>} />
+             <Route path="/Bin-Trolly-Cleaning-Form" element={<ProtectedRoute><BinTrollingForm /></ProtectedRoute>} />
+               <Route path="/Tip-Change-Monitor-Form" element={<ProtectedRoute><TipChangeMonitorForm /></ProtectedRoute>} />
 
           {/* ========== 404 NOT FOUND ========== */}
           <Route 

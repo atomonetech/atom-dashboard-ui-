@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const BinTrolleyCheckSheet = () => {
+const BinTrollingForm = () => {
   const [currentDate, setCurrentDate] = useState('');
   const [currentWeek, setCurrentWeek] = useState('W1');
   const [currentMonth, setCurrentMonth] = useState('');
@@ -405,4 +405,4 @@ const BinTrolleyCheckSheet = () => {
   );
 };
 
-export default BinTrolleyCheckSheet;
+export default BinTrollingForm;
