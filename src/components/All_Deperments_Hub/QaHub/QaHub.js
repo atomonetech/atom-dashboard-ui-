@@ -10,7 +10,6 @@ const QaHub = () => {
         { id: 3, title: 'Scrap Note', formNo: 'AOT/F/QC/04', resp: 'Quality Engineer', icon: 'bi-file-earmark-x', color: '#ef4444', bg: '#fef2f2' },
         { id: 4, title: 'Red Bin Attendance Sheet', formNo: 'AOT/F/QC/05', resp: 'Quality Engineer', icon: 'bi-person-x', color: '#f59e0b', bg: '#fef3c7' },
         { id: 5, title: 'Daily Poka Yokes Check', formNo: 'AOT/F/QC/07A', resp: 'Operator', icon: 'bi-shield-check', color: '#10b981', bg: '#d1fae5' },
-        { id: 6, title: 'Material ID Tag', formNo: 'AOT/F/QA/08', resp: 'Quality Engineer', icon: 'bi-tags', color: '#8b5cf6', bg: '#ede9fe' },
         { id: 7, title: 'Set up & Patrol Insp. (FPIR)', formNo: 'AOT/F/QA/15', resp: 'Quality Engineer', icon: 'bi-clipboard-check', color: '#06b6d4', bg: '#cffafe' },
         { id: 8, title: 'Rework / Repair Report', formNo: 'AOT/F/QA/20', resp: 'Rework Operator', icon: 'bi-tools', color: '#f59e0b', bg: '#fef3c7' },
         { id: 9, title: 'Sample Inspection Report', formNo: 'AOT/F/QA/21', resp: 'Quality Engineer', icon: 'bi-search', color: '#3b82f6', bg: '#eff6ff' },
@@ -37,6 +36,9 @@ const QaHub = () => {
                 break;
             case 5:
                 navigate('/Poka-Yoke');
+                break;
+            case 8:
+                navigate('/Rework')    
                 break;
             case 12:
                 navigate('/Good-Receipt');
@@ -83,5 +85,3 @@ const QaHub = () => {
 export default QaHub;
 
 
-
-//DMOIAM//

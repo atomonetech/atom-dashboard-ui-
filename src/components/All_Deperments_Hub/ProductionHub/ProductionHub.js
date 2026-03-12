@@ -15,7 +15,18 @@ const ProductionHub = () => {
         { id: 8, title: '4M Change tracking sheet', formNo: 'AOT-F-4M-05', resp: 'Production Engineer', icon: 'bi-signpost-split', color: '#ef4444', bg: '#fef2f2' },
         { id: 9, title: '4M Change display board', formNo: 'ATO-F-4M-08', resp: 'Production Engineer', icon: 'bi-easel2', color: '#ef4444', bg: '#fef2f2' }
     ];
-
+ const handleCardClick = (id, title) => {
+        // 🟢 NAYE LINKS YAHAN ADD KIYE GAYE HAIN
+        switch (id) {
+            
+            case 3:
+                navigate('/Operator-5S');
+                break;
+            
+            default:
+                alert(`The form for "${title}" is currently under development.`);
+        }
+    };
     return (
         <div className="hub-wrapper">
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -37,7 +48,7 @@ const ProductionHub = () => {
                 <div className="row g-4">
                     {productionReports.map((r) => (
                         <div className="col-md-6 col-lg-4" key={r.id}>
-                            <div className="card-custom" onClick={() => alert(`Opening Production Form: ${r.title}`)}>
+                            <div className="card-custom" onClick={() => handleCardClick(r.id, r.title)}>
                                 <div style={{width: '50px', height: '50px', borderRadius: '12px', background: r.bg, color: r.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', marginBottom: '1rem'}}><i className={r.icon}></i></div>
                                 <h5 style={{fontWeight: 800, fontSize: '1rem', color: '#0f172a', marginBottom: '1rem'}}>{r.title}</h5>
                                 <div className="meta-tag"><i className="bi bi-file-earmark-text text-muted"></i>Form: <span style={{color:'#0f172a'}}>{r.formNo}</span></div>
