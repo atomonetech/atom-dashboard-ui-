@@ -1,0 +1,650 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Calendar, User, Cpu, Package, BookOpen,
+  AlertCircle, ArrowLeft
+} from 'lucide-react';
+
+const MChangeTrackForm = () => {
+  const today = new Date().toISOString().split('T')[0];
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  
+  const [formData, setFormData] = useState({
+    time: '',
+    mcNo: '',
+    changeDesc: '',
+    natureOfChange: 'Planned',
+    actionTaken: '',
+    partNameNo: '',
+    operationNo: '',
+    trainingProvided: '',
+    setupApproval: {
+      status: ''
+    },
+    retroactive: {
+      qtyChecked: '',
+      entryQty: '',
+      qtyOk: '',
+      rw: '',
+      scrap: ''
+    },
+    containmentSuspected: {
+      qtyChecked: '',
+      entryQty: '',
+      qtyOk: '',
+      rw: '',
+      scrap: ''
+    },
+    dispatchDetail: {
+      customer: '',
+      date: today,
+      invoiceNo: '',
+    },
+    remark: ''
+  });
+
+  const [dailyTrackingData, setDailyTrackingData] = useState({});
+  
+  const [currentDayData, setCurrentDayData] = useState({
+    man: '',
+    machine: '',
+    material: '',
+    method: '',
+    submittedAt: null
+  });
+
+  // Clear localStorage on first load to ensure all dots are gray
+  useEffect(() => {
+    // Clear any existing saved data to start fresh with gray dots
+    localStorage.removeItem('mChangeTrackingData');
+    setDailyTrackingData({});
+    setCurrentDayData({
+      man: '',
+      machine: '',
+      material: '',
+      method: '',
+      submittedAt: null
+    });
+  }, []);
+
+  const getNextStatus = (currentStatus) => {
+    if (currentStatus === '') return 'CHANGE';
+    if (currentStatus === 'CHANGE') return 'NO CHANGE';
+    if (currentStatus === 'NO CHANGE') return '';
+    return '';
+  };
+  
+  const getStatusDot = (status) => {
+    switch(status) {
+      case 'CHANGE':
+        return <span className="inline-block w-8 h-8 rounded-full bg-red-500 cursor-pointer hover:ring-2 hover:ring-red-300 transition-all shadow-sm" title="Change"></span>;
+      case 'NO CHANGE':
+        return <span className="inline-block w-8 h-8 rounded-full bg-green-500 cursor-pointer hover:ring-2 hover:ring-green-300 transition-all shadow-sm" title="No Change"></span>;
+      default:
+        return <span className="inline-block w-8 h-8 rounded-full bg-gray-200 cursor-pointer hover:ring-2 hover:ring-gray-300 transition-all shadow-sm" title="Not Set"></span>;
+    }
+  };
+
+  const handleDailyChange = (field, value) => {
+    const newData = { ...currentDayData };
+    newData[field] = value;
+    newData.submittedAt = new Date().toISOString();
+    setCurrentDayData(newData);
+    
+    const today_date = new Date();
+    const year = today_date.getFullYear();
+    const month = today_date.getMonth() + 1;
+    const day = today_date.getDate();
+    const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    
+    setDailyTrackingData(prev => ({
+      ...prev,
+      [dateKey]: newData
+    }));
+  };
+
+  const handleFormChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleNestedChange = (section, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleSubmit = () => {
+    const today_date = new Date();
+    const year = today_date.getFullYear();
+    const month = today_date.getMonth() + 1;
+    const day = today_date.getDate();
+    const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    
+    const finalDailyTrackingData = {
+      ...dailyTrackingData,
+      [dateKey]: currentDayData
+    };
+    
+    const record = {
+      id: Date.now(),
+      ...formData,
+      dailyTrackingData: finalDailyTrackingData,
+      submittedAt: new Date().toISOString(),
+      submissionDate: dateKey
+    };
+    
+    setDailyTrackingData(finalDailyTrackingData);
+    
+    console.log('Submitted Record:', record);
+    
+    try {
+      localStorage.setItem('mChangeTrackingData', JSON.stringify(finalDailyTrackingData));
+      alert('Form submitted successfully! Data saved to localStorage.');
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+      alert('Form submitted successfully! Check console for data.');
+    }
+  };
+
+  const handleReset = () => {
+    setFormData({
+      time: '',
+      mcNo: '',
+      changeDesc: '',
+      natureOfChange: 'Planned',
+      actionTaken: '',
+      partNameNo: '',
+      operationNo: '',
+      trainingProvided: '',
+      setupApproval: {
+        status: ''
+      },
+      retroactive: {
+        qtyChecked: '',
+        entryQty: '',
+        qtyOk: '',
+        rw: '',
+        scrap: ''
+      },
+      containmentSuspected: {
+        qtyChecked: '',
+        entryQty: '',
+        qtyOk: '',
+        rw: '',
+        scrap: ''
+      },
+      dispatchDetail: {
+        customer: '',
+        date: today,
+        invoiceNo: '',
+      },
+      remark: ''
+    });
+    
+    setCurrentDayData({
+      man: '',
+      machine: '',
+      material: '',
+      method: '',
+      submittedAt: null
+    });
+  };
+
+  const handleBack = () => {
+    window.location.href = '/production-hub';
+  };
+
+  const getFormattedDate = () => {
+    return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const categories = [
+    { id: 'man', label: 'MAN', icon: <User className="w-5 h-5" /> },
+    { id: 'machine', label: 'MACHINE', icon: <Cpu className="w-5 h-5" /> },
+    { id: 'material', label: 'MATERIAL', icon: <Package className="w-5 h-5" /> },
+    { id: 'method', label: 'METHOD', icon: <BookOpen className="w-5 h-5" /> }
+  ];
+
+  const statusOptions = ['OK', 'NOT OK', 'PENDING', 'NA'];
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="max-w-7xl mx-auto mb-4">
+        <button
+          onClick={handleBack}
+          className="flex items-center text-gray-600 hover:text-gray-900 transition-colors group"
+        >
+          <div className="bg-white border border-gray-200 rounded-lg p-2 shadow-sm group-hover:shadow-md transition-shadow">
+            <ArrowLeft className="w-5 h-5 text-gray-500" />
+          </div>
+          <span className="ml-2 text-sm font-medium">Back to Production Hub</span>
+        </button>
+      </div>
+
+      <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        {/* Header - Fixed for mobile */}
+        <div className="px-4 sm:px-6 md:px-8 py-6 sm:py-7 md:py-8" style={{ 
+          background: 'linear-gradient(105deg, #8a0000 0%, #ffd6d6 30%, #ff8686 70%, #e11515 100%)'
+        }}>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <h1 className="text-2xl sm:text-2xl font-bold text-white">
+              4M Change Record Sheet
+            </h1>
+            <div className="flex items-center sm:items-center">
+              <div className="inline-flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/30 shadow-lg">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-white mr-2" />
+                <span className="text-sm sm:text-base font-semibold  text-white xs:text-red-500">{currentDate}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 sm:p-6 md:p-8">
+          {/* Mobile: Legend first, then 4M Status */}
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            {/* Legend - Shows first on mobile, right side on desktop */}
+            <div className="w-full lg:w-72 order-1 lg:order-2">
+              <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-5 md:p-6 shadow-sm">
+                <h3 className="font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center text-base sm:text-lg">
+                  <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-red-500" />
+                  Legend
+                </h3>
+                
+                <div className="space-y-2 sm:space-y-3">
+                  <div className="flex items-center space-x-3 p-1 sm:p-2">
+                    <span className="inline-block w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-red-500"></span>
+                    <div>
+                      <span className="text-xs sm:text-sm font-medium text-gray-800">CHANGE</span>
+                      <p className="text-xs text-gray-500 hidden sm:block">Change implemented</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3 p-1 sm:p-2">
+                    <span className="inline-block w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-green-500"></span>
+                    <div>
+                      <span className="text-xs sm:text-sm font-medium text-gray-800">NO CHANGE</span>
+                      <p className="text-xs text-gray-500 hidden sm:block">No change from standard</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-3 p-1 sm:p-2">
+                    <span className="inline-block w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gray-200"></span>
+                    <div>
+                      <span className="text-xs sm:text-sm font-medium text-gray-800">Not Set</span>
+                      <p className="text-xs text-gray-500 hidden sm:block">No status selected</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 4M Status - Shows second on mobile, left side on desktop */}
+            <div className="flex-1 order-2 lg:order-1">
+              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                <div className="bg-gray-50 px-4 sm:px-5 md:px-6 py-3 sm:py-4 border-b border-gray-200">
+                  <h3 className="text-sm sm:text-base font-semibold text-gray-800">
+                    4M Status for Today - {getFormattedDate()}
+                  </h3>
+                </div>
+                
+                <div className="p-4 sm:p-5 md:p-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    {categories.map((category) => (
+                      <div key={category.id} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="flex items-center space-x-2 sm:space-x-3">
+                          <div className="text-gray-500 bg-white p-1.5 sm:p-2 rounded-full shadow-sm">
+                            {category.icon}
+                          </div>
+                          <span className="text-xs sm:text-sm font-medium text-gray-700">{category.label}</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const nextValue = getNextStatus(currentDayData[category.id]);
+                            handleDailyChange(category.id, nextValue);
+                          }}
+                          className="focus:outline-none transform hover:scale-110 transition-transform"
+                        >
+                          {getStatusDot(currentDayData[category.id])}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Change Details Section - Rest of your code remains exactly the same */}
+          <div className="border-t border-gray-200 mt-6 sm:mt-7 md:mt-8 pt-6 sm:pt-7 md:pt-8">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-5 md:mb-6">Change Details</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6 mb-4 sm:mb-5 md:mb-6">
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-600 mb-1">Time</label>
+                <input
+                  type="time"
+                  value={formData.time}
+                  onChange={(e) => handleFormChange('time', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all bg-white text-slate-700"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-600 mb-1">Machine No</label>
+                <input
+                  type="text"
+                  value={formData.mcNo}
+                  onChange={(e) => handleFormChange('mcNo', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all bg-white text-slate-700"
+                  placeholder="Enter machine number"
+                />
+              </div>
+            </div>
+
+            <div className="mb-4 sm:mb-5 md:mb-6">
+              <label className="block text-xs sm:text-sm font-medium text-gray-600 mb-1">Change Description</label>
+              <textarea
+                value={formData.changeDesc}
+                onChange={(e) => handleFormChange('changeDesc', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all bg-white text-slate-700"
+                rows="3"
+                placeholder="Enter change description..."
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6 mb-4 sm:mb-5 md:mb-6">
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-600 mb-1">Nature of Change</label>
+                <select
+                  value={formData.natureOfChange}
+                  onChange={(e) => handleFormChange('natureOfChange', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all bg-white text-slate-700"
+                >
+                  <option value="Planned">Planned</option>
+                  <option value="Unplanned">Unplanned</option>
+                  <option value="Emergency">Emergency</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-600 mb-1">Action Taken</label>
+                <input
+                  type="text"
+                  value={formData.actionTaken}
+                  onChange={(e) => handleFormChange('actionTaken', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all bg-white text-slate-700"
+                  placeholder="Enter action taken"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6 mb-4 sm:mb-5 md:mb-6">
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-600 mb-1">Part Name/Number</label>
+                <input
+                  type="text"
+                  value={formData.partNameNo}
+                  onChange={(e) => handleFormChange('partNameNo', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all bg-white text-slate-700"
+                  placeholder="Enter part name/number"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-600 mb-1">Operation No</label>
+                <input
+                  type="text"
+                  value={formData.operationNo}
+                  onChange={(e) => handleFormChange('operationNo', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all bg-white text-slate-700"
+                  placeholder="Enter operation number"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6 mb-6 sm:mb-7 md:mb-8">
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-lg border border-gray-200">
+                <label className="block text-xs sm:text-sm font-medium text-gray-600 mb-1.5 sm:mb-2">Setup Approval</label>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                  <span className="text-xs sm:text-sm text-gray-500">Date: {getFormattedDate()}</span>
+                  <select
+                    value={formData.setupApproval.status}
+                    onChange={(e) => handleNestedChange('setupApproval', 'status', e.target.value)}
+                    className="w-full sm:flex-1 border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 bg-white text-slate-700"
+                  >
+                    <option value="">Not Set</option>
+                    {statusOptions.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-lg border border-gray-200">
+                <label className="block text-xs sm:text-sm font-medium text-gray-600 mb-1.5 sm:mb-2">Training Provided</label>
+                <select
+                  value={formData.trainingProvided}
+                  onChange={(e) => handleFormChange('trainingProvided', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 bg-white text-slate-700"
+                >
+                  <option value="">Not Set</option>
+                  {statusOptions.map(option => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 mb-4 sm:mb-5 md:mb-6">
+              {/* Retroactive */}
+              <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+                <h4 className="font-medium text-gray-700 mb-2 sm:mb-3 pb-1 sm:pb-2 border-b border-gray-200 text-sm sm:text-base">Retroactive</h4>
+                <div className="space-y-2 sm:space-y-3">
+                  <div>
+                    <label className="block text-xs text-slate-700 mb-1">Qty Checked</label>
+                    <input
+                      type="text"
+                      value={formData.retroactive.qtyChecked}
+                      onChange={(e) => handleNestedChange('retroactive', 'qtyChecked', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white text-slate-700"
+                      placeholder="Enter quantity"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-700 mb-1">Entry Quantity</label>
+                    <input
+                      type="text"
+                      value={formData.retroactive.entryQty}
+                      onChange={(e) => handleNestedChange('retroactive', 'entryQty', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white text-slate-700"
+                      placeholder="Enter quantity"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-700 mb-1">Qty OK</label>
+                    <select
+                      value={formData.retroactive.qtyOk}
+                      onChange={(e) => handleNestedChange('retroactive', 'qtyOk', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white text-slate-700"
+                    >
+                      <option value="">Not Set</option>
+                      {statusOptions.map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-700 mb-1">R/W</label>
+                    <select
+                      value={formData.retroactive.rw}
+                      onChange={(e) => handleNestedChange('retroactive', 'rw', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white text-slate-700"
+                    >
+                      <option value="">Not Set</option>
+                      {statusOptions.map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-700 mb-1">Scrap</label>
+                    <select
+                      value={formData.retroactive.scrap}
+                      onChange={(e) => handleNestedChange('retroactive', 'scrap', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white text-slate-700"
+                    >
+                      <option value="">Not Set</option>
+                      {statusOptions.map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Containment Suspected */}
+              <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+                <h4 className="font-medium text-gray-700 mb-2 sm:mb-3 pb-1 sm:pb-2 border-b border-gray-200 text-sm sm:text-base">Containment Suspected</h4>
+                <div className="space-y-2 sm:space-y-3">
+                  <div>
+                    <label className="block text-xs text-slate-700 mb-1">Qty Checked</label>
+                    <input
+                      type="text"
+                      value={formData.containmentSuspected.qtyChecked}
+                      onChange={(e) => handleNestedChange('containmentSuspected', 'qtyChecked', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white text-slate-700"
+                      placeholder="Enter quantity"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-700 mb-1">Entry Quantity</label>
+                    <input
+                      type="text"
+                      value={formData.containmentSuspected.entryQty}
+                      onChange={(e) => handleNestedChange('containmentSuspected', 'entryQty', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white text-slate-700"
+                      placeholder="Enter quantity"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-700 mb-1">Qty OK</label>
+                    <select
+                      value={formData.containmentSuspected.qtyOk}
+                      onChange={(e) => handleNestedChange('containmentSuspected', 'qtyOk', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white text-slate-700"
+                    >
+                      <option value="">Not Set</option>
+                      {statusOptions.map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-700 mb-1">R/W</label>
+                    <select
+                      value={formData.containmentSuspected.rw}
+                      onChange={(e) => handleNestedChange('containmentSuspected', 'rw', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white text-slate-700"
+                    >
+                      <option value="">Not Set</option>
+                      {statusOptions.map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-700 mb-1">Scrap</label>
+                    <select
+                      value={formData.containmentSuspected.scrap}
+                      onChange={(e) => handleNestedChange('containmentSuspected', 'scrap', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white text-slate-700"
+                    >
+                      <option value="">Not Set</option>
+                      {statusOptions.map(option => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dispatch Detail */}
+              <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+                <h4 className="font-medium text-gray-700 mb-2 sm:mb-3 pb-1 sm:pb-2 border-b border-gray-200 text-sm sm:text-base">Dispatch Detail</h4>
+                <div className="space-y-2 sm:space-y-3">
+                  <div>
+                    <label className="block text-xs text-slate-700 mb-1">Customer</label>
+                    <input
+                      type="text"
+                      value={formData.dispatchDetail.customer}
+                      onChange={(e) => handleNestedChange('dispatchDetail', 'customer', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white text-slate-700"
+                      placeholder="Enter customer name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-700 mb-1">Date</label>
+                    <input
+                      type="date"
+                      value={formData.dispatchDetail.date}
+                      onChange={(e) => handleNestedChange('dispatchDetail', 'date', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white text-slate-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-700 mb-1">Invoice No</label>
+                    <input
+                      type="text"
+                      value={formData.dispatchDetail.invoiceNo}
+                      onChange={(e) => handleNestedChange('dispatchDetail', 'invoiceNo', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white text-slate-700"
+                      placeholder="Enter invoice number"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 sm:mt-5 md:mt-6">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Remark</label>
+              <textarea
+                value={formData.remark}
+                onChange={(e) => handleFormChange('remark', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all bg-white text-slate-700"
+                rows="3"
+                placeholder="Enter remarks..."
+              />
+            </div>
+
+            <div className="mt-5 sm:mt-6 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
+              <button
+                onClick={handleReset}
+                className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 border border-gray-300 rounded-lg text-xs sm:text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 transition-all shadow-sm order-2 sm:order-1"
+              >
+                Reset Data
+              </button>
+              <button
+                onClick={handleSubmit}
+                className="w-full sm:w-auto px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg text-xs sm:text-sm font-medium hover:from-red-700 hover:to-red-800 transition-all shadow-sm order-1 sm:order-2"
+              >
+                Save  Data
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default MChangeTrackForm;

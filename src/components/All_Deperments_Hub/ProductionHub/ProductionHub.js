@@ -1,8 +1,11 @@
-import React from 'react';
+import React,{useState} from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const ProductionHub = () => {
     const navigate = useNavigate();
+     const [showOptionsModal, setShowOptionsModal] = useState(false);
+    const [selectedCard, setSelectedCard] = useState(null);
+
 
     const productionReports = [
         { id: 1, title: 'Daily Production Plan / Report', formNo: 'AOT-F-PROD-03', resp: 'Production Engineer', icon: 'bi-graph-up-arrow', color: '#3b82f6', bg: '#eff6ff' },
@@ -18,8 +21,8 @@ const ProductionHub = () => {
 
 
    
-      const handleCardClick = (id, title) => {
-        // 🟢 NAYE LINKS YAHAN ADD KIYE GAYE HAIN
+  
+    const navigateToForm = (id, title) => {
         switch (id) {
             case 1:
                 navigate('/Daily-Prod-Plan-Form');
@@ -36,6 +39,18 @@ const ProductionHub = () => {
             case 5:
                 navigate('/Tip-Change-Monitor-Form');
                 break;
+            case 6:
+                navigate('/4-M-Ins-Form');
+                break;
+            case 7:
+                navigate('/4M-Change-Summary-Form');
+                break;
+            case 8:
+                navigate('/4M-Change-Tracking-Form');
+                break;
+            case 9:
+                navigate('/4M-Change-Display-Form');
+                break;
             case 12:
                 navigate('/Good-Receipt');
                 break;
@@ -43,6 +58,52 @@ const ProductionHub = () => {
             default:
                 alert(`The form for "${title}" is currently under development.`);
         }
+    };
+      const navigateToReport = (id, title) => {
+        switch (id) {
+            case 6:
+                navigate('/4M-Change-Inspection-Report');
+                break;
+            case 7:
+                navigate('/4M-Change-Summary-Report');
+                break;
+            case 8:
+                navigate('/4M-Change-Tracking-Report');
+                break;
+            case 9:
+                navigate('/4M-Change-Display-Report');
+                break;
+            default:
+                alert(`The report for "${title}" is currently under development.`);
+        }
+    };
+
+        const is4MChangeCard = (id) => [6, 7, 8, 9].includes(id);
+
+    const handleCardClick = (id, title, cardData) => {
+        if (is4MChangeCard(id)) {
+            setSelectedCard({ id, title, ...cardData });
+            setShowOptionsModal(true);
+        } else {
+            navigateToForm(id, title);
+        }
+    };
+
+        const handleOptionSelect = (option) => {
+        if (option === 'fill' && selectedCard) {
+            navigateToForm(selectedCard.id, selectedCard.title);
+        } else if (option === 'print' && selectedCard) {
+            navigateToReport(selectedCard.id, selectedCard.title);
+        }
+        closeModal();
+    };
+
+    const closeModal = (e) => {
+        if (e) {
+            e.stopPropagation();
+        }
+        setShowOptionsModal(false);
+        setSelectedCard(null);
     };
     return (
         <div className="hub-wrapper">
@@ -55,6 +116,80 @@ const ProductionHub = () => {
                 .card-custom { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.5rem; cursor: pointer; transition: 0.3s; height: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
                 .card-custom:hover { transform: translateY(-5px); border-color:#8b5cf6; box-shadow: 0 15px 25px rgba(0,0,0,0.1); }
                 .meta-tag { background: #f1f5f9; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+                                .modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 100000;
+                    padding: 16px;
+                }
+                .modal-content {
+                    background: white;
+                    border-radius: 20px;
+                    padding: 24px;
+                    max-width: 400px;
+                    width: 100%;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                }
+                .modal-header {
+                    margin-bottom: 20px;
+                    padding-bottom: 12px;
+                    border-bottom: 1px solid #e2e8f0;
+                }
+                .modal-header h3 {
+                    font-weight: 700;
+                    color: #0f172a;
+                    margin: 0;
+                    font-size: 1.25rem;
+                }
+                .option-btn {
+                    width: 100%;
+                    padding: 14px 16px;
+                    margin: 8px 0;
+                    border: none;
+                    border-radius: 12px;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 12px;
+                }
+                .option-btn:hover {
+                    transform: translateY(-2px);
+                }
+                .option-btn:active {
+                    transform: translateY(0);
+                }
+                .fill-btn {
+                    background: #3b82f6;
+                    color: white;
+                }
+                .fill-btn:hover {
+                    background: #2563eb;
+                }
+                .print-btn {
+                    background: #10b981;
+                    color: white;
+                }
+                .print-btn:hover {
+                    background: #059669;
+                }
+                .close-btn {
+                    background: #ef4444;
+                    color: white;
+                    margin-top: 16px;
+                }
+                .close-btn:hover {
+                   
             `}</style>
             
             <nav className="nav-bar">
@@ -75,6 +210,50 @@ const ProductionHub = () => {
                     ))}
                 </div>
             </div>
+
+            {showOptionsModal && selectedCard && (
+                <div className="modal-overlay" onClick={closeModal}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>{selectedCard.title}</h3>
+                            <p style={{
+                                color: '#64748b',
+                                fontSize: '0.9rem',
+                                marginTop: '4px'
+                            }}>
+                                Form No: {selectedCard.formNo}
+                            </p>
+                        </div>
+                        
+                        <button 
+                            className="option-btn fill-btn" 
+                            onClick={() => handleOptionSelect('fill')}
+                        >
+                            <i className="bi bi-pencil-square"></i>
+                            Fill Data (Open Form)
+                        </button>
+                        
+                        <button 
+                            className="option-btn print-btn" 
+                            onClick={() => handleOptionSelect('print')}
+                        >
+                            <i className="bi bi-printer"></i>
+                            Print Data (View Report)
+                        </button>
+                        
+                        <button 
+                            className="option-btn close-btn" 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                closeModal();
+                            }}
+                        >
+                            <i className="bi bi-x-circle"></i>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

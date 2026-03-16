@@ -86,9 +86,47 @@ const MaintenanceHub = () => {
 
     const currentReports = activeTab === 'MACHINE' ? machineReports : toolReports;
 
-    const handleCardClick = (reportTitle) => {
-        alert(`Construction in Progress 🚧\nThe [${reportTitle}] form is coming soon!`);
-    };
+    // const handleCardClick = (reportTitle) => {
+    //     alert(`Construction in Progress 🚧\nThe [${reportTitle}] form is coming soon!`);
+    // };
+
+const handleCardClick = (reportId) => {
+
+    switch (reportId) {
+
+        case "mc_history":
+            navigate("/Machine-Card-Form");
+            break;
+
+        case "mc_breakdown":
+            navigate("/Machine-Breakdown-Slip");
+            break;
+
+        case "power_press_check":
+            navigate("/Power-Press-Checklist");
+            break;
+
+        case "tool_history":
+            navigate("/Tool-History-Form");
+            break;
+
+        case "tool_stroke":
+            navigate("/Tool-Stroke-PM");
+            break;
+
+        case "tool_pm_check":
+            navigate("/Tool-PM-Checklist-Form");
+            break;
+
+        case "tool_breakdown":
+            navigate("/Tool-Breakdown-Form");
+            break;
+
+        default:
+            alert("🚧 Form coming soon!");
+    }
+
+};
 
     return (
         <div className="maintenance-page-wrapper">
@@ -295,7 +333,7 @@ const MaintenanceHub = () => {
                             <div 
                                 className="module-card" 
                                 style={{'--card-color': report.color}} 
-                                onClick={() => handleCardClick(report.title)}
+                                onClick={() => handleCardClick(report.id)}
                             >
                                 <div className="icon-wrapper" style={{backgroundColor: report.bgColor, color: report.color}}>
                                     <i className={`bi ${report.icon}`}></i>

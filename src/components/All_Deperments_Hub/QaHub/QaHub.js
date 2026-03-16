@@ -37,6 +37,7 @@ const QaHub = () => {
             case 5:
                 navigate('/Poka-Yoke');
                 break;
+<<<<<<< Updated upstream
             case 7: 
               navigate('/inspection-form'); 
                break;
@@ -45,6 +46,14 @@ const QaHub = () => {
                 break;
             case 9:
                 navigate('/PdiReportForm');
+=======
+             case 9:
+                navigate('/Sample-Ins-Form');
+                break;
+
+             case 10:
+                navigate('/Deviation-Approval-Form');
+>>>>>>> Stashed changes
                 break;
             case 12:
                 navigate('/Good-Receipt');
