@@ -54,6 +54,7 @@ import DailyProdForm from './components/All_Deperments_Hub/ProductionHub/DailyPr
 import TipChangeMonitorForm from './components/All_Deperments_Hub/ProductionHub/TipChangeMonitorForm';
 import M_ChangeTrackForm from './components/All_Deperments_Hub/ProductionHub/M_ChangeTrackForm';
 import MachineHistoryCard from './components/All_Deperments_Hub/MaintenanceHub/MachineHistoryCard';
+import DailyPowerPressChecksheet from '././components/All_Deperments_Hub/MaintenanceHub/DailyPowerPressChecksheet'
 import ToolHistoryForm from './components/All_Deperments_Hub/MaintenanceHub/ToolHistoryForm';
 import MachineBreakDownForm from './components/All_Deperments_Hub/MaintenanceHub/MachineBreakDownForm';
 import ToolPrevMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/ToolPrevMaintenanceForm';
@@ -176,7 +177,7 @@ function App() {
                <Route path="/4M-Change-Tracking-Form" element={<ProtectedRoute><M_ChangeTrackForm/></ProtectedRoute>}/>
                <Route path='/Machine-Card-Form' element={<ProtectedRoute><MachineHistoryCard/></ProtectedRoute>}/>
                 <Route path='/Tool-History-Form' element={<ProtectedRoute><ToolHistoryForm/></ProtectedRoute>}/>
-
+            <Route path='/Daily-PowerPress-Checksheet' element={<ProtectedRoute><DailyPowerPressChecksheet/></ProtectedRoute>}/>
 
             <Route path='/Tool-Breakdown-Form' element={<ProtectedRoute><MachineBreakDownForm/></ProtectedRoute>}/>
             <Route path='/Tool-PM-Checklist-Form' element={<ProtectedRoute><ToolPrevMaintenanceForm/></ProtectedRoute>}/>
