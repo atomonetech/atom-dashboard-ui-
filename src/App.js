@@ -23,11 +23,10 @@ import QMSDashboard from './components/qms/QMSDashboard';
 import ReportDetail from './components/qms/ReportDetail';
 import ReportEditor from './components/qms/ReportEditor';
 import PatrolInspection from './components/qms/PatrolInspection';
-import InspectionForm from './components/qms/InspectionForm'; 
 import ReportsDashboard from './components/qms/ReportsDashboard';
 import RawMaterialForm from './components/qms/RawMaterialForm'; 
-import PdiReportForm from './components/qms/PdiReportForm';
 import MaintenanceHub from './components/All_Deperments_Hub/MaintenanceHub/MaintenanceHub';
+
 
 // ========== QaHub IMPORTS ==========
 import QaHub from './components/All_Deperments_Hub/QaHub/QaHub';
@@ -37,7 +36,12 @@ import RedBinForm from './components/All_Deperments_Hub/QaHub/RedBinForm';
 import ScrapNote from "./components/All_Deperments_Hub/QaHub/ScrapNoteForm";
 import GoodReceiptFrom from './components/All_Deperments_Hub/QaHub/GoodReceiptFrom';
 import PokaYokeChecksheet from './components/All_Deperments_Hub/QaHub/PokaYokeChecksheet';
-import ReworkRepair from './components/All_Deperments_Hub/QaHub/Rework_Repair';
+import ReworkRepair from './components/All_Deperments_Hub/QaHub/ReworkRepair';
+import InspectionForm from './components/All_Deperments_Hub/QaHub/InspectionForm';
+import PdiReportForm from './components/All_Deperments_Hub/QaHub/PdiReportForm';
+
+
+
 
 // ========== ProductionHub & HrSafetyHub IMPORTS ==========
 import ProductionHub from './components/All_Deperments_Hub/ProductionHub/ProductionHub';
@@ -136,7 +140,8 @@ function App() {
           {/* 🔥 SIDEBAR HUB ROUTES 🔥 */}
           <Route path="/maintenance-hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
           
-          {/* ----- QaHub Pages ----- */}
+                 
+          {/*----- QaHub Pages -----*/}
           <Route path="/qa-hub" element={<ProtectedRoute><QaHub /></ProtectedRoute>} />
           <Route path="/Incoming-Material" element={<ProtectedRoute><IncomingMaterialInsp /></ProtectedRoute>} />
           <Route path="/Redbin-Attendance" element={<ProtectedRoute><RedbinAttendance /></ProtectedRoute>} />
@@ -144,7 +149,9 @@ function App() {
           <Route path="/Scrap-Note" element={<ProtectedRoute><ScrapNote /></ProtectedRoute>} />
           <Route path="/Good-Receipt" element={<ProtectedRoute><GoodReceiptFrom /></ProtectedRoute>} />
           <Route path="/Poka-Yoke" element={<ProtectedRoute><PokaYokeChecksheet /></ProtectedRoute>} />
-          <Route path="/Rework" element={<protectedRoute><ReworkRepair/></protectedRoute>}/>
+          <Route path="/inspection-form" element={<ProtectedRoute><InspectionForm /></ProtectedRoute>} />
+          <Route path="/Rework" element={<ProtectedRoute><ReworkRepair /></ProtectedRoute>} />
+          <Route path="/pdi-report-form" element={<ProtectedRoute><PdiReportForm /></ProtectedRoute>} />
 
           {/* ----- HrSafetyHub Pages ----- */}
           <Route path="/hiring-departments" element={<ProtectedRoute><HrSafetyHub /></ProtectedRoute>} />

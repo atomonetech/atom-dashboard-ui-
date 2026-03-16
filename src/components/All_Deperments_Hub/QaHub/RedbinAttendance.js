@@ -185,6 +185,7 @@ export default function RedbinAttendance() {
           </div>
         )}
       </div>
+      
 
       {/* ── ATTENDANCE TABLE ── */}
       {rows.length > 0 && (

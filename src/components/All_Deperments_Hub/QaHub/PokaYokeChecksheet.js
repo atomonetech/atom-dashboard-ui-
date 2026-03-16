@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// 🔥 IMAGE & DETAILED HINDI SOP DATABASE 🔥
+
 const sopDatabase = {
     1: { 
         titleEng: 'Air Pressure Switch', 

@@ -37,8 +37,14 @@ const QaHub = () => {
             case 5:
                 navigate('/Poka-Yoke');
                 break;
+            case 7: 
+              navigate('/inspection-form'); 
+               break;
             case 8:
-                navigate('/Rework')    
+                navigate('/Rework');
+                break;
+            case 9:
+                navigate('/PdiReportForm');
                 break;
             case 12:
                 navigate('/Good-Receipt');
@@ -83,5 +89,3 @@ const QaHub = () => {
     );
 };
 export default QaHub;
-
-
