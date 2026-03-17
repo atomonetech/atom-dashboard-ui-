@@ -72,12 +72,20 @@ const SelectField = ({ value, onChange, options, placeholder, disabled }) => (
 
 const LBL = { fontSize: 11, fontWeight: 700, color: "#111827", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 5, display: "block" };
 
+const initialState = () => ({
+  date: formattedDate,
+  rows: [],
+  card: emptyCard(),
+  remark: "",
+});
+
 export default function ReworkRepair() {
   const [date, setDate] = useState(formattedDate);
   const [rows, setRows] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
   const [card, setCard] = useState(emptyCard());
   const [remark, setRemark] = useState("");
+  const [saveMsg, setSaveMsg] = useState("");
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -117,15 +125,68 @@ export default function ReworkRepair() {
   const toggleStatus = (i, type) => setRows(prev => prev.map((r, idx) => idx === i ? { ...r, okStatus: r.okStatus === type ? null : type } : r));
   const removeRow = i => setRows(prev => prev.filter((_, idx) => idx !== i));
 
+  // ── SAVE handler
+  const handleSave = () => {
+    const savedAt = new Date().toLocaleString();
+
+    console.group("╔══════════════════════════════════════════════════");
+    console.log("║  ✂️  REWORK / REPAIR REPORT — SAVED");
+    console.log("║  Form No: AOT/F/QA/20  |  Saved At:", savedAt);
+    console.log("║  Date:", date);
+    console.groupEnd();
+
+    console.group("🔧 REWORK ROWS (" + rows.length + " rows)");
+    const tableData = rows.map((r, i) => ({
+      "SR."             : i + 1,
+      "Part Name"       : r.partDesc       || "—",
+      "Part No."        : r.partNo         || "—",
+      "Spec."           : r.spec           || "—",
+      "Non Conformance" : r.nonConformance || "—",
+      "Rework Qty"      : r.reworkQty      !== "" ? r.reworkQty : "—",
+      "Result"          : r.okStatus === "ok" ? "✅ OK" : r.okStatus === "notok" ? "❌ NOT OK" : "⬜ Pending",
+      "Inspected By"    : r.inspectedBy    || "—",
+      ...r.observations.reduce((acc, v, j) => ({ ...acc, [`Obs ${j+1}`]: v || "—" }), {}),
+    }));
+    console.table(tableData);
+    console.groupEnd();
+
+    const okCount     = rows.filter(r => r.okStatus === "ok").length;
+    const notOkCount  = rows.filter(r => r.okStatus === "notok").length;
+    const totalQty    = rows.reduce((sum, r) => sum + (parseFloat(r.reworkQty) || 0), 0);
+    console.group("📊 SUMMARY");
+    console.log("  ✅ OK         :", okCount);
+    console.log("  ❌ NOT OK     :", notOkCount);
+    console.log("  ⬜ Pending    :", rows.length - okCount - notOkCount);
+    console.log("  📦 Total Qty  :", totalQty);
+    if (remark) console.log("  📝 Remark     :", remark);
+    console.groupEnd();
+
+    setSaveMsg("✓ Saved & Reset!");
+    setRows([]);
+    setCard(emptyCard());
+    setRemark("");
+    setDate(formattedDate);
+    setTimeout(() => setSaveMsg(""), 2500);
+  };
+
+  // ── RESET handler
+  const handleReset = () => {
+    if (window.confirm("Are you sure you want to reset all data?")) {
+      setDate(formattedDate);
+      setRows([]);
+      setCard(emptyCard());
+      setRemark("");
+      setSaveMsg("");
+    }
+  };
+
   const cardPartNos = getPartNos(card.partDesc);
   const maxObs = rows.length > 0 ? Math.max(...rows.map(r => r.observations.length)) : 5;
 
-  // Observation cell style — fluid, fills available space equally
   const obsCellStyle = {
     padding: "4px 2px",
     border: "1px solid #e5e7eb",
     verticalAlign: "middle",
-    // No fixed width — table-layout auto will distribute remaining space
   };
 
   const obsInputStyle = {
@@ -159,10 +220,11 @@ export default function ReworkRepair() {
         .add-obs-btn:active { transform: scale(0.93); }
         @keyframes slideIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
         @keyframes popIn { from { opacity:0; transform:scale(0.6); } to { opacity:1; transform:scale(1); } }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
         .new-row { animation: slideIn 0.25s ease; }
         .obs-pop { animation: popIn 0.18s ease; }
+        .save-toast { animation: fadeIn 0.25s ease; }
         
-        /* Fluid obs table: fixed cols lock their width, obs cols share the rest */
         .rework-table { border-collapse: collapse; width: 100%; table-layout: fixed; }
         .rework-table .col-sr    { width: 38px; }
         .rework-table .col-part  { width: 190px; }
@@ -173,7 +235,47 @@ export default function ReworkRepair() {
         .rework-table .col-plus  { width: 38px; }
         .rework-table .col-insp  { width: 104px; }
         .rework-table .col-del   { width: 32px; }
-        /* obs cols: no explicit width — browser fills equally */
+
+        .save-btn {
+          height: 38px;
+          padding: 0 22px;
+          border-radius: 8px;
+          background: #2563eb;
+          color: #fff;
+          border: none;
+          font-weight: 700;
+          font-size: 13px;
+          cursor: pointer;
+          font-family: 'Inter', sans-serif;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
+          box-shadow: 0 2px 8px rgba(37,99,235,0.18);
+          white-space: nowrap;
+        }
+        .save-btn:hover { background: #1d4ed8; box-shadow: 0 4px 14px rgba(37,99,235,0.28); transform: translateY(-1px); }
+        .save-btn:active { background: #1e40af; transform: scale(0.97); box-shadow: none; }
+
+        .reset-btn {
+          height: 38px;
+          padding: 0 18px;
+          border-radius: 8px;
+          background: #f1f5f9;
+          color: #374151;
+          border: 1.5px solid #d1d5db;
+          font-weight: 700;
+          font-size: 13px;
+          cursor: pointer;
+          font-family: 'Inter', sans-serif;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.12s;
+          white-space: nowrap;
+        }
+        .reset-btn:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; transform: translateY(-1px); }
+        .reset-btn:active { transform: scale(0.97); }
       `}</style>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
@@ -222,7 +324,6 @@ export default function ReworkRepair() {
               <input value={card.reworkQty} onChange={e => updateCard("reworkQty", e.target.value)} onKeyDown={handleQtyKeyDown} type="number" min="0" placeholder="0"
                 style={{ ...fieldBase, textAlign: "center", fontWeight: card.reworkQty !== "" ? 600 : 400 }} />
             </div>
-            {/* ADD button inline with form */}
             <div>
               <label style={{ ...LBL, opacity: 0 }}>Add</label>
               <button
@@ -261,7 +362,6 @@ export default function ReworkRepair() {
                     <col className="col-nc" />
                     <col className="col-ok" />
                     <col className="col-notok" />
-                    {/* obs cols — no width, auto-distributed */}
                     {Array(maxObs).fill(null).map((_, n) => <col key={n} />)}
                     <col className="col-plus" />
                     <col className="col-insp" />
@@ -289,7 +389,6 @@ export default function ReworkRepair() {
                       {Array(maxObs).fill(null).map((_, n) => (
                         <th key={n} style={{ padding: "7px 2px", fontWeight: 600, fontSize: 11, color: "#374151", textAlign: "center", background: "#f8fafc", border: "1px solid #d1d5db" }}>{n + 1}</th>
                       ))}
-                      {/* + header cell */}
                       <th style={{ padding: "7px 2px", background: "#f0f7ff", border: "1px solid #d1d5db" }}></th>
                     </tr>
                   </thead>
@@ -314,8 +413,6 @@ export default function ReworkRepair() {
                           <TD style={{ background: isNotOk ? "#fff5f5" : "inherit", textAlign: "center" }}>
                             <button className="sbtn" onClick={() => toggleStatus(i, "notok")} style={{ width: 36, height: 36, borderRadius: 8, border: isNotOk ? "2px solid #dc2626" : "1.5px solid #fecaca", background: isNotOk ? "#fee2e2" : "#fff", color: isNotOk ? "#dc2626" : "#fecaca", fontSize: 14, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto", boxShadow: isNotOk ? "0 2px 8px rgba(220,38,38,0.18)" : "none" }}>✕</button>
                           </TD>
-
-                          {/* Observation cells — fluid width, fill remaining space */}
                           {row.observations.map((v, j) => (
                             <td key={j} style={obsCellStyle}>
                               <input
@@ -326,13 +423,9 @@ export default function ReworkRepair() {
                               />
                             </td>
                           ))}
-
-                          {/* Filler empty cells for rows with fewer obs than maxObs */}
                           {Array(maxObs - row.observations.length).fill(null).map((_, k) => (
                             <td key={`empty-${k}`} style={{ ...obsCellStyle, background: i % 2 === 0 ? "#f9fafb" : "#f1f5f9" }} />
                           ))}
-
-                          {/* + button */}
                           <td style={{ padding: "4px 4px", border: "1px solid #e5e7eb", background: "#f0f7ff", textAlign: "center", verticalAlign: "middle" }}>
                             <button
                               className="add-obs-btn"
@@ -341,7 +434,6 @@ export default function ReworkRepair() {
                               style={{ width: 24, height: 24, borderRadius: 6, border: "1.5px dashed #93c5fd", background: "#eff6ff", color: "#2563eb", cursor: "pointer", fontWeight: 800, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}
                             >+</button>
                           </td>
-
                           <TD>
                             <input value={row.inspectedBy || ""} onChange={e => updateRow(i, "inspectedBy", e.target.value)} placeholder="Name..." style={{ ...fieldBase, fontSize: 11, padding: "5px 6px" }} />
                           </TD>
@@ -428,6 +520,23 @@ export default function ReworkRepair() {
               <label style={{ fontSize: 11, fontWeight: 700, color: "#111827", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6, display: "block" }}>Remark :-</label>
               <textarea value={remark} onChange={e => setRemark(e.target.value)} placeholder="Write remark here..." rows={3}
                 style={{ width: "100%", padding: "9px 12px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 13, color: "#111827", background: "#fff", fontFamily: "'Inter',sans-serif", boxSizing: "border-box", outline: "none", resize: "vertical", lineHeight: 1.6 }} />
+            </div>
+
+            {/* ── Bottom Save & Reset (inside table section) ── */}
+            <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+              {saveMsg && (
+                <span className="save-toast" style={{ fontSize: 12, fontWeight: 700, color: "#16a34a", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "5px 12px" }}>
+                  {saveMsg}
+                </span>
+              )}
+              <button className="reset-btn" onClick={handleReset}>
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582M20 20v-5h-.581M5.635 15A8 8 0 1118.364 9" /></svg>
+                Reset
+              </button>
+              <button className="save-btn" onClick={handleSave}>
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17 3H7a2 2 0 00-2 2v16l7-3 7 3V5a2 2 0 00-2-2z" /></svg>
+                Save
+              </button>
             </div>
           </div>
         </div>

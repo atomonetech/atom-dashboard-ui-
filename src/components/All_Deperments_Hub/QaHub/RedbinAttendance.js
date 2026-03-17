@@ -20,7 +20,6 @@ const NAMES = [
   "Manoj Tiwari","Kavita Mehta",
 ];
 
-/* ── SelectWrapper ── */
 const SelectWrapper = ({ children, color = "#f59e0b" }) => (
   <div style={{ position: "relative", width: "100%" }}>
     {children}
@@ -34,6 +33,7 @@ export default function RedbinAttendance() {
   const [selectedName, setSelectedName] = useState("");
   const [selectedDesignation, setSelectedDesignation] = useState("");
   const [rows, setRows] = useState([]);
+  const [saveMsg, setSaveMsg] = useState("");
 
   const handleNameChange = (name) => {
     setSelectedName(name);
@@ -62,23 +62,68 @@ export default function RedbinAttendance() {
 
   const removeRow = (i) => setRows(p => p.filter((_, idx) => idx !== i));
 
-  const lbl = { 
-    fontSize: 11, fontWeight: 700, letterSpacing: "0.07em", 
-    color: "#000000",  // ← BLACK
-    textTransform: "uppercase", marginBottom: 6, display: "block", 
-    fontFamily: "'DM Sans',sans-serif" 
+  const handleSave = () => {
+    const savedAt = new Date().toLocaleString();
+    const day = today.getDate();
+
+    console.group("╔══════════════════════════════════════════════════");
+    console.log("║  📋 RED BIN ATTENDANCE SHEET — SAVED");
+    console.log("║  Form No: AOT/F/QC/05  |  Saved At:", savedAt);
+    console.log("║  Month:", currentMonth, currentYear);
+    console.groupEnd();
+
+    console.group("👥 ATTENDANCE DATA (" + rows.length + " employees)");
+    const tableData = rows.map((r, i) => ({
+      "SR."        : i + 1,
+      "Name"       : r.name        || "—",
+      "Designation": r.designation || "—",
+      [`${day} ${currentMonth.slice(0,3)} (Today)`]: r.attendance[day] || "—",
+    }));
+    console.table(tableData);
+    console.groupEnd();
+
+    const presentCount = rows.filter(r => r.attendance[day] === "P").length;
+    const absentCount  = rows.filter(r => r.attendance[day] === "A").length;
+    const pendingCount = rows.filter(r => !r.attendance[day]).length;
+    console.group("📊 SUMMARY — " + day + " " + currentMonth);
+    console.log("  ✅ Present :", presentCount);
+    console.log("  ❌ Absent  :", absentCount);
+    console.log("  ⬜ Unmarked:", pendingCount);
+    console.groupEnd();
+
+    setSaveMsg("✓ Saved & Reset!");
+    setRows([]);
+    setSelectedName("");
+    setSelectedDesignation("");
+    setTimeout(() => setSaveMsg(""), 2500);
   };
-  
-  const sel = (v) => ({ 
-    width: "100%", 
-    padding: "11px 32px 11px 14px", 
-    border: `1.5px solid ${v ? "#f59e0b" : "#fde68a"}`, 
-    borderRadius: 10, fontSize: 14, fontWeight: v ? 600 : 400, 
-    background: v ? "#fffbeb" : "#f8fafc", 
-    color: "#000000",  // ← BLACK always
-    outline: "none", cursor: "pointer", 
-    fontFamily: "'DM Sans',sans-serif", 
-    boxSizing: "border-box", 
+
+  const handleReset = () => {
+    if (window.confirm("Are you sure you want to reset all attendance data?")) {
+      setRows([]);
+      setSelectedName("");
+      setSelectedDesignation("");
+      setSaveMsg("");
+    }
+  };
+
+  const lbl = {
+    fontSize: 11, fontWeight: 700, letterSpacing: "0.07em",
+    color: "#000000",
+    textTransform: "uppercase", marginBottom: 6, display: "block",
+    fontFamily: "'DM Sans',sans-serif"
+  };
+
+  const sel = (v) => ({
+    width: "100%",
+    padding: "11px 32px 11px 14px",
+    border: `1.5px solid ${v ? "#f59e0b" : "#fde68a"}`,
+    borderRadius: 10, fontSize: 14, fontWeight: v ? 600 : 400,
+    background: v ? "#fffbeb" : "#f8fafc",
+    color: "#000000",
+    outline: "none", cursor: "pointer",
+    fontFamily: "'DM Sans',sans-serif",
+    boxSizing: "border-box",
     transition: "border-color 0.2s",
     WebkitAppearance: "none",
     appearance: "none"
@@ -89,7 +134,7 @@ export default function RedbinAttendance() {
     border: `1.5px solid ${val === "P" ? "#f59e0b" : val === "A" ? "#fca5a5" : "#fde68a"}`,
     borderRadius: 6, fontSize: 12, fontWeight: 700,
     background: val === "P" ? "#fffbeb" : val === "A" ? "#fee2e2" : "#fff",
-    color: "#000000",  // ← BLACK always
+    color: "#000000",
     outline: "none", cursor: "pointer",
     fontFamily: "'DM Sans',sans-serif",
     WebkitAppearance: "none", appearance: "none"
@@ -100,12 +145,40 @@ export default function RedbinAttendance() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
 
-        /* ── Dropdown options: black text, white background ── */
         select option {
           color: #000000 !important;
           background: #ffffff !important;
           font-weight: 500;
         }
+
+        @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+        .rb-save-toast { animation: fadeIn 0.25s ease; }
+
+        .rb-save-btn {
+          height: 38px; padding: 0 20px; border-radius: 9px;
+          background: #d97706; color: #fff; border: none;
+          font-weight: 700; font-size: 13px; cursor: pointer;
+          font-family: 'DM Sans',sans-serif;
+          display: flex; align-items: center; gap: 6px;
+          transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
+          box-shadow: 0 2px 8px rgba(217,119,6,0.25);
+          white-space: nowrap;
+        }
+        .rb-save-btn:hover { background: #b45309; box-shadow: 0 4px 14px rgba(180,83,9,0.30); transform: translateY(-1px); }
+        .rb-save-btn:active { background: #92400e; transform: scale(0.97); box-shadow: none; }
+
+        .rb-reset-btn {
+          height: 38px; padding: 0 16px; border-radius: 9px;
+          background: #fffbeb; color: #92400e;
+          border: 1.5px solid #fde68a;
+          font-weight: 700; font-size: 13px; cursor: pointer;
+          font-family: 'DM Sans',sans-serif;
+          display: flex; align-items: center; gap: 6px;
+          transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.12s;
+          white-space: nowrap;
+        }
+        .rb-reset-btn:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; transform: translateY(-1px); }
+        .rb-reset-btn:active { transform: scale(0.97); }
 
         .redbin-filter-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; padding: 22px 28px; }
         .redbin-topbar { display: flex; align-items: center; justify-content: space-between; padding: 17px 28px; border-bottom: 1px solid #fef3c7; background: linear-gradient(90deg,#fffbeb,#fffdf5); flex-wrap: wrap; gap: 10px; }
@@ -145,9 +218,11 @@ export default function RedbinAttendance() {
               <span className="redbin-subtitle">Form No: AOT/F/QC/05 &nbsp;·&nbsp; Resp: Quality Engineer</span>
             </div>
           </div>
-          <div className="redbin-date-badge">
-            <span style={{ fontWeight: 800, fontSize: 14, color: "#000000", letterSpacing: "0.5px" }}>{formattedDate}</span>
-            <CiCalendarDate size={20} color="#92400e" />
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <div className="redbin-date-badge">
+              <span style={{ fontWeight: 800, fontSize: 14, color: "#000000", letterSpacing: "0.5px" }}>{formattedDate}</span>
+              <CiCalendarDate size={20} color="#92400e" />
+            </div>
           </div>
         </div>
 
@@ -185,7 +260,6 @@ export default function RedbinAttendance() {
           </div>
         )}
       </div>
-      
 
       {/* ── ATTENDANCE TABLE ── */}
       {rows.length > 0 && (
@@ -236,6 +310,19 @@ export default function RedbinAttendance() {
                   })}
                 </tbody>
               </table>
+            </div>
+
+            {/* Bottom Save & Reset */}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
+              {saveMsg && <span className="rb-save-toast" style={{ fontSize: 12, fontWeight: 700, color: "#92400e", background: "#fef3c7", border: "1px solid #fcd34d", borderRadius: 8, padding: "5px 12px", whiteSpace: "nowrap" }}>{saveMsg}</span>}
+              <button className="rb-reset-btn" onClick={handleReset}>
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582M20 20v-5h-.581M5.635 15A8 8 0 1118.364 9"/></svg>
+                Reset
+              </button>
+              <button className="rb-save-btn" onClick={handleSave}>
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17 3H7a2 2 0 00-2 2v16l7-3 7 3V5a2 2 0 00-2-2z"/></svg>
+                Save
+              </button>
             </div>
           </div>
         </div>

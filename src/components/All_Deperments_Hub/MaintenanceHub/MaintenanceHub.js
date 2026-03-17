@@ -103,7 +103,7 @@ const handleCardClick = (reportId) => {
             break;
 
         case "power_press_check":
-            navigate("/Power-Press-Checklist");
+            navigate("/Daily-PowerPress-Checksheet");
             break;
 
         case "tool_history":

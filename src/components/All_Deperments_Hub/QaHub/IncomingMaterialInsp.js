@@ -140,6 +140,13 @@ const TD = ({ children, style={} }) => (
   <td style={{ padding:"5px 4px", fontSize:11, textAlign:"center", color:"#1e293b", border:"1px solid #dbeafe", ...style }}>{children}</td>
 );
 
+const DEFAULT_STATE = () => ({
+  supplier:"", customer:"", partDesc:"", partNo:"",
+  date:formattedDate, grade:"", mtc:"", gaNga:"",
+  coilNo:"", invoiceNo:"", qty:"",
+  rows: DEFAULT_PARAMS.map(p => ({...emptyRow(), parameter:p.parameter, specification:p.specification, inspMethod:p.inspMethod}))
+});
+
 export default function IncomingMaterialInsp() {
   const [supplier,  setSupplier]  = useState("");
   const [customer,  setCustomer]  = useState("");
@@ -154,6 +161,7 @@ export default function IncomingMaterialInsp() {
   const [qty,       setQty]       = useState("");
   const [rows,      setRows]      = useState(DEFAULT_PARAMS.map(p => ({...emptyRow(), parameter:p.parameter, specification:p.specification, inspMethod:p.inspMethod})));
   const [isMobile,  setIsMobile]  = useState(false);
+  const [saveMsg,   setSaveMsg]   = useState("");
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -169,6 +177,73 @@ export default function IncomingMaterialInsp() {
   const addRow         = () => setRows(prev => [...prev, emptyRow()]);
   const removeRow      = i  => setRows(prev => prev.filter((_,idx)=>idx!==i));
 
+  const handleSave = () => {
+    const savedAt = new Date().toLocaleString();
+
+    console.group("╔══════════════════════════════════════════════════");
+    console.log("║  📦 INCOMING MATERIAL INSPECTION REPORT — SAVED");
+    console.log("║  Form No: AOT/F/QA/01  |  Saved At:", savedAt);
+    console.groupEnd();
+
+    console.group("📋 HEADER INFO");
+    console.table([{
+      "Supplier Name"     : supplier    || "—",
+      "Customer Name"     : customer    || "—",
+      "Part Name"         : partDesc    || "—",
+      "Part No."          : partNo      || "—",
+      "Date"              : date        || "—",
+      "Grade"             : grade       || "—",
+      "MTC"               : mtc         || "—",
+      "GA / NGA"          : gaNga       || "—",
+      "Coil No."          : coilNo      || "—",
+      "Invoice/Challan No": invoiceNo   || "—",
+      "QTY"               : qty         || "—",
+    }]);
+    console.groupEnd();
+
+    console.group("🔬 INSPECTION PARAMETERS (" + rows.length + " rows)");
+    const tableData = rows.map((r, i) => ({
+      "SR."          : i + 1,
+      "Parameter"    : r.parameter    || "—",
+      "Specification": r.specification|| "—",
+      "Insp. Method" : r.inspMethod   || "—",
+      "Obs 1"        : r.observations[0] || "—",
+      "Obs 2"        : r.observations[1] || "—",
+      "Obs 3"        : r.observations[2] || "—",
+      "Obs 4"        : r.observations[3] || "—",
+      "Obs 5"        : r.observations[4] || "—",
+      "Remark"       : r.remark       || "—",
+    }));
+    console.table(tableData);
+    console.groupEnd();
+
+    const okCount    = rows.filter(r => r.remark === "OK").length;
+    const notOkCount = rows.filter(r => r.remark === "NOT OK").length;
+    console.group("📊 SUMMARY");
+    console.log("  ✅ OK      :", okCount);
+    console.log("  ❌ NOT OK  :", notOkCount);
+    console.log("  ⬜ Pending :", rows.length - okCount - notOkCount);
+    console.groupEnd();
+
+    // Reset all fields after save
+    setSupplier(""); setCustomer(""); setPartDesc(""); setPartNo("");
+    setDate(formattedDate); setGrade(""); setMtc(""); setGaNga("");
+    setCoilNo(""); setInvoiceNo(""); setQty("");
+    setRows(DEFAULT_PARAMS.map(p => ({...emptyRow(), parameter:p.parameter, specification:p.specification, inspMethod:p.inspMethod})));
+    setSaveMsg("✓ Saved & Reset!");
+    setTimeout(() => setSaveMsg(""), 2500);
+  };
+
+  const handleReset = () => {
+    if (window.confirm("Are you sure you want to reset all data?")) {
+      setSupplier(""); setCustomer(""); setPartDesc(""); setPartNo("");
+      setDate(formattedDate); setGrade(""); setMtc(""); setGaNga("");
+      setCoilNo(""); setInvoiceNo(""); setQty("");
+      setRows(DEFAULT_PARAMS.map(p => ({...emptyRow(), parameter:p.parameter, specification:p.specification, inspMethod:p.inspMethod})));
+      setSaveMsg("");
+    }
+  };
+
   const headerFilled = !!(supplier && partDesc && partNo && qty);
   const okCount      = rows.filter(r=>r.remark==="OK").length;
   const notOkCount   = rows.filter(r=>r.remark==="NOT OK").length;
@@ -183,6 +258,34 @@ export default function IncomingMaterialInsp() {
         select, input { -webkit-tap-highlight-color: transparent; }
         select:focus, input:focus { outline: none !important; border-color: #6182f7 !important; box-shadow: 0 0 0 3px rgba(97,130,247,0.18) !important; }
         select option { background: #ffffff !important; color: #1e293b !important; font-weight: 400; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+        .save-toast { animation: fadeIn 0.25s ease; }
+
+        .imi-save-btn {
+          height: 38px; padding: 0 20px; border-radius: 9px;
+          background: #1d4ed8; color: #fff; border: none;
+          font-weight: 700; font-size: 13px; cursor: pointer;
+          font-family: 'DM Sans',sans-serif;
+          display: flex; align-items: center; gap: 6px;
+          transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
+          box-shadow: 0 2px 8px rgba(29,78,216,0.22);
+          white-space: nowrap;
+        }
+        .imi-save-btn:hover { background: #1e40af; box-shadow: 0 4px 14px rgba(29,78,216,0.30); transform: translateY(-1px); }
+        .imi-save-btn:active { background: #1e3a8a; transform: scale(0.97); box-shadow: none; }
+
+        .imi-reset-btn {
+          height: 38px; padding: 0 16px; border-radius: 9px;
+          background: #eff6ff; color: #1e3a8a;
+          border: 1.5px solid #bfdbfe;
+          font-weight: 700; font-size: 13px; cursor: pointer;
+          font-family: 'DM Sans',sans-serif;
+          display: flex; align-items: center; gap: 6px;
+          transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.12s;
+          white-space: nowrap;
+        }
+        .imi-reset-btn:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; transform: translateY(-1px); }
+        .imi-reset-btn:active { transform: scale(0.97); }
       `}</style>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 
@@ -449,9 +552,22 @@ export default function IncomingMaterialInsp() {
               </div>
             )}
 
-            <button onClick={addRow} style={{ width:"100%", padding: isMobile?"12px":"9px", borderRadius:10, border:"2px dashed #93c5fd", background:"#f8fafc", color:"#2563eb", fontWeight:700, fontSize: isMobile?14:12, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>
+            <button onClick={addRow} style={{ width:"100%", padding: isMobile?"12px":"9px", borderRadius:10, border:"2px dashed #93c5fd", background:"#f8fafc", color:"#2563eb", fontWeight:700, fontSize: isMobile?14:12, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", marginBottom:16 }}>
               ＋ Add Parameter Row
             </button>
+
+            {/* Bottom Save & Reset */}
+            <div style={{ display:"flex", justifyContent:"flex-end", gap:10, flexWrap:"wrap", alignItems:"center" }}>
+              {saveMsg && <span className="save-toast" style={{ fontSize:12, fontWeight:700, color:"#065f46", background:"#d1fae5", border:"1px solid #6ee7b7", borderRadius:8, padding:"5px 12px", whiteSpace:"nowrap" }}>{saveMsg}</span>}
+              <button className="imi-reset-btn" onClick={handleReset}>
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582M20 20v-5h-.581M5.635 15A8 8 0 1118.364 9"/></svg>
+                Reset
+              </button>
+              <button className="imi-save-btn" onClick={handleSave}>
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17 3H7a2 2 0 00-2 2v16l7-3 7 3V5a2 2 0 00-2-2z"/></svg>
+                Save
+              </button>
+            </div>
           </div>
         </div>
       )}
