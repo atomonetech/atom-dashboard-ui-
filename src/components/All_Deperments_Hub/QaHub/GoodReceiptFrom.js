@@ -25,11 +25,22 @@ const GoodReceiptForm = () => {
     e.preventDefault();
     console.log("Material Requisition Submitted:", formData);
     alert("Material Requisition Slip Saved Successfully!");
+
+    // Reset form to empty values
+    setFormData({
+      requestedBy: "",
+      itemName: "",
+      specification: "",
+      department: "",
+      qty: "",
+      remark: "",
+      receivedBy: "",
+      receivedDate: "", // Empty date field
+    });
   };
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-10 font-sans text-slate-600">
-      
       {/* Top Nav */}
       <div className="max-w-5xl mx-auto mb-6">
         <button
@@ -37,8 +48,19 @@ const GoodReceiptForm = () => {
           className="flex items-center text-xs font-bold text-white px-4 py-3 rounded-lg shadow-md transition-all active:scale-95 hover:brightness-110"
           style={{ backgroundColor: "#06b5d4" }}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-4 h-4 mr-2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={3}
+            stroke="currentColor"
+            className="w-4 h-4 mr-2"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+            />
           </svg>
           BACK TO QAHub
         </button>
@@ -46,13 +68,11 @@ const GoodReceiptForm = () => {
 
       {/* Main Card */}
       <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
-
         {/* Cyan Top Border Bar */}
         <div className="h-2 bg-cyan-500 w-full"></div>
 
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center p-8 bg-white border-b border-slate-100 gap-6">
-          
           <div className="text-center md:text-left">
             <h1 className="text-2xl md:text-3xl font-black text-cyan-700 uppercase tracking-tight leading-none">
               Material Requisition Slip
@@ -78,7 +98,6 @@ const GoodReceiptForm = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 md:p-12">
-
           {/* Requested Person */}
           <div className="mb-12">
             <div className="bg-cyan-50/30 rounded-2xl p-6 border border-cyan-100/50 shadow-sm">
@@ -125,7 +144,9 @@ const GoodReceiptForm = () => {
                 className="w-full border-b-2 border-slate-200 bg-transparent p-2 focus:border-[#06b5d4] outline-none font-bold transition-all text-slate-700 cursor-pointer appearance-none"
                 required
               >
-                <option value="" disabled>Select Dept</option>
+                <option value="" disabled>
+                  Select Dept
+                </option>
                 <option value="QA">QA</option>
                 <option value="IT">IT</option>
                 <option value="PROD">PRODUCTION</option>
@@ -179,7 +200,6 @@ const GoodReceiptForm = () => {
 
           {/* Footer */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-8 border-t border-slate-100 pt-10">
-            
             <div className="w-full md:w-auto min-w-[200px]">
               <label className="text-[12px] font-black text-slate-600 uppercase tracking-widest mb-1 block">
                 Receiver Name
@@ -212,7 +232,6 @@ const GoodReceiptForm = () => {
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
               </svg>
             </button>
-
           </div>
         </form>
       </div>

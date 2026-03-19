@@ -44,7 +44,7 @@ const QaHub = () => {
             case 8:
                 navigate('/Rework');
                 break;
-            case 9:
+            case 13:
                 navigate('/PdiReportForm');
                 break;
              case 10:

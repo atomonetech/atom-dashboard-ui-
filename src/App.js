@@ -62,6 +62,7 @@ import For_M_Change_Ins_Form from './components/All_Deperments_Hub/ProductionHub
 import DeviationApprovalForm from './components/All_Deperments_Hub/QaHub/DeviationApprovalForm';
 import './App.css';
 import ForMChangeInsPrint from './components/All_Deperments_Hub/ProductionHub/ForMChangeInsPrint';
+import PdiForm from './components/All_Deperments_Hub/QaHub/PdiForm';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -184,6 +185,7 @@ function App() {
             <Route path='/4-M-Ins-Form' element={<ProtectedRoute><For_M_Change_Ins_Form/></ProtectedRoute>}/>
             <Route path='/Deviation-Approval-Form' element={<ProtectedRoute><DeviationApprovalForm/></ProtectedRoute>}/>
             <Route path='/4M-Change-Inspection-Report' element={<ProtectedRoute><ForMChangeInsPrint/></ProtectedRoute>}/>
+            <Route path='/PdiReportForm' element={<ProtectedRoute><PdiForm/></ProtectedRoute>}/>
 
           {/* ========== 404 NOT FOUND ========== */}
           <Route 
