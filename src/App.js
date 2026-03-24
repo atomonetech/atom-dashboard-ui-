@@ -149,7 +149,7 @@ function App() {
           {/* 🔥 SIDEBAR HUB ROUTES 🔥 */}
           <Route path="/maintenance-hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
           
-                 
+                 {/* adding routes */}
           {/*----- QaHub Pages -----*/}
           <Route path="/qa-hub" element={<ProtectedRoute><QaHub /></ProtectedRoute>} />
           <Route path="/Incoming-Material" element={<ProtectedRoute><IncomingMaterialInsp /></ProtectedRoute>} />
