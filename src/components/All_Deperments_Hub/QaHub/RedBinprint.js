@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 const atomone = '/logo1.jpg';
@@ -12,17 +13,17 @@ const formatDisplay = (dateStr) => {
 };
 
 // Minimum rows to display even if data is less
-const MIN_ROWS = 20;
+const MIN_ROWS = 18;
 
-const Scrapnoteprint = ({ items = [], currentReport, onEditForm, onBack }) => {
+const RedBinprint = ({ items = [], currentReport, onEditForm, onBack }) => {
   const navigate = useNavigate();
 
   // Sort and filter items
-  const scrapItems = items
+  const reportItems = items
     .filter(x => x.sr_no >= 1)
     .sort((a, b) => a.sr_no - b.sr_no);
 
-  const TOTAL_ROWS = Math.max(MIN_ROWS, scrapItems.length);
+  const TOTAL_ROWS = Math.max(MIN_ROWS, reportItems.length);
 
   const handleBack = () => {
     if (onBack) {
@@ -78,20 +79,21 @@ const Scrapnoteprint = ({ items = [], currentReport, onEditForm, onBack }) => {
         }
       `}</style>
 
-      {/* ── Main A4 Print Container ── */}
-      <div className="bg-white mx-auto shadow-lg font-sans w-[297mm] min-h-[210mm] box-border p-[10mm] print:w-full print:p-0 print:m-0 print:shadow-none print:block">
+      {/* ── Main A4 Print Container (Fixed: h-auto instead of min-h-[210mm]) ── */}
+      <div className="bg-white mx-auto shadow-lg font-sans w-[297mm] h-auto box-border p-[10mm] print:w-full print:p-0 print:m-0 print:shadow-none print:block">
         
         <table className="w-full border-collapse table-fixed border border-black">
           <colgroup>
-            <col className="w-[7%]" />  
-            <col className="w-[15%]" /> 
+            {/* Total 9 Columns exactly matching 100% width */}
+            <col className="w-[5%]" />  
+            <col className="w-[8%]" />  
+            <col className="w-[18%]" /> 
+            <col className="w-[24%]" /> 
+            <col className="w-[12%]" /> 
             <col className="w-[8%]" />  
             <col className="w-[10%]" /> 
-            <col className="w-[29%]" /> 
-            <col className="w-[6%]" />  
-            <col className="w-[9%]" />  
-            <col className="w-[9%]" />  
-            <col className="w-[7%]" />  
+            <col className="w-[10%]" /> 
+            <col className="w-[5%]" />  
           </colgroup>
 
           {/* ════════════ THEAD ════════════ */}
@@ -103,12 +105,12 @@ const Scrapnoteprint = ({ items = [], currentReport, onEditForm, onBack }) => {
               
               <th colSpan={4} rowSpan={3} className="border border-black text-center align-middle bg-white">
                 <h1 className="text-[22px] font-bold uppercase tracking-[2px] m-0 text-black">
-                  SCRAP NOTE
+                  RED BIN ANALYSIS REPORT
                 </h1>
               </th>
               
               <th className={InfoLabel}>DOC.NO.</th>
-              <th colSpan={2} className={InfoValue}>{currentReport?.doc_no || 'AOT-F-QC-04'}</th>
+              <th colSpan={2} className={InfoValue}>{currentReport?.doc_no || 'AOT-F-QC-02'}</th>
             </tr>
 
             <tr className="h-[26px]">
@@ -122,73 +124,43 @@ const Scrapnoteprint = ({ items = [], currentReport, onEditForm, onBack }) => {
             </tr>
 
             <tr className="h-[35px]">
+              <th className={TH}>S.No.</th>
               <th className={TH}>DATE</th>
-              <th className={TH}>PART NAME</th>
-              <th className={TH}>MODEL</th>
-              <th className={TH}>DEFECT</th>
-              <th className={TH}>PROCESS</th>
-              <th className={TH}>QTY</th>
-              <th className={TH}>QA HEAD<br />SIGN</th>
-              <th className={TH}>PLANT HEAD<br />SIGN</th>
-              <th className={TH}>REMARKS</th>
+              <th className={TH}>PART NAME / MODEL</th>
+              <th className={TH}>DEFECT DETAIL</th>
+              <th className={TH}>OPERATION</th>
+              <th className={TH}>TOTAL REJ. QTY</th>
+              <th className={TH}>REASON</th>
+              <th className={TH}>ACTION TAKEN</th>
+              <th className={TH}>SIGN.</th>
             </tr>
           </thead>
 
           {/* ════════════ TBODY ════════════ */}
           <tbody>
             {Array.from({ length: TOTAL_ROWS }, (_, i) => {
-              const row = scrapItems[i] || null;
+              const row = reportItems[i] || null;
               const isEven = (i + 1) % 2 === 0;
               const bgClass = isEven ? 'bg-[#fafafa]' : 'bg-white';
               
               // break-inside-avoid ensures rows don't split across pages
               return (
-                <tr key={i} className="h-[26px] break-inside-avoid">
+                <tr key={i} className="h-[30px] break-inside-avoid">
+                  <td className={`${TD} ${bgClass}`}>{row?.sr_no || ''}</td>
                   <td className={`${TD} ${bgClass}`}>{row?.date ? formatDisplay(row.date) : ''}</td>
-                  
                   <td className={`${TD} ${bgClass} text-left pl-[6px] ${row?.part_name ? 'font-semibold' : 'font-normal'}`}>
                     {row?.part_name || ''}
                   </td>
-                  
-                  <td className={`${TD} ${bgClass}`}>{row?.model || ''}</td>
-                  <td className={`${TD} ${bgClass} text-left pl-[6px]`}>{row?.defect || ''}</td>
-                  <td className={`${TD} ${bgClass} text-left pl-[6px]`}>{row?.process || ''}</td>
-                  <td className={`${TD} ${bgClass}`}>{row?.qty || ''}</td>
-                  <td className={`${TD} ${bgClass}`}>{row?.qa_head_sign || ''}</td>
-                  <td className={`${TD} ${bgClass}`}>{row?.plant_head_sign || ''}</td>
-                  <td className={`${TD} ${bgClass} text-left pl-[4px]`}>{row?.remarks || ''}</td>
+                  <td className={`${TD} ${bgClass} text-left pl-[6px]`}>{row?.defect_detail || ''}</td>
+                  <td className={`${TD} ${bgClass}`}>{row?.operation || ''}</td>
+                  <td className={`${TD} ${bgClass}`}>{row?.total_rej_qty || ''}</td>
+                  <td className={`${TD} ${bgClass} text-left pl-[4px]`}>{row?.reason || ''}</td>
+                  <td className={`${TD} ${bgClass} text-left pl-[4px]`}>{row?.action_taken || ''}</td>
+                  <td className={`${TD} ${bgClass}`}>{row?.sign || ''}</td>
                 </tr>
               );
             })}
           </tbody>
-
-          {/* ════════════ TFOOT ════════════ */}
-          <tfoot className="table-footer-group">
-            <tr>
-              {/* Hum poore 9 columns ko ek kar rahe hain (colSpan=9) */}
-              <td colSpan={9} className="border border-black p-0 h-[40px] bg-white">
-                <div className="flex w-full h-full">
-                  
-                  {/* Left Half: Prepared By (Exactly 50% width) */}
-                  <div className="w-1/2 border-r border-black px-3 py-3 flex items-end">
-                    <span className="font-bold text-[12px] whitespace-nowrap mr-2 text-black">PREPARED BY:</span>
-                    <span className="flex-grow border-b-[1.5px] border-black text-[12px] pb-[2px] min-h-[18px] text-black">
-                      {currentReport?.prepared_by || ''}
-                    </span>
-                  </div>
-
-                  {/* Right Half: Approved By (Exactly 50% width) */}
-                  <div className="w-1/2 px-3 py-3 flex items-end">
-                    <span className="font-bold text-[12px] whitespace-nowrap mr-2 text-black">APPROVED BY:</span>
-                    <span className="flex-grow border-b-[1.5px] border-black text-[12px] pb-[2px] min-h-[18px] text-black">
-                      {currentReport?.approved_by || ''}
-                    </span>
-                  </div>
-
-                </div>
-              </td>
-            </tr>
-          </tfoot>
 
         </table>
       </div>
@@ -196,4 +168,4 @@ const Scrapnoteprint = ({ items = [], currentReport, onEditForm, onBack }) => {
   );
 };
 
-export default Scrapnoteprint;                           
+export default RedBinprint;

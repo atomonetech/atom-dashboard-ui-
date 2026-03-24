@@ -39,7 +39,7 @@ import PokaYokeChecksheet from './components/All_Deperments_Hub/QaHub/PokaYokeCh
 import ReworkRepair from './components/All_Deperments_Hub/QaHub/ReworkRepair';
 import InspectionForm from './components/All_Deperments_Hub/QaHub/InspectionForm';
 import PdiReportForm from './components/All_Deperments_Hub/QaHub/PdiReportForm';
-
+import SampleInspectionReport from './components/All_Deperments_Hub/QaHub/SampleInspectionReport';
 
 
 
@@ -64,6 +64,9 @@ import DeviationApprovalForm from './components/All_Deperments_Hub/QaHub/Deviati
 import './App.css';
 import ForMChangeInsPrint from './components/All_Deperments_Hub/ProductionHub/ForMChangeInsPrint';
 
+import BinTrollingprint from './components/All_Deperments_Hub/ProductionHub/BinTrollingprint';
+import DailyProdprint from './components/All_Deperments_Hub/ProductionHub/DailyProdprint';
+import ForMChangeRecordPrint from './components/All_Deperments_Hub/ProductionHub/ForMChangeRecordPrint';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const savedAuth = localStorage.getItem('isAuthenticated');
@@ -161,7 +164,7 @@ function App() {
           <Route path="/inspection-form" element={<ProtectedRoute><InspectionForm /></ProtectedRoute>} />
           <Route path="/Rework" element={<ProtectedRoute><ReworkRepair /></ProtectedRoute>} />
           <Route path="/pdi-report-form" element={<ProtectedRoute><PdiReportForm /></ProtectedRoute>} />
-
+          <Route path="/sample-inspection" element={<ProtectedRoute><SampleInspectionReport /></ProtectedRoute>} />
           {/* ----- HrSafetyHub Pages ----- */}
           <Route path="/hiring-departments" element={<ProtectedRoute><HrSafetyHub /></ProtectedRoute>} />
           <Route path="/Induction-Training" element={<ProtectedRoute><InductionTrainingForm /></ProtectedRoute>} />
@@ -186,6 +189,11 @@ function App() {
             <Route path='/Deviation-Approval-Form' element={<ProtectedRoute><DeviationApprovalForm/></ProtectedRoute>}/>
             <Route path='/4M-Change-Inspection-Report' element={<ProtectedRoute><ForMChangeInsPrint/></ProtectedRoute>}/>
 
+
+
+           <Route path="/Bin-Trolly-Cleaning-Report" element={<BinTrollingprint currentReport={null} />} />
+           <Route path="/Daily-Prod-Plan-Report" element={<DailyProdprint currentReport={null}/>} />
+           <Route path="/4M-Change-Tracking-Report" element={<ForMChangeRecordPrint currentReport={null} />} />
           {/* ========== 404 NOT FOUND ========== */}
           <Route 
             path="*" 

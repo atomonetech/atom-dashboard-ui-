@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import RedBinAttendanceprint from './RedBinAttendanceprint';
 import Scrapnoteprint from './Scrapnoteprint';
 import Reworkrepairprint from './Reworkrepairprint';
+import RedBinprint from './RedBinprint';
+import PdiReportprint from './PdiReportprint';
+import PokaYokeChecksheetprint from './PokaYokeChecksheetprint';
+import DeviationApprovalprint from './DeviationApprovalprint';
+import Inspectionprint from './Inspectionprint';
+import IncomingMaterialprint from './IncomingMaterialprint';
+import SampleInspectionprint from './SampleInspectionprint';
+
 
 const QaHub = () => {
     const navigate = useNavigate();
@@ -15,18 +23,18 @@ const QaHub = () => {
     const [printView, setPrintView] = useState(null); // null = cards dikhao
 
     const qaReports = [
-        { id: 1,  title: 'Incoming Material Insp.',      formNo: 'AOT/F/QA/01',   resp: 'Quality Engineer',    icon: 'bi-box-seam',           color: '#3b82f6', bg: '#eff6ff', fillRoute: '/Incoming-Material',       printKey: null },
-        { id: 2,  title: 'Red Bin Analysis - NC Reg.',   formNo: 'AOT/F/QC/02',   resp: 'CFT',                 icon: 'bi-trash3',             color: '#ef4444', bg: '#fef2f2', fillRoute: '/RedBin-Form',             printKey: null },
+        { id: 1,  title: 'Incoming Material Insp.',      formNo: 'AOT/F/QA/01',   resp: 'Quality Engineer',    icon: 'bi-box-seam',           color: '#3b82f6', bg: '#eff6ff', fillRoute: '/Incoming-Material',       printKey: 'incomingmaterial' },
+        { id: 2,  title: 'Red Bin Analysis - NC Reg.',   formNo: 'AOT/F/QC/02',   resp: 'CFT',                 icon: 'bi-trash3',             color: '#ef4444', bg: '#fef2f2', fillRoute: '/RedBin-Form',             printKey: 'redbin-analysis' },
         { id: 3,  title: 'Scrap Note',                   formNo: 'AOT/F/QC/04',   resp: 'Quality Engineer',    icon: 'bi-file-earmark-x',     color: '#ef4444', bg: '#fef2f2', fillRoute: '/Scrap-Note',              printKey: 'scrap-note' },
         { id: 4,  title: 'Red Bin Attendance Sheet',     formNo: 'AOT/F/QC/05',   resp: 'Quality Engineer',    icon: 'bi-person-x',           color: '#f59e0b', bg: '#fef3c7', fillRoute: '/Redbin-Attendance',       printKey: 'redbin-attendance' },
-        { id: 5,  title: 'Daily Poka Yokes Check',       formNo: 'AOT/F/QC/07A',  resp: 'Operator',            icon: 'bi-shield-check',       color: '#10b981', bg: '#d1fae5', fillRoute: '/Poka-Yoke',               printKey: null },
-        { id: 7,  title: 'Set up & Patrol Insp. (FPIR)', formNo: 'AOT/F/QA/15',   resp: 'Quality Engineer',    icon: 'bi-clipboard-check',    color: '#06b6d4', bg: '#cffafe', fillRoute: '/inspection-form',         printKey: null },
+        { id: 5,  title: 'Daily Poka Yokes Check',       formNo: 'AOT/F/QC/07A',  resp: 'Operator',            icon: 'bi-shield-check',       color: '#10b981', bg: '#d1fae5', fillRoute: '/Poka-Yoke',               printKey: 'PokaYoke'},
+        { id: 7,  title: 'Set up & Patrol Insp. (FPIR)', formNo: 'AOT/F/QA/15',   resp: 'Quality Engineer',    icon: 'bi-clipboard-check',    color: '#06b6d4', bg: '#cffafe', fillRoute: '/inspection-form',         printKey: 'inspection' },
         { id: 8,  title: 'Rework / Repair Report',       formNo: 'AOT/F/QA/20',   resp: 'Rework Operator',     icon: 'bi-tools',              color: '#f59e0b', bg: '#fef3c7', fillRoute: '/Rework',                  printKey: 'rework-report' },
-        { id: 9,  title: 'Sample Inspection Report',     formNo: 'AOT/F/QA/21',   resp: 'Quality Engineer',    icon: 'bi-search',             color: '#3b82f6', bg: '#eff6ff', fillRoute: '/PdiReportForm',           printKey: null },
-        { id: 10, title: 'Deviation Approval Form',      formNo: 'AOT/F/PROD/04', resp: 'Production Engineer', icon: 'bi-file-earmark-check', color: '#8b5cf6', bg: '#ede9fe', fillRoute: '/Deviation-Approval-Form', printKey: null },
+        { id: 9,  title: 'Sample Inspection Report',     formNo: 'AOT/F/QA/21',   resp: 'Quality Engineer',    icon: 'bi-search',             color: '#3b82f6', bg: '#eff6ff', fillRoute: '/sample-inspection',       printKey: 'sample-inspection' },
+        { id: 10, title: 'Deviation Approval Form',      formNo: 'AOT/F/PROD/04', resp: 'Production Engineer', icon: 'bi-file-earmark-check', color: '#8b5cf6', bg: '#ede9fe', fillRoute: '/Deviation-Approval-Form', printKey: 'Deviation' },
         { id: 11, title: 'RM Quality Plan',              formNo: 'AOT/F/QA/25',   resp: 'Quality Engineer',    icon: 'bi-diagram-3',          color: '#10b981', bg: '#d1fae5', fillRoute: null,                       printKey: null },
-        { id: 12, title: 'Goods Receipt Note (GRN)',     formNo: 'Not Reqd.',      resp: 'Store Incharge',      icon: 'bi-receipt',            color: '#06b6d4', bg: '#cffafe', fillRoute: '/Good-Receipt',            printKey: null },
-        { id: 13, title: 'Pre Dispatch Insp. (PDIR)',    formNo: 'AOT/F/QA/40',   resp: 'Quality Engineer',    icon: 'bi-truck',              color: '#10b981', bg: '#d1fae5', fillRoute: null,                       printKey: null },
+        { id: 12, title: 'Goods Receipt Note (GRN)',     formNo: 'Not Reqd.',      resp: 'Store Incharge',      icon: 'bi-receipt',            color: '#06b6d4', bg: '#cffafe', fillRoute: '/Good-Receipt',           printKey: null },
+        { id: 13, title: 'Pre Dispatch Insp. (PDIR)',    formNo: 'AOT/F/QA/40',   resp: 'Quality Engineer',    icon: 'bi-truck',              color: '#10b981', bg: '#d1fae5', fillRoute: '/pdi-report-form',         printKey: 'pdiprint' },
     ];
 
     const handleCardClick = (report) => {
@@ -52,6 +60,17 @@ const QaHub = () => {
         setModalOpen(false);
     };
 
+    // ── Red Bin Analysis Print View ──
+    if (printView === 'redbin-analysis') {
+        return (
+          <RedBinprint
+            items={[]}
+            currentReport={null}
+            onBack={() => setPrintView(null)}
+            onEditForm={() => { setPrintView(null); navigate('/RedBin-Form'); }}
+         />
+      );
+    }
     // ── Red Bin Attendance Print View ──
     if (printView === 'redbin-attendance') {
         return (
@@ -96,6 +115,93 @@ const QaHub = () => {
             />
         );
     }
+     // ── Pdi Report ──
+    if (printView === 'pdiprint') {
+        return (
+            <PdiReportprint
+                items={[]}
+                currentReport={null}
+                onBack={() => setPrintView(null)}
+                onEditForm={() => {
+                    setPrintView(null);
+                    navigate('/pdi-report-form');
+                }}
+            />
+        );
+    }
+// --PokaYoka
+        if (printView === 'PokaYoke') {
+        return (
+            <PokaYokeChecksheetprint
+                items={[]}
+                currentReport={null}
+                onBack={() => setPrintView(null)}
+                onEditForm={() => {
+                    setPrintView(null);
+                    navigate('/Poka-Yoke');
+                }}
+            />
+        );
+    }
+    // --Deviation Approval 
+        if (printView === 'Deviation') {
+        return (
+            <DeviationApprovalprint
+                items={[]}
+                currentReport={null}
+                onBack={() => setPrintView(null)}
+                onEditForm={() => {
+                    setPrintView(null);
+                    navigate('/Deviation-Approval-Form');
+                }}
+            />
+        );
+    }
+  // --inspection
+        if (printView === 'inspection') {
+        return (
+            <Inspectionprint
+                items={[]}
+                currentReport={null}
+                onBack={() => setPrintView(null)}
+                onEditForm={() => {
+                    setPrintView(null);
+                    navigate('/inspection-form');
+                }}
+            />
+        );
+    }
+    // --Incomingmaterialprint
+        if (printView === 'incomingmaterial') {
+        return (
+            <IncomingMaterialprint
+                items={[]}
+                currentReport={null}
+                onBack={() => setPrintView(null)}
+                onEditForm={() => {
+                    setPrintView(null);
+                    navigate('/Incoming-Material');
+                }}
+            />
+        );
+    }
+   // Sample inspection 
+        if (printView === 'sample-inspection') {
+        return (
+            <SampleInspectionprint
+                items={[]}
+                currentReport={null}
+                onBack={() => setPrintView(null)}
+                onEditForm={() => {
+                    setPrintView(null);
+                    navigate('/sample-inspection');
+                }}
+            />
+        );
+    }
+
+
+
 
     // ── Default: Cards view ──
     return (
