@@ -17,7 +17,7 @@ import SignUpPage from './components/SignUpPage';
 import Notifications from './components/Notifications';
 import Profile from './components/Profile';
 import Support from './components/Support';
-
+import ProductionHistory from './components/ProductionHistory';
 // ========== QMS IMPORTS ==========
 import QMSDashboard from './components/qms/QMSDashboard';
 import ReportDetail from './components/qms/ReportDetail';
@@ -104,6 +104,7 @@ function App() {
           <Route path="/signup" element={<SignUpPage onLogin={handleLogin} />} />
 
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path='/Production-history' element={<ProtectedRoute><ProductionHistory/></ProtectedRoute>}/>
 
           {/* ========== QMS ROUTES ========== */}
           <Route path="/qms" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} />
