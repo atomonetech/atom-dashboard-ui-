@@ -12,6 +12,8 @@
     "axios": "^1.13.4",
     "bootstrap": "^5.3.8",
     "chart.js": "^4.5.0",
+    "echarts": "^6.0.0",
+    "echarts-for-react": "^3.0.6",
     "framer-motion": "^12.23.24",
     "grapesjs": "^0.22.14",
     "handsontable": "^16.2.0",

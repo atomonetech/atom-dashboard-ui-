@@ -49,8 +49,7 @@ const DeviationApprovalForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Form submitted:', formData);
-    
-    // Reset form after submission
+    alert('Deviation Approval Form Submitted Successfully!');
     resetForm();
   };
 
@@ -78,247 +77,232 @@ const DeviationApprovalForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white p-4 md:p-6">
-      {/* Back button above the form */}
-      <div className="max-w-5xl mx-auto mb-2">
-        <a
-          href="/qa-hub"
-          className="inline-flex items-center gap-1 text-gray-600 hover:text-[#4158D0] transition-colors rounded-lg hover:bg-purple-50 px-3 py-2"
-        >
-          <ArrowLeft size={20} />
-          <span className="text-sm font-medium">Back to QAHub</span>
-        </a>
-      </div>
-
-      {/* Header with Gradient Background - Increased height */}
-      <div className="max-w-5xl mx-auto">
-        <div 
-          className="rounded-t-xl shadow-lg"
-          style={{ 
-            background: `linear-gradient(135deg, ${gradientColors.start}, ${gradientColors.middle}, ${gradientColors.end})`
-          }}
-        >
-          <div className="px-6 py-6 md:py-8">
-            {/* Desktop view: heading and date in same line */}
-            <div className="hidden sm:flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <AlertTriangle size={32} className="text-white" />
-                <h1 className="text-2xl md:text-3xl font-bold text-white">
-                  DEVIATION APPROVAL FORM
-                </h1>
-              </div>
-              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg">
-                <Calendar size={20} className="text-white" />
-                <span className="text-lg font-semibold text-white">{currentDate}</span>
-              </div>
-            </div>
-
-            {/* Mobile view: heading and date stacked */}
-            <div className="sm:hidden space-y-3">
-              <div className="flex items-center gap-2">
-                <AlertTriangle size={28} className="text-white" />
-                <h1 className="text-xl font-bold text-white">
-                  DEVIATION APPROVAL FORM
-                </h1>
-              </div>
-              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg w-fit">
-                <Calendar size={16} className="text-white" />
-                <span className="text-sm font-semibold text-white">{currentDate}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Form - Attached directly to header */}
-      <div className="max-w-5xl mx-auto bg-white rounded-b-xl shadow-lg overflow-hidden border-x border-b border-gray-200">
-        <form onSubmit={handleSubmit}>
-          {/* Deviation Details Section */}
-          <div className="p-6 md:p-8">
-            <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-200">
-              <FileText size={20} className="text-[#4158D0]" />
-              <h2 className="text-lg font-semibold text-gray-800">
-                Deviation Details
-              </h2>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white py-2 px-3 sm:py-3 sm:px-4 md:py-4 font-sans">
+      <div className="w-full max-w-6xl mx-auto">
+        {/* Main Form Card */}
+        <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+          {/* Header Section with Back Button Inside */}
+          <div 
+            className="px-4 py-3 sm:px-5 sm:py-4"
+            style={{ 
+              background: `linear-gradient(135deg, ${gradientColors.start}, ${gradientColors.middle}, ${gradientColors.end})`
+            }}
+          >
+            {/* Back Button - First */}
+            <div className="mb-3 sm:mb-4">
+              <a
+                href="/qa-hub"
+                className="inline-flex items-center gap-1.5 text-white hover:text-white/90 transition-all rounded-lg bg-white/20 backdrop-blur-sm px-3 py-1.5 sm:px-4 sm:py-2 group"
+              >
+                <ArrowLeft size={18} className="transition-transform group-hover:-translate-x-1" />
+                <span className="text-xs sm:text-sm font-medium">Back to QA Hub</span>
+              </a>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* TOOL NAME/NO. */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  TOOL NAME/NO. <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="toolNameNo"
-                  value={formData.toolNameNo}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4158D0] focus:border-transparent outline-none transition-all text-sm text-slate-700"
-                  placeholder="Enter tool name/number"
-                  required
-                />
+            {/* Heading and Date */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <AlertTriangle size={24} className="text-white sm:w-6 sm:h-6 md:w-7 md:h-7" />
+                <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white">
+                  DEVIATION APPROVAL FORM
+                </h1>
               </div>
-
-              {/* LOCATION */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  LOCATION <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4158D0] focus:border-transparent outline-none transition-all text-sm text-slate-700"
-                  placeholder="Enter location"
-                  required
-                />
-              </div>
-
-              {/* PROBLEM */}
-              <div className="space-y-2 md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  PROBLEM <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="problem"
-                  value={formData.problem}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4158D0] focus:border-transparent outline-none transition-all text-sm text-slate-700"
-                  placeholder="Describe the problem"
-                  required
-                />
-              </div>
-
-              {/* REASON FOR DEVIATION */}
-              <div className="space-y-2 md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  REASON FOR DEVIATION <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  name="reasonForDeviation"
-                  value={formData.reasonForDeviation}
-                  onChange={handleInputChange}
-                  rows="3"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4158D0] focus:border-transparent outline-none transition-all text-sm text-slate-700"
-                  placeholder="Enter detailed reason for deviation"
-                  required
-                />
+              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg">
+                <Calendar size={14} className="text-white sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                <span className="text-xs sm:text-sm md:text-base font-semibold text-white">{currentDate}</span>
               </div>
             </div>
           </div>
 
-          {/* Time & Signatures Section */}
-          <div className="p-6 md:p-8 bg-gray-50 border-t border-gray-200">
-            <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-200">
-              <Clock size={20} className="text-[#4158D0]" />
-              <h2 className="text-lg font-semibold text-gray-800">
-                Time & Signatures
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* DURATION */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  DURATION <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Clock size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <form onSubmit={handleSubmit}>
+            {/* Deviation Details Section */}
+            <div className="p-4 sm:p-5 md:p-6">
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-200">
+                <FileText size={18} className="text-[#4158D0]" />
+                <h2 className="text-sm sm:text-base font-semibold text-gray-800">
+                  Deviation Details
+                </h2>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                {/* TOOL NAME/NO. */}
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase">
+                    TOOL NAME/NO. <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
-                    name="duration"
-                    value={formData.duration}
+                    name="toolNameNo"
+                    value={formData.toolNameNo}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4158D0] focus:border-transparent outline-none transition-all text-sm text-slate-700"
-                    placeholder="e.g., 2 hours, 1 day"
+                    className="w-full px-3 py-2 border-2 border-slate-100 bg-slate-50 rounded-lg focus:bg-white focus:border-[#4158D0] outline-none transition-all text-sm text-slate-700"
+                    placeholder="Enter tool name/number"
+                    required
+                  />
+                </div>
+
+                {/* LOCATION */}
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase">
+                    LOCATION <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border-2 border-slate-100 bg-slate-50 rounded-lg focus:bg-white focus:border-[#4158D0] outline-none transition-all text-sm text-slate-700"
+                    placeholder="Enter location"
+                    required
+                  />
+                </div>
+
+                {/* PROBLEM */}
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase">
+                    PROBLEM <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="problem"
+                    value={formData.problem}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border-2 border-slate-100 bg-slate-50 rounded-lg focus:bg-white focus:border-[#4158D0] outline-none transition-all text-sm text-slate-700"
+                    placeholder="Describe the problem"
+                    required
+                  />
+                </div>
+
+                {/* REASON FOR DEVIATION */}
+                <div className="space-y-1.5 md:col-span-2">
+                  <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase">
+                    REASON FOR DEVIATION <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    name="reasonForDeviation"
+                    value={formData.reasonForDeviation}
+                    onChange={handleInputChange}
+                    rows="3"
+                    className="w-full px-3 py-2 border-2 border-slate-100 bg-slate-50 rounded-lg focus:bg-white focus:border-[#4158D0] outline-none transition-all text-sm text-slate-700 resize-y"
+                    placeholder="Enter detailed reason for deviation"
                     required
                   />
                 </div>
               </div>
+            </div>
 
-              {/* PROD. INCHARGE */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  PROD. INCHARGE
-                </label>
-                <div className="relative">
-                  <UserCheck size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    name="prodIncharge"
-                    value={formData.prodIncharge}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4158D0] focus:border-transparent outline-none transition-all text-sm text-slate-700"
-                    placeholder="Enter name"
-                  />
-                </div>
+            {/* Time & Signatures Section */}
+            <div className="p-4 sm:p-5 md:p-6 bg-gray-50 border-t border-gray-200">
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-200">
+                <Clock size={18} className="text-[#4158D0]" />
+                <h2 className="text-sm sm:text-base font-semibold text-gray-800">
+                  Time & Signatures
+                </h2>
               </div>
 
-              {/* QA INCHARGE */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  QA INCHARGE
-                </label>
-                <div className="relative">
-                  <UserCheck size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    name="qaIncharge"
-                    value={formData.qaIncharge}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4158D0] focus:border-transparent outline-none transition-all text-sm text-slate-700"
-                    placeholder="Enter name"
-                  />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                {/* DURATION */}
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase">
+                    DURATION <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Clock size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      name="duration"
+                      value={formData.duration}
+                      onChange={handleInputChange}
+                      className="w-full pl-9 pr-3 py-2 border-2 border-slate-100 bg-slate-50 rounded-lg focus:bg-white focus:border-[#4158D0] outline-none transition-all text-sm text-slate-700"
+                      placeholder="e.g., 2 hours, 1 day"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* PROD. INCHARGE */}
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase">
+                    PROD. INCHARGE
+                  </label>
+                  <div className="relative">
+                    <UserCheck size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      name="prodIncharge"
+                      value={formData.prodIncharge}
+                      onChange={handleInputChange}
+                      className="w-full pl-9 pr-3 py-2 border-2 border-slate-100 bg-slate-50 rounded-lg focus:bg-white focus:border-[#4158D0] outline-none transition-all text-sm text-slate-700"
+                      placeholder="Enter name"
+                    />
+                  </div>
+                </div>
+
+                {/* QA INCHARGE */}
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase">
+                    QA INCHARGE
+                  </label>
+                  <div className="relative">
+                    <UserCheck size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      name="qaIncharge"
+                      value={formData.qaIncharge}
+                      onChange={handleInputChange}
+                      className="w-full pl-9 pr-3 py-2 border-2 border-slate-100 bg-slate-50 rounded-lg focus:bg-white focus:border-[#4158D0] outline-none transition-all text-sm text-slate-700"
+                      placeholder="Enter name"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* REMARKS Section */}
-          <div className="p-6 md:p-8 border-t border-gray-200">
-            <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-200">
-              <FileText size={20} className="text-[#4158D0]" />
-              <h2 className="text-lg font-semibold text-gray-800">
-                REMARKS
-              </h2>
+            {/* REMARKS Section */}
+            <div className="p-4 sm:p-5 md:p-6 border-t border-gray-200">
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-200">
+                <FileText size={18} className="text-[#4158D0]" />
+                <h2 className="text-sm sm:text-base font-semibold text-gray-800">
+                  REMARKS
+                </h2>
+              </div>
+              <textarea
+                name="remarks"
+                value={formData.remarks}
+                onChange={handleInputChange}
+                rows="2"
+                className="w-full px-3 py-2 border-2 border-slate-100 bg-slate-50 rounded-lg focus:bg-white focus:border-[#4158D0] outline-none transition-all text-sm text-slate-700 resize-y"
+                placeholder="Under deviation produced parts will be checked 100% visually as well as dimensionally"
+              />
             </div>
-            <textarea
-              name="remarks"
-              value={formData.remarks}
-              onChange={handleInputChange}
-              rows="3"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4158D0] focus:border-transparent outline-none transition-all text-sm text-slate-700"
-              placeholder="Under deviation produced parts will be checked 100% visually as well as dimensionally"
-            />
-          </div>
 
-          {/* Form Actions */}
-          <div className="px-6 md:px-8 py-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row gap-4 justify-end">
-            <button
-              type="button"
-              onClick={handleReset}
-              className="flex items-center justify-center gap-2 px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all font-medium"
-            >
-              <RotateCcw size={18} />
-              Reset
-            </button>
-            <button
-              type="submit"
-              className="flex items-center justify-center gap-2 px-6 py-2 text-white rounded-lg hover:opacity-90 transition-all font-medium shadow-md hover:shadow-lg"
-              style={{ 
-                background: `linear-gradient(135deg, ${gradientColors.start}, ${gradientColors.middle}, ${gradientColors.end})`
-              }}
-            >
-              <Eye size={18} />
-              Submit for Approval
-            </button>
-          </div>
-        </form>
+            {/* Form Actions */}
+            <div className="px-4 sm:px-5 md:px-6 py-3 sm:py-4 bg-gray-50 border-t border-gray-200 flex flex-col-reverse sm:flex-row gap-3 justify-end items-stretch sm:items-center">
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-slate-200 rounded-lg text-slate-600 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all text-xs uppercase font-bold"
+                >
+                  <RotateCcw size={14} />
+                  Clear Form
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center justify-center gap-2 px-5 py-2 text-white rounded-lg hover:opacity-90 transition-all font-bold uppercase tracking-wide text-xs shadow-md hover:shadow-lg"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${gradientColors.start}, ${gradientColors.middle}, ${gradientColors.end})`
+                  }}
+                >
+                  <Eye size={14} />
+                  Submit for Approval
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
 
-      {/* Add keyframe animation to document */}
       <style jsx>{`
         @keyframes fadeIn {
           from {

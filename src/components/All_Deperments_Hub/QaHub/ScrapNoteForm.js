@@ -82,134 +82,172 @@ const ScrapNoteForm = () => {
     e.preventDefault();
     console.log("Saving Scrap Entry:", formData);
     alert("Scrap Entry Saved Successfully!");
-    // Reset form data after submit
     setFormData(initialState);
   };
 
   const handleClear = () => setFormData(initialState);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-2 md:p-6 font-sans text-slate-800">
-      <div className="max-w-4xl mx-auto mb-4 flex items-center justify-between">
-        <button
-          onClick={() => navigate("/qa-hub")}
-          className="flex items-center text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded shadow-md transition-all active:scale-95 group"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 mr-1.5 transition-transform group-hover:-translate-x-1">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-          </svg>
-          Back to QAHub
-        </button>
-        <div className="text-right">
-          <span className="text-[10px] font-bold text-slate-400 block uppercase">Doc No: AOT-F-QC-04</span>
-          <span className="text-xs font-black text-red-500 uppercase">Scrap Register</span>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden border-t-4" style={{ borderColor: "#f04343" }}>
-        <div className="bg-gradient-to-r from-white to-red-50 p-4 border-b border-slate-100 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded text-white shadow" style={{ backgroundColor: "#f04343" }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Scrap Entry Form</h2>
-              <p className="text-slate-500 text-[10px] font-medium">Quality Assurance & Production Control</p>
-            </div>
-          </div>
-          <div className="bg-white border border-red-100 rounded p-1.5 px-3 flex flex-col items-center shadow-sm">
-            <span className="text-[9px] font-black text-red-600 uppercase">Entry Date</span>
-            <input type="date" name="date" value={formData.date} onChange={handleChange} className="text-xs font-bold text-slate-700 outline-none cursor-pointer bg-transparent" />
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 mb-1 uppercase">Part Name</label>
-              <select
-                name="partName"
-                value={formData.partName}
-                onChange={handlePartChange}
-                className="w-full bg-white border border-slate-200 rounded p-2 text-sm outline-none focus:border-red-400 font-bold"
-                required
+    <div className="min-h-screen bg-slate-50 py-2 px-3 sm:py-3 sm:px-4 md:py-4 font-sans">
+      <div className="w-full max-w-4xl mx-auto">
+        <div className="bg-white rounded-xl shadow-xl overflow-hidden border-t-4" style={{ borderColor: "#f04343" }}>
+          {/* Header Section */}
+          <div className="bg-gradient-to-r from-white to-red-50 px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-100">
+            {/* Back Button - First */}
+            <div className="mb-2 sm:mb-3">
+              <button
+                onClick={() => navigate("/qa-hub")}
+                className="inline-flex items-center text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg shadow-md transition-all active:scale-95 group"
               >
-                <option value="">-- Select Part --</option>
-                {PART_DATABASE.map((part, idx) => (
-                  <option key={idx} value={part.name}>{part.name}</option>
-                ))}
-              </select>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2.5}
+                  stroke="currentColor"
+                  className="w-3.5 h-3.5 mr-1.5 transition-transform group-hover:-translate-x-1"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+                Back to QA Hub
+              </button>
             </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 mb-1 uppercase">Part Number</label>
-              <input
-                name="partNo"
-                value={formData.partNo}
-                readOnly
-                className="w-full bg-slate-50 border border-slate-200 rounded p-2 text-sm text-slate-500 font-black cursor-not-allowed"
-                placeholder="Auto-filled"
-              />
-            </div>
-          </div>
+            
+            {/* Main Heading and Entry Date */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <div className="flex items-center gap-2">
+                <div
+                  className="p-1.5 sm:p-2 rounded-lg text-white shadow-lg shrink-0"
+                  style={{ backgroundColor: "#f04343" }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-sm sm:text-base md:text-lg font-black text-slate-800 m-0 uppercase tracking-tight">
+                    Scrap Entry Form
+                  </h2>
+                  <p className="text-slate-500 text-[8px] sm:text-[9px] font-medium">Quality Assurance & Production Control</p>
+                </div>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 mb-1 uppercase">Defect Detail</label>
-              <select
-                name="defect"
-                value={formData.defect}
-                onChange={handleChange}
-                className="w-full border border-slate-200 bg-white rounded p-2 text-sm focus:border-slate-400 font-semibold outline-none"
-                required
-                disabled={!formData.partName}
-              >
-                <option value="">{formData.partName ? "Select Defect" : "Choose Part First"}</option>
-                {availableDefects.map((d, index) => (
-                  <option key={index} value={d}>{d}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-500 mb-1 uppercase">Quantity (NOS)</label>
-              <div className="flex">
-                <input 
-                  name="qty" 
-                  value={formData.qty} 
-                  onChange={handleChange} 
-                  type="number" 
-                  className="w-full border border-slate-200 rounded-l p-2 text-sm font-bold text-center outline-none" 
-                  placeholder="0" 
-                  required 
+              {/* Entry Date */}
+              <div className="w-full sm:w-auto bg-white border-2 border-red-100 rounded-lg px-2 py-1.5 flex items-center justify-between sm:justify-center gap-2 shadow-sm">
+                <span className="text-[8px] sm:text-[9px] font-black text-red-600 uppercase whitespace-nowrap">Entry Date</span>
+                <input
+                  type="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  className="text-xs font-bold text-slate-700 outline-none cursor-pointer bg-transparent"
                 />
-                <span className="bg-slate-100 px-3 py-2 border border-l-0 border-slate-200 rounded-r text-slate-600 font-black text-[10px] flex items-center">NOS</span>
               </div>
             </div>
           </div>
 
-          <div className="mb-5">
-            <label className="block text-[10px] font-black text-slate-500 mb-1 uppercase">Remarks</label>
-            <textarea 
-              name="remark" 
-              value={formData.remark} 
-              onChange={handleChange} 
-              rows="1" 
-              className="w-full border border-slate-200 bg-white rounded p-2 text-sm font-medium outline-none focus:border-slate-400" 
-              placeholder="Additional notes..."
-            ></textarea>
-          </div>
+          <form onSubmit={handleSubmit} className="p-4 sm:p-5">
+            {/* Part Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4">
+              <div>
+                <label className="block text-[9px] sm:text-[10px] font-black text-slate-500 mb-1 uppercase">Part Name</label>
+                <select
+                  name="partName"
+                  value={formData.partName}
+                  onChange={handlePartChange}
+                  className="w-full bg-white border-2 border-slate-100 rounded-lg p-2 text-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 font-bold"
+                  required
+                >
+                  <option value="">-- Select Part --</option>
+                  {PART_DATABASE.map((part, idx) => (
+                    <option key={idx} value={part.name}>{part.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[9px] sm:text-[10px] font-black text-slate-500 mb-1 uppercase">Part Number</label>
+                <input
+                  name="partNo"
+                  value={formData.partNo}
+                  readOnly
+                  className="w-full bg-slate-50 border-2 border-slate-100 rounded-lg p-2 text-sm text-slate-500 font-black cursor-not-allowed"
+                  placeholder="Auto-filled"
+                />
+              </div>
+            </div>
 
-          <div className="flex gap-3 justify-end border-t border-slate-100 pt-4">
-            <button type="button" onClick={handleClear} className="text-xs font-bold text-slate-400 hover:text-red-500 uppercase px-2">Clear</button>
-            <button type="submit" className="px-8 py-2.5 rounded text-white shadow hover:opacity-90 flex items-center gap-2 uppercase font-black text-[10px]" style={{ backgroundColor: "#f04343" }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z" />
-              </svg>
-              Save Entry
-            </button>
-          </div>
-        </form>
+            {/* Defect and Quantity */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4">
+              <div>
+                <label className="block text-[9px] sm:text-[10px] font-black text-slate-500 mb-1 uppercase">Defect Detail</label>
+                <select
+                  name="defect"
+                  value={formData.defect}
+                  onChange={handleChange}
+                  className="w-full border-2 border-slate-100 bg-white rounded-lg p-2 text-sm focus:border-red-400 focus:ring-2 focus:ring-red-100 font-semibold outline-none"
+                  required
+                  disabled={!formData.partName}
+                >
+                  <option value="">{formData.partName ? "Select Defect" : "Choose Part First"}</option>
+                  {availableDefects.map((d, index) => (
+                    <option key={index} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[9px] sm:text-[10px] font-black text-slate-500 mb-1 uppercase">Quantity (NOS)</label>
+                <div className="flex">
+                  <input 
+                    name="qty" 
+                    value={formData.qty} 
+                    onChange={handleChange} 
+                    type="number" 
+                    className="w-full border-2 border-slate-100 rounded-l-lg p-2 text-sm font-bold text-center outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100" 
+                    placeholder="0" 
+                    required 
+                  />
+                  <span className="bg-slate-100 px-3 py-2 border-2 border-l-0 border-slate-100 rounded-r-lg text-slate-600 font-black text-[10px] flex items-center">NOS</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Remarks */}
+            <div className="mb-4">
+              <label className="block text-[9px] sm:text-[10px] font-black text-slate-500 mb-1 uppercase">Remarks</label>
+              <textarea 
+                name="remark" 
+                value={formData.remark} 
+                onChange={handleChange} 
+                rows="2" 
+                className="w-full border-2 border-slate-100 bg-white rounded-lg p-2 text-sm font-medium outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100 resize-y" 
+                placeholder="Additional notes..."
+              />
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex flex-col-reverse sm:flex-row gap-2 justify-end items-stretch sm:items-center border-t border-slate-100 pt-3">
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="px-4 py-2 rounded-lg font-bold text-slate-600 hover:text-red-600 hover:bg-red-50 transition-all text-xs uppercase tracking-wide border border-slate-200 hover:border-red-200"
+                >
+                  Clear Form
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-lg text-white shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 uppercase font-black tracking-wider text-xs"
+                  style={{ backgroundColor: "#f04343" }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z" />
+                  </svg>
+                  Save Entry
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
