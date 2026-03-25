@@ -87,8 +87,10 @@ const PokaYokeChecksheet = () => {
         setShowInfoModal(true);
     };
 
-    const handleSubmit = (e) => {
+    // 🔥 API CALL WALA NAYA SUBMIT FUNCTION 🔥
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        
         if (!selectedPlant || !selectedMachine) {
             alert("⚠️ Please select both Plant and Machine No.");
             return;
@@ -100,9 +102,50 @@ const PokaYokeChecksheet = () => {
             return;
         }
 
-        console.log("Saving Poka Yoke Record:", { selectedDate, selectedPlant, selectedMachine, checklist, signatures });
-        alert("✅ Daily Poka Yoke Checksheet successfully saved!");
-        navigate('/qa-hub'); 
+        // 🌟 STEP 1: React ke data ko Django JSON format mein set karo
+        const payload = {
+            date: selectedDate,
+            plant_name: selectedPlant,
+            machine_no: selectedMachine,
+            checked_by_maintenance: signatures.checkedBy,
+            verified_by_production: signatures.verifiedBy,
+            
+            // Loop chala kar checklist ko API ke liye map kiya
+            check_points: checklist.map(item => ({
+                s_no: item.id,
+                poka_yoke_detail: item.detailEng,
+                checking_method: item.method,
+                reference_sop: "SOP View", // Static value as per UI
+                is_ok: item.status === 'OK', // Converts 'OK' to boolean true/false
+                remarks: item.remarks
+            }))
+        };
+
+        // 🌟 STEP 2: Django API ko data bhejo
+        try {
+            // Note: Agar backend 127.0.0.1 ki jagah 192.168.0.35 par chal raha hai toh URL update kar lena
+            const response = await fetch('http://127.0.0.1:8000/api/save-checksheet/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert("✅ Daily Poka Yoke Checksheet successfully saved in Database!");
+                console.log("Success:", result);
+                navigate('/qa-hub'); 
+            } else {
+                alert("❌ Backend Error: Data save nahi hua.");
+                console.error("Django Error:", result);
+            }
+        } catch (error) {
+            console.error("Network Error:", error);
+            alert("❌ Server se connect nahi ho paaya. Kya Django chal raha hai?");
+        }
     };
 
     return (
