@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-
 const sopDatabase = {
     1: { 
         titleEng: 'Air Pressure Switch', 
@@ -94,8 +93,10 @@ const PokaYokeChecksheet = () => {
         setShowInfoModal(true);
     };
 
-    const handleSubmit = (e) => {
+    // 🔥 API CALL WALA NAYA SUBMIT FUNCTION 🔥
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        
         if (!selectedPlant || !selectedMachine) {
             alert("⚠️ Please select both Plant and Machine No.");
             return;
@@ -107,9 +108,50 @@ const PokaYokeChecksheet = () => {
             return;
         }
 
-        console.log("Saving Poka Yoke Record:", { selectedDate, selectedPlant, selectedMachine, checklist, signatures });
-        alert("✅ Daily Poka Yoke Checksheet successfully saved!");
-        navigate('/qa-hub'); 
+        // 🌟 STEP 1: React ke data ko Django JSON format mein set karo
+        const payload = {
+            date: selectedDate,
+            plant_name: selectedPlant,
+            machine_no: selectedMachine,
+            checked_by_maintenance: signatures.checkedBy,
+            verified_by_production: signatures.verifiedBy,
+            
+            // Loop chala kar checklist ko API ke liye map kiya
+            check_points: checklist.map(item => ({
+                s_no: item.id,
+                poka_yoke_detail: item.detailEng,
+                checking_method: item.method,
+                reference_sop: "SOP View", // Static value as per UI
+                is_ok: item.status === 'OK', // Converts 'OK' to boolean true/false
+                remarks: item.remarks
+            }))
+        };
+
+        // 🌟 STEP 2: Django API ko data bhejo
+        try {
+            // Note: Agar backend 127.0.0.1 ki jagah 192.168.0.35 par chal raha hai toh URL update kar lena
+            const response = await fetch('http://127.0.0.1:8000/api/save-checksheet/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert("✅ Daily Poka Yoke Checksheet successfully saved in Database!");
+                console.log("Success:", result);
+                navigate('/qa-hub'); 
+            } else {
+                alert("❌ Backend Error: Data save nahi hua.");
+                console.error("Django Error:", result);
+            }
+        } catch (error) {
+            console.error("Network Error:", error);
+            alert("❌ Server se connect nahi ho paaya. Kya Django chal raha hai?");
+        }
     };
 
     return (
@@ -261,18 +303,18 @@ const PokaYokeChecksheet = () => {
                                     {checklist.map((item) => (
                                         <tr key={item.id}>
                                             <td className="text-center text-muted fw-bold">{item.id}</td>
-                                            <td>
+                                            <td className="align-middle">
                                                 <div style={{fontWeight: 800, color: '#0f172a'}}>{item.detailEng}</div>
                                                 <div style={{fontSize: '0.8rem', color: '#64748b', marginTop: '2px'}}>{item.detailHin}</div>
                                             </td>
-                                            <td><span className="badge bg-light text-dark border px-2 py-1">{item.method}</span></td>
-                                            <td className="text-center">
+                                            <td className="align-middle"><span className="badge bg-light text-dark border px-2 py-1">{item.method}</span></td>
+                                            <td className="text-center align-middle">
                                                 {/* 🔥 INFO BUTTON FOR IMAGES & HINDI TEXT 🔥 */}
                                                 <button className="btn-info-icon" onClick={() => openSopModal(item.id)}>
                                                     <i className="bi bi-journal-text me-1"></i> SOP View
                                                 </button>
                                             </td>
-                                            <td className="text-center">
+                                            <td className="text-center align-middle">
                                                 <div className="d-flex justify-content-center gap-2">
                                                     <button 
                                                         className={`btn-toggle ${item.status === 'OK' ? 'ok' : ''}`}
@@ -288,7 +330,7 @@ const PokaYokeChecksheet = () => {
                                                     </button>
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td className="align-middle">
                                                 <input type="text" className="form-control-light input-sm" 
                                                     placeholder="Add remark..." 
                                                     value={item.remarks} onChange={(e) => handleRemarkChange(item.id, e.target.value)} 
