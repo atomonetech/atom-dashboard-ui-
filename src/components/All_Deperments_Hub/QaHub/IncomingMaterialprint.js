@@ -14,14 +14,7 @@ const formatDisplay = (dateStr) => {
 const IncomingMaterialprint = ({ items = [], currentReport, onEditForm, onBack }) => {
   const navigate = useNavigate();
 
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      navigate(-1);
-    }
-  };
-
+  
   // ── Khali Rows Ka Format (S.No. ke alawa sab blank) ──
   const emptyParams = [
     { s_no: 1, name: '', spec: '', method: '' },
@@ -71,7 +64,7 @@ const IncomingMaterialprint = ({ items = [], currentReport, onEditForm, onBack }
       {/* ── Top Bar (Buttons) ── */}
       <div className="flex justify-end items-center gap-3 mb-3 w-full max-w-[1122px] print:hidden">
         <button 
-          onClick={handleBack} 
+          onClick={() => navigate("/qa-hub")}
           className="bg-[#607d8b] hover:bg-[#4d646f] text-white border-none px-5 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors"
         >
           <i className="bi bi-arrow-left-circle-fill"></i> Back

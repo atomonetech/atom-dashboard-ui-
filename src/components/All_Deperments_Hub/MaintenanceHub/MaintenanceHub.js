@@ -5,6 +5,10 @@ const MaintenanceHub = () => {
     const navigate = useNavigate();
     // Tab state: 'MACHINE' or 'TOOL'
     const [activeTab, setActiveTab] = useState('MACHINE');
+    
+    // Modal States
+    const [showOptionsModal, setShowOptionsModal] = useState(false);
+    const [selectedCard, setSelectedCard] = useState(null);
 
     // 🔥 PDF DATA FOR MACHINE MAINTENANCE 🔥
     const machineReports = [
@@ -86,47 +90,56 @@ const MaintenanceHub = () => {
 
     const currentReports = activeTab === 'MACHINE' ? machineReports : toolReports;
 
-    // const handleCardClick = (reportTitle) => {
-    //     alert(`Construction in Progress 🚧\nThe [${reportTitle}] form is coming soon!`);
-    // };
+    // ✅ Form Routing Logic
+    const navigateToForm = (reportId, title) => {
+        switch (reportId) {
+            case "mc_history": navigate("/Machine-Card-Form"); break;
+            case "mc_breakdown": navigate("/Machine-Breakdown-Slip"); break;
+            case "power_press_check": navigate("/Daily-PowerPress-Checksheet"); break;
+            case "tool_history": navigate("/Tool-History-Form"); break;
+            case "tool_stroke": navigate("/Tool-Stroke-PM"); break;
+            case "tool_pm_check": navigate("/Tool-PM-Checklist-Form"); break;
+            case "tool_breakdown": navigate("/Tool-Breakdown-Form"); break;
+            default: alert(`🚧 The form for "${title}" is coming soon!`);
+        }
+    };
 
-const handleCardClick = (reportId) => {
+    // ✅ Report/Print Routing Logic
+    const navigateToReport = (reportId, title) => {
+        switch (reportId) {
+            case "mc_history": navigate("/Machine-Card-Report"); break;
+            case "mc_breakdown": navigate("/Machine-Breakdown-Report"); break;
+            case "power_press_check": navigate("/Daily-PowerPress-Report"); break;
+            case "tool_history": navigate("/Tool-History-Report"); break;
+            case "tool_stroke": navigate("/Tool-Stroke-Report"); break;
+            case "tool_pm_check": navigate("/Tool-PM-Checklist-Report"); break;
+            case "tool_breakdown": navigate("/Tool-Breakdown-Report"); break;
+            default: alert(`🚧 The report for "${title}" is coming soon!`);
+        }
+    };
 
-    switch (reportId) {
+    // ✅ Open Modal on Card Click
+    const handleCardClick = (report) => {
+        setSelectedCard(report);
+        setShowOptionsModal(true);
+    };
 
-        case "mc_history":
-            navigate("/Machine-Card-Form");
-            break;
+    // ✅ Handle Modal Options
+    const handleOptionSelect = (option) => {
+        if (option === 'fill' && selectedCard) {
+            navigateToForm(selectedCard.id, selectedCard.title);
+        } else if (option === 'print' && selectedCard) {
+            navigateToReport(selectedCard.id, selectedCard.title);
+        }
+        closeModal();
+    };
 
-        case "mc_breakdown":
-            navigate("/Machine-Breakdown-Slip");
-            break;
-
-        case "power_press_check":
-            navigate("/Daily-PowerPress-Checksheet");
-            break;
-
-        case "tool_history":
-            navigate("/Tool-History-Form");
-            break;
-
-        case "tool_stroke":
-            navigate("/Tool-Stroke-PM");
-            break;
-
-        case "tool_pm_check":
-            navigate("/Tool-PM-Checklist-Form");
-            break;
-
-        case "tool_breakdown":
-            navigate("/Tool-Breakdown-Form");
-            break;
-
-        default:
-            alert("🚧 Form coming soon!");
-    }
-
-};
+    // ✅ Close Modal
+    const closeModal = (e) => {
+        if (e) e.stopPropagation();
+        setShowOptionsModal(false);
+        setSelectedCard(null);
+    };
 
     return (
         <div className="maintenance-page-wrapper">
@@ -256,7 +269,6 @@ const handleCardClick = (reportId) => {
 
                 .card-title-custom { font-weight: 800 !important; font-size: 1.15rem !important; color: #0f172a !important; margin-bottom: 1rem !important; }
                 
-                /* Metadata tags inside card */
                 .meta-tag {
                     display: flex;
                     align-items: center;
@@ -276,6 +288,26 @@ const handleCardClick = (reportId) => {
                     transition: 0.3s; opacity: 0; transform: translateX(-10px);
                 }
                 .module-card:hover .go-arrow { color: var(--card-color); opacity: 1; transform: translateX(0); }
+
+                /* 🔥 MODAL STYLING 🔥 */
+                .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 100000; padding: 16px; }
+                .modal-content { background: white; border-radius: 16px; padding: 24px; max-width: 420px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: none; }
+                .modal-header-custom { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9; gap: 15px;}
+                .modal-title-custom { font-weight: 800; color: #0f172a; margin: 0; font-size: 1.25rem; line-height: 1.3; }
+                .modal-form-info { text-align: right; min-width: 120px;}
+                .option-btn { width: 100%; padding: 14px 16px; margin: 6px 0; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 10px; }
+                .option-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+                .option-btn:active { transform: translateY(0); }
+                
+                /* Match exactly with the image colors */
+                .fill-btn { background: #5a75f9; color: white; }
+                .fill-btn:hover { background: #4762e6; }
+                
+                .print-btn { background: #00c48c; color: white; }
+                .print-btn:hover { background: #00a877; }
+                
+                .close-btn { background: #f43f5e; color: white; margin-top: 10px; }
+                .close-btn:hover { background: #e11d48; }
 
                 @media (max-width: 768px) {
                     .dashboard-navbar { padding: 0 1rem !important; }
@@ -333,7 +365,7 @@ const handleCardClick = (reportId) => {
                             <div 
                                 className="module-card" 
                                 style={{'--card-color': report.color}} 
-                                onClick={() => handleCardClick(report.id)}
+                                onClick={() => handleCardClick(report)} // ✅ Open Modal instead of Navigating Directly
                             >
                                 <div className="icon-wrapper" style={{backgroundColor: report.bgColor, color: report.color}}>
                                     <i className={`bi ${report.icon}`}></i>
@@ -363,6 +395,34 @@ const handleCardClick = (reportId) => {
                     ))}
                 </div>
             </div>
+
+            {/* 🔥 MODAL COMPONENT (Appears when a card is clicked) 🔥 */}
+            {showOptionsModal && selectedCard && (
+                <div className="modal-overlay" onClick={closeModal}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        
+                        <div className="modal-header-custom">
+                            <h3 className="modal-title-custom">{selectedCard.title}</h3>
+                            <div className="modal-form-info text-muted">
+                                <span style={{ fontSize: '0.8rem', display: 'block' }}>Form No:</span>
+                                <span style={{ fontSize: '0.9rem', fontWeight: '600' }}>{selectedCard.formNo}</span>
+                            </div>
+                        </div>
+
+                        <button className="option-btn fill-btn" onClick={() => handleOptionSelect('fill')}>
+                            <i className="bi bi-pencil-square"></i> Fill Data (Open Form)
+                        </button>
+
+                        <button className="option-btn print-btn" onClick={() => handleOptionSelect('print')}>
+                            <i className="bi bi-printer"></i> Print Data (View Report)
+                        </button>
+
+                        <button className="option-btn close-btn" onClick={(e) => { e.stopPropagation(); closeModal(); }}>
+                            <i className="bi bi-x-circle"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

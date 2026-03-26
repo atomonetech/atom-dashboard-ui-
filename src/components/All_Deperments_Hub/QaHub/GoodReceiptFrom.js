@@ -25,65 +25,86 @@ const GoodReceiptForm = () => {
     e.preventDefault();
     console.log("Material Requisition Submitted:", formData);
     alert("Material Requisition Slip Saved Successfully!");
+    handleReset();
+  };
+
+  const handleReset = () => {
+    setFormData({
+      requestedBy: "",
+      itemName: "",
+      specification: "",
+      department: "",
+      qty: "",
+      remark: "",
+      receivedBy: "",
+      receivedDate: today,
+    });
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-10 font-sans text-slate-600">
-      
-      {/* Top Nav */}
-      <div className="max-w-5xl mx-auto mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center text-xs font-bold text-white px-4 py-3 rounded-lg shadow-md transition-all active:scale-95 hover:brightness-110"
-          style={{ backgroundColor: "#06b5d4" }}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-4 h-4 mr-2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-          </svg>
-          BACK TO QAHub
-        </button>
-      </div>
+    <div className="min-h-screen bg-slate-50 py-3 px-3 sm:py-4 sm:px-4 md:py-6 lg:py-8 font-sans">
+      <div className="w-full max-w-6xl mx-auto">
+        {/* Main Form Card */}
+        <div className="bg-white rounded-xl shadow-xl overflow-hidden border border-slate-200">
+          {/* Cyan Top Border Bar */}
+          <div className="h-1.5 bg-cyan-500 w-full"></div>
 
-      {/* Main Card */}
-      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+          {/* Header Section */}
+          <div className="px-4 sm:px-5 md:px-6 py-4 sm:py-5 md:py-6 bg-white border-b border-slate-100">
+            {/* Back Button */}
+            <div className="mb-4 sm:mb-5">
+              <button
+                onClick={() => navigate("/qa-hub")}
+                className="inline-flex items-center gap-1.5 text-white bg-cyan-500 hover:bg-cyan-600 transition-all rounded-lg px-3 py-1.5 sm:px-4 sm:py-2 group shadow-md"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2.5}
+                  stroke="currentColor"
+                  className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:-translate-x-1"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+                <span className="text-xs sm:text-sm font-bold">Back to QA Hub</span>
+              </button>
+            </div>
 
-        {/* Cyan Top Border Bar */}
-        <div className="h-2 bg-cyan-500 w-full"></div>
+            {/* Heading and Date Row */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="w-full sm:w-auto">
+                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-cyan-700 uppercase tracking-tight">
+                  Material Requisition Slip
+                </h1>
+                <p className="text-cyan-500 text-[9px] sm:text-[10px] md:text-xs font-extrabold mt-1 uppercase tracking-wider">
+                  Good Receipt Entry
+                </p>
+              </div>
 
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-center p-8 bg-white border-b border-slate-100 gap-6">
-          
-          <div className="text-center md:text-left">
-            <h1 className="text-2xl md:text-3xl font-black text-cyan-700 uppercase tracking-tight leading-none">
-              Material Requisition Slip
-            </h1>
-            <p className="text-[#06b5d4] text-[10px] font-extrabold mt-2 uppercase tracking-[0.3em]">
-              Good Receipt Entry
-            </p>
+              {/* Date Box - Full width on mobile */}
+              <div className="w-full sm:w-auto bg-slate-50 border-2 border-cyan-100 rounded-lg px-4 py-2 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-center justify-between sm:justify-center gap-1 sm:gap-2">
+                  <label className="text-[9px] sm:text-[10px] font-black text-cyan-600 uppercase tracking-wider whitespace-nowrap">
+                    Receipt Date
+                  </label>
+                  <input
+                    type="date"
+                    name="receivedDate"
+                    value={formData.receivedDate}
+                    onChange={handleChange}
+                    className="text-xs sm:text-sm font-bold text-slate-700 outline-none cursor-pointer bg-transparent w-full sm:w-auto text-center"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Date Box */}
-          <div className="flex flex-col items-center justify-center bg-slate-50 border border-slate-200 rounded-xl px-6 py-3 min-w-[180px] shadow-inner">
-            <label className="text-[9px] font-black text-[#06b5d4] uppercase tracking-widest mb-1">
-              Receipt Date
-            </label>
-            <input
-              type="date"
-              name="receivedDate"
-              value={formData.receivedDate}
-              onChange={handleChange}
-              className="text-sm font-bold text-slate-700 outline-none bg-transparent cursor-pointer text-center"
-            />
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-8 md:p-12">
-
-          {/* Requested Person */}
-          <div className="mb-12">
-            <div className="bg-cyan-50/30 rounded-2xl p-6 border border-cyan-100/50 shadow-sm">
-              <label className="block text-[15px] font-black text-[#06b5d4] uppercase mb-3 tracking-widest">
-                Requested Person Name
+          <form onSubmit={handleSubmit} className="p-4 sm:p-5 md:p-6 lg:p-8">
+            {/* Requested Person Section - Full width */}
+            <div className="mb-6 sm:mb-7 md:mb-8">
+              <label className="block text-xs sm:text-sm font-black text-cyan-600 uppercase mb-2 tracking-wider">
+                Requested Person Name <span className="text-red-500">*</span>
               </label>
               <input
                 name="requestedBy"
@@ -91,130 +112,146 @@ const GoodReceiptForm = () => {
                 onChange={handleChange}
                 type="text"
                 placeholder="Enter full name of the requester"
-                className="w-full bg-white border-2 border-slate-200 rounded-xl p-4 outline-none focus:border-[#06b5d4] transition-all font-bold text-slate-700 shadow-sm"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Grid Layout */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-            <div className="md:col-span-1">
-              <label className="block text-[12px] font-black text-slate-600 uppercase mb-2 tracking-widest">
-                Item Name
-              </label>
-              <input
-                name="itemName"
-                value={formData.itemName}
-                onChange={handleChange}
-                placeholder="e.g. A4 Paper"
-                className="w-full border-b-2 border-slate-200 bg-transparent p-2 focus:border-[#06b5d4] outline-none font-bold transition-all text-slate-700"
+                className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-3 sm:p-3.5 outline-none focus:border-cyan-500 focus:bg-white focus:ring-2 focus:ring-cyan-100 transition-all font-medium text-sm sm:text-base text-slate-700"
                 required
               />
             </div>
 
-            {/* Department Dropdown */}
-            <div>
-              <label className="block text-[12px] font-black text-slate-600 uppercase mb-2 tracking-widest">
-                Department
-              </label>
-              <select
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
-                className="w-full border-b-2 border-slate-200 bg-transparent p-2 focus:border-[#06b5d4] outline-none font-bold transition-all text-slate-700 cursor-pointer appearance-none"
-                required
-              >
-                <option value="" disabled>Select Dept</option>
-                <option value="QA">QA</option>
-                <option value="IT">IT</option>
-                <option value="PROD">PRODUCTION</option>
-                <option value="HR">HR</option>
-              </select>
+            {/* Three Column Grid - Full width inputs */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 mb-6 sm:mb-7 md:mb-8">
+              <div>
+                <label className="block text-[10px] sm:text-xs font-black text-slate-600 uppercase mb-1.5 tracking-wider">
+                  Item Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="itemName"
+                  value={formData.itemName}
+                  onChange={handleChange}
+                  placeholder="e.g. A4 Paper, Screw, etc."
+                  className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 sm:p-3 focus:bg-white focus:border-cyan-500 outline-none font-medium transition-all text-sm text-slate-700"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] sm:text-xs font-black text-slate-600 uppercase mb-1.5 tracking-wider">
+                  Department <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 sm:p-3 focus:bg-white focus:border-cyan-500 outline-none font-medium transition-all text-sm text-slate-700 cursor-pointer"
+                  required
+                >
+                  <option value="" disabled>Select Department</option>
+                  <option value="QA">QA</option>
+                  <option value="IT">IT</option>
+                  <option value="PRODUCTION">PRODUCTION</option>
+                  <option value="HR">HR</option>
+                  <option value="MAINTENANCE">MAINTENANCE</option>
+                  <option value="PURCHASE">PURCHASE</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] sm:text-xs font-black text-slate-600 uppercase mb-1.5 tracking-wider">
+                  Quantity <span className="text-red-500">*</span>
+                </label>
+                <div className="flex items-stretch">
+                  <input
+                    name="qty"
+                    value={formData.qty}
+                    onChange={handleChange}
+                    type="text"
+                    placeholder="e.g. 100, 2 Boxes"
+                    className="flex-1 bg-slate-50 border-2 border-r-0 border-slate-200 rounded-l-lg p-2.5 sm:p-3 focus:bg-white focus:border-cyan-500 outline-none font-medium transition-all text-sm text-slate-700"
+                    required
+                  />
+                  <span className="bg-slate-100 px-3 sm:px-4 flex items-center border-2 border-l-0 border-slate-200 rounded-r-lg text-slate-600 font-bold text-xs sm:text-sm whitespace-nowrap">
+                    NOS
+                  </span>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-[12px] font-black text-slate-600 uppercase mb-2 tracking-widest">
-                Quantity
-              </label>
-              <input
-                name="qty"
-                value={formData.qty}
-                onChange={handleChange}
-                placeholder="e.g. 1 Pkt"
-                className="w-full border-b-2 border-slate-200 bg-transparent p-2 focus:border-[#06b5d4] outline-none font-bold transition-all text-slate-700"
-                required
-              />
-            </div>
-          </div>
+            {/* Two Column Grid for Specification and Remark */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 mb-6 sm:mb-7 md:mb-8">
+              <div>
+                <label className="block text-[10px] sm:text-xs font-black text-slate-600 uppercase mb-1.5 tracking-wider">
+                  Specification
+                </label>
+                <input
+                  name="specification"
+                  value={formData.specification}
+                  onChange={handleChange}
+                  placeholder="Size, Color, Grade, Model"
+                  className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 sm:p-3 focus:bg-white focus:border-cyan-500 outline-none font-medium transition-all text-sm text-slate-700"
+                />
+              </div>
 
-          {/* Specification + Remark */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            <div>
-              <label className="block text-[12px] font-black text-slate-600 uppercase mb-2 tracking-widest">
-                Specification
-              </label>
-              <input
-                name="specification"
-                value={formData.specification}
-                onChange={handleChange}
-                placeholder="Size, Color, or Grade"
-                className="w-full border-b-2 border-slate-200 bg-transparent p-2 focus:border-[#06b5d4] outline-none font-bold transition-all text-slate-700"
-              />
+              <div>
+                <label className="block text-[10px] sm:text-xs font-black text-slate-600 uppercase mb-1.5 tracking-wider">
+                  Remark
+                </label>
+                <input
+                  name="remark"
+                  value={formData.remark}
+                  onChange={handleChange}
+                  placeholder="Additional notes or instructions"
+                  className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 sm:p-3 focus:bg-white focus:border-cyan-500 outline-none font-medium transition-all text-sm text-slate-700"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-[12px] font-black text-slate-600 uppercase mb-2 tracking-widest">
-                Remark
-              </label>
-              <input
-                name="remark"
-                value={formData.remark}
-                onChange={handleChange}
-                placeholder="Additional notes..."
-                className="w-full border-b-2 border-slate-200 bg-transparent p-2 focus:border-[#06b5d4] outline-none font-bold transition-all text-slate-700"
-              />
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8 border-t border-slate-100 pt-10">
-            
-            <div className="w-full md:w-auto min-w-[200px]">
-              <label className="text-[12px] font-black text-slate-600 uppercase tracking-widest mb-1 block">
-                Receiver Name
+            {/* Receiver Section */}
+            <div className="mb-6 sm:mb-7 md:mb-8">
+              <label className="block text-[10px] sm:text-xs font-black text-slate-600 uppercase mb-1.5 tracking-wider">
+                Receiver Name <span className="text-red-500">*</span>
               </label>
               <input
                 name="receivedBy"
                 value={formData.receivedBy}
                 onChange={handleChange}
-                className="w-full text-sm font-black text-slate-700 uppercase border-b-2 border-slate-200 focus:border-[#06b5d4] outline-none pb-1 transition-all bg-transparent"
+                placeholder="Enter receiver name"
+                className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 sm:p-3 focus:bg-white focus:border-cyan-500 outline-none font-medium transition-all text-sm text-slate-700"
+                required
               />
             </div>
 
-            <button
-              type="submit"
-              className="w-full md:w-auto px-10 py-3 rounded-xl text-white shadow-lg shadow-cyan-500/20 transition-all flex items-center justify-center gap-4 uppercase font-black tracking-widest text-[11px] active:scale-95 hover:brightness-110"
-              style={{ backgroundColor: "#06b5d4" }}
-            >
-              Submit Requisition
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="22" y1="2" x2="11" y2="13"></line>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-              </svg>
-            </button>
-
-          </div>
-        </form>
+            {/* Footer Actions */}
+            <div className="flex flex-col-reverse sm:flex-row gap-3 justify-end items-stretch sm:items-center border-t border-slate-200 pt-6 mt-2">
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg font-bold text-slate-600 hover:text-cyan-600 hover:bg-cyan-50 transition-all text-xs sm:text-sm uppercase tracking-wide border-2 border-slate-200 hover:border-cyan-200"
+                >
+                  Clear Form
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg text-white shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 uppercase font-black tracking-wider text-xs sm:text-sm bg-cyan-500 hover:bg-cyan-600"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="14"
+                    height="14"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                  Submit Requisition
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

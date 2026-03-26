@@ -30,14 +30,6 @@ const SampleInspectionprint = ({ items = [], currentReport, onEditForm, onBack }
   // Determine total rows to render (actual data or minimum padding rows)
   const TOTAL_ROWS = Math.max(MIN_ROWS, inspItems.length);
 
-  // ── Back Navigation Logic ──
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      navigate('/sample-reports'); // Fallback routing if onBack is not passed
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-5">
@@ -48,7 +40,7 @@ const SampleInspectionprint = ({ items = [], currentReport, onEditForm, onBack }
       <div className="print:hidden flex justify-end items-center gap-3 mb-2.5">
         {/* Back Button */}
         <button
-          onClick={handleBack}
+          onClick={() => navigate("/qa-hub")}
           className="bg-[#607d8b] text-white border-none py-2 px-5 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5"
         >
           <i className="bi bi-arrow-left-circle-fill"></i> Back

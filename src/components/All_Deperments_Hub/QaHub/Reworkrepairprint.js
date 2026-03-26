@@ -58,11 +58,6 @@ const Reworkrepairprint = ({ items = [], currentReport, onEditForm, onBack }) =>
   // We assign 30% of total width to Observation columns. Math handles the rest.
   const obsColWidth = (30 / obsCount).toFixed(2);
 
-  const handleBack = () => {
-    if (onBack) onBack();
-    else navigate(-1);
-  };
-
   // ── Common Tailwind Classes for Cells ──
   const TH = 'border border-black font-bold text-center align-middle bg-[#f5f5f5] text-black px-1 py-1 text-[10px] break-words leading-tight';
   const TD = 'border border-black text-center align-middle px-1 py-1 text-black text-[10px] overflow-hidden';
@@ -77,7 +72,7 @@ const Reworkrepairprint = ({ items = [], currentReport, onEditForm, onBack }) =>
       {/* ── Top Bar (Buttons) ── */}
       <div className="flex justify-end items-center gap-3 mb-3 print:hidden">
         <button 
-          onClick={handleBack} 
+          onClick={() => navigate("/qa-hub")}
           className="bg-[#607d8b] hover:bg-[#4d646f] text-white border-none px-5 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors"
         >
           <i className="bi bi-arrow-left-circle-fill"></i> Back

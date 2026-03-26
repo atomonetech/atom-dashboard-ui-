@@ -42,7 +42,7 @@ const BinTrollingprint = ({ currentReport, onEditForm, onBack }) => {
       {/* ── Top Bar (Buttons) ── */}
       <div className="flex justify-end items-center gap-3 mb-3 print:hidden">
         <button 
-          onClick={handleBack} 
+          onClick={() => navigate("/production-hub")}
           className="bg-[#607d8b] hover:bg-[#4d646f] text-white border-none px-5 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors"
         >
           <i className="bi bi-arrow-left-circle-fill"></i> Back

@@ -68,7 +68,7 @@ const ForMChangeInsPrint = ({
     <div className="min-h-screen bg-[#f5f5f5] p-4 text-black flex flex-col items-center">
       {/* ── Top Bar ── */}
       <div className="flex justify-end items-center gap-3 mb-3 print:hidden w-full max-w-[420mm]">
-        <button onClick={() => navigate(-1)} className="bg-[#607d8b] hover:bg-[#4d646f] text-white px-5 py-2 rounded-md font-bold text-sm flex items-center gap-1.5 transition-colors">
+        <button onClick={() => navigate("/production-hub")} className="bg-[#607d8b] hover:bg-[#4d646f] text-white px-5 py-2 rounded-md font-bold text-sm flex items-center gap-1.5 transition-colors">
           <i className="bi bi-arrow-left-circle-fill"></i> Back
         </button>
         {onEditForm && (
@@ -95,13 +95,13 @@ const ForMChangeInsPrint = ({
           {/* ════════════ DYNAMIC COLUMN GROUP ════════════ */}
           <colgroup>
             <col className="w-[3%]" />   {/* 1: Sr No */}
-            <col className="w-[5%]" />   {/* 2: Date */}
+            <col className="w-[4%]" />   {/* 2: Date */}
             <col className="w-[12%]" />  {/* 3: Part Name */}
-            <col className="w-[6%]" />   {/* 4: Operation */}
+            <col className="w-[11%]" />  {/* 4: Operation (Increased from 6%) */}
             <col className="w-[4%]" />   {/* 5: Lot Qty */}
             <col className="w-[4%]" />   {/* 6: Ok Qty */}
             <col className="w-[4%]" />   {/* 7: Rej Qty */}
-            <col className="w-[10%]" />  {/* 8: Parameter */}
+            <col className="w-[15%]" />  {/* 8: Parameter (Increased from 10%) */}
             
             {/* Dynamic Before Cols */}
             {Array.from({ length: beforeCount }).map((_, i) => (
@@ -114,7 +114,7 @@ const ForMChangeInsPrint = ({
             ))}
             
             <col className="w-[7%]" />   {/* Insp By */}
-            <col className="w-[20%]" />  {/* Remarks */}
+            <col className="w-[11%]" />  {/* Remarks (Decreased from 20%) */}
           </colgroup>
 
           <thead className="table-header-group">

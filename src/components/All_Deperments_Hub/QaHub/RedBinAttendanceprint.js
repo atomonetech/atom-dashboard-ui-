@@ -44,11 +44,6 @@ const RedBinAttendanceprint = ({ items = [], currentReport, onFilter, onEditForm
   const totalCols = 3 + daysInMonth;
   const titleColSpan = totalCols - 9; 
 
-  const handleBack = () => {
-    if (onBack) onBack();
-    else navigate(-1);
-  };
-
   const TH = 'border border-black font-bold text-center align-middle bg-[#f5f5f5] text-black px-[1px] py-[2px] text-[9px] break-words leading-tight';
   const TD = 'border border-black text-center align-middle px-[2px] py-[2px] text-black text-[9px] overflow-hidden';
   const InfoLabel = 'border border-black font-bold bg-[#c0c0c0] text-black text-[10px] px-2 py-1 text-left whitespace-nowrap';
@@ -80,7 +75,7 @@ const RedBinAttendanceprint = ({ items = [], currentReport, onFilter, onEditForm
         </div>
 
         <div className="flex items-center gap-3">
-          <button onClick={handleBack} className="bg-[#607d8b] hover:bg-[#4d646f] text-white border-none px-5 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors">
+          <button onClick={() => navigate("/qa-hub")} className="bg-[#607d8b] hover:bg-[#4d646f] text-white border-none px-5 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors">
             <i className="bi bi-arrow-left-circle-fill"></i> Back
           </button>
           {onEditForm && (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const atomone = '/logo1.jpg';
@@ -6,17 +6,80 @@ const atomone = '/logo1.jpg';
 const formatDisplay = (dateStr) => {
   if (!dateStr) return '';
   const parts = String(dateStr).split('-');
-  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  if (parts.length === 3) {
+    if (parts[0].length === 4) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    return `${parts[0]}/${parts[1]}/${parts[2]}`;
+  }
   return dateStr;
 };
 
 const Inspectionprint = ({ items=[], currentReport, onEditForm, onBack }) => {
   const navigate = useNavigate();
+  const filterRef = useRef(null);
 
-  const displayDate = '01/01/2026';
+  // ── FILTER STATES (For Dropdowns) ──
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filterDate, setFilterDate] = useState("");
+  const [filterPartName, setFilterPartName] = useState("All Parts");
+  const [filterOperation, setFilterOperation] = useState("All Operations");
+  const [filterCustomer, setFilterCustomer] = useState("All Customers");
+
+  // ── APPLIED FILTERS (To actually change UI) ──
+  const [appliedDate, setAppliedDate] = useState("");
+  const [appliedPartName, setAppliedPartName] = useState("All Parts");
+  const [appliedOperation, setAppliedOperation] = useState("All Operations");
+  const [appliedCustomer, setAppliedCustomer] = useState("All Customers");
+
+  // Close filter when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterRef.current && !filterRef.current.contains(event.target)) {
+        setIsFilterOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // ── APPLY BUTTON LOGIC ──
+  const handleApplyFilter = () => {
+    setAppliedDate(filterDate);
+    setAppliedPartName(filterPartName);
+    setAppliedOperation(filterOperation);
+    setAppliedCustomer(filterCustomer);
+    setIsFilterOpen(false); 
+  };
+
+  // ── RESET BUTTON LOGIC ──
+  const handleResetFilter = () => {
+    setFilterDate("");
+    setFilterPartName("All Parts");
+    setFilterOperation("All Operations");
+    setFilterCustomer("All Customers");
+
+    setAppliedDate("");
+    setAppliedPartName("All Parts");
+    setAppliedOperation("All Operations");
+    setAppliedCustomer("All Customers");
+    setIsFilterOpen(false);
+  };
+
+  // ── DYNAMIC HEADER DATA BASED ON FILTER ──
+  const displayDate = appliedDate ? formatDisplay(appliedDate) : formatDisplay(currentReport?.date) || 'DD/MM/YYYY';
+  const displayCustomer = appliedCustomer !== "All Customers" ? appliedCustomer : (currentReport?.customer_name || '');
+  const displayPart = appliedPartName !== "All Parts" ? appliedPartName : (currentReport?.part_name || '');
+  const displayOp = appliedOperation !== "All Operations" ? appliedOperation : (currentReport?.operation_name || '');
+
+  // ── FILTERING SCHEDULE ENTRIES BASED ON SELECTED DATE ──
+  const rawScheduleEntries = currentReport?.schedule_entries || [];
+  const scheduleEntries = rawScheduleEntries.filter(entry => {
+    if (appliedDate) {
+      return entry.date === appliedDate || formatDisplay(entry.date) === formatDisplay(appliedDate);
+    }
+    return true; 
+  });
 
   // ── KEEPING YOUR EXACT SCHEDULE LOGIC ──
-  const scheduleEntries = currentReport?.schedule_entries || [];
   const productItems    = items.filter(x=>x.sr_no>=1 &&x.sr_no<=10).sort((a,b)=>a.sr_no-b.sr_no);
   const processItems    = items.filter(x=>x.sr_no>=11&&x.sr_no<=20).sort((a,b)=>a.sr_no-b.sr_no);
   const productCount    = productItems.filter(x=>x.item&&x.item.trim()!=='').length;
@@ -80,23 +143,12 @@ const Inspectionprint = ({ items=[], currentReport, onEditForm, onBack }) => {
 
   const colPct = `${(75/Math.max(totalFilledCols,1)).toFixed(2)}%`;
 
-  // Common Tailwind Classes
   const TD = "border border-black text-center align-middle overflow-hidden";
   const TH = "border border-black text-center align-middle font-bold bg-[#f5f5f5]";
-
-  // ── Back Navigation Logic ──
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      navigate('/selection'); // Fallback routing if onBack is not passed
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] p-5 font-sans text-black">
       
-      {/* ── Print Styles ── */}
       <style>{`
         @media print {
           @page { size: A4 landscape; margin: 6mm; }
@@ -111,35 +163,137 @@ const Inspectionprint = ({ items=[], currentReport, onEditForm, onBack }) => {
         }
       `}</style>
 
-      {/* ── Top Bar ── */}
+      {/* ── Top Bar (Buttons & Filter) ── */}
       <div className="flex justify-end items-center gap-3 mb-3 print:hidden">
-        <button onClick={handleBack} className="bg-[#607d8b] hover:bg-[#4d646f] text-white border-none px-5 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors">
+        <button onClick={() => navigate("/qa-hub")} className="bg-[#607d8b] hover:bg-[#4d646f] text-white border-none px-4 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors shadow-sm">
           <i className="bi bi-arrow-left-circle-fill"></i> Back
         </button>
 
-        {currentReport?.customer_name && (
-          <>
-            <button onClick={()=>{ if(onEditForm) onEditForm(); navigate('/form?mode=edit'); }} className="bg-[#ff9800] hover:bg-[#e68a00] text-white border-none px-5 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors">
-              <i className="bi bi-pencil-square"></i> Edit
-            </button>
-            <button onClick={() => window.print()} className="bg-[#4CAF50] hover:bg-[#43a047] text-white border-none px-5 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors">
-              <i className="bi bi-printer-fill"></i> Print
-            </button>
-          </>
+        <div className="relative" ref={filterRef}>
+          <button 
+            onClick={() => setIsFilterOpen(!isFilterOpen)} 
+            className="bg-[#3b5998] hover:bg-[#2d4373] text-white border-none px-4 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors shadow-sm"
+          >
+            <i className="bi bi-funnel-fill"></i> Filter
+          </button>
+
+          {isFilterOpen && (
+            <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+              
+              <div className="flex justify-between items-center border-b p-3">
+                <h3 className="text-[#3b5998] font-bold text-sm flex items-center gap-2 m-0">
+                  <i className="bi bi-funnel-fill"></i> Filter Reports
+                </h3>
+                <button 
+                  onClick={() => setIsFilterOpen(false)} 
+                  className="text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer"
+                >
+                  <i className="bi bi-x-lg"></i>
+                </button>
+              </div>
+
+              <div className="p-4 flex flex-col gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 flex items-center gap-2 mb-1 tracking-wide">
+                    <i className="bi bi-calendar3"></i> DATE
+                  </label>
+                  <input 
+                    type="date" 
+                    value={filterDate} 
+                    onChange={(e) => setFilterDate(e.target.value)} 
+                    className="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:border-[#3b5998] text-gray-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-500 flex items-center gap-2 mb-1 tracking-wide">
+                    <i className="bi bi-gear-fill"></i> PART NAME
+                  </label>
+                  <select 
+                    value={filterPartName} 
+                    onChange={(e) => setFilterPartName(e.target.value)} 
+                    className="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:border-[#3b5998] text-gray-700"
+                  >
+                    <option value="All Parts">All Parts</option>
+                    <option value="Part A">Part A</option>
+                    <option value="Part B">Part B</option>
+                    {currentReport?.part_name && <option value={currentReport.part_name}>{currentReport.part_name}</option>}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-500 flex items-center gap-2 mb-1 tracking-wide">
+                    <i className="bi bi-scissors"></i> OPERATION
+                  </label>
+                  <select 
+                    value={filterOperation} 
+                    onChange={(e) => setFilterOperation(e.target.value)} 
+                    className="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:border-[#3b5998] text-gray-700"
+                  >
+                    <option value="All Operations">All Operations</option>
+                    <option value="Cutting">Cutting</option>
+                    <option value="Bending">Bending</option>
+                    {currentReport?.operation_name && <option value={currentReport.operation_name}>{currentReport.operation_name}</option>}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-500 flex items-center gap-2 mb-1 tracking-wide">
+                    <i className="bi bi-building"></i> CUSTOMER
+                  </label>
+                  <select 
+                    value={filterCustomer} 
+                    onChange={(e) => setFilterCustomer(e.target.value)} 
+                    className="w-full border border-gray-300 rounded p-2 text-sm focus:outline-none focus:border-[#3b5998] text-gray-700"
+                  >
+                    <option value="All Customers">All Customers</option>
+                    <option value="Customer X">Customer X</option>
+                    <option value="Customer Y">Customer Y</option>
+                    {currentReport?.customer_name && <option value={currentReport.customer_name}>{currentReport.customer_name}</option>}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex gap-2 p-3 bg-white rounded-b-lg border-t border-gray-100">
+                <button 
+                  onClick={handleApplyFilter} 
+                  className="flex-1 bg-[#4285F4] hover:bg-[#3367D6] text-white py-2 rounded text-sm font-bold flex justify-center items-center gap-2 transition-colors border-none cursor-pointer"
+                >
+                  <i className="bi bi-check-circle-fill"></i> Apply
+                </button>
+                <button 
+                  onClick={handleResetFilter} 
+                  className="flex-1 bg-white border border-[#ff4d4f] text-[#ff4d4f] hover:bg-red-50 py-2 rounded text-sm font-bold flex justify-center items-center gap-2 transition-colors cursor-pointer"
+                >
+                  <i className="bi bi-arrow-counterclockwise"></i> Reset
+                </button>
+              </div>
+
+            </div>
+          )}
+        </div>
+
+        {/* ── Edit Button (Visible if onEditForm prop is passed) ── */}
+        {onEditForm && (
+          <button onClick={()=>{ onEditForm(); navigate('/form?mode=edit'); }} className="bg-[#ff9800] hover:bg-[#e68a00] text-white border-none px-4 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors shadow-sm">
+            <i className="bi bi-pencil-square"></i> Edit
+          </button>
         )}
+
+        {/* ── Print Button (Always Visible Now) ── */}
+        <button onClick={() => window.print()} className="bg-[#4CAF50] hover:bg-[#43a047] text-white border-none px-4 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors shadow-sm">
+          <i className="bi bi-printer-fill"></i> Print
+        </button>
+        
       </div>
 
-      {/* ── Main A4 Print Container ── */}
       <div className="bg-white mx-auto w-full min-h-[210mm] box-border p-5 md:p-[10mm] shadow-lg print:w-full print:h-auto print:min-h-0 print:p-0 print:m-0 print:shadow-none print:block">
         
-        {/* ── MASTER TABLE WRAPPER ── */}
         <table className="w-full border-none border-collapse border border-black">
           
-          {/* ════════════ THEAD ════════════ */}
           <thead className="table-header-group">
             <tr>
               <td className="p-0">
-                {/* HEADER - Uniform border */}
                 <table className="w-full border-collapse border border-b-0 border-black">
                   <tbody><tr>
                     <td className="w-[120px] p-1.5 text-center border-r border-black align-middle bg-white">
@@ -160,25 +314,24 @@ const Inspectionprint = ({ items=[], currentReport, onEditForm, onBack }) => {
                         </tr>
                         <tr>
                           <td className="font-bold w-[95px] border-r border-r-black px-2 py-1 text-[11px] h-[24px] text-left print-text-sm print:h-[21px]">DATE:</td>
-                          <td className="font-semibold text-[13px] px-2 py-1 h-[24px] text-left print-text-lg print:h-[21px]">{displayDate||'DD/MM/YYYY'}</td>
+                          <td className="font-semibold text-[13px] px-2 py-1 h-[24px] text-left print-text-lg print:h-[21px]">{displayDate}</td>
                         </tr>
                       </tbody></table>
                     </td>
                   </tr></tbody>
                 </table>
 
-                {/* FLEET INFO - Uniform border */}
                 <table className="w-full border-collapse border border-black">
                   <tbody>
                     <tr>
                       <td className="bg-[#f5f5f5] text-[11px] font-bold uppercase w-[13%] px-2.5 h-[32px] border border-black text-center align-middle print-text-sm print:h-[26px]">CUSTOMER NAME</td>
-                      <td className="w-[37%] text-[12px] font-semibold text-left pl-2.5 px-2.5 h-[32px] border border-black align-middle print-text-lg print:h-[26px] bg-white">{currentReport?.customer_name||''}</td>
+                      <td className="w-[37%] text-[12px] font-semibold text-left pl-2.5 px-2.5 h-[32px] border border-black align-middle print-text-lg print:h-[26px] bg-white">{displayCustomer}</td>
                       <td className="bg-[#f5f5f5] text-[11px] font-bold uppercase w-[13%] px-2.5 h-[32px] border border-black text-center align-middle print-text-sm print:h-[26px]">PART NAME</td>
-                      <td className="w-[37%] text-[12px] font-semibold text-left pl-2.5 px-2.5 h-[32px] border border-black align-middle print-text-lg print:h-[26px] bg-white">{currentReport?.part_name||''}</td>
+                      <td className="w-[37%] text-[12px] font-semibold text-left pl-2.5 px-2.5 h-[32px] border border-black align-middle print-text-lg print:h-[26px] bg-white">{displayPart}</td>
                     </tr>
                     <tr>
                       <td className="bg-[#f5f5f5] text-[11px] font-bold uppercase w-[13%] px-2.5 h-[32px] border border-black text-center align-middle print-text-sm print:h-[26px]">OPERATION NAME</td>
-                      <td className="w-[37%] text-[12px] font-semibold text-left pl-2.5 px-2.5 h-[32px] border border-black align-middle print-text-lg print:h-[26px] bg-white">{currentReport?.operation_name||''}</td>
+                      <td className="w-[37%] text-[12px] font-semibold text-left pl-2.5 px-2.5 h-[32px] border border-black align-middle print-text-lg print:h-[26px] bg-white">{displayOp}</td>
                       <td className="bg-[#f5f5f5] text-[11px] font-bold uppercase w-[13%] px-2.5 h-[32px] border border-black text-center align-middle print-text-sm print:h-[26px]">PART NUMBER</td>
                       <td className="w-[37%] text-[12px] font-semibold text-left pl-2.5 px-2.5 h-[32px] border border-black align-middle print-text-lg print:h-[26px] bg-white">{currentReport?.part_number||''}</td>
                     </tr>
@@ -188,11 +341,9 @@ const Inspectionprint = ({ items=[], currentReport, onEditForm, onBack }) => {
             </tr>
           </thead>
 
-          {/* ════════════ TBODY (Main Data) ════════════ */}
           <tbody>
             <tr>
               <td className="p-0 align-top">
-                {/* INSPECTION TABLE - Uniform border */}
                 <table className="w-full border-collapse border border-t-0 border-b-0 border-black table-fixed" style={{height:`${inspTotalH}px`}}>
                   <thead>
                     <tr style={{height:`${INSP_THEAD}px`}}>
@@ -234,7 +385,6 @@ const Inspectionprint = ({ items=[], currentReport, onEditForm, onBack }) => {
                   </tbody>
                 </table>
 
-                {/* SCHEDULE TABLE - Uniform border */}
                 <table className="w-full border-collapse border border-black table-fixed">
                   <colgroup>
                     <col style={{width:'2%'}}/>
@@ -303,11 +453,9 @@ const Inspectionprint = ({ items=[], currentReport, onEditForm, onBack }) => {
             </tr>
           </tbody>
 
-          {/* ════════════ TFOOT ════════════ */}
           <tfoot className="table-footer-group">
             <tr>
               <td className="p-0 h-[40px]">
-                {/* SIGNATURES TABLE - Uniform border */}
                 <table className="w-full border-collapse border border-t-0 border-black bg-white">
                   <tbody>
                     <tr>
@@ -334,7 +482,7 @@ const Inspectionprint = ({ items=[], currentReport, onEditForm, onBack }) => {
             </tr>
           </tfoot>
 
-        </table>
+        </table >
       </div>
     </div>
   );

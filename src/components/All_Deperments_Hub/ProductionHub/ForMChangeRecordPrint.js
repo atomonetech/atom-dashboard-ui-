@@ -28,22 +28,14 @@ const defaultStatusData = {
   METHOD: { 20: 'CHANGE' },
 };
 
-// Generating rows for the lower detail table
-const defaultDetailRows = Array.from({ length: 12 }).map((_, i) => ({
-  id: i, date: '', time: '', mcNo: '', changeDesc: '', nature: '', action: '',
-  partName: '', opNo: '', 
-  retroQtyChk: '', retroQtyOk: '', retroRw: '',
-  contQtyChk: '', contQtyOk: '', contRw: '',
-  sigQa: '', sigProd: '', sigPlant: '',
-  remarks: ''
-}));
-
+// Default empty array for backend data
+const defaultDetailRows = []; 
 
 const ForMChangeRecordPrint = ({ 
   month = defaultMonth, 
   year = defaultYear, 
   statusData = defaultStatusData,
-  detailData = defaultDetailRows,
+  detailData = defaultDetailRows, 
   onEditForm 
 }) => {
   const navigate = useNavigate();
@@ -60,8 +52,8 @@ const ForMChangeRecordPrint = ({
 
   // ── Common Tailwind Classes ──
   const TH = 'border border-black font-bold text-center align-middle bg-white text-black px-1 py-1 text-[10px] leading-tight';
-  const TDLOWER = 'border border-black text-center align-middle bg-white px-0.5 py-0 text-black text-[10px]';
-  const V_TEXT = '[writing-mode:vertical-rl] transform rotate-180 text-center mx-auto whitespace-nowrap py-1';
+  const TDLOWER = 'border border-black text-center align-middle bg-white px-0 py-0 text-black text-[10px] h-[18px] print:h-[5.5mm]'; // Added default height directly to TD
+  const V_TEXT = '[writing-mode:vertical-rl] transform rotate-180 text-center mx-auto whitespace-nowrap py-0.5';
 
   // Helper to render the colored/empty circle inside a cell
   const renderCircleCell = (category, day) => {
@@ -71,18 +63,30 @@ const ForMChangeRecordPrint = ({
     return (
       <td key={`${category}-${day}`} className="border border-black text-center align-middle p-0">
         <div className="w-full h-full flex items-center justify-center">
-          <div className={`w-[22px] h-[22px] rounded-full border-[1.5px] ${circleColorClass}`}></div>
+          <div className={`w-[28px] h-[28px] print:w-[32px] print:h-[32px] rounded-full border-[2px] ${circleColorClass}`}></div>
         </div>
       </td>
     );
   };
+
+  // Logic to ensure table structure remains by padding with empty rows
+  const MIN_ROWS = 6; // Hamesha kam se kam 6 rows dikhengi
+  const tableDataToRender = [...(detailData || [])];
+  
+  while (tableDataToRender.length < MIN_ROWS) {
+    tableDataToRender.push({
+      date: '', time: '', mcNo: '', changeDesc: '', nature: '', action: '',
+      partName: '', opNo: '', retroQtyChk: '', retroQtyOk: '', retroRw: '',
+      contQtyChk: '', contQtyOk: '', contRw: '', sigQa: '', sigProd: '', sigPlant: '', remarks: ''
+    });
+  }
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] p-4 text-black flex flex-col items-center">
       
       {/* ── Top Bar (Buttons) ── */}
       <div className="flex justify-end items-center gap-3 mb-3 print:hidden w-full max-w-[420mm]">
-        <button onClick={() => navigate(-1)} className="bg-[#607d8b] hover:bg-[#4d646f] text-white px-5 py-2 rounded-md font-bold text-sm flex items-center gap-1.5 transition-colors">
+        <button onClick={() => navigate("/production-hub")} className="bg-[#607d8b] hover:bg-[#4d646f] text-white px-5 py-2 rounded-md font-bold text-sm flex items-center gap-1.5 transition-colors">
           <i className="bi bi-arrow-left-circle-fill"></i> Back
         </button>
         {onEditForm && (
@@ -134,12 +138,12 @@ const ForMChangeRecordPrint = ({
           {/* ================= UPPER TABLE (BIGGER) ================= */}
           <table className="w-full border-collapse table-fixed border-b-[2px] border-b-black flex-shrink-0">
             <colgroup>
-              <col className="w-[3%]" />  {/* S.No */}
-              <col className="w-[10%]" /> {/* Category */}
+              <col className="w-[3%]" />
+              <col className="w-[10%]" />
               {daysArray.map(d => (
                  <col key={`col-day-${d}`} style={{ width: `${72 / daysInMonth}%` }} />
               ))}
-              <col className="w-[15%]" /> {/* Legend */}
+              <col className="w-[15%]" />
             </colgroup>
             <tbody>
               <tr className="h-[30px]">
@@ -154,43 +158,43 @@ const ForMChangeRecordPrint = ({
                 ))}
               </tr>
 
-              <tr className="h-[60px]">
+              <tr className="h-[90px] print:h-[24mm]">
                 <td className={`${TH} font-bold text-[14px]`}>1</td>
                 <td className={`${TH} font-bold text-[14px]`}>MAN</td>
                 {daysArray.map(day => renderCircleCell('MAN', day))}
                 <td className={`${TH} text-left px-5`}>
                   <div className="flex items-center justify-between w-[80%] mx-auto">
                     <span className="font-bold text-[12px]">NO CHANGE</span>
-                    <div className="w-[20px] h-[20px] rounded-full border-[1.5px] border-[#00b050] bg-[#00b050]"></div>
+                    <div className="w-[24px] h-[24px] rounded-full border-[2px] border-[#00b050] bg-[#00b050]"></div>
                   </div>
                 </td>
               </tr>
 
-              <tr className="h-[60px]">
+              <tr className="h-[90px] print:h-[24mm]">
                 <td className={`${TH} font-bold text-[14px]`}>2</td>
                 <td className={`${TH} font-bold text-[14px]`}>MACHINE</td>
                 {daysArray.map(day => renderCircleCell('MACHINE', day))}
                 <td className={`${TH} text-left px-5`}>
                   <div className="flex items-center justify-between w-[80%] mx-auto">
                     <span className="font-bold text-[12px]">CHANGE</span>
-                    <div className="w-[20px] h-[20px] rounded-full border-[1.5px] border-[#ff3333] bg-[#ff3333]"></div>
+                    <div className="w-[24px] h-[24px] rounded-full border-[2px] border-[#ff3333] bg-[#ff3333]"></div>
                   </div>
                 </td>
               </tr>
 
-              <tr className="h-[60px]">
+              <tr className="h-[90px] print:h-[24mm]">
                 <td className={`${TH} font-bold text-[14px]`}>3</td>
                 <td className={`${TH} font-bold text-[14px]`}>MATERIAL</td>
                 {daysArray.map(day => renderCircleCell('MATERIAL', day))}
                 <td className={`${TH} text-left px-5`}>
                   <div className="flex items-center justify-between w-[80%] mx-auto">
                     <span className="font-bold text-[12px]">NO PLAN</span>
-                    <div className="w-[20px] h-[20px] rounded-full border-[1.5px] border-black bg-white"></div>
+                    <div className="w-[24px] h-[24px] rounded-full border-[2px] border-black bg-white"></div>
                   </div>
                 </td>
               </tr>
 
-              <tr className="h-[60px]">
+              <tr className="h-[90px] print:h-[24mm]">
                 <td className={`${TH} font-bold text-[14px]`}>4</td>
                 <td className={`${TH} font-bold text-[14px]`}>METHOD</td>
                 {daysArray.map(day => renderCircleCell('METHOD', day))}
@@ -221,7 +225,7 @@ const ForMChangeRecordPrint = ({
             </colgroup>
             
             <thead className="table-header-group">
-              <tr className="h-[20px]">
+              <tr className="h-[18px]">
                 <th rowSpan={2} className={TH}>Date</th>
                 <th rowSpan={2} className={TH}>Time</th>
                 <th rowSpan={2} className={TH}>M/c No.</th>
@@ -237,7 +241,7 @@ const ForMChangeRecordPrint = ({
                 <th rowSpan={2} className={TH}><div className={V_TEXT}>Sig Plant</div></th>
                 <th rowSpan={2} className={TH}>Remarks</th>
               </tr>
-              <tr className="h-[20px]">
+              <tr className="h-[18px]">
                 <th className={TH}><div className={V_TEXT}>Qty Chk</div></th>
                 <th className={TH}><div className={V_TEXT}>Qty Ok</div></th>
                 <th className={TH}><div className={V_TEXT}>R/W</div></th>
@@ -248,26 +252,27 @@ const ForMChangeRecordPrint = ({
             </thead>
             
             <tbody>
-              {detailData.map((row, i) => (
-                <tr key={i} className="h-[22px] print:h-[6.5mm]">
-                  <td className={TDLOWER}>{row.date}</td>
-                  <td className={TDLOWER}>{row.time}</td>
-                  <td className={TDLOWER}>{row.mcNo}</td>
-                  <td className={`${TDLOWER} text-left px-1`}>{row.changeDesc}</td>
-                  <td className={`${TDLOWER} text-left px-1`}>{row.nature}</td>
-                  <td className={`${TDLOWER} text-left px-1`}>{row.action}</td>
-                  <td className={TDLOWER}>{row.partName}</td>
-                  <td className={TDLOWER}>{row.opNo}</td>
-                  <td className={TDLOWER}>{row.retroQtyChk}</td>
-                  <td className={TDLOWER}>{row.retroQtyOk}</td>
-                  <td className={TDLOWER}>{row.retroRw}</td>
-                  <td className={TDLOWER}>{row.contQtyChk}</td>
-                  <td className={TDLOWER}>{row.contQtyOk}</td>
-                  <td className={TDLOWER}>{row.contRw}</td>
-                  <td className={TDLOWER}>{row.sigQa}</td>
-                  <td className={TDLOWER}>{row.sigProd}</td>
-                  <td className={TDLOWER}>{row.sigPlant}</td>
-                  <td className={TDLOWER}>{row.remarks}</td>
+              {/* Data dynamically render hoga, aur empty items pad ho jayenge */}
+              {tableDataToRender.map((row, i) => (
+                <tr key={i}>
+                  <td className={TDLOWER}>{row.date || '\u00A0'}</td>
+                  <td className={TDLOWER}>{row.time || '\u00A0'}</td>
+                  <td className={TDLOWER}>{row.mcNo || '\u00A0'}</td>
+                  <td className={`${TDLOWER} text-left px-1`}>{row.changeDesc || '\u00A0'}</td>
+                  <td className={`${TDLOWER} text-left px-1`}>{row.nature || '\u00A0'}</td>
+                  <td className={`${TDLOWER} text-left px-1`}>{row.action || '\u00A0'}</td>
+                  <td className={TDLOWER}>{row.partName || '\u00A0'}</td>
+                  <td className={TDLOWER}>{row.opNo || '\u00A0'}</td>
+                  <td className={TDLOWER}>{row.retroQtyChk || '\u00A0'}</td>
+                  <td className={TDLOWER}>{row.retroQtyOk || '\u00A0'}</td>
+                  <td className={TDLOWER}>{row.retroRw || '\u00A0'}</td>
+                  <td className={TDLOWER}>{row.contQtyChk || '\u00A0'}</td>
+                  <td className={TDLOWER}>{row.contQtyOk || '\u00A0'}</td>
+                  <td className={TDLOWER}>{row.contRw || '\u00A0'}</td>
+                  <td className={TDLOWER}>{row.sigQa || '\u00A0'}</td>
+                  <td className={TDLOWER}>{row.sigProd || '\u00A0'}</td>
+                  <td className={TDLOWER}>{row.sigPlant || '\u00A0'}</td>
+                  <td className={TDLOWER}>{row.remarks || '\u00A0'}</td>
                 </tr>
               ))}
             </tbody>

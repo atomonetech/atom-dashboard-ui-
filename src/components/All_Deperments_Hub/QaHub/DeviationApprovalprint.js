@@ -36,13 +36,13 @@ const DeviationApprovalprint = ({
   const rowData = rows.length > 0 ? rows : DEFAULT_ROWS;
 
   // ── Back Navigation Logic ──
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      navigate(-1); // Fallback routing if onBack is not passed
-    }
-  };
+  // const handleBack = () => {
+  //   if (onBack) {
+  //     onBack();
+  //   } else {
+  //     navigate(-1); // Fallback routing if onBack is not passed
+  //   }
+  // };
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
@@ -50,7 +50,7 @@ const DeviationApprovalprint = ({
       {/* ── Buttons (Hidden on Print) ── */}
       <div className="print:hidden flex justify-end items-center gap-3 mb-2.5">
         <button
-          onClick={handleBack}
+          onClick={()=>navigate('/qa-hub')}
           className="bg-[#607d8b] text-white border-none py-2 px-5 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5"
         >
           <i className="bi bi-arrow-left-circle-fill"></i> Back

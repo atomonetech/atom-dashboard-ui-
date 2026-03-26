@@ -21,7 +21,8 @@ import {
   Wrench,
   ClipboardCheck,
   Package,
-  Users
+  Users,
+  History
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -97,6 +98,7 @@ export default function Sidebar({ onLogout }) {
     { label: 'Production Hub', icon: Package, path: '/production-hub', color: 'indigo', badge: null },
     { label: 'Hiring & Departments', icon: Users, path: '/hiring-departments', color: 'cyan', badge: null },
     { label: 'Attendance', icon: CalendarCheck, path: '/attendance', color: 'indigo', badge: null },
+    {label:'Production History', icon:History, path:'/Production-history', color:'indigo', badge:null }
   ];
 
   const bottomMenuItems = [
