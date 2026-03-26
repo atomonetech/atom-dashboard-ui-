@@ -1,11 +1,4 @@
-// ============================================================
-//  RedBin_Attendance.js
-//  Red Bin Attendance Sheet — Landscape A4
-//  DOC.NO. AOT-F-QC-05
-//  Logic: Days change automatically based on selected month/year
-//  CSS: Fully inlined — no external CSS file needed
-//  FIX: color: '#000' added to all styles to prevent dark mode override
-// ============================================================
+
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -29,274 +22,14 @@ const MONTH_NAMES = [
 
 const MIN_ROWS = 12;
 
-const S = {
-  container: {
-    padding: '20px',
-    backgroundColor: '#f5f5f5',
-    minHeight: '100vh',
-    color: '#000',
-  },
-  report: {
-    background: 'white',
-    color: '#000',
-    maxWidth: '1500px',
-    margin: '0 auto',
-    padding: '20px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2px',
-  },
-  topBar: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    gap: '12px',
-    marginBottom: '10px',
-  },
-  selectorBox: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    background: '#fff',
-    padding: '6px 14px',
-    borderRadius: '8px',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
-  },
-  calIcon: { color: '#1976d2', fontSize: '16px' },
-  select: {
-    border: '1px solid #ccc',
-    borderRadius: '5px',
-    padding: '4px 8px',
-    fontSize: '13px',
-    fontWeight: '600',
-    color: '#1976d2',
-    cursor: 'pointer',
-  },
-  daysLabel: { fontSize: '12px', color: '#666', fontWeight: '600' },
-  btnBack: {
-    background: '#607d8b', color: '#fff', border: 'none',
-    padding: '8px 20px', borderRadius: '6px', fontWeight: 'bold',
-    cursor: 'pointer', fontSize: '14px', display: 'flex',
-    alignItems: 'center', gap: '6px',
-  },
-  btnEdit: {
-    background: '#ff9800', color: '#fff', border: 'none',
-    padding: '8px 20px', borderRadius: '6px', fontWeight: 'bold',
-    cursor: 'pointer', fontSize: '14px', display: 'flex',
-    alignItems: 'center', gap: '6px',
-  },
-  btnPrint: {
-    background: '#4CAF50', color: '#fff', border: 'none',
-    padding: '8px 20px', borderRadius: '6px', fontWeight: 'bold',
-    cursor: 'pointer', fontSize: '14px', display: 'flex',
-    alignItems: 'center', gap: '6px',
-  },
-  headerTable: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    border: '1px solid #000',
-  },
-  logoCell: {
-    width: '120px',
-    padding: '6px',
-    textAlign: 'center',
-    border: '0.1px solid #000',
-    borderRight: '1px solid black',
-    verticalAlign: 'middle',
-    backgroundColor: '#fff',
-  },
-  logoImage: {
-    maxWidth: '100%',
-    maxHeight: '50px',
-    objectFit: 'contain',
-  },
-  titleCell: {
-    color: '#000',
-    fontWeight: 'bold',
-    fontSize: '20px',
-    padding: '0 12px',
-    letterSpacing: '1.5px',
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    border: '0.1px solid #000',
-    verticalAlign: 'middle',
-    backgroundColor: '#fff',
-  },
-  docInfoCell: {
-    width: '200px',
-    padding: '0',
-    border: '0.1px solid #000',
-    borderLeft: '1px solid black',
-    verticalAlign: 'middle',
-    backgroundColor: '#fff',
-  },
-  docInfoInnerTable: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    border: 'none',
-  },
-  docInfoTd: {
-    color: '#000',
-    border: 'none',
-    borderBottom: '1px solid black',
-    padding: '4px 8px',
-    fontSize: '10px',
-    height: '22px',
-    textAlign: 'left',
-    verticalAlign: 'middle',
-    backgroundColor: '#fff',
-  },
-  docInfoTdLast: {
-    color: '#000',
-    border: 'none',
-    padding: '4px 8px',
-    fontSize: '10px',
-    height: '22px',
-    textAlign: 'left',
-    verticalAlign: 'middle',
-    backgroundColor: '#fff',
-  },
-  docLabel: {
-    color: '#000',
-    fontWeight: 'bold',
-    width: '65px',
-    borderRight: '1px solid black',
-    backgroundColor: '#c0c0c0',
-    fontSize: '10px',
-  },
-  docValue: {
-    color: '#000',
-    fontSize: '11px',
-    fontWeight: '600',
-    backgroundColor: '#fff',
-  },
-  attTable: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    border: '1px solid black',
-    tableLayout: 'fixed',
-  },
-  attTh: {
-    color: '#000',
-    backgroundColor: '#f5f5f5',
-    fontWeight: 'bold',
-    fontSize: '11px',
-    padding: '4px 2px',
-    height: '32px',
-    whiteSpace: 'normal',
-    wordBreak: 'break-word',
-    lineHeight: '1.2',
-    border: '0.1px solid #000',
-    textAlign: 'center',
-    verticalAlign: 'middle',
-  },
-  attTd: {
-    color: '#000',
-    fontSize: '10px',
-    padding: '2px',
-    height: '30px',
-    border: '0.1px solid #000',
-    textAlign: 'center',
-    verticalAlign: 'middle',
-    overflow: 'hidden',
-    backgroundColor: '#fff',
-  },
-  attTdEven: {
-    color: '#000',
-    fontSize: '10px',
-    padding: '2px',
-    height: '30px',
-    border: '0.1px solid #000',
-    textAlign: 'center',
-    verticalAlign: 'middle',
-    overflow: 'hidden',
-    backgroundColor: '#fafafa',
-  },
-  legend: {
-    color: '#000',
-    backgroundColor: '#fff',
-    border: '1px solid black',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '6px 30px',
-    fontSize: '12px',
-    fontWeight: 'bold',
-    minHeight: '34px',
-  },
-  footer: {
-    border: '1px solid black',
-    display: 'flex',
-    alignItems: 'stretch',
-    minHeight: '50px',
-    backgroundColor: '#fff',
-  },
-  remarksLabel: {
-    color: '#000',
-    backgroundColor: '#fff',
-    width: '140px',
-    borderRight: '1px solid black',
-    padding: '8px 12px',
-    fontSize: '12px',
-    fontWeight: 'bold',
-    display: 'flex',
-    alignItems: 'center',
-  },
-  remarksValue: {
-    color: '#000',
-    backgroundColor: '#fff',
-    flex: '1',
-    padding: '8px 12px',
-    fontSize: '11px',
-  },
-};
-
-const PRINT_CSS = `
-  @page { size: A4 landscape; margin: 6mm; }
-  * { margin:0; padding:0; box-sizing:border-box; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
-  html, body { width:297mm; height:210mm; overflow:hidden; background:white; color:#000; }
-  table { width:100%; border-collapse:collapse; border-spacing:0; }
-  td, th { border:1px solid black; text-align:center; vertical-align:middle; overflow:hidden; color:#000; }
-  .rb-container { padding:0 !important; background:white !important; color:#000 !important; }
-  .rb-report {
-    display:flex !important; flex-direction:column !important;
-    width:285mm !important; height:198mm !important;
-    padding:0 !important; margin:0 auto !important;
-    gap:2px !important; box-shadow:none !important;
-    overflow:hidden !important; background:white !important;
-    color:#000 !important;
-  }
-  .rb-header-table { border:2px solid black; flex:0 0 auto; }
-  .rb-logo-cell { width:110px; padding:4px 6px; border-right:2px solid black; text-align:center; background:white; }
-  .rb-logo-image { max-width:100%; max-height:40px; object-fit:contain; }
-  .rb-title-cell { font-weight:bold; font-size:15px; letter-spacing:1.5px; text-transform:uppercase; color:#000 !important; background:white; }
-  .rb-doc-info-cell { width:200px; padding:0; border-left:2px solid black; background:white; }
-  .rb-doc-info-cell table { border:none; }
-  .rb-doc-info-cell table td { border:none; border-bottom:1px solid black; padding:0 6px; font-size:8px; height:20px; text-align:left; color:#000 !important; background:white; }
-  .rb-doc-info-cell table tr:last-child td { border-bottom:none; }
-  .rb-doc-label { font-weight:bold; width:60px; border-right:1px solid black !important; background:#c0c0c0 !important; font-size:8px; color:#000 !important; }
-  .rb-doc-value { font-size:9px; font-weight:600; color:#000 !important; background:white; }
-  .rb-att-table { border:2px solid black; table-layout:fixed; flex:1 1 auto; }
-  .rb-att-table th { background:#f5f5f5 !important; font-weight:bold; font-size:7.5px; padding:1px 1px; height:26px; white-space:normal; word-break:break-word; line-height:1.1; color:#000 !important; }
-  .rb-att-table td { font-size:8px; padding:0 1px; overflow:hidden; height:26px; color:#000 !important; background:white; }
-  .rb-att-table tbody tr:nth-child(even) td { background:#fafafa !important; color:#000 !important; }
-  .rb-legend { border:2px solid black; flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; padding:4px 20px; font-size:9px; font-weight:bold; color:#000 !important; background:white; }
-  .rb-footer { flex:0 0 auto; border:2px solid black; display:flex; align-items:stretch; background:white; }
-  .rb-remarks-label { width:130px; border-right:1px solid black; padding:6px 10px; font-size:10px; font-weight:bold; display:flex; align-items:center; color:#000 !important; background:white; }
-  .rb-remarks-value { flex:1; padding:6px 10px; font-size:10px; color:#000 !important; background:white; }
-`;
-
-// ══════════════════════════════════════
-// COMPONENT
-// ══════════════════════════════════════
 const RedBinAttendanceprint = ({ items = [], currentReport, onFilter, onEditForm, onBack }) => {
   const navigate = useNavigate();
 
   const today = new Date();
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
   const [selectedYear,  setSelectedYear]  = useState(today.getFullYear());
-  const [remarks,       setRemarks]       = useState(currentReport?.remarks || '');
+  
+  const remarks = currentReport?.remarks || '';
 
   const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
   const dayColumns  = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -304,154 +37,125 @@ const RedBinAttendanceprint = ({ items = [], currentReport, onFilter, onEditForm
   const empItems = items
     .filter(x => x.sr_no >= 1)
     .sort((a, b) => a.sr_no - b.sr_no);
+    
   const TOTAL_ROWS = Math.max(MIN_ROWS, empItems.length);
-
-  const HEADER_H  = 64;
-  const THEAD_H   = 32;
-  const LEGEND_H  = 32;
-  const FOOTER_H  = 52;
-  const GAPS      = 10;
-  const PAGE_H_PX = 762;
-  const rowH = Math.max(28, Math.floor((PAGE_H_PX - HEADER_H - THEAD_H - LEGEND_H - FOOTER_H - GAPS) / TOTAL_ROWS));
-
   const yearOptions = Array.from({ length: 11 }, (_, i) => today.getFullYear() - 5 + i);
 
-  const handlePrint = () => {
-    const reportEl = document.getElementById('redbin-print-area');
-    if (!reportEl) return;
-    const printWindow = window.open('', '_blank', 'width=1200,height=800');
-    printWindow.document.write(`
-      <!DOCTYPE html><html>
-      <head>
-        <meta charset="utf-8"/>
-        <title>Red Bin Attendance Sheet</title>
-        <style>${PRINT_CSS}</style>
-      </head>
-      <body>
-        ${reportEl.outerHTML}
-        <script>
-          window.onload = function() {
-            setTimeout(function() { window.print(); setTimeout(function() { window.close(); }, 500); }, 300);
-          };
-        <\/script>
-      </body></html>
-    `);
-    printWindow.document.close();
-  };
+  const totalCols = 3 + daysInMonth;
+  const titleColSpan = totalCols - 9; 
 
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      navigate(-1);
-    }
-  };
+  const TH = 'border border-black font-bold text-center align-middle bg-[#f5f5f5] text-black px-[1px] py-[2px] text-[9px] break-words leading-tight';
+  const TD = 'border border-black text-center align-middle px-[2px] py-[2px] text-black text-[9px] overflow-hidden';
+  const InfoLabel = 'border border-black font-bold bg-[#c0c0c0] text-black text-[10px] px-2 py-1 text-left whitespace-nowrap';
+  const InfoValue = 'border border-black font-semibold bg-white text-black text-[10px] px-2 py-1 text-left whitespace-nowrap';
 
   return (
-    <div style={S.container}>
+    <div className="min-h-screen bg-[#f5f5f5] p-4 text-black">
 
-      {/* ── Top Bar ── */}
-      <div style={S.topBar} className="no-print">
-
-        <div style={S.selectorBox}>
-          <i className="bi bi-calendar3" style={S.calIcon}></i>
-          <select value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))} style={S.select}>
+      {/* ── Top Bar (Buttons & Selectors) ── */}
+      <div className="flex justify-between items-center mb-3 print:hidden">
+        
+        <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg shadow-sm border border-gray-200">
+          <i className="bi bi-calendar3 text-[#1976d2] text-base"></i>
+          <select 
+            value={selectedMonth} 
+            onChange={e => setSelectedMonth(Number(e.target.value))} 
+            className="border border-gray-300 rounded px-2 py-1 text-xs font-semibold text-[#1976d2] cursor-pointer outline-none"
+          >
             {MONTH_NAMES.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
           </select>
-          <select value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))} style={S.select}>
+          <select 
+            value={selectedYear} 
+            onChange={e => setSelectedYear(Number(e.target.value))} 
+            className="border border-gray-300 rounded px-2 py-1 text-xs font-semibold text-[#1976d2] cursor-pointer outline-none"
+          >
             {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-          <span style={S.daysLabel}>({daysInMonth} days)</span>
+          <span className="text-xs text-gray-500 font-semibold ml-1">({daysInMonth} days)</span>
         </div>
 
-        <button onClick={handleBack} style={S.btnBack}>
-          <i className="bi bi-arrow-left-circle-fill"></i> Back
-        </button>
-
-        <button onClick={() => { if (onEditForm) onEditForm(currentReport); }} style={S.btnEdit}>
-          <i className="bi bi-pencil-square"></i> Edit
-        </button>
-
-        <button onClick={handlePrint} style={S.btnPrint}>
-          <i className="bi bi-printer-fill"></i> Print
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate("/qa-hub")} className="bg-[#607d8b] hover:bg-[#4d646f] text-white border-none px-5 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors">
+            <i className="bi bi-arrow-left-circle-fill"></i> Back
+          </button>
+          {onEditForm && (
+            <button onClick={() => onEditForm(currentReport)} className="bg-[#ff9800] hover:bg-[#e68a00] text-white border-none px-5 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors">
+              <i className="bi bi-pencil-square"></i> Edit
+            </button>
+          )}
+          <button onClick={() => window.print()} className="bg-[#4CAF50] hover:bg-[#43a047] text-white border-none px-5 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors">
+            <i className="bi bi-printer-fill"></i> Print
+          </button>
+        </div>
       </div>
 
-      {/* ── Report Area ── */}
-      <div className="rb-report" id="redbin-print-area" style={S.report}>
+      <style>{`
+        @media print {
+          @page { size: A4 landscape; margin: 6mm; }
+          body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: white; }
+        }
+      `}</style>
 
-        {/* HEADER */}
-        <table style={S.headerTable} className="rb-header-table">
-          <tbody>
-            <tr>
-              <td style={S.logoCell} className="rb-logo-cell">
-                <img src={atomone} alt="ATOM ONE" style={S.logoImage} className="rb-logo-image" />
-              </td>
-              <td style={S.titleCell} className="rb-title-cell">
-                RED BIN ATTENDANCE SHEET
-              </td>
-              <td style={S.docInfoCell} className="rb-doc-info-cell">
-                <table style={S.docInfoInnerTable}>
-                  <tbody>
-                    <tr>
-                      <td style={{ ...S.docInfoTd, ...S.docLabel }} className="rb-doc-label">Doc.no.</td>
-                      <td style={{ ...S.docInfoTd, ...S.docValue }} className="rb-doc-value">
-                        {currentReport?.doc_no || 'AOT-F-QC-05'}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style={{ ...S.docInfoTd, ...S.docLabel }} className="rb-doc-label">Rev.no.</td>
-                      <td style={{ ...S.docInfoTd, ...S.docValue }} className="rb-doc-value">
-                        {currentReport?.rev_no || '00'}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style={{ ...S.docInfoTdLast, ...S.docLabel }} className="rb-doc-label">Date</td>
-                      <td style={{ ...S.docInfoTdLast, ...S.docValue }} className="rb-doc-value">
-                        {formatDisplay(currentReport?.doc_date) || '14.10.2024'}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        {/* ATTENDANCE TABLE */}
-        <table style={S.attTable} className="rb-att-table">
+      {/* ── Main A4 Print Container (Fix: h-auto instead of min-h-[210mm]) ── */}
+      <div className="bg-white mx-auto shadow-lg font-sans w-[297mm] h-auto box-border p-[8mm] print:w-full print:p-0 print:m-0 print:shadow-none print:block">
+        
+        <table className="w-full border-collapse table-fixed border border-black bg-white">
           <colgroup>
-            <col style={{ width: '3%' }} />
-            <col style={{ width: '8%' }} />
-            <col style={{ width: '7%' }} />
+            <col className="w-[3%]" /> 
+            <col className="w-[10%]" /> 
+            <col className="w-[7%]" /> 
             {dayColumns.map(d => (
-              <col key={d} style={{ width: `${(82 / daysInMonth).toFixed(2)}%` }} />
+              <col key={d} style={{ width: `${(80 / daysInMonth).toFixed(2)}%` }} />
             ))}
           </colgroup>
-          <thead>
-            <tr style={{ height: `${THEAD_H}px` }}>
-              <th style={S.attTh}>Sr.No.</th>
-              <th style={S.attTh}>Name</th>
-              <th style={S.attTh}>DESIGNATION</th>
+
+          <thead className="table-header-group">
+            <tr className="h-[26px]">
+              <th colSpan={3} rowSpan={3} className="border border-black p-1 align-middle text-center bg-white">
+                <img src={atomone} alt="ATOM ONE" className="max-h-[50px] max-w-full block mx-auto object-contain" />
+              </th>
+              <th colSpan={titleColSpan} rowSpan={3} className="border border-black text-center align-middle bg-white">
+                <h1 className="text-[20px] font-bold uppercase tracking-[1.5px] m-0 text-black">
+                  RED BIN ATTENDANCE SHEET
+                </h1>
+              </th>
+              <th colSpan={3} className={InfoLabel}>DOC.NO.</th>
+              <th colSpan={3} className={InfoValue}>{currentReport?.doc_no || 'AOT-F-QC-05'}</th>
+            </tr>
+            <tr className="h-[26px]">
+              <th colSpan={3} className={InfoLabel}>REV.NO.</th>
+              <th colSpan={3} className={InfoValue}>{currentReport?.rev_no || '00'}</th>
+            </tr>
+            <tr className="h-[26px]">
+              <th colSpan={3} className={InfoLabel}>DATE</th>
+              <th colSpan={3} className={InfoValue}>{formatDisplay(currentReport?.doc_date) || '14.10.2024'}</th>
+            </tr>
+            <tr className="h-[32px]">
+              <th className={TH}>Sr.<br/>No.</th>
+              <th className={TH}>Name</th>
+              <th className={TH}>DESIGNATION</th>
               {dayColumns.map(d => (
-                <th key={d} style={S.attTh}>{d}</th>
+                <th key={d} className={`${TH} text-[8.5px] p-0`}>{d}</th>
               ))}
             </tr>
           </thead>
+
           <tbody>
             {Array.from({ length: TOTAL_ROWS }, (_, i) => {
-              const row    = empItems[i] || null;
+              const row = empItems[i] || null;
               const isEven = (i + 1) % 2 === 0;
-              const tdStyle = isEven ? S.attTdEven : S.attTd;
+              const bgClass = isEven ? 'bg-[#fafafa]' : 'bg-white';
+              
+              
               return (
-                <tr key={i} style={{ height: `${rowH}px` }}>
-                  <td style={{ ...tdStyle, fontWeight: '600', fontSize: '10px', color: '#000' }}>{i + 1}</td>
-                  <td style={{ ...tdStyle, textAlign: 'left', paddingLeft: '6px', fontWeight: row?.name ? '600' : '400', fontSize: '10px', color: '#000' }}>
+                <tr key={i} className="h-[36px] break-inside-avoid">
+                  <td className={`${TD} ${bgClass} font-semibold`}>{i + 1}</td>
+                  <td className={`${TD} ${bgClass} text-left pl-1.5 ${row?.name ? 'font-semibold' : 'font-normal'}`}>
                     {row?.name || ''}
                   </td>
-                  <td style={{ ...tdStyle, fontSize: '9px', color: '#000' }}>{row?.designation || ''}</td>
+                  <td className={`${TD} ${bgClass}`}>{row?.designation || ''}</td>
                   {dayColumns.map(d => (
-                    <td key={d} style={{ ...tdStyle, fontSize: '9px', color: '#000' }}>
+                    <td key={d} className={`${TD} ${bgClass}`}>
                       {row?.[`day_${d}`] || ''}
                     </td>
                   ))}
@@ -459,31 +163,33 @@ const RedBinAttendanceprint = ({ items = [], currentReport, onFilter, onEditForm
               );
             })}
           </tbody>
+
+          <tfoot className="table-footer-group">
+            <tr>
+              <td colSpan={totalCols} className="border border-black bg-white">
+                <div className="flex items-center justify-between px-6 py-1.5 text-[11px] font-bold text-black min-h-[30px]">
+                  <span>P &nbsp;: &nbsp;Present</span>
+                  <span>A &nbsp;: &nbsp;Absent</span>
+                  <span>Month &nbsp;: &nbsp;<strong className="text-black uppercase">{MONTH_NAMES[selectedMonth - 1]} {selectedYear}</strong></span>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td colSpan={totalCols} className="border border-black bg-white p-0">
+                <div className="flex w-full items-stretch min-h-[40px]">
+                  <div className="font-bold text-[11px] px-4 py-2 border-r border-black flex items-center w-[120px] shrink-0 bg-[#fff] text-black">
+                    REMARKS
+                  </div>
+                  <div className="flex-grow px-3 py-2 flex items-center text-[11px] bg-[#fff] text-black">
+                    {remarks}
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
+
         </table>
-
-        {/* LEGEND */}
-        <div style={S.legend} className="rb-legend">
-          <span>P &nbsp;: &nbsp;Present</span>
-          <span>A &nbsp;: &nbsp;Absent</span>
-          <span>Month &nbsp;: &nbsp;<strong>{MONTH_NAMES[selectedMonth - 1]} {selectedYear}</strong></span>
-        </div>
-
-        {/* FOOTER */}
-        <div style={S.footer} className="rb-footer">
-          <div style={S.remarksLabel} className="rb-remarks-label">Remarks</div>
-          <div style={S.remarksValue} className="rb-remarks-value">
-            {currentReport?.remarks || remarks}
-          </div>
-        </div>
-
       </div>
-
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          ${PRINT_CSS}
-        }
-      `}</style>
     </div>
   );
 };
