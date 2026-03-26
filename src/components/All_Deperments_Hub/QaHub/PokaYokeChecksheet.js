@@ -72,7 +72,6 @@ const PokaYokeChecksheet = () => {
         }
     }, [selectedPlant]);
 
-
     // Fetch all existing data for selected machine
     useEffect(() => {
         const fetchExistingData = async () => {
@@ -101,7 +100,6 @@ const PokaYokeChecksheet = () => {
         fetchExistingData();
     }, [selectedMachine, selectedPlant]);
 
-
     const initialChecks = [
         { id: 1, detailEng: 'Air Pressure switch', detailHin: 'एयर प्रेशर स्विच', method: 'BY HAND OPERATED', status: '', remarks: '' },
         { id: 2, detailEng: 'Photo Guard sensor', detailHin: 'फोटो गार्ड सेंसर', method: 'CHECKED BY HAND', status: '', remarks: '' },
@@ -126,14 +124,10 @@ const PokaYokeChecksheet = () => {
         setShowInfoModal(true);
     };
 
-
     const resetForm = () => {
         setSignatures({ checkedBy: '', verifiedBy: '' });
         setChecklist(initialChecks.map(item => ({ ...item, status: '', remarks: '' })));
     };
-
-
-    // 🔥 API CALL WALA NAYA SUBMIT FUNCTION 🔥
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -149,11 +143,7 @@ const PokaYokeChecksheet = () => {
             return;
         }
 
-
         setIsSubmitting(true);
-
-
-        // 🌟 STEP 1: React ke data ko Django JSON format mein set karo
 
         const payload = {
             date: selectedDate,
@@ -162,31 +152,17 @@ const PokaYokeChecksheet = () => {
             checked_by_maintenance: signatures.checkedBy,
             verified_by_production: signatures.verifiedBy,
             
-
-
-            // Loop chala kar checklist ko API ke liye map kiya
-
             check_points: checklist.map(item => ({
                 s_no: item.id,
                 poka_yoke_detail: item.detailEng,
                 checking_method: item.method,
-
                 reference_sop: "SOP View",
                 is_ok: item.status === 'OK',
-
-                reference_sop: "SOP View", // Static value as per UI
-                is_ok: item.status === 'OK', // Converts 'OK' to boolean true/false
                 remarks: item.remarks
             }))
         };
 
-
         try {
-
-        // 🌟 STEP 2: Django API ko data bhejo
-        try {
-            // Note: Agar backend 127.0.0.1 ki jagah 192.168.0.35 par chal raha hai toh URL update kar lena
-
             const response = await fetch('http://127.0.0.1:8000/api/save-checksheet/', {
                 method: 'POST',
                 headers: {
@@ -200,7 +176,6 @@ const PokaYokeChecksheet = () => {
             if (response.ok) {
                 alert("✅ Daily Poka Yoke Checksheet successfully saved in Database!");
                 console.log("Success:", result);
-
                 
                 // Add the new data to the existing list
                 setExistingDataList(prev => [{
@@ -220,9 +195,6 @@ const PokaYokeChecksheet = () => {
                 setTimeout(() => {
                     alert("✅ Form has been reset! You can now fill data for another date.");
                 }, 500);
-
-                navigate('/qa-hub'); 
-
             } else {
                 alert("❌ Backend Error: Data save nahi hua.");
                 console.error("Django Error:", result);
@@ -230,10 +202,8 @@ const PokaYokeChecksheet = () => {
         } catch (error) {
             console.error("Network Error:", error);
             alert("❌ Server se connect nahi ho paaya. Kya Django chal raha hai?");
-
         } finally {
             setIsSubmitting(false);
-
         }
     };
 
@@ -335,18 +305,11 @@ const PokaYokeChecksheet = () => {
     // Check if data exists for selected date
     const dataExistsForSelectedDate = existingDataList.some(data => data.date === selectedDate);
 
-    return(
+    return (
         <div className="min-h-screen bg-slate-50 font-['Inter',system-ui]">
-
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
             
             {/* SOP Modal */}
-
-            {/* Bootstrap Icons CDN */}
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
-            
-            {/* Modal */}
-
             {showInfoModal && currentSop && (
                 <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100050] flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
@@ -411,7 +374,6 @@ const PokaYokeChecksheet = () => {
                 </div>
             )}
 
-
             {/* Existing Data Modal */}
             {showExistingDataModal && selectedExistingData && <ExistingDataModal />}
 
@@ -419,13 +381,6 @@ const PokaYokeChecksheet = () => {
             <nav className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-[10000] shadow-sm">
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-14 sm:h-16">
-
-            {/* Navbar - Optimized with no overflow */}
-            <nav className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-[10000] shadow-sm">
-                <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-14 sm:h-16">
-                        {/* Logo Section */}
-
                         <div 
                             onClick={() => navigate('/qa-hub')} 
                             className="flex items-center gap-2 cursor-pointer group min-w-0 flex-1"
@@ -436,16 +391,6 @@ const PokaYokeChecksheet = () => {
                                 Poka Yoke Monitoring
                             </span>
                         </div>
-
-               
-                        {/* Right Section */}
-                        {/* <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 ml-2">
-                            <span className="font-semibold text-gray-600 text-xs sm:text-sm hidden xs:inline">
-                                Doc No: AOT-F-QC-07A
-                            </span>
-                           
-                        </div> */}
-
                     </div>
                 </div>
             </nav>
@@ -481,11 +426,7 @@ const PokaYokeChecksheet = () => {
                                 <option value="Plant 2">Plant 2 (49 Machines)</option>
                             </select>
                         </div>
-
                         <div className="relative">
-
-                        <div>
-
                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 block">M/C No. (मशीन नंबर)</label>
                             <select 
                                 className="w-full bg-slate-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition disabled:opacity-50 text-slate-700"
@@ -518,7 +459,6 @@ const PokaYokeChecksheet = () => {
                         </div>
                     )}
                 </div>
-
 
                 {/* Existing Data Table */}
                 {selectedMachine && existingDataList.length > 0 && (
@@ -623,30 +563,6 @@ const PokaYokeChecksheet = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-
-                {/* Checklist Table */}
-                {selectedMachine && (
-                    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm mb-6">
-                        <div className="p-4 sm:p-6 pb-0">
-                            <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-gray-100">
-                                <i className="bi bi-ui-checks-grid text-emerald-600 text-lg"></i>
-                                <h2 className="font-bold text-gray-900 text-base sm:text-lg">Daily Check Parameters (पैरामीटर)</h2>
-                            </div>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[700px]">
-                                <thead className="bg-slate-50">
-                                    <tr>
-                                        <th className="px-3 sm:px-4 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">S.No.</th>
-                                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Poka Yoke Detail</th>
-                                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Checking Method</th>
-                                        <th className="px-3 sm:px-4 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Reference / SOP</th>
-                                        <th className="px-3 sm:px-4 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">OK / NG</th>
-                                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Remarks</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-
                                     {checklist.map((item) => (
                                         <tr key={item.id} className="hover:bg-slate-50 transition">
                                             <td className="px-3 sm:px-4 py-3 text-center text-sm font-semibold text-gray-500">{item.id}</td>
@@ -694,11 +610,7 @@ const PokaYokeChecksheet = () => {
                                             <td className="px-3 sm:px-4 py-3">
                                                 <input 
                                                     type="text" 
-
                                                     className="w-full bg-slate-50 border border-gray-300 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 outline-none transition"
-
-                                                    className="w-full bg-slate-50 border border-gray-300 rounded-lg px-2 py-1.5 text-xs  text-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 outline-none transition"
-
                                                     placeholder="Add remark..." 
                                                     value={item.remarks} 
                                                     onChange={(e) => handleRemarkChange(item.id, e.target.value)} 
@@ -720,7 +632,6 @@ const PokaYokeChecksheet = () => {
                                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 block">Checked By (Maintenance Person)</label>
                                 <input 
                                     type="text" 
-
                                     className="w-full bg-slate-50 border border-gray-300 rounded-lg px-3 py-2 text-sm text-slate-700 font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
                                     placeholder="Name / Sign" 
                                     value={signatures.checkedBy} 
@@ -729,31 +640,16 @@ const PokaYokeChecksheet = () => {
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 block">Verified By (Production Engineer)</label>
-
-                                    className="w-full bg-slate-50 border border-gray-300 rounded-lg px-3 py-2 text-sm   text-slate-700 font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
-                                    placeholder="Name / Sign" 
-                                    value={signatures.checkedBy} 
-                                    onChange={(e) => setSignatures({...signatures, checkedBy: e.target.value})} 
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 block ">Verified By (Production Engineer)</label>
-
                                 <input 
                                     type="text" 
                                     className="w-full bg-slate-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
                                     placeholder="Name / Sign" 
                                     value={signatures.verifiedBy} 
-
                                     onChange={(e) => setSignatures({...signatures, verifiedBy: e.target.value})}
-
-                                    onChange={(e) => setSignatures({...signatures, verifiedBy: e.target.value})} 
-
                                 />
                             </div>
                             <div className="sm:text-right">
                                 <button 
-
                                     className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 py-2.5 rounded-xl transition shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                     onClick={handleSubmit}
                                     disabled={isSubmitting}
@@ -767,12 +663,6 @@ const PokaYokeChecksheet = () => {
                                             <i className="bi bi-cloud-arrow-up-fill mr-2"></i> Save Checksheet
                                         </>
                                     )}
-
-                                    className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 py-2.5 rounded-xl transition shadow-md hover:shadow-lg"
-                                    onClick={handleSubmit}
-                                >
-                                    <i className="bi bi-cloud-arrow-up-fill mr-2"></i> Save Checksheet
-
                                 </button>
                             </div>
                         </div>
