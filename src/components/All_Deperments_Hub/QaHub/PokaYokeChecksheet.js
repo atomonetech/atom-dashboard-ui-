@@ -48,20 +48,57 @@ const PokaYokeChecksheet = () => {
     const [machineList, setMachineList] = useState([]);
     const [showInfoModal, setShowInfoModal] = useState(false);
     const [currentSop, setCurrentSop] = useState(null);
+    
+    // New states for existing data
+    const [existingDataList, setExistingDataList] = useState([]);
+    const [isLoadingData, setIsLoadingData] = useState(false);
+    const [showExistingDataModal, setShowExistingDataModal] = useState(false);
+    const [selectedExistingData, setSelectedExistingData] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (selectedPlant === 'Plant 1') {
             const p1 = Array.from({ length: 57 }, (_, i) => `PP-${String(i + 1).padStart(2, '0')}`);
             setMachineList(p1);
             setSelectedMachine('');
+            setExistingDataList([]);
         } else if (selectedPlant === 'Plant 2') {
             const p2 = Array.from({ length: 49 }, (_, i) => `PP-${String(i + 1).padStart(2, '0')}`);
             setMachineList(p2);
             setSelectedMachine('');
+            setExistingDataList([]);
         } else {
             setMachineList([]);
         }
     }, [selectedPlant]);
+
+    // Fetch all existing data for selected machine
+    useEffect(() => {
+        const fetchExistingData = async () => {
+            if (selectedMachine && selectedPlant) {
+                setIsLoadingData(true);
+                try {
+                    const response = await fetch(
+                        `http://127.0.0.1:8000/api/get-machine-checksheets/?plant_name=${selectedPlant}&machine_no=${selectedMachine}`
+                    );
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        setExistingDataList(data.data || []);
+                    } else {
+                        setExistingDataList([]);
+                    }
+                } catch (error) {
+                    console.error("Error fetching existing data:", error);
+                    setExistingDataList([]);
+                } finally {
+                    setIsLoadingData(false);
+                }
+            }
+        };
+        
+        fetchExistingData();
+    }, [selectedMachine, selectedPlant]);
 
     const initialChecks = [
         { id: 1, detailEng: 'Air Pressure switch', detailHin: 'एयर प्रेशर स्विच', method: 'BY HAND OPERATED', status: '', remarks: '' },
@@ -87,7 +124,11 @@ const PokaYokeChecksheet = () => {
         setShowInfoModal(true);
     };
 
-    // 🔥 API CALL WALA NAYA SUBMIT FUNCTION 🔥
+    const resetForm = () => {
+        setSignatures({ checkedBy: '', verifiedBy: '' });
+        setChecklist(initialChecks.map(item => ({ ...item, status: '', remarks: '' })));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         
@@ -102,7 +143,8 @@ const PokaYokeChecksheet = () => {
             return;
         }
 
-        // 🌟 STEP 1: React ke data ko Django JSON format mein set karo
+        setIsSubmitting(true);
+
         const payload = {
             date: selectedDate,
             plant_name: selectedPlant,
@@ -110,20 +152,17 @@ const PokaYokeChecksheet = () => {
             checked_by_maintenance: signatures.checkedBy,
             verified_by_production: signatures.verifiedBy,
             
-            // Loop chala kar checklist ko API ke liye map kiya
             check_points: checklist.map(item => ({
                 s_no: item.id,
                 poka_yoke_detail: item.detailEng,
                 checking_method: item.method,
-                reference_sop: "SOP View", // Static value as per UI
-                is_ok: item.status === 'OK', // Converts 'OK' to boolean true/false
+                reference_sop: "SOP View",
+                is_ok: item.status === 'OK',
                 remarks: item.remarks
             }))
         };
 
-        // 🌟 STEP 2: Django API ko data bhejo
         try {
-            // Note: Agar backend 127.0.0.1 ki jagah 192.168.0.35 par chal raha hai toh URL update kar lena
             const response = await fetch('http://127.0.0.1:8000/api/save-checksheet/', {
                 method: 'POST',
                 headers: {
@@ -137,7 +176,25 @@ const PokaYokeChecksheet = () => {
             if (response.ok) {
                 alert("✅ Daily Poka Yoke Checksheet successfully saved in Database!");
                 console.log("Success:", result);
-                navigate('/qa-hub'); 
+                
+                // Add the new data to the existing list
+                setExistingDataList(prev => [{
+                    id: result.id,
+                    date: selectedDate,
+                    plant_name: selectedPlant,
+                    machine_no: selectedMachine,
+                    checked_by_maintenance: signatures.checkedBy,
+                    verified_by_production: signatures.verifiedBy,
+                    check_points: payload.check_points
+                }, ...prev]);
+                
+                // Reset the form
+                resetForm();
+                
+                // Show success message
+                setTimeout(() => {
+                    alert("✅ Form has been reset! You can now fill data for another date.");
+                }, 500);
             } else {
                 alert("❌ Backend Error: Data save nahi hua.");
                 console.error("Django Error:", result);
@@ -145,15 +202,114 @@ const PokaYokeChecksheet = () => {
         } catch (error) {
             console.error("Network Error:", error);
             alert("❌ Server se connect nahi ho paaya. Kya Django chal raha hai?");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
+    // View Existing Data Modal
+    const ExistingDataModal = () => {
+        if (!selectedExistingData) return null;
+        
+        return (
+            <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100050] flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                    <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 rounded-t-2xl">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <h4 className="text-xl font-bold text-gray-900">
+                                    Checksheet Details
+                                </h4>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    {selectedExistingData.machine_no} - {selectedExistingData.date}
+                                </p>
+                            </div>
+                            <button onClick={() => setShowExistingDataModal(false)} className="text-gray-400 hover:text-gray-600 transition">
+                                <i className="bi bi-x-lg text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="p-6">
+                        {/* Status Banner */}
+                        <div className="mb-6 p-4 bg-green-50 rounded-xl border-l-4 border-green-500">
+                            <div className="flex items-center gap-2">
+                                <i className="bi bi-check-circle-fill text-green-600 text-lg"></i>
+                                <span className="text-green-800 font-medium">
+                                    Checksheet completed and saved on {selectedExistingData.date}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Checklist Summary */}
+                        <div className="mb-6">
+                            <h5 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                <i className="bi bi-check2-square text-emerald-600"></i>
+                                Check Points Summary
+                            </h5>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {selectedExistingData.check_points?.map((point, idx) => (
+                                    <div key={idx} className="bg-slate-50 rounded-lg p-3 border border-gray-200">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex-1">
+                                                <div className="font-semibold text-gray-900 text-sm">
+                                                    {point.poka_yoke_detail}
+                                                </div>
+                                                {point.remarks && (
+                                                    <div className="text-xs text-gray-500 mt-1">
+                                                        <i className="bi bi-chat-text mr-1"></i>
+                                                        {point.remarks}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold ${
+                                                point.is_ok 
+                                                    ? 'bg-emerald-100 text-emerald-700' 
+                                                    : 'bg-red-100 text-red-700'
+                                            }`}>
+                                                <i className={`bi ${point.is_ok ? 'bi-check-circle-fill' : 'bi-x-circle-fill'} mr-1 text-xs`}></i>
+                                                {point.is_ok ? 'OK' : 'NG'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Signatures */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-gray-50 rounded-lg p-3">
+                                <div className="text-xs text-gray-500 mb-1">Checked By (Maintenance)</div>
+                                <div className="font-semibold text-gray-900">{selectedExistingData.checked_by_maintenance || 'Not provided'}</div>
+                            </div>
+                            <div className="bg-gray-50 rounded-lg p-3">
+                                <div className="text-xs text-gray-500 mb-1">Verified By (Production)</div>
+                                <div className="font-semibold text-gray-900">{selectedExistingData.verified_by_production || 'Not provided'}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 rounded-b-2xl">
+                        <button 
+                            onClick={() => setShowExistingDataModal(false)} 
+                            className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold transition"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    // Check if data exists for selected date
+    const dataExistsForSelectedDate = existingDataList.some(data => data.date === selectedDate);
+
     return (
         <div className="min-h-screen bg-slate-50 font-['Inter',system-ui]">
-            {/* Bootstrap Icons CDN */}
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
             
-            {/* Modal */}
+            {/* SOP Modal */}
             {showInfoModal && currentSop && (
                 <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100050] flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
@@ -218,11 +374,13 @@ const PokaYokeChecksheet = () => {
                 </div>
             )}
 
-            {/* Navbar - Optimized with no overflow */}
+            {/* Existing Data Modal */}
+            {showExistingDataModal && selectedExistingData && <ExistingDataModal />}
+
+            {/* Navbar */}
             <nav className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-[10000] shadow-sm">
                 <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-14 sm:h-16">
-                        {/* Logo Section */}
                         <div 
                             onClick={() => navigate('/qa-hub')} 
                             className="flex items-center gap-2 cursor-pointer group min-w-0 flex-1"
@@ -233,14 +391,6 @@ const PokaYokeChecksheet = () => {
                                 Poka Yoke Monitoring
                             </span>
                         </div>
-                        
-                        {/* Right Section */}
-                        {/* <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 ml-2">
-                            <span className="font-semibold text-gray-600 text-xs sm:text-sm hidden xs:inline">
-                                Doc No: AOT-F-QC-07A
-                            </span>
-                           
-                        </div> */}
                     </div>
                 </div>
             </nav>
@@ -276,7 +426,7 @@ const PokaYokeChecksheet = () => {
                                 <option value="Plant 2">Plant 2 (49 Machines)</option>
                             </select>
                         </div>
-                        <div>
+                        <div className="relative">
                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 block">M/C No. (मशीन नंबर)</label>
                             <select 
                                 className="w-full bg-slate-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition disabled:opacity-50 text-slate-700"
@@ -289,9 +439,102 @@ const PokaYokeChecksheet = () => {
                                     <option key={i} value={mc}>{mc}</option>
                                 ))}
                             </select>
+                            {isLoadingData && (
+                                <div className="absolute right-3 top-8">
+                                    <i className="bi bi-arrow-repeat animate-spin text-emerald-500"></i>
+                                </div>
+                            )}
                         </div>
                     </div>
+
+                    {/* Data Status Alert */}
+                    {selectedMachine && !isLoadingData && dataExistsForSelectedDate && (
+                        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <i className="bi bi-exclamation-triangle-fill text-yellow-600 text-lg"></i>
+                                <span className="text-yellow-800 text-sm">
+                                    <strong>⚠️ Warning!</strong> Data already exists for this machine on {selectedDate}. Submitting will create a new entry.
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
+
+                {/* Existing Data Table */}
+                {selectedMachine && existingDataList.length > 0 && (
+                    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm mb-6">
+                        <div className="p-4 sm:p-6 pb-0">
+                            <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-gray-100">
+                                <i className="bi bi-table text-emerald-600 text-lg"></i>
+                                <h2 className="font-bold text-gray-900 text-base sm:text-lg">
+                                    Saved Checksheets History
+                                    <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                                        {existingDataList.length} records
+                                    </span>
+                                </h2>
+                            </div>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-slate-50">
+                                    <tr>
+                                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Date</th>
+                                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Checked By</th>
+                                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Verified By</th>
+                                        <th className="px-3 sm:px-4 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
+                                        <th className="px-3 sm:px-4 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {existingDataList.map((data, index) => {
+                                        const totalPoints = data.check_points?.length || 0;
+                                        const okPoints = data.check_points?.filter(p => p.is_ok).length || 0;
+                                        const ngPoints = totalPoints - okPoints;
+                                        
+                                        return (
+                                            <tr key={data.id || index} className="hover:bg-slate-50 transition">
+                                                <td className="px-3 sm:px-4 py-3">
+                                                    <div className="font-medium text-gray-900 text-sm">{data.date}</div>
+                                                </td>
+                                                <td className="px-3 sm:px-4 py-3">
+                                                    <div className="text-sm text-gray-700">{data.checked_by_maintenance || '-'}</div>
+                                                </td>
+                                                <td className="px-3 sm:px-4 py-3">
+                                                    <div className="text-sm text-gray-700">{data.verified_by_production || '-'}</div>
+                                                </td>
+                                                <td className="px-3 sm:px-4 py-3 text-center">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+                                                            <i className="bi bi-check-circle-fill mr-1 text-xs"></i>
+                                                            {okPoints} OK
+                                                        </span>
+                                                        {ngPoints > 0 && (
+                                                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                                                                <i className="bi bi-x-circle-fill mr-1 text-xs"></i>
+                                                                {ngPoints} NG
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-3 sm:px-4 py-3 text-center">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedExistingData(data);
+                                                            setShowExistingDataModal(true);
+                                                        }}
+                                                        className="bg-sky-100 text-sky-700 hover:bg-sky-200 rounded-lg px-3 py-1.5 text-xs font-bold transition"
+                                                    >
+                                                        <i className="bi bi-eye-fill mr-1"></i> View Details
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
 
                 {/* Checklist Table */}
                 {selectedMachine && (
@@ -299,7 +542,12 @@ const PokaYokeChecksheet = () => {
                         <div className="p-4 sm:p-6 pb-0">
                             <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-gray-100">
                                 <i className="bi bi-ui-checks-grid text-emerald-600 text-lg"></i>
-                                <h2 className="font-bold text-gray-900 text-base sm:text-lg">Daily Check Parameters (पैरामीटर)</h2>
+                                <h2 className="font-bold text-gray-900 text-base sm:text-lg">
+                                    New Checksheet Entry
+                                    <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                                        {selectedDate}
+                                    </span>
+                                </h2>
                             </div>
                         </div>
                         <div className="overflow-x-auto">
@@ -362,7 +610,7 @@ const PokaYokeChecksheet = () => {
                                             <td className="px-3 sm:px-4 py-3">
                                                 <input 
                                                     type="text" 
-                                                    className="w-full bg-slate-50 border border-gray-300 rounded-lg px-2 py-1.5 text-xs  text-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 outline-none transition"
+                                                    className="w-full bg-slate-50 border border-gray-300 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 outline-none transition"
                                                     placeholder="Add remark..." 
                                                     value={item.remarks} 
                                                     onChange={(e) => handleRemarkChange(item.id, e.target.value)} 
@@ -384,28 +632,37 @@ const PokaYokeChecksheet = () => {
                                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 block">Checked By (Maintenance Person)</label>
                                 <input 
                                     type="text" 
-                                    className="w-full bg-slate-50 border border-gray-300 rounded-lg px-3 py-2 text-sm   text-slate-700 font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
+                                    className="w-full bg-slate-50 border border-gray-300 rounded-lg px-3 py-2 text-sm text-slate-700 font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
                                     placeholder="Name / Sign" 
                                     value={signatures.checkedBy} 
-                                    onChange={(e) => setSignatures({...signatures, checkedBy: e.target.value})} 
+                                    onChange={(e) => setSignatures({...signatures, checkedBy: e.target.value})}
                                 />
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 block ">Verified By (Production Engineer)</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 block">Verified By (Production Engineer)</label>
                                 <input 
                                     type="text" 
                                     className="w-full bg-slate-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition"
                                     placeholder="Name / Sign" 
                                     value={signatures.verifiedBy} 
-                                    onChange={(e) => setSignatures({...signatures, verifiedBy: e.target.value})} 
+                                    onChange={(e) => setSignatures({...signatures, verifiedBy: e.target.value})}
                                 />
                             </div>
                             <div className="sm:text-right">
                                 <button 
-                                    className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 py-2.5 rounded-xl transition shadow-md hover:shadow-lg"
+                                    className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 py-2.5 rounded-xl transition shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                     onClick={handleSubmit}
+                                    disabled={isSubmitting}
                                 >
-                                    <i className="bi bi-cloud-arrow-up-fill mr-2"></i> Save Checksheet
+                                    {isSubmitting ? (
+                                        <>
+                                            <i className="bi bi-arrow-repeat animate-spin mr-2"></i> Saving...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="bi bi-cloud-arrow-up-fill mr-2"></i> Save Checksheet
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </div>

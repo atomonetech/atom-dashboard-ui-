@@ -6,22 +6,12 @@ import {
 import {
   Factory, Calendar, Settings, TrendingUp, Activity, AlertTriangle,
   ChevronDown, ChevronRight, Cpu, Gauge, Clock, Zap, Monitor,
-  Filter, BarChart3, Play, Square, Power, Terminal, Download,
+  Filter, BarChart3, Play, Square, Power, Terminal,
   LineChart as LineChartIcon, BarChart as BarChartIcon, AreaChart as AreaChartIcon,
-  Server, HardDrive, Wifi, Shield
+  Server, HardDrive, Wifi, Shield, X, TrendingDown, Layers, Grid, Circle
 } from 'lucide-react';
 
-// Generate 30 days of production data for 2022-2024
-const generateYearlyData = (year) => {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return months.map((month, idx) => ({
-    name: month,
-    production: Math.floor(Math.random() * (8500 - 4500 + 1) + 4500),
-    idle: Math.floor(Math.random() * (2500 - 800 + 1) + 800),
-    shutdown: Math.floor(Math.random() * (1200 - 300 + 1) + 300),
-  }));
-};
-
+// Generate 30 days of production data
 const generateMonthData = () => {
   const days = [];
   for (let i = 1; i <= 30; i++) {
@@ -35,47 +25,53 @@ const generateMonthData = () => {
   return days;
 };
 
-const generateWeekData = () => {
-  const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-  return weeks.map((week) => ({
-    name: week,
-    production: Math.floor(Math.random() * (2800 - 1500 + 1) + 1500),
-    idle: Math.floor(Math.random() * (800 - 300 + 1) + 300),
-    shutdown: Math.floor(Math.random() * (400 - 100 + 1) + 100),
-  }));
+// Individual machine data generator
+const generateMachineData = (machineNumber) => {
+  return {
+    machineId: `M-${String(machineNumber).padStart(2, '0')}`,
+    monthlyProduction: Math.floor(Math.random() * (8500 - 4500 + 1) + 4500),
+    monthlyIdle: Math.floor(Math.random() * (1200 - 300 + 1) + 300),
+    monthlyStop: Math.floor(Math.random() * (800 - 150 + 1) + 150),
+    efficiency: Math.floor(Math.random() * (98 - 75 + 1) + 75),
+    uptime: Math.floor(Math.random() * (99 - 85 + 1) + 85),
+    lastActive: new Date().toLocaleDateString(),
+  };
 };
 
 const ProductionHistory = () => {
-  const [selectedPlant, setSelectedPlant] = useState('Plant 1');
-  const [selectedMachines, setSelectedMachines] = useState(new Set([12]));
-  const [timeFrame, setTimeFrame] = useState('monthly'); // 'monthly', 'yearly', 'weekly'
-  const [selectedMonth, setSelectedMonth] = useState('November');
-  const [selectedYear, setSelectedYear] = useState('2022');
-  const [chartType, setChartType] = useState('bar'); // 'bar', 'line', 'area'
+  const [selectedPlant, setSelectedPlant] = useState('Plant 2');
+  const [selectedMachines, setSelectedMachines] = useState(new Set());
+  const [selectedMonth, setSelectedMonth] = useState('April');
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [chartType, setChartType] = useState('bar');
   const [showMachineGrid, setShowMachineGrid] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
   const [currentDay, setCurrentDay] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [selectedMachineDetail, setSelectedMachineDetail] = useState(null);
+  const [showMachineModal, setShowMachineModal] = useState(false);
+  const [backgroundPattern, setBackgroundPattern] = useState('circuit');
 
-  // Data based on timeframe
+  // Generate dynamic years: past 3 years, current year, next 3 years
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let i = currentYear - 3; i <= currentYear + 3; i++) {
+    years.push(i.toString());
+  }
+
+  // Monthly data
   const monthlyData = generateMonthData();
-  const yearlyData = generateYearlyData(selectedYear);
-  const weeklyData = generateWeekData();
 
-  const getCurrentData = () => {
-    switch(timeFrame) {
-      case 'yearly': return yearlyData;
-      case 'weekly': return weeklyData;
-      default: return monthlyData;
-    }
-  };
+  // Calculate monthly totals
+  const monthlyTotals = monthlyData.reduce((acc, day) => {
+    acc.production += day.production;
+    acc.idle += day.idle;
+    acc.shutdown += day.shutdown;
+    return acc;
+  }, { production: 0, idle: 0, shutdown: 0 });
 
   const getChartTitle = () => {
-    switch(timeFrame) {
-      case 'yearly': return `${selectedYear} Production Overview`;
-      case 'weekly': return 'Weekly Production Analysis';
-      default: return `${selectedMonth} ${selectedYear} - Daily Production`;
-    }
+    return `${selectedMonth} ${selectedYear} - Daily Production`;
   };
 
   useEffect(() => {
@@ -83,9 +79,10 @@ const ProductionHistory = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const overallEfficiency = 89;
-  const topMachine = 'M-12';
-  const totalDowntime = '14h';
+  // Get machine count based on selected plant
+  const getMachineCount = () => {
+    return selectedPlant === 'Plant 1' ? 57 : 49;
+  };
 
   const toggleMachine = (num) => {
     const newSet = new Set(selectedMachines);
@@ -97,8 +94,15 @@ const ProductionHistory = () => {
     setSelectedMachines(newSet);
   };
 
+  const handleMachineClick = (machineNumber) => {
+    const machineData = generateMachineData(machineNumber);
+    setSelectedMachineDetail(machineData);
+    setShowMachineModal(true);
+  };
+
   const selectAllMachines = () => {
-    const allMachines = Array.from({ length: 52 }, (_, i) => i + 1);
+    const machineCount = getMachineCount();
+    const allMachines = Array.from({ length: machineCount }, (_, i) => i + 1);
     setSelectedMachines(new Set(allMachines));
   };
 
@@ -127,7 +131,6 @@ const ProductionHistory = () => {
   };
 
   const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const years = ['2022', '2023', '2024'];
 
   const formattedTime = currentTime.toLocaleTimeString('en-US', { 
     hour: '2-digit', 
@@ -137,7 +140,7 @@ const ProductionHistory = () => {
   });
 
   const renderChart = () => {
-    const data = getCurrentData();
+    const data = monthlyData;
     const commonProps = {
       data: data,
       margin: { top: 20, right: 30, left: 20, bottom: 5 }
@@ -148,7 +151,7 @@ const ProductionHistory = () => {
         return (
           <LineChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-            <XAxis dataKey="name" stroke="#9ca3af" fontSize={11} tickLine={false} />
+            <XAxis dataKey="name" stroke="#9ca3af" fontSize={11} tickLine={false} interval={4} />
             <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} />
             <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #3b82f6', borderRadius: '8px' }} />
             <Line type="monotone" dataKey="production" stroke="#10b981" strokeWidth={2} dot={{ fill: '#10b981' }} />
@@ -174,7 +177,7 @@ const ProductionHistory = () => {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-            <XAxis dataKey="name" stroke="#9ca3af" fontSize={11} tickLine={false} />
+            <XAxis dataKey="name" stroke="#9ca3af" fontSize={11} tickLine={false} interval={4} />
             <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} />
             <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #3b82f6', borderRadius: '8px' }} />
             <Area type="monotone" dataKey="production" stroke="#10b981" fill="url(#productionGradient)" />
@@ -186,12 +189,12 @@ const ProductionHistory = () => {
         return (
           <BarChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
-            <XAxis dataKey="name" stroke="#9ca3af" fontSize={11} tickLine={false} interval={timeFrame === 'monthly' ? 4 : 0} />
+            <XAxis dataKey="name" stroke="#9ca3af" fontSize={11} tickLine={false} interval={4} />
             <YAxis stroke="#9ca3af" fontSize={11} tickLine={false} />
             <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #3b82f6', borderRadius: '8px' }} />
-            <Bar dataKey="production" fill="#10b981" radius={[4, 4, 0, 0]} barSize={timeFrame === 'monthly' ? 24 : 40} />
-            <Bar dataKey="idle" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={timeFrame === 'monthly' ? 24 : 40} />
-            <Bar dataKey="shutdown" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={timeFrame === 'monthly' ? 24 : 40} />
+            <Bar dataKey="production" fill="#10b981" radius={[4, 4, 0, 0]} barSize={24} />
+            <Bar dataKey="idle" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={24} />
+            <Bar dataKey="shutdown" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={24} />
           </BarChart>
         );
     }
@@ -199,70 +202,195 @@ const ProductionHistory = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
-      {/* Enhanced Glass Background Effects */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.1),transparent_50%)]" />
-        <div className="absolute bottom-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_bottom,rgba(139,92,246,0.05),transparent_50%)]" />
+      
+      {/* Dynamic SVG Backgrounds */}
+      <div className="absolute inset-0 pointer-events-none">
         
-        {/* Animated Grid */}
-        <div className="absolute inset-0" style={{
-          backgroundImage: `linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
-                            linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px)`,
-          backgroundSize: '50px 50px'
-        }} />
+        {/* Circuit Pattern SVG */}
+        <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="circuitPattern" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+              {/* Horizontal Lines */}
+              <path d="M 20 20 L 60 20" stroke="#3b82f6" strokeWidth="0.5" fill="none" strokeDasharray="2 2">
+                <animate attributeName="stroke-opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" />
+              </path>
+              <path d="M 20 60 L 60 60" stroke="#3b82f6" strokeWidth="0.5" fill="none" strokeDasharray="2 2">
+                <animate attributeName="stroke-opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" begin="1s" />
+              </path>
+              
+              {/* Vertical Lines */}
+              <path d="M 20 20 L 20 60" stroke="#3b82f6" strokeWidth="0.5" fill="none" strokeDasharray="2 2">
+                <animate attributeName="stroke-opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" begin="0.5s" />
+              </path>
+              <path d="M 60 20 L 60 60" stroke="#3b82f6" strokeWidth="0.5" fill="none" strokeDasharray="2 2">
+                <animate attributeName="stroke-opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" begin="1.5s" />
+              </path>
+              
+              {/* Connection Nodes */}
+              <circle cx="20" cy="20" r="2" fill="#3b82f6" fillOpacity="0.5">
+                <animate attributeName="r" values="1.5;2.5;1.5" dur="2s" repeatCount="indefinite" />
+                <animate attributeName="fill-opacity" values="0.3;0.8;0.3" dur="2s" repeatCount="indefinite" />
+              </circle>
+              <circle cx="60" cy="20" r="2" fill="#3b82f6" fillOpacity="0.5">
+                <animate attributeName="r" values="1.5;2.5;1.5" dur="2s" repeatCount="indefinite" begin="0.3s" />
+              </circle>
+              <circle cx="20" cy="60" r="2" fill="#3b82f6" fillOpacity="0.5">
+                <animate attributeName="r" values="1.5;2.5;1.5" dur="2s" repeatCount="indefinite" begin="0.6s" />
+              </circle>
+              <circle cx="60" cy="60" r="2" fill="#3b82f6" fillOpacity="0.5">
+                <animate attributeName="r" values="1.5;2.5;1.5" dur="2s" repeatCount="indefinite" begin="0.9s" />
+              </circle>
+            </pattern>
+            
+            {/* Data Stream Pattern */}
+            <pattern id="dataStream" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 0 20 L 40 20" stroke="#10b981" strokeWidth="0.3" fill="none" strokeDasharray="3 3">
+                <animate attributeName="stroke-dashoffset" values="0;20" dur="2s" repeatCount="indefinite" />
+              </path>
+              <path d="M 20 0 L 20 40" stroke="#10b981" strokeWidth="0.3" fill="none" strokeDasharray="3 3">
+                <animate attributeName="stroke-dashoffset" values="0;20" dur="2s" repeatCount="indefinite" begin="0.5s" />
+              </path>
+            </pattern>
+            
+            {/* Gradient Background */}
+            <radialGradient id="radialGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.05">
+                <animate attributeName="stop-opacity" values="0.05;0.1;0.05" dur="4s" repeatCount="indefinite" />
+              </stop>
+              <stop offset="100%" stopColor="#1e293b" stopOpacity="0"/>
+            </radialGradient>
+          </defs>
+          
+          <rect width="100%" height="100%" fill="url(#radialGlow)" />
+          <rect width="100%" height="100%" fill="url(#circuitPattern)" />
+          <rect width="100%" height="100%" fill="url(#dataStream)" />
+        </svg>
         
-        {/* Floating Particles */}
-        {[...Array(30)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full bg-blue-500/20 animate-float"
-            style={{
-              width: `${Math.random() * 3 + 1}px`,
-              height: `${Math.random() * 3 + 1}px`,
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 10}s`,
-              animationDuration: `${15 + Math.random() * 20}s`
-            }}
-          />
-        ))}
+        {/* Animated Particles */}
+        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+          {[...Array(50)].map((_, i) => (
+            <circle
+              key={i}
+              cx={`${Math.random() * 100}%`}
+              cy={`${Math.random() * 100}%`}
+              r="1.5"
+              fill="#3b82f6"
+              fillOpacity="0.3"
+            >
+              <animate 
+                attributeName="r" 
+                values="1;2;1" 
+                dur={`${2 + Math.random() * 3}s`} 
+                repeatCount="indefinite" 
+              />
+              <animate 
+                attributeName="fill-opacity" 
+                values="0.2;0.6;0.2" 
+                dur={`${2 + Math.random() * 3}s`} 
+                repeatCount="indefinite" 
+              />
+            </circle>
+          ))}
+        </svg>
+        
+        {/* Digital Rain Effect */}
+        <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="digitalRain" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
+              {[...Array(5)].map((_, i) => (
+                <text 
+                  key={i} 
+                  x={5 + i * 5} 
+                  y={15} 
+                  fontSize="8" 
+                  fill="#00ff00" 
+                  fontFamily="monospace"
+                  opacity="0.3"
+                >
+                  {Math.random() > 0.5 ? '1' : '0'}
+                  <animate attributeName="opacity" values="0.1;0.5;0.1" dur={`${1 + Math.random() * 2}s`} repeatCount="indefinite" />
+                  <animateTransform attributeName="transform" type="translate" values={`0,-10;0,10`} dur={`${2 + Math.random() * 2}s`} repeatCount="indefinite" />
+                </text>
+              ))}
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#digitalRain)" />
+        </svg>
+        
+        {/* Glowing Orbs */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse-slow" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse-slow delay-1000" />
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl animate-pulse-slow delay-2000" />
       </div>
+      
+      {/* Modal for Machine Details */}
+      {showMachineModal && selectedMachineDetail && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-blue-500/30 max-w-md w-full p-6 shadow-2xl animate-fadeIn">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-blue-400">{selectedMachineDetail.machineId}</h3>
+              <button 
+                onClick={() => setShowMachineModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                  <p className="text-xs text-gray-400 mb-1">Monthly Production</p>
+                  <p className="text-2xl font-bold text-emerald-400">{selectedMachineDetail.monthlyProduction.toLocaleString()} units</p>
+                </div>
+                <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                  <p className="text-xs text-gray-400 mb-1">Monthly Idle</p>
+                  <p className="text-2xl font-bold text-amber-400">{selectedMachineDetail.monthlyIdle.toLocaleString()} hrs</p>
+                </div>
+                <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                  <p className="text-xs text-gray-400 mb-1">Monthly Stop</p>
+                  <p className="text-2xl font-bold text-red-400">{selectedMachineDetail.monthlyStop.toLocaleString()} hrs</p>
+                </div>
+                <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                  <p className="text-xs text-gray-400 mb-1">Efficiency</p>
+                  <p className="text-2xl font-bold text-cyan-400">{selectedMachineDetail.efficiency}%</p>
+                </div>
+              </div>
+              <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+                <p className="text-xs text-gray-400 mb-1">Uptime</p>
+                <p className="text-lg font-bold text-emerald-400">{selectedMachineDetail.uptime}%</p>
+              </div>
+              <div className="text-xs text-gray-500 text-center pt-2">
+                Last Active: {selectedMachineDetail.lastActive}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-[1600px] mx-auto p-6 relative z-10">
-        {/* Header with Enhanced Glass Effect */}
+        {/* Header */}
         <div className="backdrop-blur-2xl bg-white/5 border border-white/10 rounded-2xl mb-8 p-6 shadow-2xl">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500 shadow-lg" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-lg" />
-                  <div className="w-3 h-3 rounded-full bg-green-500 shadow-lg" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Terminal size={14} className="text-blue-400" />
-                  <span className="text-xs text-gray-400 font-mono">production@dashboard:~/system$</span>
-                </div>
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500 shadow-lg" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-lg" />
+                <div className="w-3 h-3 rounded-full bg-green-500 shadow-lg" />
               </div>
-              <h1 className="text-5xl font-bold tracking-tight">
-                <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                  PRODUCTION HISTORY
-                </span>
-                <span className="text-gray-300 ml-3">& ANALYSIS</span>
-              </h1>
-              <p className="text-sm text-gray-400 mt-2 font-mono flex items-center gap-2">
-                <Activity size={14} /> CONSOLE VIEW · REAL-TIME MONITORING SYSTEM
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl px-5 py-2.5 text-sm text-gray-300 hover:bg-white/10 transition-all flex items-center gap-2">
-                <Settings size={16} />
-                CONFIG
-              </button>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-white/10 flex items-center justify-center text-blue-400 font-bold backdrop-blur-xl">
-                AD
+              <div className="flex items-center gap-2">
+                <Terminal size={14} className="text-blue-400" />
+                <span className="text-xs text-gray-400 font-mono">production@dashboard:~/system$</span>
               </div>
             </div>
+            <h1 className="text-5xl font-bold tracking-tight">
+              <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                PRODUCTION HISTORY
+              </span>
+              <span className="text-gray-300 ml-3">& ANALYSIS</span>
+            </h1>
+            <p className="text-sm text-gray-400 mt-2 font-mono flex items-center gap-2">
+              <Activity size={14} /> CONSOLE VIEW · REAL-TIME MONITORING SYSTEM
+            </p>
           </div>
         </div>
 
@@ -279,62 +407,26 @@ const ProductionHistory = () => {
               </div>
               
               <div className="p-5 space-y-6">
-                {/* TIME PERIOD with Date Selection */}
+                {/* TIME PERIOD with Dynamic Year Selection */}
                 <div>
                   <label className="text-[11px] font-mono text-gray-400 block mb-2 flex items-center gap-2">
                     <Calendar size={12} /> TIME PERIOD
                   </label>
                   
-                  {/* Time Frame Selection */}
-                  <div className="grid grid-cols-3 gap-2 mb-3">
-                    <button
-                      onClick={() => setTimeFrame('monthly')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${
-                        timeFrame === 'monthly'
-                          ? 'bg-blue-500/20 border border-blue-500 text-blue-400'
-                          : 'bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10'
-                      }`}
+                  {/* Month Selection */}
+                  <div className="mb-2">
+                    <select
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      className="w-full bg-black/30 backdrop-blur border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-300 font-mono focus:border-blue-500 focus:outline-none mb-2"
                     >
-                      Monthly
-                    </button>
-                    <button
-                      onClick={() => setTimeFrame('weekly')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${
-                        timeFrame === 'weekly'
-                          ? 'bg-blue-500/20 border border-blue-500 text-blue-400'
-                          : 'bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10'
-                      }`}
-                    >
-                      Weekly
-                    </button>
-                    <button
-                      onClick={() => setTimeFrame('yearly')}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all ${
-                        timeFrame === 'yearly'
-                          ? 'bg-blue-500/20 border border-blue-500 text-blue-400'
-                          : 'bg-white/5 border border-white/10 text-gray-400 hover:bg-white/10'
-                      }`}
-                    >
-                      Yearly
-                    </button>
+                      {months.map(month => (
+                        <option key={month}>{month}</option>
+                      ))}
+                    </select>
                   </div>
                   
-                  {/* Month Selection (for monthly view) */}
-                  {timeFrame === 'monthly' && (
-                    <div className="mb-2">
-                      <select
-                        value={selectedMonth}
-                        onChange={(e) => setSelectedMonth(e.target.value)}
-                        className="w-full bg-black/30 backdrop-blur border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-300 font-mono focus:border-blue-500 focus:outline-none mb-2"
-                      >
-                        {months.map(month => (
-                          <option key={month}>{month}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  
-                  {/* Year Selection */}
+                  {/* Dynamic Year Selection */}
                   <div className="flex gap-2">
                     <select
                       value={selectedYear}
@@ -342,7 +434,9 @@ const ProductionHistory = () => {
                       className="flex-1 bg-black/30 backdrop-blur border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-300 font-mono focus:border-blue-500 focus:outline-none"
                     >
                       {years.map(year => (
-                        <option key={year}>{year}</option>
+                        <option key={year} value={year}>
+                          {year} {parseInt(year) === currentYear ? '(Current)' : parseInt(year) < currentYear ? '(Past)' : '(Upcoming)'}
+                        </option>
                       ))}
                     </select>
                     <div className="text-[11px] text-gray-500 font-mono flex items-center">
@@ -359,7 +453,10 @@ const ProductionHistory = () => {
                   </label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
-                      onClick={() => setSelectedPlant('Plant 1')}
+                      onClick={() => {
+                        setSelectedPlant('Plant 1');
+                        setSelectedMachines(new Set());
+                      }}
                       className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-all duration-300 font-mono text-sm ${
                         selectedPlant === 'Plant 1'
                           ? 'border-blue-500 bg-blue-500/10 text-blue-400 shadow-lg shadow-blue-500/10'
@@ -369,7 +466,10 @@ const ProductionHistory = () => {
                       <Cpu size={14} /> Plant 1
                     </button>
                     <button
-                      onClick={() => setSelectedPlant('Plant 2')}
+                      onClick={() => {
+                        setSelectedPlant('Plant 2');
+                        setSelectedMachines(new Set());
+                      }}
                       className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border transition-all duration-300 font-mono text-sm ${
                         selectedPlant === 'Plant 2'
                           ? 'border-blue-500 bg-blue-500/10 text-blue-400 shadow-lg shadow-blue-500/10'
@@ -380,7 +480,7 @@ const ProductionHistory = () => {
                     </button>
                   </div>
                   <div className="text-[10px] text-gray-500 mt-2 font-mono">
-                    {selectedPlant} Machines (1-52)
+                    {selectedPlant} Machines (1-{getMachineCount()})
                   </div>
                 </div>
 
@@ -401,18 +501,19 @@ const ProductionHistory = () => {
                   {showMachineGrid && (
                     <div className="space-y-3">
                       <div className="text-[10px] text-gray-500 mb-2 font-mono">
-                        {selectedPlant} Machines (1-52)
+                        {selectedPlant} Machines (1-{getMachineCount()}) - Click machine for details
                       </div>
                       <div className="grid grid-cols-5 gap-1.5 max-h-[240px] overflow-y-auto custom-scrollbar">
-                        {Array.from({ length: 52 }, (_, i) => i + 1).map((num) => (
+                        {Array.from({ length: getMachineCount() }, (_, i) => i + 1).map((num) => (
                           <button
                             key={num}
-                            onClick={() => toggleMachine(num)}
-                            className={`aspect-square flex items-center justify-center text-xs font-mono rounded-lg transition-all ${
+                            onClick={() => handleMachineClick(num)}
+                            className={`aspect-square flex items-center justify-center text-xs font-mono rounded-lg transition-all cursor-pointer ${
                               selectedMachines.has(num)
                                 ? 'bg-gradient-to-br from-blue-500 to-cyan-500 text-white font-bold shadow-lg'
                                 : 'bg-black/30 border border-white/10 text-gray-400 hover:border-blue-500/50 hover:text-blue-400'
                             }`}
+                            title={`Click to view details for Machine ${num}`}
                           >
                             {String(num).padStart(2, '0')}
                           </button>
@@ -498,9 +599,6 @@ const ProductionHistory = () => {
                   >
                     <Square size={12} /> STOP
                   </button>
-                  <button className="flex items-center gap-2 px-4 py-2 bg-gray-500/10 border border-gray-500/30 rounded-xl text-xs text-gray-400 hover:bg-gray-500/20 transition-all font-mono">
-                    <Download size={12} /> EXPORT
-                  </button>
                 </div>
               </div>
             </div>
@@ -514,7 +612,7 @@ const ProductionHistory = () => {
                     <span className="text-gray-200">MACHINE PRODUCTION & STATE HISTORY</span>
                   </h3>
                   <p className="text-[10px] text-gray-500 mt-1 font-mono">
-                    {getChartTitle()} · {timeFrame === 'monthly' ? '30 Day Cycle' : timeFrame === 'weekly' ? '4 Week Cycle' : '12 Month Cycle'}
+                    {getChartTitle()} · 30 Day Cycle
                   </p>
                 </div>
                 <div className="flex gap-6 mt-4 text-xs font-mono">
@@ -529,7 +627,7 @@ const ProductionHistory = () => {
                   {renderChart()}
                 </ResponsiveContainer>
               </div>
-              {isAnimating && timeFrame === 'monthly' && (
+              {isAnimating && (
                 <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-blue-500/90 backdrop-blur text-white px-4 py-2 rounded-full text-xs font-mono shadow-lg animate-bounce">
                   <Play size={10} className="inline mr-1" /> ANIMATING DAY {currentDay + 1}/30
                 </div>
@@ -538,41 +636,52 @@ const ProductionHistory = () => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="backdrop-blur-2xl bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-blue-500/30 transition-all group">
+              <div className="backdrop-blur-2xl bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-emerald-500/30 transition-all group">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <p className="text-[11px] text-gray-400 font-mono">OVERALL PLANT EFFICIENCY</p>
+                    <p className="text-[11px] text-gray-400 font-mono flex items-center gap-2">
+                      <Calendar size={12} className="text-emerald-400" />
+                      MONTHLY PRODUCTION
+                    </p>
                     <p className="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-emerald-300 bg-clip-text text-transparent mt-2">
-                      {overallEfficiency}%
+                      {monthlyTotals.production.toLocaleString()}
                     </p>
                   </div>
                   <Gauge size={32} className="text-emerald-500/50 group-hover:text-emerald-400 transition-colors" />
                 </div>
-                <div className="mt-3 h-2 w-full bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full shadow-lg" style={{ width: `${overallEfficiency}%` }} />
-                </div>
+                <p className="text-[10px] text-emerald-400/70 mt-2 font-mono">Total units produced in {selectedMonth}</p>
               </div>
 
-              <div className="backdrop-blur-2xl bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-cyan-500/30 transition-all group">
+              <div className="backdrop-blur-2xl bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-amber-500/30 transition-all group">
                 <div className="flex justify-between items-center mb-3">
                   <div>
-                    <p className="text-[11px] text-gray-400 font-mono">TOP PERFORMING MACHINE</p>
-                    <p className="text-3xl font-bold text-cyan-400 mt-2 font-mono">{topMachine}</p>
+                    <p className="text-[11px] text-gray-400 font-mono flex items-center gap-2">
+                      <Clock size={12} className="text-amber-400" />
+                      MONTHLY IDLE
+                    </p>
+                    <p className="text-4xl font-bold text-amber-400 mt-2">
+                      {monthlyTotals.idle.toLocaleString()}
+                    </p>
                   </div>
-                  <TrendingUp size={32} className="text-cyan-500/50 group-hover:text-cyan-400 transition-colors" />
+                  <Activity size={32} className="text-amber-500/50 group-hover:text-amber-400 transition-colors" />
                 </div>
-                <p className="text-xs text-emerald-400 font-mono">↑ 98% UPTIME THIS MONTH</p>
+                <p className="text-[10px] text-amber-400/70 mt-2 font-mono">Total idle hours in {selectedMonth}</p>
               </div>
 
               <div className="backdrop-blur-2xl bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-red-500/30 transition-all group">
                 <div className="flex justify-between items-center mb-3">
                   <div>
-                    <p className="text-[11px] text-gray-400 font-mono">TOTAL DOWNTIME THIS MONTH</p>
-                    <p className="text-3xl font-bold text-red-400 mt-2 font-mono">{totalDowntime}</p>
+                    <p className="text-[11px] text-gray-400 font-mono flex items-center gap-2">
+                      <AlertTriangle size={12} className="text-red-400" />
+                      MONTHLY STOP MACHINE
+                    </p>
+                    <p className="text-4xl font-bold text-red-400 mt-2">
+                      {monthlyTotals.shutdown.toLocaleString()}
+                    </p>
                   </div>
-                  <AlertTriangle size={32} className="text-red-500/50 group-hover:text-red-400 transition-colors" />
+                  <TrendingDown size={32} className="text-red-500/50 group-hover:text-red-400 transition-colors" />
                 </div>
-                <p className="text-xs text-emerald-400 font-mono">↓ 12% VS PREVIOUS MONTH</p>
+                <p className="text-[10px] text-red-400/70 mt-2 font-mono">Total shutdown hours in {selectedMonth}</p>
               </div>
             </div>
 
@@ -586,7 +695,7 @@ const ProductionHistory = () => {
                   </span>
                   <span className="text-gray-500 flex items-center gap-1">
                     <Server size={10} />
-                    MACHINE COUNT: {selectedMachines.size}/52
+                    MACHINE COUNT: {selectedMachines.size}/{getMachineCount()}
                   </span>
                   <span className="text-gray-500 flex items-center gap-1">
                     <Factory size={10} />
@@ -611,8 +720,46 @@ const ProductionHistory = () => {
           50% { transform: translateY(-20px) translateX(10px); opacity: 0.5; }
         }
         
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 0.3;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.6;
+            transform: scale(1.05);
+          }
+        }
+        
         .animate-float {
           animation: float 15s ease-in-out infinite;
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+        
+        .animate-pulse-slow {
+          animation: pulse-slow 4s ease-in-out infinite;
+        }
+        
+        .delay-1000 {
+          animation-delay: 1s;
+        }
+        
+        .delay-2000 {
+          animation-delay: 2s;
         }
         
         .custom-scrollbar::-webkit-scrollbar {
