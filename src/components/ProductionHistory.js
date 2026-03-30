@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   LineChart, Line, AreaChart, Area
@@ -50,7 +50,8 @@ const ProductionHistory = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedMachineDetail, setSelectedMachineDetail] = useState(null);
   const [showMachineModal, setShowMachineModal] = useState(false);
-  const [backgroundPattern, setBackgroundPattern] = useState('circuit');
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const canvasRef = useRef(null);
 
   // Generate dynamic years: past 3 years, current year, next 3 years
   const currentYear = new Date().getFullYear();
@@ -77,6 +78,102 @@ const ProductionHistory = () => {
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  // Mouse move effect for interactive background
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Canvas animation for dynamic particle system
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    let animationFrameId;
+    let particles = [];
+    
+    // Set canvas size
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    
+    // Create particles
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 2 + 1;
+        this.speedX = (Math.random() - 0.5) * 0.5;
+        this.speedY = (Math.random() - 0.5) * 0.5;
+        this.color = `hsl(${200 + Math.random() * 60}, 70%, 50%)`;
+        this.opacity = Math.random() * 0.5 + 0.2;
+      }
+      
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        
+        if (this.x < 0) this.x = canvas.width;
+        if (this.x > canvas.width) this.x = 0;
+        if (this.y < 0) this.y = canvas.height;
+        if (this.y > canvas.height) this.y = 0;
+      }
+      
+      draw(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = this.opacity;
+        ctx.fill();
+        
+        // Draw connection lines
+        particles.forEach(particle => {
+          const dx = this.x - particle.x;
+          const dy = this.y - particle.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < 100) {
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(particle.x, particle.y);
+            ctx.strokeStyle = `rgba(59, 130, 246, ${0.1 * (1 - distance / 100)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        });
+      }
+    }
+    
+    // Initialize particles
+    for (let i = 0; i < 80; i++) {
+      particles.push(new Particle());
+    }
+    
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      particles.forEach(particle => {
+        particle.update();
+        particle.draw(ctx);
+      });
+      
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    
+    animate();
+    
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', resizeCanvas);
+    };
   }, []);
 
   // Get machine count based on selected plant
@@ -203,124 +300,187 @@ const ProductionHistory = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
       
-      {/* Dynamic SVG Backgrounds */}
+      {/* Canvas Particle System */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ opacity: 0.4 }}
+      />
+      
+      {/* Advanced SVG Background Layers */}
       <div className="absolute inset-0 pointer-events-none">
-        
-        {/* Circuit Pattern SVG */}
-        <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+        {/* Layer 1: Animated Grid */}
+        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <pattern id="circuitPattern" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
-              {/* Horizontal Lines */}
-              <path d="M 20 20 L 60 20" stroke="#3b82f6" strokeWidth="0.5" fill="none" strokeDasharray="2 2">
-                <animate attributeName="stroke-opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" />
+            <pattern id="dynamicGrid" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+              <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#3b82f6" strokeWidth="0.5">
+                <animate attributeName="stroke-opacity" values="0.1;0.3;0.1" dur="3s" repeatCount="indefinite" />
               </path>
-              <path d="M 20 60 L 60 60" stroke="#3b82f6" strokeWidth="0.5" fill="none" strokeDasharray="2 2">
-                <animate attributeName="stroke-opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" begin="1s" />
-              </path>
-              
-              {/* Vertical Lines */}
-              <path d="M 20 20 L 20 60" stroke="#3b82f6" strokeWidth="0.5" fill="none" strokeDasharray="2 2">
-                <animate attributeName="stroke-opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" begin="0.5s" />
-              </path>
-              <path d="M 60 20 L 60 60" stroke="#3b82f6" strokeWidth="0.5" fill="none" strokeDasharray="2 2">
-                <animate attributeName="stroke-opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" begin="1.5s" />
-              </path>
-              
-              {/* Connection Nodes */}
-              <circle cx="20" cy="20" r="2" fill="#3b82f6" fillOpacity="0.5">
-                <animate attributeName="r" values="1.5;2.5;1.5" dur="2s" repeatCount="indefinite" />
+              <circle cx="30" cy="30" r="1.5" fill="#3b82f6">
+                <animate attributeName="r" values="1;2;1" dur="2s" repeatCount="indefinite" />
                 <animate attributeName="fill-opacity" values="0.3;0.8;0.3" dur="2s" repeatCount="indefinite" />
-              </circle>
-              <circle cx="60" cy="20" r="2" fill="#3b82f6" fillOpacity="0.5">
-                <animate attributeName="r" values="1.5;2.5;1.5" dur="2s" repeatCount="indefinite" begin="0.3s" />
-              </circle>
-              <circle cx="20" cy="60" r="2" fill="#3b82f6" fillOpacity="0.5">
-                <animate attributeName="r" values="1.5;2.5;1.5" dur="2s" repeatCount="indefinite" begin="0.6s" />
-              </circle>
-              <circle cx="60" cy="60" r="2" fill="#3b82f6" fillOpacity="0.5">
-                <animate attributeName="r" values="1.5;2.5;1.5" dur="2s" repeatCount="indefinite" begin="0.9s" />
               </circle>
             </pattern>
             
-            {/* Data Stream Pattern */}
-            <pattern id="dataStream" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 0 20 L 40 20" stroke="#10b981" strokeWidth="0.3" fill="none" strokeDasharray="3 3">
+            {/* Flowing Lines Pattern */}
+            <pattern id="flowingLines" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+              <path d="M 0 50 L 100 50" stroke="#10b981" strokeWidth="0.3" fill="none" strokeDasharray="5 5">
                 <animate attributeName="stroke-dashoffset" values="0;20" dur="2s" repeatCount="indefinite" />
               </path>
-              <path d="M 20 0 L 20 40" stroke="#10b981" strokeWidth="0.3" fill="none" strokeDasharray="3 3">
+              <path d="M 50 0 L 50 100" stroke="#10b981" strokeWidth="0.3" fill="none" strokeDasharray="5 5">
                 <animate attributeName="stroke-dashoffset" values="0;20" dur="2s" repeatCount="indefinite" begin="0.5s" />
               </path>
             </pattern>
             
-            {/* Gradient Background */}
-            <radialGradient id="radialGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.05">
-                <animate attributeName="stop-opacity" values="0.05;0.1;0.05" dur="4s" repeatCount="indefinite" />
+            {/* Hexagonal Pattern */}
+            <pattern id="hexagonPattern" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+              <path d="M 40 10 L 70 30 L 70 50 L 40 70 L 10 50 L 10 30 Z" fill="none" stroke="#6366f1" strokeWidth="0.3">
+                <animate attributeName="stroke-opacity" values="0.1;0.4;0.1" dur="4s" repeatCount="indefinite" />
+              </path>
+            </pattern>
+            
+            {/* Gradient Backgrounds */}
+            <radialGradient id="mouseGlow" cx={mousePosition.x / window.innerWidth * 100 + '%'} cy={mousePosition.y / window.innerHeight * 100 + '%'} r="30%">
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.15">
+                <animate attributeName="stop-opacity" values="0.1;0.2;0.1" dur="2s" repeatCount="indefinite" />
               </stop>
               <stop offset="100%" stopColor="#1e293b" stopOpacity="0"/>
             </radialGradient>
+            
+            <linearGradient id="auroraGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.05">
+                <animate attributeName="stop-opacity" values="0.05;0.1;0.05" dur="5s" repeatCount="indefinite" />
+              </stop>
+              <stop offset="50%" stopColor="#8b5cf6" stopOpacity="0.05">
+                <animate attributeName="stop-opacity" values="0.05;0.1;0.05" dur="5s" repeatCount="indefinite" begin="1s" />
+              </stop>
+              <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.05">
+                <animate attributeName="stop-opacity" values="0.05;0.1;0.05" dur="5s" repeatCount="indefinite" begin="2s" />
+              </stop>
+            </linearGradient>
           </defs>
           
-          <rect width="100%" height="100%" fill="url(#radialGlow)" />
-          <rect width="100%" height="100%" fill="url(#circuitPattern)" />
-          <rect width="100%" height="100%" fill="url(#dataStream)" />
+          {/* Apply all patterns */}
+          <rect width="100%" height="100%" fill="url(#dynamicGrid)" />
+          <rect width="100%" height="100%" fill="url(#flowingLines)" />
+          <rect width="100%" height="100%" fill="url(#hexagonPattern)" />
+          <rect width="100%" height="100%" fill="url(#auroraGradient)" />
+          <rect width="100%" height="100%" fill="url(#mouseGlow)" />
         </svg>
         
-        {/* Animated Particles */}
+        {/* Layer 2: Orbiting Particles */}
         <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          {[...Array(50)].map((_, i) => (
+          {[...Array(30)].map((_, i) => {
+            const angle = (i / 30) * Math.PI * 2;
+            const radius = 200 + Math.random() * 300;
+            const x = 50 + Math.cos(angle) * (radius / 10);
+            const y = 50 + Math.sin(angle) * (radius / 10);
+            return (
+              <circle
+                key={i}
+                cx={`${x}%`}
+                cy={`${y}%`}
+                r="2"
+                fill="#3b82f6"
+                fillOpacity="0.4"
+              >
+                <animateMotion
+                  dur={`${10 + Math.random() * 10}s`}
+                  repeatCount="indefinite"
+                  path={`M ${x} ${y} 
+                         Q ${x + 20} ${y - 20} ${x + 40} ${y} 
+                         T ${x + 80} ${y}
+                         T ${x + 40} ${y}
+                         T ${x} ${y}`}
+                />
+                <animate attributeName="fill-opacity" values="0.2;0.6;0.2" dur={`${2 + Math.random() * 3}s`} repeatCount="indefinite" />
+                <animate attributeName="r" values="1;2.5;1" dur={`${2 + Math.random() * 2}s`} repeatCount="indefinite" />
+              </circle>
+            );
+          })}
+        </svg>
+        
+        {/* Layer 3: Pulsing Rings */}
+        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="ringGradient">
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8"/>
+              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0"/>
+            </radialGradient>
+          </defs>
+          {[...Array(8)].map((_, i) => (
             <circle
               key={i}
-              cx={`${Math.random() * 100}%`}
-              cy={`${Math.random() * 100}%`}
-              r="1.5"
-              fill="#3b82f6"
-              fillOpacity="0.3"
+              cx="50%"
+              cy="50%"
+              r={100 + i * 80}
+              fill="none"
+              stroke="url(#ringGradient)"
+              strokeWidth="1"
             >
-              <animate 
-                attributeName="r" 
-                values="1;2;1" 
-                dur={`${2 + Math.random() * 3}s`} 
-                repeatCount="indefinite" 
+              <animate
+                attributeName="r"
+                values={`${100 + i * 80};${150 + i * 80};${100 + i * 80}`}
+                dur={`${5 + i * 0.5}s`}
+                repeatCount="indefinite"
               />
-              <animate 
-                attributeName="fill-opacity" 
-                values="0.2;0.6;0.2" 
-                dur={`${2 + Math.random() * 3}s`} 
-                repeatCount="indefinite" 
+              <animate
+                attributeName="stroke-opacity"
+                values="0.3;0.1;0.3"
+                dur={`${5 + i * 0.5}s`}
+                repeatCount="indefinite"
               />
             </circle>
           ))}
         </svg>
         
-        {/* Digital Rain Effect */}
-        <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="digitalRain" x="0" y="0" width="30" height="30" patternUnits="userSpaceOnUse">
-              {[...Array(5)].map((_, i) => (
-                <text 
-                  key={i} 
-                  x={5 + i * 5} 
-                  y={15} 
-                  fontSize="8" 
-                  fill="#00ff00" 
-                  fontFamily="monospace"
-                  opacity="0.3"
-                >
-                  {Math.random() > 0.5 ? '1' : '0'}
-                  <animate attributeName="opacity" values="0.1;0.5;0.1" dur={`${1 + Math.random() * 2}s`} repeatCount="indefinite" />
-                  <animateTransform attributeName="transform" type="translate" values={`0,-10;0,10`} dur={`${2 + Math.random() * 2}s`} repeatCount="indefinite" />
-                </text>
-              ))}
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#digitalRain)" />
+        {/* Layer 4: Data Streams */}
+        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+          {[...Array(20)].map((_, i) => (
+            <g key={i}>
+              <path
+                d={`M ${Math.random() * 100}% ${Math.random() * 100}% 
+                    L ${Math.random() * 100}% ${Math.random() * 100}%`}
+                stroke="#10b981"
+                strokeWidth="0.5"
+                strokeDasharray="4 4"
+              >
+                <animate
+                  attributeName="stroke-dashoffset"
+                  values="0;20"
+                  dur={`${2 + Math.random() * 3}s`}
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="stroke-opacity"
+                  values="0.1;0.4;0.1"
+                  dur={`${3 + Math.random() * 2}s`}
+                  repeatCount="indefinite"
+                />
+              </path>
+            </g>
+          ))}
         </svg>
         
-        {/* Glowing Orbs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl animate-pulse-slow delay-1000" />
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl animate-pulse-slow delay-2000" />
+        {/* Layer 5: Glowing Orbs with Mouse Interaction */}
+        <div 
+          className="absolute w-96 h-96 rounded-full blur-3xl transition-all duration-300"
+          style={{
+            background: 'radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(59,130,246,0) 70%)',
+            left: mousePosition.x - 200,
+            top: mousePosition.y - 200,
+            pointerEvents: 'none'
+          }}
+        />
+        <div 
+          className="absolute w-64 h-64 rounded-full blur-2xl transition-all duration-500"
+          style={{
+            background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0) 70%)',
+            left: window.innerWidth - mousePosition.x - 150,
+            top: window.innerHeight - mousePosition.y - 150,
+            pointerEvents: 'none'
+          }}
+        />
       </div>
       
       {/* Modal for Machine Details */}
@@ -373,9 +533,9 @@ const ProductionHistory = () => {
           <div>
             <div className="flex items-center gap-3 mb-3">
               <div className="flex gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500 shadow-lg" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-lg" />
-                <div className="w-3 h-3 rounded-full bg-green-500 shadow-lg" />
+                <div className="w-3 h-3 rounded-full bg-red-500 shadow-lg animate-pulse" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-lg animate-pulse delay-100" />
+                <div className="w-3 h-3 rounded-full bg-green-500 shadow-lg animate-pulse delay-200" />
               </div>
               <div className="flex items-center gap-2">
                 <Terminal size={14} className="text-blue-400" />
@@ -396,7 +556,7 @@ const ProductionHistory = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* LEFT SIDEBAR - Enhanced Glass Filters */}
+          {/* LEFT SIDEBAR */}
           <div className="lg:col-span-3 space-y-6">
             <div className="backdrop-blur-2xl bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
               <div className="bg-white/5 px-5 py-3 border-b border-white/10">
@@ -407,13 +567,12 @@ const ProductionHistory = () => {
               </div>
               
               <div className="p-5 space-y-6">
-                {/* TIME PERIOD with Dynamic Year Selection */}
+                {/* TIME PERIOD */}
                 <div>
                   <label className="text-[11px] font-mono text-gray-400 block mb-2 flex items-center gap-2">
                     <Calendar size={12} /> TIME PERIOD
                   </label>
                   
-                  {/* Month Selection */}
                   <div className="mb-2">
                     <select
                       value={selectedMonth}
@@ -426,7 +585,6 @@ const ProductionHistory = () => {
                     </select>
                   </div>
                   
-                  {/* Dynamic Year Selection */}
                   <div className="flex gap-2">
                     <select
                       value={selectedYear}
@@ -752,6 +910,14 @@ const ProductionHistory = () => {
         
         .animate-pulse-slow {
           animation: pulse-slow 4s ease-in-out infinite;
+        }
+        
+        .delay-100 {
+          animation-delay: 100ms;
+        }
+        
+        .delay-200 {
+          animation-delay: 200ms;
         }
         
         .delay-1000 {
