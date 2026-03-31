@@ -199,7 +199,7 @@ export default function LandingPage() {
               whileHover="hover"
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/login')}
-              className="px-6 md:px-8 py-2.5 md:py-3 text-sm md:text-base font-medium bg-transparent backdrop-blur-sm border-2 border-[#06b6d4] text-[#06b6d4] rounded-xl hover:bg-[#06b6d4] hover:text-[#0f172a] transition-all duration-300 hover:shadow-lg hover:shadow-[#06b6d4]/50 hover:border-transparent"
+              className="px-6 md:px-8 py-2.5 md:py-3 text-sm md:text-base font-medium bg-transparent backdrop-blur-sm border-2 border-[#06b6d4] text-[#06b6d4] rounded-xl  transition-all duration-300 hover:shadow-lg hover:shadow-[#06b6d4]/50 hover:border-transparent"
             >
               Login
             </motion.button>
