@@ -75,15 +75,14 @@ import ToolHistoryForm from './components/All_Deperments_Hub/MaintenanceHub/form
 import MachineBreakDownForm from './components/All_Deperments_Hub/MaintenanceHub/forms/MachineBreakDownForm';
 import ToolPrevMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/forms/ToolPrevMaintenanceForm';
 
-import MachineHistoryCard from './components/All_Deperments_Hub/MaintenanceHub/MachineHistoryCard';
+
 import MachineHistoryCardprint from './components/All_Deperments_Hub/MaintenanceHub/MachineHistoryCardprint';
-import DailyPowerPressChecksheet from '././components/All_Deperments_Hub/MaintenanceHub/DailyPowerPressChecksheet'
-import DailyPowerPressChecksheetprint from './components/All_Deperments_Hub/MaintenanceHub/DailyPowerPressChecksheetprint';
-import ToolHistoryForm from './components/All_Deperments_Hub/MaintenanceHub/ToolHistoryForm';
+
+
 import ToolHistoryReport from './components/All_Deperments_Hub/MaintenanceHub/ToolHistoryReport';
-import MachineBreakDownForm from './components/All_Deperments_Hub/MaintenanceHub/MachineBreakDownForm';
+
 import MachineBreakdownSummaryPrint from './components/All_Deperments_Hub/MaintenanceHub/MachineBreakdownSummaryPrint';
-import ToolPrevMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/ToolPrevMaintenanceForm';
+
 
 import SampleInsForm from './components/All_Deperments_Hub/QaHub/SampleInsForm';
 import For_M_Change_Ins_Form from './components/All_Deperments_Hub/ProductionHub/For_M_Change_Ins_Form';
