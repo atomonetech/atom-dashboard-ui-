@@ -113,9 +113,9 @@ export default function Sidebar({ onLogout }) {
 
   // Get sidebar width based on device and state
   const getSidebarWidth = () => {
-    // Mobile devices - full width overlay
+    // Mobile devices - half width overlay
     if (screenInfo.isMobile) {
-      return mobileOpen ? '280px' : '0px';
+      return mobileOpen ? '230px' : '0px';
     }
     
     // iPad Mini (768px - 810px)
@@ -184,17 +184,51 @@ export default function Sidebar({ onLogout }) {
   };
 
   // Get icon size
-  const getIconSize = () => {
-    if (screenInfo.isMobile) return 'w-5 h-5';
-    if (screenInfo.isIPadMini) return 'w-4.5 h-4.5';
-    return 'w-5 h-5';
-  };
+ // Even smaller icon sizes
+const getIconSize = () => {
+  if (screenInfo.isMobile) return 'w-2 h-2';      // Very small for mobile
+  if (screenInfo.isIPadMini) return 'w-2.5 h-2.5'; // Small for iPad Mini
+  return 'w-3 h-3';                               // Small for desktop
+};
 
   // Get logo size
   const getLogoSize = () => {
     if (screenInfo.isMobile) return 'h-12';
     if (screenInfo.isIPadMini) return 'h-11';
     return 'h-14';
+  };
+
+  // Get logo width based on screen size
+  const getLogoWidth = () => {
+    if (screenInfo.isMobile) {
+      return 'w-[100px]';  // For screens < 768px
+    }
+    if (screenInfo.isTablet) {
+      return 'w-[120px]'; // For tablets (768px - 1024px)
+    }
+    return 'w-[140px]';   // For desktop screens
+  };
+
+  // Get small logo width based on screen size
+  const getSmallLogoWidth = () => {
+    if (screenInfo.isMobile) {
+      return 'w-[50px]';  // For screens < 768px
+    }
+    return 'w-[70px]';    // For tablet and desktop
+  };
+
+  // Get close button size based on screen size
+  const getCloseButtonSize = () => {
+    if (screenInfo.isMobile) {
+      return {
+        padding: 'p-1.5',
+        iconSize: 'w-3 h-3'
+      };
+    }
+    return {
+      padding: 'p-2.5',
+      iconSize: 'w-4 h-4'
+    };
   };
 
   // Toggle collapse
@@ -222,6 +256,8 @@ export default function Sidebar({ onLogout }) {
     }
     return 'top-4 left-4';
   };
+
+  const closeButtonSize = getCloseButtonSize();
 
   return (
     <>
@@ -284,10 +320,10 @@ export default function Sidebar({ onLogout }) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={closeSidebar}
-            className="absolute top-5 right-5 z-50 p-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border border-red-500/30"
+            className={`absolute top-5 right-5 z-50 ${closeButtonSize.padding} rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border border-red-500/30`}
             aria-label="Close menu"
           >
-            <X className="w-6 h-6" strokeWidth={2} />
+            <X className={closeButtonSize.iconSize} strokeWidth={1.5} />
           </motion.button>
         )}
 
@@ -362,7 +398,7 @@ export default function Sidebar({ onLogout }) {
                   <img 
                     src={fullLogo} 
                     alt="AtomOne Technologies" 
-                    className={`relative ${getLogoSize()} w-full object-contain drop-shadow-2xl filter brightness-110`}
+                    className={`relative ${getLogoSize()} ${getLogoWidth()} object-contain drop-shadow-xl filter brightness-110`}
                   />
                 </motion.div>
               ) : (
@@ -381,7 +417,7 @@ export default function Sidebar({ onLogout }) {
                     <img 
                       src={smallLogo} 
                       alt="A1" 
-                      className="w-full h-full object-cover filter brightness-110"
+                      className={`${getSmallLogoWidth()} h-full object-cover filter brightness-110`}
                     />
                   </div>
                 </motion.div>
