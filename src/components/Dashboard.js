@@ -684,6 +684,7 @@ const Dashboard = ({ onLogout }) => {
           </div>
 
           <Sidebar onLogout={onLogout} />
+          {/* logout  */}
 
           <div className="flex-1 overflow-auto relative z-10 mt-5">
             <div className={`max-w-[1600px] mx-auto ${getContainerPadding()}`}>
