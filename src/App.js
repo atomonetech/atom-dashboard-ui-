@@ -54,7 +54,6 @@ import SampleInspectionprint from './components/All_Deperments_Hub/QaHub/SampleI
 
 
 
-// ========== ProductionHub & HrSafetyHub IMPORTS ==========
 import ProductionHub from './components/All_Deperments_Hub/ProductionHub/ProductionHub';
 import Operator5S from './components/All_Deperments_Hub/ProductionHub/Operator_5s';
 import Operator5sprint from './components/All_Deperments_Hub/ProductionHub/Operator5sprint';
@@ -68,6 +67,14 @@ import TipChangeMonitorprint from './components/All_Deperments_Hub/ProductionHub
 import M_ChangeTrackForm from './components/All_Deperments_Hub/ProductionHub/M_ChangeTrackForm';
 
 
+
+import MachineHistoryCard from './components/All_Deperments_Hub/MaintenanceHub/forms/MachineHistoryCard';
+import DailyPowerPressChecksheet from '././components/All_Deperments_Hub/MaintenanceHub/forms/DailyPowerPressChecksheet'
+import DailyPowerPressChecksheetprint from './components/All_Deperments_Hub/MaintenanceHub/forms/DailyPowerPressChecksheetprint';
+import ToolHistoryForm from './components/All_Deperments_Hub/MaintenanceHub/forms/ToolHistoryForm';
+import MachineBreakDownForm from './components/All_Deperments_Hub/MaintenanceHub/forms/MachineBreakDownForm';
+import ToolPrevMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/forms/ToolPrevMaintenanceForm';
+
 import MachineHistoryCard from './components/All_Deperments_Hub/MaintenanceHub/MachineHistoryCard';
 import MachineHistoryCardprint from './components/All_Deperments_Hub/MaintenanceHub/MachineHistoryCardprint';
 import DailyPowerPressChecksheet from '././components/All_Deperments_Hub/MaintenanceHub/DailyPowerPressChecksheet'
@@ -77,6 +84,7 @@ import ToolHistoryReport from './components/All_Deperments_Hub/MaintenanceHub/To
 import MachineBreakDownForm from './components/All_Deperments_Hub/MaintenanceHub/MachineBreakDownForm';
 import MachineBreakdownSummaryPrint from './components/All_Deperments_Hub/MaintenanceHub/MachineBreakdownSummaryPrint';
 import ToolPrevMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/ToolPrevMaintenanceForm';
+
 import SampleInsForm from './components/All_Deperments_Hub/QaHub/SampleInsForm';
 import For_M_Change_Ins_Form from './components/All_Deperments_Hub/ProductionHub/For_M_Change_Ins_Form';
 import DeviationApprovalForm from './components/All_Deperments_Hub/QaHub/DeviationApprovalForm';
