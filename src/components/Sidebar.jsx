@@ -184,12 +184,11 @@ export default function Sidebar({ onLogout }) {
   };
 
   // Get icon size
- // Even smaller icon sizes
-const getIconSize = () => {
-  if (screenInfo.isMobile) return 'w-2 h-2';      // Very small for mobile
-  if (screenInfo.isIPadMini) return 'w-2.5 h-2.5'; // Small for iPad Mini
-  return 'w-3 h-3';                               // Small for desktop
-};
+  const getIconSize = () => {
+    if (screenInfo.isMobile) return 'w-5 h-5';
+    if (screenInfo.isIPadMini) return 'w-4.5 h-4.5';
+    return 'w-5 h-5';
+  };
 
   // Get logo size
   const getLogoSize = () => {
