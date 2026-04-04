@@ -13,46 +13,31 @@ export const machineDailyReports = [
     { id: 'mc_breakdown', title: 'Machine Breakdown Slip', formNo: 'AOT-F-BD-01', frequency: 'Daily', responsibility: 'Maint engineer / Pro Engineer', icon: 'bi-exclamation-triangle', color: '#ef4444', bgColor: '#fef2f2' }
 ];
 
-// 🔥 The Parent Card for Weekly
-export const machineWeeklyReports = [
-    { 
-        id: 'weekly_pm_checklist', 
-        title: 'Preventive & Predictive Maint. Checklist', 
-        formNo: 'AOT-F-PM-01', 
-        frequency: 'Weekly', 
-        responsibility: 'Maintenance Team', 
-        icon: 'bi-folder2-open', 
-        color: '#10b981', 
-        bgColor: '#d1fae5',
-        isGroup: true // Tells our hub that clicking this opens a sub-menu
-    }
-];
-
-// 🔥 19 Machines with 19 Unique Color Themes
+// 🔥 19 Machines with Unique Color Themes
 const machinesWithColors = [
-    { name: 'VMM', color: '#3b82f6', bgColor: '#eff6ff' },             // Blue
-    { name: 'Projection WELD', color: '#8b5cf6', bgColor: '#ede9fe' }, // Purple
-    { name: 'VMC', color: '#ec4899', bgColor: '#fce7f3' },             // Pink
-    { name: 'CNC', color: '#10b981', bgColor: '#d1fae5' },             // Green
-    { name: 'Power Press', color: '#f59e0b', bgColor: '#fef3c7' },     // Amber
-    { name: 'Hydraulic MIG', color: '#ef4444', bgColor: '#fef2f2' },   // Red
-    { name: 'TIG', color: '#06b6d4', bgColor: '#cffafe' },             // Cyan
-    { name: 'Spot Welding', color: '#6366f1', bgColor: '#e0e7ff' },    // Indigo
-    { name: 'Compressor', color: '#14b8a6', bgColor: '#ccfbf1' },      // Teal
-    { name: 'Lathe', color: '#f43f5e', bgColor: '#ffe4e6' },           // Rose
-    { name: 'Drill Machine', color: '#84cc16', bgColor: '#ecfccb' },   // Lime
-    { name: 'Surface Grinder', color: '#d946ef', bgColor: '#fae8ff' }, // Fuchsia
-    { name: 'Belt Grinder', color: '#0ea5e9', bgColor: '#e0f2fe' },    // Sky Blue
-    { name: 'Base Grinder', color: '#f97316', bgColor: '#ffedd5' },    // Orange
-    { name: 'Tapping Machine', color: '#eab308', bgColor: '#fef9c3' }, // Yellow
-    { name: 'Pipe Cutter', color: '#64748b', bgColor: '#f1f5f9' },     // Slate Gray
-    { name: 'Vibra', color: '#1d4ed8', bgColor: '#dbeafe' },           // Deep Royal Blue
-    { name: 'DIP Molding', color: '#be185d', bgColor: '#fce7f3' },     // Deep Pink/Ruby
-    { name: 'Servo Press', color: '#047857', bgColor: '#d1fae5' }      // Emerald Green
+    { name: 'VMM', color: '#3b82f6', bgColor: '#eff6ff', icon: 'bi-aspect-ratio' },             
+    { name: 'Projection WELD', color: '#8b5cf6', bgColor: '#ede9fe', icon: 'bi-lightning-charge-fill' }, 
+    { name: 'VMC', color: '#ec4899', bgColor: '#fce7f3', icon: 'bi-cpu-fill' },             
+    { name: 'CNC', color: '#10b981', bgColor: '#d1fae5', icon: 'bi-motherboard-fill' },             
+    { name: 'PowerPress', color: '#f59e0b', bgColor: '#fef3c7', icon: 'bi-arrow-down-square-fill' },     
+    { name: 'Hydraulic MIG', color: '#ef4444', bgColor: '#fef2f2', icon: 'bi-fire' },   
+    { name: 'TIG', color: '#06b6d4', bgColor: '#cffafe', icon: 'bi-magic' },             
+    { name: 'Spot Welding', color: '#6366f1', bgColor: '#e0e7ff', icon: 'bi-node-plus-fill' },    
+    { name: 'Compressor', color: '#14b8a6', bgColor: '#ccfbf1', icon: 'bi-wind' },      
+    { name: 'Lathe', color: '#f43f5e', bgColor: '#ffe4e6', icon: 'bi-arrow-repeat' },           
+    { name: 'Drill Machine', color: '#84cc16', bgColor: '#ecfccb', icon: 'bi-crosshair' },   
+    { name: 'Surface Grinder', color: '#d946ef', bgColor: '#fae8ff', icon: 'bi-layers-fill' }, 
+    { name: 'Belt Grinder', color: '#0ea5e9', bgColor: '#e0f2fe', icon: 'bi-vinyl-fill' },    
+    { name: 'Base Grinder', color: '#f97316', bgColor: '#ffedd5', icon: 'bi-disc-fill' },    
+    { name: 'Tapping Machine', color: '#eab308', bgColor: '#fef9c3', icon: 'bi-nut-fill' }, 
+    { name: 'Pipe Cutter', color: '#64748b', bgColor: '#f1f5f9', icon: 'bi-scissors' },     
+    { name: 'Vibra', color: '#1d4ed8', bgColor: '#dbeafe', icon: 'bi-phone-vibrate-fill' },           
+    { name: 'DIP Molding', color: '#be185d', bgColor: '#fce7f3', icon: 'bi-droplet-half' },     
+    { name: 'Servo Press', color: '#047857', bgColor: '#d1fae5', icon: 'bi-chevron-double-down' }      
 ];
 
-// Automatically generate the 19 cards applying the colors above
-export const weeklyMachineSubReports = machinesWithColors.map((m) => ({
+// 🔥 Directly generate the 19 cards as the primary Weekly Reports
+export const machineWeeklyReports = machinesWithColors.map((m) => ({
     id: `weekly_pm_${m.name.replace(/\s+/g, '_').toLowerCase()}`, 
     title: `${m.name} Weekly Maint.`,
     formNo: 'AOT-F-PM-01', 

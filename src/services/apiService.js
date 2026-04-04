@@ -1,5 +1,5 @@
 // src/services/ApiService.js - COMPLETELY FIXED WITH CORRECT ENDPOINTS
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.0.34:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
 class ApiService {
   static async get(endpoint, params = {}) {

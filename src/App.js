@@ -81,8 +81,14 @@ import './App.css';
 import ForMChangeInsPrint from './components/All_Deperments_Hub/ProductionHub/ForMChangeInsPrint';
 
 import BinTrollingprint from './components/All_Deperments_Hub/ProductionHub/BinTrollingprint';
+import DailyReports from './components/All_Deperments_Hub/MaintenanceHub/views/DailyReports';
 import DailyProdprint from './components/All_Deperments_Hub/ProductionHub/DailyProdprint';
 import ForMChangeRecordPrint from './components/All_Deperments_Hub/ProductionHub/ForMChangeRecordPrint';
+import WeeklyReports from './components/All_Deperments_Hub/MaintenanceHub/views/WeeklyReports';
+import MachinePreventForm from './components/All_Deperments_Hub/MaintenanceHub/forms/MachinePreventMainForm';
+import CncPrevForm from './components/All_Deperments_Hub/MaintenanceHub/forms/CNCPreventiveMaintenanceForm';
+import PowerPressForm from './components/All_Deperments_Hub/MaintenanceHub/forms/PowerPressPreventiveMaintenanceForm';
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const savedAuth = localStorage.getItem('isAuthenticated');
@@ -221,10 +227,18 @@ function App() {
             <Route path='/4M-Change-Inspection-Report' element={<ProtectedRoute><ForMChangeInsPrint/></ProtectedRoute>}/>
 
 
+<Route path="/Maintenance-Hub" element={<MaintenanceHub />} />
+<Route path="/Maintenance/Weekly-Reports" element={<WeeklyReports />} />
+        
+                  <Route path="/Weekly-VMC-Form" element={<ProtectedRoute><MachinePreventForm /></ProtectedRoute>} />
+                  <Route path='/Weekly-CNC-Form' element={<ProtectedRoute><CncPrevForm/></ProtectedRoute>}/>
+                  <Route path='/Weekly-Power-Press-Form' element={<ProtectedRoute><PowerPressForm/></ProtectedRoute>}/>
+                  <Route path="/Maintenance/Daily-Reports" element={<ProtectedRoute><DailyReports /></ProtectedRoute>} />
 
            <Route path="/Bin-Trolly-Cleaning-Report" element={<BinTrollingprint currentReport={null} />} />
            <Route path="/Daily-Prod-Plan-Report" element={<DailyProdprint currentReport={null}/>} />
            <Route path="/4M-Change-Tracking-Report" element={<ForMChangeRecordPrint currentReport={null} />} />
+           
           {/* ========== 404 NOT FOUND ========== */}
           <Route 
             path="*" 
