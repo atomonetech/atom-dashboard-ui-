@@ -85,7 +85,7 @@ import DailyReports from './components/All_Deperments_Hub/MaintenanceHub/views/D
 import DailyProdprint from './components/All_Deperments_Hub/ProductionHub/DailyProdprint';
 import ForMChangeRecordPrint from './components/All_Deperments_Hub/ProductionHub/ForMChangeRecordPrint';
 import MachinePreventForm from './components/All_Deperments_Hub/MaintenanceHub/forms/MachinePreventMainForm';
-import CncPrevForm from './components/All_Deperments_Hub/MaintenanceHub/forms/CNCPreventiveMaintenanceForm';
+import CNCPreventiveMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/forms/CncPreventiveMaintenanceForm';
 import PowerPressForm from './components/All_Deperments_Hub/MaintenanceHub/forms/PowerPressPreventiveMaintenanceForm';
 import MachineRoutes from './routes/MachineRoutes';
 import ToolRoutes from './routes/ToolRoutes';
@@ -258,12 +258,12 @@ function App() {
   } 
 />
 
-{/* 4. Individual Forms (Inhe modular routes ke andar le jayein ya yahan rehne dein) */}
+{/* 4. Individual Forms (Inhe modular routes ke andar le jayein ya yahan rehne dein) add */}
 <Route path='/Machine-Card-Form' element={<ProtectedRoute><MachineHistoryCard/></ProtectedRoute>}/>
 <Route path='/Tool-History-Form' element={<ProtectedRoute><ToolHistoryForm/></ProtectedRoute>}/>
 <Route path='/Daily-PowerPress-Checksheet' element={<ProtectedRoute><DailyPowerPressChecksheet/></ProtectedRoute>}/>
 <Route path="/Weekly-VMC-Form" element={<ProtectedRoute><MachinePreventForm /></ProtectedRoute>} />
-<Route path='/Weekly-CNC-Form' element={<ProtectedRoute><CncPrevForm/></ProtectedRoute>}/>
+<Route path='/Weekly-CNC-Form' element={<ProtectedRoute><CNCPreventiveMaintenanceForm/></ProtectedRoute>}/>
 <Route path='/Weekly-Power-Press-Form' element={<ProtectedRoute><PowerPressForm/></ProtectedRoute>}/>
 
 <Route path="/Maintenance/Tool/*" element={<ProtectedRoute><ToolRoutes /></ProtectedRoute>} />
@@ -272,7 +272,7 @@ function App() {
       {/* Separate Machine Section */}
       <Route path="/Maintenance/Machine/*" element={<MachineRoutes />} />
                   <Route path="/Weekly-VMC-Form" element={<ProtectedRoute><MachinePreventForm /></ProtectedRoute>} />
-                  <Route path='/Weekly-CNC-Form' element={<ProtectedRoute><CncPrevForm/></ProtectedRoute>}/>
+                  
                   <Route path='/Weekly-Power-Press-Form' element={<ProtectedRoute><PowerPressForm/></ProtectedRoute>}/>
                   <Route path="/Maintenance/Daily-Reports" element={<ProtectedRoute><DailyReports /></ProtectedRoute>} />
 
