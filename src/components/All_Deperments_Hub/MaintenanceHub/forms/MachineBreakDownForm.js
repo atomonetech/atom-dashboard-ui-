@@ -166,7 +166,7 @@ const MachineBreakDownForm = () => {
     console.log('Navigating back to Maintenance Hub');
     // Navigate to maintenance hub - using window.location.href for direct navigation
     // You can replace this with your routing logic (React Router, Next.js, etc.)
-    window.location.href = '/maintenance-hub';
+    window.location.href = '/Maintenance/Machine/Daily-Reports';
     // If using React Router, you would use: navigate('/maintenance-hub');
   };
 

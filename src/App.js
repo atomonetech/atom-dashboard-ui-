@@ -84,11 +84,11 @@ import BinTrollingprint from './components/All_Deperments_Hub/ProductionHub/BinT
 import DailyReports from './components/All_Deperments_Hub/MaintenanceHub/views/DailyReports';
 import DailyProdprint from './components/All_Deperments_Hub/ProductionHub/DailyProdprint';
 import ForMChangeRecordPrint from './components/All_Deperments_Hub/ProductionHub/ForMChangeRecordPrint';
-import WeeklyReports from './components/All_Deperments_Hub/MaintenanceHub/views/WeeklyReports';
 import MachinePreventForm from './components/All_Deperments_Hub/MaintenanceHub/forms/MachinePreventMainForm';
 import CncPrevForm from './components/All_Deperments_Hub/MaintenanceHub/forms/CNCPreventiveMaintenanceForm';
 import PowerPressForm from './components/All_Deperments_Hub/MaintenanceHub/forms/PowerPressPreventiveMaintenanceForm';
-
+import MachineRoutes from './routes/MachineRoutes';
+import ToolRoutes from './routes/ToolRoutes';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const savedAuth = localStorage.getItem('isAuthenticated');
@@ -227,9 +227,50 @@ function App() {
             <Route path='/4M-Change-Inspection-Report' element={<ProtectedRoute><ForMChangeInsPrint/></ProtectedRoute>}/>
 
 
-<Route path="/Maintenance-Hub" element={<MaintenanceHub />} />
-<Route path="/Maintenance/Weekly-Reports" element={<WeeklyReports />} />
-        
+<Route path="/Maintenance-Hub" element={<ProtectedRoute> <MaintenanceHub /></ProtectedRoute>} />
+<Route path="/Maintenance-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+<Route path="/Maintenance/Machine-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+<Route path="/Maintenance/Tool-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+
+{/* 🔥 MAINTENANCE SECTION - CLEAN & SECURE 🔥 */}
+{/* 1. Main Hub - Dono routes se Hub page khulega */}
+<Route path="/Maintenance-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+<Route path="/Maintenance/Machine-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+<Route path="/Maintenance/Tool-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+
+{/* 2. Tool Modular Routes - Wrap with ProtectedRoute */}
+<Route 
+  path="/Maintenance/Tool/*" 
+  element={
+    <ProtectedRoute>
+      <ToolRoutes />
+    </ProtectedRoute>
+  } 
+/>
+
+{/* 3. Machine Modular Routes - Wrap with ProtectedRoute */}
+<Route 
+  path="/Maintenance/Machine/*" 
+  element={
+    <ProtectedRoute>
+      <MachineRoutes />
+    </ProtectedRoute>
+  } 
+/>
+
+{/* 4. Individual Forms (Inhe modular routes ke andar le jayein ya yahan rehne dein) */}
+<Route path='/Machine-Card-Form' element={<ProtectedRoute><MachineHistoryCard/></ProtectedRoute>}/>
+<Route path='/Tool-History-Form' element={<ProtectedRoute><ToolHistoryForm/></ProtectedRoute>}/>
+<Route path='/Daily-PowerPress-Checksheet' element={<ProtectedRoute><DailyPowerPressChecksheet/></ProtectedRoute>}/>
+<Route path="/Weekly-VMC-Form" element={<ProtectedRoute><MachinePreventForm /></ProtectedRoute>} />
+<Route path='/Weekly-CNC-Form' element={<ProtectedRoute><CncPrevForm/></ProtectedRoute>}/>
+<Route path='/Weekly-Power-Press-Form' element={<ProtectedRoute><PowerPressForm/></ProtectedRoute>}/>
+
+<Route path="/Maintenance/Tool/*" element={<ProtectedRoute><ToolRoutes /></ProtectedRoute>} />
+<Route path="/Maintenance/Machine/*" element={<ProtectedRoute><MachineRoutes /></ProtectedRoute>} />
+
+      {/* Separate Machine Section */}
+      <Route path="/Maintenance/Machine/*" element={<MachineRoutes />} />
                   <Route path="/Weekly-VMC-Form" element={<ProtectedRoute><MachinePreventForm /></ProtectedRoute>} />
                   <Route path='/Weekly-CNC-Form' element={<ProtectedRoute><CncPrevForm/></ProtectedRoute>}/>
                   <Route path='/Weekly-Power-Press-Form' element={<ProtectedRoute><PowerPressForm/></ProtectedRoute>}/>

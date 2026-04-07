@@ -22,7 +22,8 @@ import {
   Package,
   Users,
   History,
-  ArrowRight
+  ArrowRight,
+  ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -287,7 +288,7 @@ export default function Sidebar({ onLogout }) {
             className="absolute top-3 right-3 z-50 p-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border border-indigo-500/30"
             aria-label="Go back"
           >
-            <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.5} />
+            <ArrowLeft className="w-3.5 h-3.5" strokeWidth={1.5} />
           </motion.button>
         )}
 

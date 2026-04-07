@@ -4,7 +4,7 @@ export const frequencyCards = [
     { id: 'daily', title: 'Daily Maintenance', formNo: 'Daily Routines', frequency: 'Daily', responsibility: 'Various', icon: 'bi-calendar-day', color: '#3b82f6', bgColor: '#eff6ff' },
     { id: 'weekly', title: 'Weekly Maintenance', formNo: 'Weekly PM', frequency: 'Weekly', responsibility: 'Maint. Team', icon: 'bi-calendar-week', color: '#10b981', bgColor: '#d1fae5' },
     { id: 'monthly', title: 'Monthly Maintenance', formNo: 'Monthly PM', frequency: 'Monthly', responsibility: 'Maint. Team', icon: 'bi-calendar-month', color: '#8b5cf6', bgColor: '#ede9fe' },
-    { id: 'quarterly', title: 'Quarterly Maintenance', formNo: 'Quarterly PM', frequency: 'Quarterly', responsibility: 'Maint. Team', icon: 'bi-calendar3', color: '#f59e0b', bgColor: '#fef3c7' }
+    { id: 'Yearly', title: 'Yearly Maintenance', formNo: 'Yearly PM', frequency: 'yearly', responsibility: 'Maint. Team', icon: 'bi-calendar3', color: '#f59e0b', bgColor: '#fef3c7' }
 ];
 
 export const machineDailyReports = [

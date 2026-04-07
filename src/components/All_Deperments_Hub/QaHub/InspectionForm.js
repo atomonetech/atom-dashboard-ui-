@@ -1,4 +1,6 @@
+import { ArrowLeft } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Example SOP Content
 const sopDatabase = {
@@ -36,7 +38,7 @@ const InspectionForm = () => {
     const [modelName, setModelName] = useState('');
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
-    const API_URL = "http://127.0.0.1:8000/api";
+    const API_URL = "http://192.168.0.34:8000/api";
     const [specList, setSpecList] = useState([]); 
 
     const [dbLogs, setDbLogs] = useState([]); 
@@ -50,8 +52,8 @@ const InspectionForm = () => {
     const activeColumn = logColumns.find(col => col.id === activeColId) || logColumns[0];
 
     const [showInfoModal, setShowInfoModal] = useState(false);
-    const [currentSop, setCurrentSop] = useState(null);
-
+    const [currentSop, setCurrentSop] = useState(null)
+   const navigate=useNavigate()
     // ==========================================
     //  2. FETCH DATA & LOAD FORM
     // ==========================================
@@ -111,11 +113,10 @@ const InspectionForm = () => {
     };
 
     // ==========================================
-    //  3. ACTION & STAGE GATES LOGIC 🔥 (Updated with Cool English)
+    //  3. ACTION & STAGE GATES LOGIC
     // ==========================================
     const handleUpdateAction = () => {
         if (dbLogs.length === 0) {
-            // 🔥 Professional English Alert
             alert("ℹ️ No existing records found for this date. Please select 'New Record' to initiate an inspection.");
             return;
         }
@@ -128,15 +129,12 @@ const InspectionForm = () => {
 
     const handleDeleteAction = async () => {
         if (dbLogs.length === 0) {
-            // 🔥 Professional English Alert
             alert("ℹ️ No data available to purge for the selected date.");
             return;
         }
-        // 🔥 Professional English Confirm
         const confirmDelete = window.confirm("⚠️ Critical Warning: You are about to permanently purge all inspection records for this date. \n\nDo you wish to proceed?");
         if (confirmDelete) {
             try {
-                // 🔥 Professional English Alert
                 alert("🗑️ Records successfully purged from the database.");
                 loadDataForGates(selectedCustomer, selectedPart, selectedTool, selectedDate);
             } catch (err) { alert("❌ Deletion failed. Please verify database connection."); }
@@ -153,33 +151,25 @@ const InspectionForm = () => {
     const isLastDone = !!lastLog;
 
     const startFillingStage = (stageCode) => {
-        
-        // 🔥 4-HOUR STRICT TIME LOCK LOGIC 🔥
         if (stageCode === '4HRS') {
             if (!setupLog) {
-                // 🔥 Professional English Alert
                 alert("⛔ Sequence Error: Please complete the SETUP inspection before initiating the 4-Hourly report.");
                 return;
             }
             if (setupLog.timestamp) {
-                const FOUR_HOURS_MS = 4 * 60 * 60 * 1000; // Change to 2 * 60 * 1000 for 2 min testing
-                
+                const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
                 const timePassed = Date.now() - setupLog.timestamp;
                 if (timePassed < FOUR_HOURS_MS) {
                     const timeLeft = FOUR_HOURS_MS - timePassed;
                     const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
                     const minsLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                    
-                    // 🔥 Professional English Alert (Cool Accent)
                     alert(`⏳ Time Restriction Active: The 4-Hourly inspection will unlock in ${hoursLeft}h ${minsLeft}m.`);
                     return; 
                 }
             }
         }
 
-        // 🔥 CONFIRMATION LOGIC FOR 'LAST PIECE'
         if (stageCode === 'LAST') {
-            // 🔥 Professional English Confirm
             const isConfirmed = window.confirm(`⚠️ Verification Required: Are you sure you want to log the LAST PIECE for the [${selectedTool}] operation?\n\nProceeding will finalize the batch inspection.`);
             if (!isConfirmed) return; 
         }
@@ -238,11 +228,9 @@ const InspectionForm = () => {
         setShowInfoModal(true);
     };
     const handleVideoClick = (paramName) => { 
-        // 🔥 Professional English Alert
         alert(`🎥 Initializing tutorial video for: ${paramName}`); 
     };
 
-    // 🔥 STRICT SAVE DATA LOGIC 🔥
     const handleSaveData = async () => {
         const timeNow = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         
@@ -269,17 +257,14 @@ const InspectionForm = () => {
             });
             
             if (response.ok) {
-                // 🔥 Professional English Alert
                 alert(`✅ [${activeColumn?.displayStage || 'Data'}] inspection successfully committed to the database.`);
             } else {
                 const errorData = await response.json();
                 console.error("Django Backend Error:", errorData);
-                // 🔥 Professional English Alert
                 alert(`❌ Synchronization Failed: The server rejected the payload. Please verify console logs (F12).`);
             }
         } catch (error) { 
             console.error("Network / CORS Error:", error);
-            // 🔥 Professional English Alert
             alert("❌ Connection Timeout: Unable to reach the server. Please verify your network or backend status."); 
         }
 
@@ -338,14 +323,14 @@ const InspectionForm = () => {
     };
 
     return (
-        <>
+        <div style={{backgroundColor: '#ffffff', minHeight: '100vh', width: '100%'}}>
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
             
             <style>{`
                 /* ====== PREMIUM LIGHT THEME ====== */
                 :root {
-                    --bg-main: #f4f7f9;         
+                    --bg-main: #ffffff;         
                     --bg-card: #ffffff;         
                     --bg-input: #f8fafc;        
                     --text-main: #0f172a;       
@@ -358,13 +343,32 @@ const InspectionForm = () => {
                     --success: #10b981;
                 }
 
-                body { background-color: var(--bg-main); font-family: 'Inter', 'Segoe UI', sans-serif; color: var(--text-main); }
+             
+                body, html, #root {
+                    background-color: #ffffff !important;
+                    min-height: 100vh;
+                    font-family: 'Inter', 'Segoe UI', sans-serif;
+                    color: var(--text-main);
+                }
                 
                 @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
                 .animate-pop { animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
                 
-                .navbar-light-custom { position: fixed; top: 0; width: 100%; height: 70px; background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-subtle); z-index: 1000; box-shadow: 0 1px 3px rgba(0,0,0,0.02);}
-                .brand-logo { font-weight: 900; color: var(--accent-primary); font-size: 1.4rem; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px;}
+              
+                .navbar-light-custom { 
+                    position: fixed; 
+                    top: 0; 
+                    width: 100%; 
+                    height: 70px; 
+                    background-color: #ffffff; 
+                    border-bottom: 1px solid var(--border-subtle); 
+                    z-index: 1000; 
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0 1.5rem;
+                }
                 
                 .card-custom { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 24px; transition: 0.3s; }
                 .card-header-custom { background-color: #ffffff; border-bottom: 1px solid var(--border-subtle); padding: 1.2rem 1.5rem; display: flex; align-items: center; justify-content: space-between; border-radius: 12px 12px 0 0;}
@@ -386,7 +390,6 @@ const InspectionForm = () => {
                 .gate-title-light { font-weight: 800; color: var(--text-main); font-size: 1.15rem; margin-bottom: 0.2rem; }
                 .gate-desc-light { font-size: 0.85rem; color: var(--text-muted); margin: 0; font-weight: 500;}
 
-                /* DONE STAGE GATE */
                 .gate-done-light { border-color: #34d399 !important; background-color: #f0fdf4 !important; cursor: not-allowed !important; opacity: 0.9; }
                 .gate-done-light:hover { transform: none !important; box-shadow: 0 2px 5px rgba(0,0,0,0.02) !important; border-color: #34d399 !important;}
                 .gate-done-light::before { background: var(--success) !important; }
@@ -456,7 +459,7 @@ const InspectionForm = () => {
 
             {/* SOP MODAL */}
             {showInfoModal && currentSop && (
-                <div className="modal fade show modal-light-custom" style={{display: 'block', backgroundColor: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(4px)'}} tabIndex="-1">
+                <div className="modal fade show modal-light-custom" style={{display: 'block', backgroundColor: 'rgba(35, 21, 21, 0.5)', backdropFilter: 'blur(4px)'}} tabIndex="-1">
                     <div className="modal-dialog modal-dialog-centered modal-lg animate-pop">
                         <div className="modal-content">
                             <div className="modal-header">
@@ -487,22 +490,35 @@ const InspectionForm = () => {
                 </div>
             )}
 
-            {/* NAVBAR */}
-            <nav className="navbar-light-custom d-flex justify-content-between align-items-center px-4">
-                <div className="brand-logo">
-                    <i className="bi bi-box-seam-fill"></i> QMS Dashboard
+            {/* ✅ FIX: NAVBAR - Properly structured with ArrowLeft icon */}
+            <nav className="navbar-light-custom">
+                <div 
+                    className="d-flex align-items-center gap-2" 
+                    style={{cursor: 'pointer', color: '#0f172a', fontWeight: '700', fontSize: '0.95rem', textDecoration: 'none'}}
+                    onClick={() => navigate('/qa-hub')}
+                >
+                    <ArrowLeft size={18} color="#0f172a" />
+                    <span style={{color: '#0f172a'}}>QMS Dashboard</span>
                 </div>
                 <div className="d-flex align-items-center gap-3">
-                    <div className="d-flex align-items-center gap-2 px-3 py-1 rounded-pill" style={{backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0'}}>
+                    <div 
+                        className="d-flex align-items-center gap-2 px-3 py-1 rounded-pill" 
+                        style={{backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0'}}
+                    >
                         <span style={{width: '8px', height: '8px', backgroundColor: '#10B981', borderRadius: '50%', display: 'inline-block'}}></span>
                         <span style={{fontSize: '0.75rem', fontWeight: '800', color: '#059669', letterSpacing: '0.5px'}}>LIVE</span>
                     </div>
-                    <span className="badge" style={{backgroundColor: '#f1f5f9', color: '#0f172a', padding: '0.5rem 1rem', fontSize: '0.75rem', border: '1px solid #cbd5e1'}}>Operator Terminal</span>
+                    <span 
+                        className="badge" 
+                        style={{backgroundColor: '#f1f5f9', color: '#0f172a', padding: '0.5rem 1rem', fontSize: '0.75rem', border: '1px solid #cbd5e1'}}
+                    >
+                        Operator Terminal
+                    </span>
                 </div>
             </nav>
 
             <div className="main-container">
-                {/* 🌟 STEP 1: CONTEXT */}
+                {/* STEP 1: CONTEXT */}
                 <div className="card-custom animate-pop" style={{animationDelay: '0.1s'}}>
                     <div className="card-header-custom">
                         <h6 className="card-title-custom"><i className="bi bi-sliders text-primary"></i> Process Context Filters</h6>
@@ -524,7 +540,7 @@ const InspectionForm = () => {
                     </div>
                 </div>
 
-                {/* 🌟 GATES & FORM */}
+                {/* GATES & FORM */}
                 {specList.length > 0 && (
                     <div className="card-custom animate-pop" style={{animationDelay: '0.2s'}}>
                         <div className="card-header-custom">
@@ -686,7 +702,7 @@ const InspectionForm = () => {
                     </div>
                 )}
             </div>
-        </>
+        </div>
     );
 };
 

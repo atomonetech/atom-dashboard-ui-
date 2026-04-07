@@ -9,31 +9,25 @@ const CNCPreventiveMaintenanceForm = () => {
   // --- COLLAPSIBLE STATE FOR CHECKLIST ---
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
 
-  // --- DROPDOWN OPTIONS ---
-  const methodOptions = [
-    "Visual",
-    "Feel by Hand",
-    "By clothes/ brushes"
-  ];
-
+  // --- DROPDOWN OPTIONS FOR STATUS ---
   const statusOptions = ['', 'Ok', 'Not Ok', 'Ng', 'N/A'];
 
-  // --- FIXED CNC CHECKLIST DATA ---
+  // --- FIXED CNC CHECKLIST DATA WITH PRE-DEFINED CHECKING METHODS ---
   const initialChecklist = [
-    { id: 1, point: "Lub oil pressure (12 to 15 bar)", method: '', before: '', after: '', remarks: '' },
-    { id: 2, point: "Lub oil level", method: '', before: '', after: '', remarks: '' },
-    { id: 3, point: "Hydraulic oil level and condition", method: '', before: '', after: '', remarks: '' },
-    { id: 4, point: "Hydraulic system pressure", method: '', before: '', after: '', remarks: '' },
-    { id: 5, point: "Chuck clamping Pressure", method: '', before: '', after: '', remarks: '' },
-    { id: 6, point: "Coolant level in coolant tank", method: '', before: '', after: '', remarks: '' },
-    { id: 7, point: "Work holding greasing", method: '', before: '', after: '', remarks: '' },
-    { id: 8, point: "Oil level in chip conveyor gear", method: '', before: '', after: '', remarks: '' },
-    { id: 9, point: "Oil/ coolant leakage in fitting", method: '', before: '', after: '', remarks: '' },
-    { id: 10, point: "Lubricator hose condition", method: '', before: '', after: '', remarks: '' },
-    { id: 11, point: "Spindle belt condition, belt tension", method: '', before: '', after: '', remarks: '' },
-    { id: 12, point: "Spindle motor blower fan", method: '', before: '', after: '', remarks: '' },
-    { id: 13, point: "Drive cooling fan", method: '', before: '', after: '', remarks: '' },
-    { id: 14, point: "Overall cleaning", method: '', before: '', after: '', remarks: '' }
+    { id: 1, point: "Lub oil pressure (12 to 15 bar)", method: 'Visual', before: '', after: '', remarks: '' },
+    { id: 2, point: "Lub oil level", method: 'Visual', before: '', after: '', remarks: '' },
+    { id: 3, point: "Hydraulic oil level and condition", method: 'Visual', before: '', after: '', remarks: '' },
+    { id: 4, point: "Hydraulic system pressure", method: 'Visual', before: '', after: '', remarks: '' },
+    { id: 5, point: "Chuck clamping Pressure", method: 'Visual', before: '', after: '', remarks: '' },
+    { id: 6, point: "Coolant level in coolant tank", method: 'Visual', before: '', after: '', remarks: '' },
+    { id: 7, point: "Work holding greasing", method: 'Visual', before: '', after: '', remarks: '' },
+    { id: 8, point: "Oil level in chip conveyor gear", method: 'Visual', before: '', after: '', remarks: '' },
+    { id: 9, point: "Oil/ coolant leakage in fitting", method: 'Visual', before: '', after: '', remarks: '' },
+    { id: 10, point: "Lubricator hose condition", method: 'Visual', before: '', after: '', remarks: '' },
+    { id: 11, point: "Spindle belt condition, belt tension", method: 'Feel by Hand', before: '', after: '', remarks: '' },
+    { id: 12, point: "Spindle motor blower fan", method: 'Visual', before: '', after: '', remarks: '' },
+    { id: 13, point: "Drive cooling fan", method: 'Visual', before: '', after: '', remarks: '' },
+    { id: 14, point: "Overall cleaning", method: 'By clothes/ brushes', before: '', after: '', remarks: '' }
   ];
 
   // --- INITIAL STATES (For Resetting) ---
@@ -54,10 +48,6 @@ const CNCPreventiveMaintenanceForm = () => {
   // --- HANDLERS ---
   const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
   
-  const handleMethodChange = (id, value) => {
-    setTableData(tableData.map(row => row.id === id ? { ...row, method: value } : row));
-  };
-
   const handleBeforeChange = (id, value) => {
     setTableData(tableData.map(row => row.id === id ? { ...row, before: value } : row));
   };
@@ -80,8 +70,8 @@ const CNCPreventiveMaintenanceForm = () => {
     }
 
     for (let i = 0; i < tableData.length; i++) {
-      if (!tableData[i].method || !tableData[i].before || !tableData[i].after) {
-        alert(`Please complete Method and Before/After status for row ${i + 1}`);
+      if (!tableData[i].before || !tableData[i].after) {
+        alert(`Please complete Before/After status for row ${i + 1}`);
         return;
       }
     }
@@ -131,7 +121,7 @@ const CNCPreventiveMaintenanceForm = () => {
         }
         
         .btn-primary-custom { 
-          background: #10b981; /* Changed to Green for CNC Theme */
+          background: #10b981;
           color: white; 
           border: none;
           transition: all 0.2s ease;
@@ -261,6 +251,19 @@ const CNCPreventiveMaintenanceForm = () => {
         select option[value="Ok"] { color: #10b981; font-weight: bold; }
         select option[value="Not Ok"] { color: #ef4444; font-weight: bold; }
         select option[value="Ng"] { color: #f59e0b; font-weight: bold; }
+
+        /* Method badge styling */
+        .method-badge {
+          background-color: #eef2ff;
+          color: #1e40af;
+          padding: 6px 12px;
+          border-radius: 20px;
+          font-size: 0.8rem;
+          font-weight: 500;
+          display: inline-block;
+          text-align: center;
+          width: 100%;
+        }
       `}</style>
 
       {/* --- TOP BACK BUTTON --- */}
@@ -353,7 +356,7 @@ const CNCPreventiveMaintenanceForm = () => {
                       <tr>
                         <th style={{ width: '4%' }} className="text-center">#</th>
                         <th style={{ width: '35%' }}>Check Point</th>
-                        <th style={{ width: '15%' }}>Checking Method *</th>
+                        <th style={{ width: '15%' }}>Checking Method</th>
                         <th style={{ width: '12%' }}>Before Maint. *</th>
                         <th style={{ width: '12%' }}>After Maint. *</th>
                         <th style={{ width: '22%' }}>Remarks / Spares</th>
@@ -365,20 +368,10 @@ const CNCPreventiveMaintenanceForm = () => {
                           <td className="text-center fw-bold text-muted">{index + 1}</td>
                           <td className="fw-medium">{row.point}</td>
                           
-                          {/* 🔥 CHECKING METHOD DROPDOWN 🔥 */}
+                          {/* 🔥 CHECKING METHOD - READONLY TEXT ACCORDING TO IMAGE 🔥 */}
                           <td>
-                            <select 
-                              className="form-select border-0 bg-light shadow-sm" 
-                              value={row.method} 
-                              onChange={(e) => handleMethodChange(row.id, e.target.value)} 
-                              required
-                            >
-                              <option value="">Select Method...</option>
-                              {methodOptions.map((opt, i) => (
-                                <option key={i} value={opt}>{opt}</option>
-                              ))}
-                            </select>
-                          </td>
+                            <div className="method-badge">{row.method}</div>
+                           </td>
                           
                           <td>
                             <select 

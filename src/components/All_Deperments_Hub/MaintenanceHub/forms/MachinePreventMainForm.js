@@ -9,33 +9,26 @@ const MachinePreventMainForm = () => {
   // --- COLLAPSIBLE STATE FOR CHECKLIST ---
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
 
-  // --- DROPDOWN OPTIONS ---
-  const methodOptions = [
-    "Visual",
-    "Manual",
-    "Manually & visually",
-    "Leveler"
-  ];
-
+  // --- DROPDOWN OPTIONS FOR STATUS ---
   const statusOptions = ['', 'Ok', 'Not Ok', 'Ng', 'N/A'];
 
-  // --- FIXED CHECKLIST DATA (Method cleared so 'Select Method...' shows) ---
+  // --- FIXED CHECKLIST DATA WITH PRE-DEFINED CHECKING METHODS FROM IMAGE ---
   const initialChecklist = [
-    { id: 1, point: "Air pressure (4-7 bar)", method: '', before: '', after: '', remarks: '' },
-    { id: 2, point: "Cleaning of air filter in AC unit", method: '', before: '', after: '', remarks: '' },
-    { id: 3, point: "Air filter and fan of electrical cabinet cleaning", method: '', before: '', after: '', remarks: '' },
-    { id: 4, point: "Coolant tank/ filter cleaning", method: '', before: '', after: '', remarks: '' },
-    { id: 5, point: "Cleaning of spindle belt", method: '', before: '', after: '', remarks: '' },
-    { id: 6, point: "Lub oil level (ALU)", method: '', before: '', after: '', remarks: '' },
-    { id: 7, point: "Door sensor", method: '', before: '', after: '', remarks: '' },
-    { id: 8, point: "Checking od runout / noise in spindle", method: '', before: '', after: '', remarks: '' },
-    { id: 9, point: "Bed cleaning", method: '', before: '', after: '', remarks: '' },
-    { id: 10, point: "Lubricator house condition", method: '', before: '', after: '', remarks: '' },
-    { id: 11, point: "Cleaning of machine lamp", method: '', before: '', after: '', remarks: '' },
-    { id: 12, point: "Spindle motor blower fan", method: '', before: '', after: '', remarks: '' },
-    { id: 13, point: "Electrical control pannel cleaning", method: '', before: '', after: '', remarks: '' },
-    { id: 14, point: "Machine level", method: '', before: '', after: '', remarks: '' },
-    { id: 15, point: "Check the preventive maintenance data", method: '', before: '', after: '', remarks: '' }
+    { id: 1, point: "Air pressure (4-7 bar)", method: "Visual", before: '', after: '', remarks: '' },
+    { id: 2, point: "Cleaning of air filter in AC unit", method: "Manual", before: '', after: '', remarks: '' },
+    { id: 3, point: "Air filter and fan of electrical cabinet cleaning", method: "Manual & visually", before: '', after: '', remarks: '' },
+    { id: 4, point: "Coolant tank/ filter cleaning", method: "Manual & visually", before: '', after: '', remarks: '' },
+    { id: 5, point: "Cleaning of spindle belt", method: "Manual & visually", before: '', after: '', remarks: '' },
+    { id: 6, point: "Lub oil level (ALU)", method: "Manual & visually", before: '', after: '', remarks: '' },
+    { id: 7, point: "Door sensor", method: "", before: '', after: '', remarks: '' },
+    { id: 8, point: "Checking od runout / noise in spindle", method: "Manual & visually", before: '', after: '', remarks: '' },
+    { id: 9, point: "Bed cleaning", method: "Manual & visually", before: '', after: '', remarks: '' },
+    { id: 10, point: "Lubricator hose condition", method: "Visual", before: '', after: '', remarks: '' },
+    { id: 11, point: "Cleaning of machine lamp", method: "Manual & visually", before: '', after: '', remarks: '' },
+    { id: 12, point: "Spindle motor blower fan", method: "Manual & visually", before: '', after: '', remarks: '' },
+    { id: 13, point: "Electrical control panel cleaning", method: "Visual", before: '', after: '', remarks: '' },
+    { id: 14, point: "Machine level", method: "Leveler", before: '', after: '', remarks: '' },
+    { id: 15, point: "Check the preventive maintenance data", method: "Visual", before: '', after: '', remarks: '' }  // Changed to "Visual" with capital V
   ];
 
   // --- INITIAL STATES (For Resetting) ---
@@ -56,10 +49,6 @@ const MachinePreventMainForm = () => {
   // --- HANDLERS ---
   const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
   
-  const handleMethodChange = (id, value) => {
-    setTableData(tableData.map(row => row.id === id ? { ...row, method: value } : row));
-  };
-
   const handleBeforeChange = (id, value) => {
     setTableData(tableData.map(row => row.id === id ? { ...row, before: value } : row));
   };
@@ -82,8 +71,8 @@ const MachinePreventMainForm = () => {
     }
 
     for (let i = 0; i < tableData.length; i++) {
-      if (!tableData[i].method || !tableData[i].before || !tableData[i].after) {
-        alert(`Please complete Method and Before/After status for row ${i + 1}`);
+      if (!tableData[i].before || !tableData[i].after) {
+        alert(`Please complete Before/After status for row ${i + 1}`);
         return;
       }
     }
@@ -110,6 +99,18 @@ const MachinePreventMainForm = () => {
       setMetaData(initialMetaData);
       setTableData(initialChecklist);
     }
+  };
+
+  // Get method badge class (case-insensitive)
+  const getMethodBadgeClass = (method) => {
+    if (!method) return 'method-badge method-empty';
+    
+    const methodLower = method.toLowerCase();
+    if (methodLower === 'visual') return 'method-badge method-visual';
+    if (methodLower === 'manual') return 'method-badge method-manual';
+    if (methodLower === 'manual & visually') return 'method-badge method-manual-visual';
+    if (methodLower === 'leveler') return 'method-badge method-leveler';
+    return 'method-badge';
   };
 
   return (
@@ -263,6 +264,37 @@ const MachinePreventMainForm = () => {
         select option[value="Ok"] { color: #10b981; font-weight: bold; }
         select option[value="Not Ok"] { color: #ef4444; font-weight: bold; }
         select option[value="Ng"] { color: #f59e0b; font-weight: bold; }
+
+        /* Method Badge Styles */
+        .method-badge {
+          display: inline-block;
+          padding: 6px 12px;
+          border-radius: 20px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-align: center;
+          width: 100%;
+        }
+        .method-visual {
+          background-color: #e3f2fd;
+          color: #1565c0;
+        }
+        .method-manual {
+          background-color: #e8f5e9;
+          color: #2e7d32;
+        }
+        .method-manual-visual {
+          background-color: #fff3e0;
+          color: #e65100;
+        }
+        .method-leveler {
+          background-color: #f3e5f5;
+          color: #6a1b9a;
+        }
+        .method-empty {
+          background-color: #ffebee;
+          color: #c62828;
+        }
       `}</style>
 
       {/* --- TOP BACK BUTTON --- */}
@@ -355,7 +387,7 @@ const MachinePreventMainForm = () => {
                       <tr>
                         <th style={{ width: '4%' }} className="text-center">#</th>
                         <th style={{ width: '35%' }}>Check Point</th>
-                        <th style={{ width: '15%' }}>Checking Method *</th>
+                        <th style={{ width: '15%' }}>Checking Method</th>
                         <th style={{ width: '12%' }}>Before Maint. *</th>
                         <th style={{ width: '12%' }}>After Maint. *</th>
                         <th style={{ width: '22%' }}>Remarks / Spares</th>
@@ -367,19 +399,11 @@ const MachinePreventMainForm = () => {
                           <td className="text-center fw-bold text-muted">{index + 1}</td>
                           <td className="fw-medium">{row.point}</td>
                           
-                          {/* 🔥 CHECKING METHOD DROPDOWN 🔥 */}
+                          {/* 🔥 CHECKING METHOD - ALL ROWS GET PROPER COLOR BADGE 🔥 */}
                           <td>
-                            <select 
-                              className="form-select border-0 bg-light shadow-sm" 
-                              value={row.method} 
-                              onChange={(e) => handleMethodChange(row.id, e.target.value)} 
-                              required
-                            >
-                              <option value="">Select Method...</option>
-                              {methodOptions.map((opt, i) => (
-                                <option key={i} value={opt}>{opt}</option>
-                              ))}
-                            </select>
+                            <div className={getMethodBadgeClass(row.method)}>
+                              {row.method || "Not Specified"}
+                            </div>
                           </td>
                           
                           <td>
