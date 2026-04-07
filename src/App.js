@@ -18,6 +18,7 @@ import Notifications from './components/Notifications';
 import Profile from './components/Profile';
 import Support from './components/Support';
 import ProductionHistory from './components/ProductionHistory';
+
 // ========== QMS IMPORTS ==========
 import QMSDashboard from './components/qms/QMSDashboard';
 import ReportDetail from './components/qms/ReportDetail';
@@ -26,7 +27,6 @@ import PatrolInspection from './components/qms/PatrolInspection';
 import ReportsDashboard from './components/qms/ReportsDashboard';
 import RawMaterialForm from './components/qms/RawMaterialForm'; 
 import MaintenanceHub from './components/All_Deperments_Hub/MaintenanceHub/MaintenanceHub';
-
 
 // ========== QaHub IMPORTS ==========
 import QaHub from './components/All_Deperments_Hub/QaHub/QaHub';
@@ -52,8 +52,6 @@ import Inspectionprint from './components/All_Deperments_Hub/QaHub/Inspectionpri
 import IncomingMaterialprint from './components/All_Deperments_Hub/QaHub/IncomingMaterialprint';
 import SampleInspectionprint from './components/All_Deperments_Hub/QaHub/SampleInspectionprint';
 
-
-
 // ========== ProductionHub & HrSafetyHub IMPORTS ==========
 import ProductionHub from './components/All_Deperments_Hub/ProductionHub/ProductionHub';
 import Operator5S from './components/All_Deperments_Hub/ProductionHub/Operator_5s';
@@ -67,9 +65,8 @@ import TipChangeMonitorForm from './components/All_Deperments_Hub/ProductionHub/
 import TipChangeMonitorprint from './components/All_Deperments_Hub/ProductionHub/TipChangeMonitorprint';
 import M_ChangeTrackForm from './components/All_Deperments_Hub/ProductionHub/M_ChangeTrackForm';
 
-
 import MachineHistoryCard from './components/All_Deperments_Hub/MaintenanceHub/forms/MachineHistoryCard';
-import DailyPowerPressChecksheet from '././components/All_Deperments_Hub/MaintenanceHub/forms/DailyPowerPressChecksheet'
+import DailyPowerPressChecksheet from './components/All_Deperments_Hub/MaintenanceHub/forms/DailyPowerPressChecksheet';
 import DailyPowerPressChecksheetprint from './components/All_Deperments_Hub/MaintenanceHub/forms/DailyPowerPressChecksheetprint';
 import ToolHistoryForm from './components/All_Deperments_Hub/MaintenanceHub/forms/ToolHistoryForm';
 import MachineBreakDownForm from './components/All_Deperments_Hub/MaintenanceHub/forms/MachineBreakDownForm';
@@ -89,6 +86,7 @@ import CNCPreventiveMaintenanceForm from './components/All_Deperments_Hub/Mainte
 import PowerPressForm from './components/All_Deperments_Hub/MaintenanceHub/forms/PowerPressPreventiveMaintenanceForm';
 import MachineRoutes from './routes/MachineRoutes';
 import ToolRoutes from './routes/ToolRoutes';
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const savedAuth = localStorage.getItem('isAuthenticated');
@@ -124,22 +122,21 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
+          {/* PUBLIC ROUTES */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Auth onLogin={handleLogin} />} />
           <Route path="/signup" element={<SignUpPage onLogin={handleLogin} />} />
 
+          {/* DASHBOARD & PRODUCTION */}
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path='/Production-history' element={<ProtectedRoute><ProductionHistory/></ProtectedRoute>}/>
+          <Route path="/Production-history" element={<ProtectedRoute><ProductionHistory /></ProtectedRoute>} />
 
           {/* ========== QMS ROUTES ========== */}
           <Route path="/qms" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} />
-          <Route path="/ReportsDashboard" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} /> 
+          <Route path="/ReportsDashboard" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} />
           <Route path="/qms/reports-dashboard" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} />
-          
           <Route path="/qms-dashboard" element={<ProtectedRoute><QMSDashboard onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/quality-management" element={<ProtectedRoute><QMSDashboard onLogout={handleLogout} /></ProtectedRoute>} />
-
-          {/* QMS REPORT ROUTES */}
           <Route path="/qms/report/:reportId" element={<ProtectedRoute><ReportDetail /></ProtectedRoute>} />
           <Route path="/qms/report/:reportId/edit" element={<ProtectedRoute><ReportEditor /></ProtectedRoute>} />
           <Route path="/qms/patrol-inspection" element={<ProtectedRoute><PatrolInspection /></ProtectedRoute>} />
@@ -172,11 +169,7 @@ function App() {
           <Route path="/notifications" element={<ProtectedRoute><Notifications onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/support" element={<ProtectedRoute><Support onLogout={handleLogout} /></ProtectedRoute>} />
 
-          {/* 🔥 SIDEBAR HUB ROUTES 🔥 */}
-          <Route path="/maintenance-hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
-          
-                 {/* adding routes */}
-          {/*----- QaHub Pages -----*/}
+          {/* ========== QA HUB ROUTES ========== */}
           <Route path="/qa-hub" element={<ProtectedRoute><QaHub /></ProtectedRoute>} />
           <Route path="/Incoming-Material" element={<ProtectedRoute><IncomingMaterialInsp /></ProtectedRoute>} />
           <Route path="/Redbin-Attendance" element={<ProtectedRoute><RedbinAttendance /></ProtectedRoute>} />
@@ -184,11 +177,10 @@ function App() {
           <Route path="/Scrap-Note" element={<ProtectedRoute><ScrapNote /></ProtectedRoute>} />
           <Route path="/Good-Receipt" element={<ProtectedRoute><GoodReceiptFrom /></ProtectedRoute>} />
           <Route path="/Poka-Yoke" element={<ProtectedRoute><PokaYokeChecksheet /></ProtectedRoute>} />
-          <Route path="/inspection-form" element={<ProtectedRoute><InspectionForm /></ProtectedRoute>} />
           <Route path="/Rework" element={<ProtectedRoute><ReworkRepair /></ProtectedRoute>} />
-          <Route path="/pdi-report-form" element={<ProtectedRoute><PdiReportForm /></ProtectedRoute>} />
           <Route path="/sample-inspection" element={<ProtectedRoute><SampleInspectionReport /></ProtectedRoute>} />
-          {/*----- QaHub Print Pages -----*/}
+
+          {/* QA HUB PRINT ROUTES */}
           <Route path="/incomingmaterial-report" element={<ProtectedRoute><IncomingMaterialprint /></ProtectedRoute>} />
           <Route path="/redbin-analysis-report" element={<ProtectedRoute><RedBinprint /></ProtectedRoute>} />
           <Route path="/scrap-note-report" element={<ProtectedRoute><Scrapnoteprint /></ProtectedRoute>} />
@@ -200,86 +192,54 @@ function App() {
           <Route path="/Deviation-report" element={<ProtectedRoute><DeviationApprovalprint /></ProtectedRoute>} />
           <Route path="/pdiprint-report" element={<ProtectedRoute><PdiReportprint /></ProtectedRoute>} />
 
-          {/* ----- HrSafetyHub Pages ----- */}
+          {/* ========== HR SAFETY HUB ROUTES ========== */}
           <Route path="/hiring-departments" element={<ProtectedRoute><HrSafetyHub /></ProtectedRoute>} />
           <Route path="/Induction-Training" element={<ProtectedRoute><InductionTrainingForm /></ProtectedRoute>} />
           <Route path="/Training-History" element={<ProtectedRoute><TrainingHistoryCard /></ProtectedRoute>} />
 
-          {/* ----- ProductionHub Pages ----- */}
+          {/* ========== PRODUCTION HUB ROUTES ========== */}
           <Route path="/production-hub" element={<ProtectedRoute><ProductionHub /></ProtectedRoute>} />
+          <Route path="/Operator5S" element={<ProtectedRoute><Operator5S /></ProtectedRoute>} />
+          <Route path="/Operator5S-Report" element={<ProtectedRoute><Operator5sprint /></ProtectedRoute>} />
+          <Route path="/Daily-Prod-Plan-Form" element={<ProtectedRoute><DailyProdForm /></ProtectedRoute>} />
+          <Route path="/Bin-Trolly-Cleaning-Form" element={<ProtectedRoute><BinTrollingForm /></ProtectedRoute>} />
+          <Route path="/Tip-Change-Monitor-Form" element={<ProtectedRoute><TipChangeMonitorForm /></ProtectedRoute>} />
+          <Route path="/Tip-Change-Monitor-Report" element={<ProtectedRoute><TipChangeMonitorprint /></ProtectedRoute>} />
+          <Route path="/4M-Change-Tracking-Form" element={<ProtectedRoute><M_ChangeTrackForm /></ProtectedRoute>} />
+          <Route path="/4-M-Ins-Form" element={<ProtectedRoute><For_M_Change_Ins_Form /></ProtectedRoute>} />
+          <Route path="/4M-Change-Inspection-Report" element={<ProtectedRoute><ForMChangeInsPrint /></ProtectedRoute>} />
+          <Route path="/Bin-Trolly-Cleaning-Report" element={<ProtectedRoute><BinTrollingprint currentReport={null} /></ProtectedRoute>} />
+          <Route path="/Daily-Prod-Plan-Report" element={<ProtectedRoute><DailyProdprint currentReport={null} /></ProtectedRoute>} />
+          <Route path="/4M-Change-Tracking-Report" element={<ProtectedRoute><ForMChangeRecordPrint currentReport={null} /></ProtectedRoute>} />
 
-          <Route path="/Operator5S" element={<ProtectedRoute><Operator5S/></ProtectedRoute>}/>
-           <Route path="/Operator5S-Report" element={<ProtectedRoute><Operator5sprint/></ProtectedRoute>} />
-           <Route path="/Daily-Prod-Plan-Form" element={<ProtectedRoute><DailyProdForm /></ProtectedRoute>} />
-            <Route path="/Bin-Trolly-Cleaning-Form" element={<ProtectedRoute><BinTrollingForm /></ProtectedRoute>} />
-            <Route path="/Tip-Change-Monitor-Form" element={<ProtectedRoute><TipChangeMonitorForm /></ProtectedRoute>} />
-            <Route path="/Tip-Change-Monitor-Report" element={<ProtectedRoute><TipChangeMonitorprint /></ProtectedRoute>} />
-            <Route path="/4M-Change-Tracking-Form" element={<ProtectedRoute><M_ChangeTrackForm/></ProtectedRoute>}/>
-            <Route path='/Machine-Card-Form' element={<ProtectedRoute><MachineHistoryCard/></ProtectedRoute>}/>
-            <Route path='/Tool-History-Form' element={<ProtectedRoute><ToolHistoryForm/></ProtectedRoute>}/>
-            <Route path='/Daily-PowerPress-Checksheet' element={<ProtectedRoute><DailyPowerPressChecksheet/></ProtectedRoute>}/>
-            <Route path="/Daily-PowerPress-Report" element={<ProtectedRoute><DailyPowerPressChecksheetprint /></ProtectedRoute>} />
-            <Route path='/Tool-Breakdown-Form' element={<ProtectedRoute><MachineBreakDownForm/></ProtectedRoute>}/>
-            <Route path='/Tool-PM-Checklist-Form' element={<ProtectedRoute><ToolPrevMaintenanceForm/></ProtectedRoute>}/>
-            <Route path='/Sample-Ins-Form' element={<ProtectedRoute><SampleInsForm/></ProtectedRoute>}/>
-            <Route path='/4-M-Ins-Form' element={<ProtectedRoute><For_M_Change_Ins_Form/></ProtectedRoute>}/>
-            <Route path='/Deviation-Approval-Form' element={<ProtectedRoute><DeviationApprovalForm/></ProtectedRoute>}/>
-            <Route path='/4M-Change-Inspection-Report' element={<ProtectedRoute><ForMChangeInsPrint/></ProtectedRoute>}/>
+          {/* ========== MAINTENANCE HUB ROUTES ========== */}
+          {/* Main Hub */}
+          <Route path="/Maintenance-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+          <Route path="/Maintenance/Machine-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+          <Route path="/Maintenance/Tool-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
 
+          {/* Tool Modular Routes */}
+          <Route path="/Maintenance/Tool/*" element={<ProtectedRoute><ToolRoutes /></ProtectedRoute>} />
 
-<Route path="/Maintenance-Hub" element={<ProtectedRoute> <MaintenanceHub /></ProtectedRoute>} />
-<Route path="/Maintenance-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
-<Route path="/Maintenance/Machine-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
-<Route path="/Maintenance/Tool-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+          {/* Machine Modular Routes */}
+          <Route path="/Maintenance/Machine/*" element={<ProtectedRoute><MachineRoutes /></ProtectedRoute>} />
 
-{/* 🔥 MAINTENANCE SECTION - CLEAN & SECURE 🔥 */}
-{/* 1. Main Hub - Dono routes se Hub page khulega */}
-<Route path="/Maintenance-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
-<Route path="/Maintenance/Machine-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
-<Route path="/Maintenance/Tool-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+          {/* Individual Maintenance Forms */}
+          <Route path='/Machine-Card-Form' element={<ProtectedRoute><MachineHistoryCard /></ProtectedRoute>} />
+          <Route path='/Tool-History-Form' element={<ProtectedRoute><ToolHistoryForm /></ProtectedRoute>} />
+          <Route path='/Daily-PowerPress-Checksheet' element={<ProtectedRoute><DailyPowerPressChecksheet /></ProtectedRoute>} />
+          <Route path="/Daily-PowerPress-Report" element={<ProtectedRoute><DailyPowerPressChecksheetprint /></ProtectedRoute>} />
+          <Route path='/Tool-Breakdown-Form' element={<ProtectedRoute><MachineBreakDownForm /></ProtectedRoute>} />
+          <Route path='/Tool-PM-Checklist-Form' element={<ProtectedRoute><ToolPrevMaintenanceForm /></ProtectedRoute>} />
+          <Route path="/Weekly-VMC-Form" element={<ProtectedRoute><MachinePreventForm /></ProtectedRoute>} />
+          <Route path='/Weekly-CNC-Form' element={<ProtectedRoute><CNCPreventiveMaintenanceForm /></ProtectedRoute>} />
+          <Route path='/Weekly-Power-Press-Form' element={<ProtectedRoute><PowerPressForm /></ProtectedRoute>} />
+          <Route path="/Maintenance/Daily-Reports" element={<ProtectedRoute><DailyReports /></ProtectedRoute>} />
 
-{/* 2. Tool Modular Routes - Wrap with ProtectedRoute */}
-<Route 
-  path="/Maintenance/Tool/*" 
-  element={
-    <ProtectedRoute>
-      <ToolRoutes />
-    </ProtectedRoute>
-  } 
-/>
+          {/* Other Forms */}
+          <Route path='/Sample-Ins-Form' element={<ProtectedRoute><SampleInsForm /></ProtectedRoute>} />
+          <Route path='/Deviation-Approval-Form' element={<ProtectedRoute><DeviationApprovalForm /></ProtectedRoute>} />
 
-{/* 3. Machine Modular Routes - Wrap with ProtectedRoute */}
-<Route 
-  path="/Maintenance/Machine/*" 
-  element={
-    <ProtectedRoute>
-      <MachineRoutes />
-    </ProtectedRoute>
-  } 
-/>
-
-{/* 4. Individual Forms (Inhe modular routes ke andar le jayein ya yahan rehne dein) add */}
-<Route path='/Machine-Card-Form' element={<ProtectedRoute><MachineHistoryCard/></ProtectedRoute>}/>
-<Route path='/Tool-History-Form' element={<ProtectedRoute><ToolHistoryForm/></ProtectedRoute>}/>
-<Route path='/Daily-PowerPress-Checksheet' element={<ProtectedRoute><DailyPowerPressChecksheet/></ProtectedRoute>}/>
-<Route path="/Weekly-VMC-Form" element={<ProtectedRoute><MachinePreventForm /></ProtectedRoute>} />
-<Route path='/Weekly-CNC-Form' element={<ProtectedRoute><CNCPreventiveMaintenanceForm/></ProtectedRoute>}/>
-<Route path='/Weekly-Power-Press-Form' element={<ProtectedRoute><PowerPressForm/></ProtectedRoute>}/>
-
-<Route path="/Maintenance/Tool/*" element={<ProtectedRoute><ToolRoutes /></ProtectedRoute>} />
-<Route path="/Maintenance/Machine/*" element={<ProtectedRoute><MachineRoutes /></ProtectedRoute>} />
-
-      {/* Separate Machine Section */}
-      <Route path="/Maintenance/Machine/*" element={<MachineRoutes />} />
-                  <Route path="/Weekly-VMC-Form" element={<ProtectedRoute><MachinePreventForm /></ProtectedRoute>} />
-                  
-                  <Route path='/Weekly-Power-Press-Form' element={<ProtectedRoute><PowerPressForm/></ProtectedRoute>}/>
-                  <Route path="/Maintenance/Daily-Reports" element={<ProtectedRoute><DailyReports /></ProtectedRoute>} />
-
-           <Route path="/Bin-Trolly-Cleaning-Report" element={<BinTrollingprint currentReport={null} />} />
-           <Route path="/Daily-Prod-Plan-Report" element={<DailyProdprint currentReport={null}/>} />
-           <Route path="/4M-Change-Tracking-Report" element={<ForMChangeRecordPrint currentReport={null} />} />
-           
           {/* ========== 404 NOT FOUND ========== */}
           <Route 
             path="*" 

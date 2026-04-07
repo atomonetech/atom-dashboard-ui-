@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const CNCPreventiveMaintenanceForm = () => {
+const CncPreventiveMaintenanceForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -465,4 +465,4 @@ const CNCPreventiveMaintenanceForm = () => {
   );
 };
 
-export default CNCPreventiveMaintenanceForm;
+export default CncPreventiveMaintenanceForm;
