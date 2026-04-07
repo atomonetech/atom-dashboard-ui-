@@ -205,11 +205,9 @@ function App() {
           <Route path="/Good-Receipt" element={<ProtectedRoute><GoodReceiptFrom /></ProtectedRoute>} />
           <Route path="/Poka-Yoke" element={<ProtectedRoute><PokaYokeChecksheet /></ProtectedRoute>} />
           <Route path="/Rework" element={<ProtectedRoute><ReworkRepair /></ProtectedRoute>} />
-<<<<<<< Updated upstream
           <Route path="/sample-inspection" element={<ProtectedRoute><SampleInspectionReport /></ProtectedRoute>} />
-=======
           <Route path="/pri-dispatch-ins" element={<ProtectedRoute><PreDispatchInsForm/></ProtectedRoute>} />
->>>>>>> Stashed changes
+
 
           {/* QA HUB PRINT ROUTES */}
           <Route path="/incomingmaterial-report" element={<ProtectedRoute><IncomingMaterialprint /></ProtectedRoute>} />
@@ -241,13 +239,13 @@ function App() {
             <Route path='/Machine-Card-Form' element={<ProtectedRoute><MachineHistoryCard/></ProtectedRoute>}/>
             <Route path='/Tool-History-Form' element={<ProtectedRoute><ToolHistoryForm/></ProtectedRoute>}/>
             <Route path='/Daily-PowerPress-Checksheet' element={<ProtectedRoute><DailyPowerPressChecksheet/></ProtectedRoute>}/>
-<<<<<<< Updated upstream
+
             <Route path="/Daily-PowerPress-Report" element={<ProtectedRoute><DailyPowerPressChecksheetprint /></ProtectedRoute>} />
             <Route path='/Tool-Breakdown-Form' element={<ProtectedRoute><MachineBreakDownForm/></ProtectedRoute>}/>
-=======
+
 
             {/* <Route path='/Tool-Breakdown-Form' element={<ProtectedRoute><MachineBreakDownForm/></ProtectedRoute>}/> */}
->>>>>>> Stashed changes
+
             <Route path='/Tool-PM-Checklist-Form' element={<ProtectedRoute><ToolPrevMaintenanceForm/></ProtectedRoute>}/>
             <Route path='/Sample-Ins-Form' element={<ProtectedRoute><SampleInsForm/></ProtectedRoute>}/>
             <Route path='/4-M-Ins-Form' element={<ProtectedRoute><For_M_Change_Ins_Form/></ProtectedRoute>}/>
