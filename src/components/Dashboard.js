@@ -684,9 +684,14 @@ const Dashboard = ({ onLogout }) => {
           </div>
 
           <Sidebar onLogout={onLogout} />
+<<<<<<< Updated upstream
           {/* logout  */}
 
           <div className="flex-1 overflow-auto relative z-10 mt-5">
+=======
+
+          <div className="flex-1 overflow-auto relative z-10">
+>>>>>>> Stashed changes
             <div className={`max-w-[1600px] mx-auto ${getContainerPadding()}`}>
               {/* HEADER */}
               <motion.div variants={itemVariants} className={`flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 ${getHeaderMargin()}`}>
@@ -697,7 +702,11 @@ const Dashboard = ({ onLogout }) => {
                       transition={{ type: "spring", stiffness: 300 }}
                       className={`${screenSize.isMobile ? 'w-10 h-10' : 'w-12 h-12'} rounded-2xl bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-cyan-500/30`}
                     >
+<<<<<<< Updated upstream
                       <Sparkles className={`${screenSize.isMobile ? 'w-5 h-5' : 'w-6 h-6'} text-white justify-center align-items-center`} />
+=======
+                      <Sparkles className={`${screenSize.isMobile ? 'w-5 h-5' : 'w-6 h-6'} text-white`} />
+>>>>>>> Stashed changes
                     </motion.div>
                     <div>
                       <h1 className={`${getTitleSize()} font-bold bg-gradient-to-r from-cyan-400 via-white to-yellow-400 bg-clip-text text-transparent relative inline-block`}>

@@ -90,16 +90,25 @@ export default function Sidebar({ onLogout }) {
     { label: 'Plant 1 Live', icon: Factory, path: '/plant1-live', color: 'cyan', badge: '45' },
     { label: 'Plant 2 Live', icon: MonitorDot, path: '/plant2-live', color: 'yellow', badge: '22' },
     { label: 'Operations', icon: Settings, path: '/assign-machine', color: 'indigo', badge: null },
+<<<<<<< Updated upstream
     { label: 'Reports', icon: ClipboardList, path: '/idle-reports-list', color: 'indigo', badge: null },
     { label: 'Idle Case', icon: CircleAlert, path: '/idle-case', color: 'yellow', badge: 'Alert' },
     { label: 'Production Report', icon: FileText, path: '/production-report', color: 'indigo', badge: null },
+=======
+    { label: 'Reports', icon: FileText, path: '/idle-reports-list', color: 'indigo', badge: null },
+    { label: 'Idle Case', icon: CircleAlert, path: '/idle-case', color: 'yellow', badge: 'Alert' },
+    { label: 'Production Report', icon: ClipboardList, path: '/production-report', color: 'indigo', badge: null },
+>>>>>>> Stashed changes
     { label: 'QMS', icon: ShieldCheck, path: '/qms', color: 'yellow', badge: 'New' },
     { label: 'Maintenance Hub', icon: Wrench, path: '/maintenance-hub', color: 'cyan', badge: null },
     { label: 'QA Hub', icon: ClipboardCheck, path: '/qa-hub', color: 'yellow', badge: null },
     { label: 'Production Hub', icon: Package, path: '/production-hub', color: 'indigo', badge: null },
     { label: 'Hiring & Departments', icon: Users, path: '/hiring-departments', color: 'cyan', badge: null },
     { label: 'Attendance', icon: CalendarCheck, path: '/attendance', color: 'indigo', badge: null },
+<<<<<<< Updated upstream
     {label:'Production History', icon:History, path:'/Production-history', color:'indigo', badge:null }
+=======
+>>>>>>> Stashed changes
   ];
 
   const bottomMenuItems = [
@@ -114,9 +123,15 @@ export default function Sidebar({ onLogout }) {
 
   // Get sidebar width based on device and state
   const getSidebarWidth = () => {
+<<<<<<< Updated upstream
     // Mobile devices - half width overlay
     if (screenInfo.isMobile) {
       return mobileOpen ? '200px' : '0px';
+=======
+    // Mobile devices - full width overlay
+    if (screenInfo.isMobile) {
+      return mobileOpen ? '280px' : '0px';
+>>>>>>> Stashed changes
     }
     
     // iPad Mini (768px - 810px)
@@ -151,6 +166,7 @@ export default function Sidebar({ onLogout }) {
     return false;
   };
 
+<<<<<<< Updated upstream
   // Get item padding based on device - Reduced padding for smaller icons
   const getItemPadding = () => {
     if (screenInfo.isMobile) return 'py-1.5 px-2.5';
@@ -196,6 +212,53 @@ export default function Sidebar({ onLogout }) {
       return 'w-[40px]';  // For screens < 768px
     }
     return 'w-[50px]';    // For tablet and desktop
+=======
+  // Check if close button should be visible
+  const showCloseButton = () => {
+    // On mobile when sidebar is open
+    if (screenInfo.isMobile && mobileOpen) {
+      return true;
+    }
+    // On tablets (iPad) when sidebar is open in overlay mode
+    if (screenInfo.isTablet && mobileOpen) {
+      return true;
+    }
+    return false;
+  };
+
+  // Check if search bar should be visible
+  const showSearchBar = () => {
+    if (screenInfo.isMobile) return mobileOpen && !isCollapsed;
+    return !isCollapsed;
+  };
+
+  // Get item padding based on device
+  const getItemPadding = () => {
+    if (screenInfo.isMobile) return 'py-2.5 px-3';
+    if (screenInfo.isIPadMini) return 'py-2 px-2.5';
+    return 'py-2.5 px-3';
+  };
+
+  // Get gap between icon and text
+  const getGap = () => {
+    if (screenInfo.isMobile) return 'gap-3';
+    if (screenInfo.isIPadMini) return 'gap-2.5';
+    return 'gap-3';
+  };
+
+  // Get icon size
+  const getIconSize = () => {
+    if (screenInfo.isMobile) return 'w-5 h-5';
+    if (screenInfo.isIPadMini) return 'w-4.5 h-4.5';
+    return 'w-5 h-5';
+  };
+
+  // Get logo size
+  const getLogoSize = () => {
+    if (screenInfo.isMobile) return 'h-12';
+    if (screenInfo.isIPadMini) return 'h-11';
+    return 'h-14';
+>>>>>>> Stashed changes
   };
 
   // Toggle collapse
@@ -219,9 +282,15 @@ export default function Sidebar({ onLogout }) {
   // Get button position based on device
   const getButtonPosition = () => {
     if (screenInfo.isIPadMini) {
+<<<<<<< Updated upstream
       return 'top-3 left-3';
     }
     return 'top-2 left-2';
+=======
+      return 'top-5 left-5';
+    }
+    return 'top-4 left-4';
+>>>>>>> Stashed changes
   };
 
   return (
@@ -233,14 +302,22 @@ export default function Sidebar({ onLogout }) {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           onClick={openSidebar}
+<<<<<<< Updated upstream
           className={`fixed ${getButtonPosition()} z-50 p-2 rounded-xl bg-gradient-to-br from-[#1e293b] to-[#0f172a] border-2 border-indigo-500/40 text-indigo-400 shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer`}
+=======
+          className={`fixed ${getButtonPosition()} z-50 p-3 rounded-xl bg-gradient-to-br from-[#1e293b] to-[#0f172a] border-2 border-indigo-500/40 text-indigo-400 shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer`}
+>>>>>>> Stashed changes
           aria-label="Open menu"
           style={{
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)',
           }}
         >
+<<<<<<< Updated upstream
           <Menu className="w-4 h-4 md:w-5 md:h-5" strokeWidth={2} />
+=======
+          <Menu className="w-6 h-6 md:w-7 md:h-7" strokeWidth={2} />
+>>>>>>> Stashed changes
         </motion.button>
       )}
 
@@ -278,17 +355,29 @@ export default function Sidebar({ onLogout }) {
           maxWidth: getSidebarWidth(),
         }}
       >
+<<<<<<< Updated upstream
         {/* Back Button on Right Side */}
         {(screenInfo.isMobile || screenInfo.isTablet) && mobileOpen && (
+=======
+        {/* Close Button - Visible on mobile and tablets when sidebar is open */}
+        {showCloseButton() && (
+>>>>>>> Stashed changes
           <motion.button
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={closeSidebar}
+<<<<<<< Updated upstream
             className="absolute top-3 right-3 z-50 p-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border border-indigo-500/30"
             aria-label="Go back"
           >
             <ArrowLeft className="w-3.5 h-3.5" strokeWidth={1.5} />
+=======
+            className="absolute top-5 right-5 z-50 p-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border border-red-500/30"
+            aria-label="Close menu"
+          >
+            <X className="w-6 h-6" strokeWidth={2} />
+>>>>>>> Stashed changes
           </motion.button>
         )}
 
@@ -327,6 +416,7 @@ export default function Sidebar({ onLogout }) {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={toggleCollapse}
+<<<<<<< Updated upstream
             className="absolute right-[10px] top-5 z-50 w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 border-2 border-[#0f172a] flex items-center justify-center shadow-lg shadow-indigo-500/50 hover:shadow-indigo-500/80 transition-all duration-300 cursor-pointer"
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
@@ -334,14 +424,30 @@ export default function Sidebar({ onLogout }) {
               <ChevronRight className="w-2.5 h-2.5 text-white" />
             ) : (
               <ChevronLeft className="w-2.5 h-2.5 text-white" />
+=======
+            className="absolute right-[5px]   top-8 z-50 w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 border-2 border-[#0f172a] flex items-center justify-center shadow-lg shadow-indigo-500/50 hover:shadow-indigo-500/80 transition-all duration-300 cursor-pointer"
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="w-3 h-3 text-white" />
+            ) : (
+              <ChevronLeft className="w-3 h-3 text-white" />
+>>>>>>> Stashed changes
             )}
           </motion.button>
         )}
 
+<<<<<<< Updated upstream
         {/* Logo Section - Centered with smaller padding */}
         <div className={`pt-10 pb-2 px-3 border-b border-indigo-500/20 relative ${!shouldShowLabels() ? 'flex items-center justify-center' : ''}`}>
           <motion.div 
             className="flex items-center justify-center cursor-pointer group relative w-full"
+=======
+        {/* Logo Section */}
+        <div className={`p-5 border-b border-indigo-500/20 relative ${!shouldShowLabels() ? 'flex items-center justify-center' : ''}`}>
+          <motion.div 
+            className="flex items-center justify-center cursor-pointer group relative"
+>>>>>>> Stashed changes
             onClick={() => {
               navigate('/dashboard');
               closeSidebar();
@@ -363,7 +469,11 @@ export default function Sidebar({ onLogout }) {
                   <img 
                     src={fullLogo} 
                     alt="AtomOne Technologies" 
+<<<<<<< Updated upstream
                     className={`relative ${getLogoSize()} ${getLogoWidth()} object-contain drop-shadow-xl filter brightness-110`}
+=======
+                    className={`relative ${getLogoSize()} w-full object-contain drop-shadow-2xl filter brightness-110`}
+>>>>>>> Stashed changes
                   />
                 </motion.div>
               ) : (
@@ -377,7 +487,11 @@ export default function Sidebar({ onLogout }) {
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-indigo-400/40 to-yellow-400/40 rounded-xl blur-lg opacity-70 group-hover:opacity-100 transition-opacity" />
                   <div className={`relative rounded-xl overflow-hidden border-2 border-indigo-500/30 shadow-lg shadow-indigo-500/30 ${
+<<<<<<< Updated upstream
                     screenInfo.isIPadMini ? 'w-8 h-8' : 'w-9 h-9'
+=======
+                    screenInfo.isIPadMini ? 'w-10 h-10' : 'w-11 h-11'
+>>>>>>> Stashed changes
                   }`}>
                     <img 
                       src={smallLogo} 
@@ -391,8 +505,34 @@ export default function Sidebar({ onLogout }) {
           </motion.div>
         </div>
 
+<<<<<<< Updated upstream
         {/* Main Navigation Menu - Reduced spacing */}
         <nav className="flex-1 pt-1 pb-1 px-2 space-y-0.5 overflow-y-auto custom-scrollbar">
+=======
+        {/* Search Bar */}
+        <AnimatePresence>
+          {showSearchBar() && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="px-4 pt-4"
+            >
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-yellow-500/20 rounded-lg blur opacity-0 group-hover:opacity-100 transition-opacity" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="relative w-full bg-[#0f172a]/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm text-slate-300 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-all"
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Main Navigation Menu */}
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto custom-scrollbar">
+>>>>>>> Stashed changes
           {menuItems.map((item, index) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
@@ -444,11 +584,19 @@ export default function Sidebar({ onLogout }) {
                     closeSidebar();
                   }}
                   whileHover={{ 
+<<<<<<< Updated upstream
                     x: showLabel ? 3 : 0, 
                     scale: isCentered ? 1.02 : 1 
                   }}
                   whileTap={{ scale: 0.98 }}
                   className={`w-full flex items-center ${isCentered ? 'justify-center' : gap} ${itemPadding} rounded-lg transition-all relative group`}
+=======
+                    x: showLabel ? 5 : 0, 
+                    scale: isCentered ? 1.05 : 1 
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`w-full flex items-center ${isCentered ? 'justify-center' : gap} ${itemPadding} rounded-xl transition-all relative group`}
+>>>>>>> Stashed changes
                 >
                   {/* Hover Effect */}
                   {!isActive && (
@@ -470,7 +618,11 @@ export default function Sidebar({ onLogout }) {
                   {isActive && showLabel && (
                     <motion.div
                       layoutId="activeBorder"
+<<<<<<< Updated upstream
                       className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full ${colors.border}`}
+=======
+                      className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 rounded-r-full ${colors.border}`}
+>>>>>>> Stashed changes
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
                   )}
@@ -483,8 +635,13 @@ export default function Sidebar({ onLogout }) {
                       }`}
                     />
                     <Icon className={`relative ${iconSize} flex-shrink-0 ${
+<<<<<<< Updated upstream
                       isActive ? 'filter drop-shadow-[0_0_6px_currentColor]' : ''
                     } transition-all group-hover:filter group-hover:drop-shadow-[0_0_8px_currentColor]`} />
+=======
+                      isActive ? 'filter drop-shadow-[0_0_8px_currentColor]' : ''
+                    } transition-all group-hover:filter group-hover:drop-shadow-[0_0_10px_currentColor]`} />
+>>>>>>> Stashed changes
                   </div>
 
                   {/* Label */}
@@ -515,7 +672,11 @@ export default function Sidebar({ onLogout }) {
                         </motion.span>
                       ) : (
                         isCentered && (
+<<<<<<< Updated upstream
                           <div className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 ${colors.border} rounded-full border border-[#1e293b] animate-pulse shadow-lg`} />
+=======
+                          <div className={`absolute -top-1 -right-1 w-2 h-2 ${colors.border} rounded-full border border-[#1e293b] animate-pulse shadow-lg`} />
+>>>>>>> Stashed changes
                         )
                       )}
                     </AnimatePresence>
@@ -529,8 +690,13 @@ export default function Sidebar({ onLogout }) {
         {/* Divider - Thinner margin */}
         <div className="mx-2 border-t border-indigo-500/10" />
 
+<<<<<<< Updated upstream
         {/* Bottom Section - Reduced padding */}
         <div className="p-1.5 space-y-0.5">
+=======
+        {/* Bottom Section */}
+        <div className="p-3 space-y-1">
+>>>>>>> Stashed changes
           {bottomMenuItems.map((item) => {
             const Icon = item.icon;
             const colorClasses = item.color === 'indigo' 
@@ -551,15 +717,27 @@ export default function Sidebar({ onLogout }) {
                   closeSidebar();
                 }}
                 whileHover={{ 
+<<<<<<< Updated upstream
                   x: showLabel ? 3 : 0, 
                   scale: isCentered ? 1.02 : 1 
                 }}
                 whileTap={{ scale: 0.98 }}
                 className={`w-full flex items-center ${isCentered ? 'justify-center' : gap} ${itemPadding} rounded-lg text-slate-400 hover:text-slate-200 transition-all relative group`}
+=======
+                  x: showLabel ? 5 : 0, 
+                  scale: isCentered ? 1.05 : 1 
+                }}
+                whileTap={{ scale: 0.98 }}
+                className={`w-full flex items-center ${isCentered ? 'justify-center' : gap} ${itemPadding} rounded-xl text-slate-400 hover:text-slate-200 transition-all relative group`}
+>>>>>>> Stashed changes
               >
                 <motion.div className={`absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r ${colorClasses.hoverGlow} blur-sm`} />
                 <div className="relative z-10">
+<<<<<<< Updated upstream
                   <Icon className={`relative ${iconSize} flex-shrink-0 group-hover:filter group-hover:drop-shadow-[0_0_8px_currentColor] transition-all`} />
+=======
+                  <Icon className={`relative ${iconSize} flex-shrink-0 group-hover:filter group-hover:drop-shadow-[0_0_10px_currentColor] transition-all`} />
+>>>>>>> Stashed changes
                 </div>
                 
                 <AnimatePresence>
@@ -578,12 +756,20 @@ export default function Sidebar({ onLogout }) {
                 {item.badge && (
                   <AnimatePresence>
                     {showLabel ? (
+<<<<<<< Updated upstream
                       <motion.span className={`relative z-10 px-1.5 py-0.5 rounded-full text-[10px] ${colorClasses.badge} border font-semibold`}>
+=======
+                      <motion.span className={`relative z-10 px-2 py-0.5 rounded-full text-xs ${colorClasses.badge} border font-semibold`}>
+>>>>>>> Stashed changes
                         {item.badge}
                       </motion.span>
                     ) : (
                       isCentered && (
+<<<<<<< Updated upstream
                         <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-[#1e293b] animate-pulse shadow-lg shadow-red-500/50" />
+=======
+                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-[#1e293b] animate-pulse shadow-lg shadow-red-500/50" />
+>>>>>>> Stashed changes
                       )
                     )}
                   </AnimatePresence>
@@ -593,8 +779,13 @@ export default function Sidebar({ onLogout }) {
           })}
         </div>
 
+<<<<<<< Updated upstream
         {/* User Profile - Reduced padding */}
         <div className="p-2 border-t border-indigo-500/20">
+=======
+        {/* User Profile */}
+        <div className="p-4 border-t border-indigo-500/20">
+>>>>>>> Stashed changes
           {shouldShowLabels() ? (
             <motion.div
               whileHover={{ scale: 1.02 }}
@@ -603,7 +794,11 @@ export default function Sidebar({ onLogout }) {
                 navigate('/profile');
                 closeSidebar();
               }}
+<<<<<<< Updated upstream
               className="flex items-center gap-1.5 p-1.5 rounded-lg bg-gradient-to-r from-slate-700/30 to-slate-700/20 border border-slate-700/50 relative overflow-hidden group cursor-pointer"
+=======
+              className="flex items-center gap-3 p-2.5 rounded-xl bg-gradient-to-r from-slate-700/30 to-slate-700/20 border border-slate-700/50 relative overflow-hidden group cursor-pointer"
+>>>>>>> Stashed changes
             >
               <motion.div
                 className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
@@ -614,9 +809,15 @@ export default function Sidebar({ onLogout }) {
               <div className="relative flex-shrink-0">
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-yellow-500 rounded-full blur-md opacity-50 group-hover:opacity-75 transition-opacity" />
                 <div className={`relative rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg ${
+<<<<<<< Updated upstream
                   screenInfo.isIPadMini ? 'w-6 h-6' : 'w-7 h-7'
                 }`}>
                   <User className={`${screenInfo.isIPadMini ? 'w-3 h-3' : 'w-3.5 h-3.5'} text-white`} />
+=======
+                  screenInfo.isIPadMini ? 'w-8 h-8' : 'w-9 h-9'
+                }`}>
+                  <User className={`${screenInfo.isIPadMini ? 'w-4 h-4' : 'w-5 h-5'} text-white`} />
+>>>>>>> Stashed changes
                 </div>
               </div>
               
@@ -649,11 +850,19 @@ export default function Sidebar({ onLogout }) {
             >
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/40 to-yellow-500/40 rounded-full blur-lg opacity-50 group-hover:opacity-100 transition-opacity" />
               <div className={`relative rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-indigo-500/40 border-2 border-indigo-400/30 ${
+<<<<<<< Updated upstream
                 screenInfo.isIPadMini ? 'w-8 h-8' : 'w-9 h-9'
               }`}>
                 <User className={`${screenInfo.isIPadMini ? 'w-4 h-4' : 'w-4.5 h-4.5'} text-white filter drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]`} />
               </div>
               <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full border-2 border-[#1e293b] animate-pulse shadow-lg shadow-red-500/50" />
+=======
+                screenInfo.isIPadMini ? 'w-10 h-10' : 'w-11 h-11'
+              }`}>
+                <User className={`${screenInfo.isIPadMini ? 'w-5 h-5' : 'w-6 h-6'} text-white filter drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]`} />
+              </div>
+              <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#1e293b] animate-pulse shadow-lg shadow-red-500/50" />
+>>>>>>> Stashed changes
             </motion.div>
           )}
         </div>
@@ -670,7 +879,11 @@ export default function Sidebar({ onLogout }) {
       {/* Custom Scrollbar Styles */}
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {
+<<<<<<< Updated upstream
           width: 3px;
+=======
+          width: 4px;
+>>>>>>> Stashed changes
         }
         .custom-scrollbar::-webkit-scrollbar-track {
           background: transparent;
@@ -685,7 +898,11 @@ export default function Sidebar({ onLogout }) {
         
         @media (min-width: 768px) {
           .custom-scrollbar::-webkit-scrollbar {
+<<<<<<< Updated upstream
             width: 4px;
+=======
+            width: 5px;
+>>>>>>> Stashed changes
           }
         }
       `}</style>

@@ -16,11 +16,19 @@ const QaHub = () => {
         { id: 5,  title: 'Daily Poka Yokes Check',       formNo: 'AOT/F/QC/07A',  resp: 'Operator',            icon: 'bi-shield-check',       color: '#10b981', bg: '#d1fae5', fillRoute: '/Poka-Yoke',               printKey: 'PokaYoke-report'},
         { id: 7,  title: 'Set up & Patrol Insp. (FPIR)', formNo: 'AOT/F/QA/15',   resp: 'Quality Engineer',    icon: 'bi-clipboard-check',    color: '#06b6d4', bg: '#cffafe', fillRoute: '/inspection-form',         printKey: 'inspection-report' },
         { id: 8,  title: 'Rework / Repair Report',       formNo: 'AOT/F/QA/20',   resp: 'Rework Operator',     icon: 'bi-tools',              color: '#f59e0b', bg: '#fef3c7', fillRoute: '/Rework',                  printKey: 'rework-report' },
+<<<<<<< Updated upstream
         { id: 9,  title: 'Sample Inspection Report',     formNo: 'AOT/F/QA/21',   resp: 'Quality Engineer',    icon: 'bi-search',             color: '#3b82f6', bg: '#eff6ff', fillRoute: '/sample-inspection',       printKey: 'sample-inspection-report' },
         { id: 10, title: 'Deviation Approval Form',      formNo: 'AOT/F/PROD/04', resp: 'Production Engineer', icon: 'bi-file-earmark-check', color: '#8b5cf6', bg: '#ede9fe', fillRoute: '/Deviation-Approval-Form', printKey: 'Deviation-report' },
         { id: 11, title: 'RM Quality Plan',              formNo: 'AOT/F/QA/25',   resp: 'Quality Engineer',    icon: 'bi-diagram-3',          color: '#10b981', bg: '#d1fae5', fillRoute: null,                       printKey: null },
         { id: 12, title: 'Goods Receipt Note (GRN)',     formNo: 'Not Reqd.',     resp: 'Store Incharge',      icon: 'bi-receipt',            color: '#06b6d4', bg: '#cffafe', fillRoute: '/Good-Receipt',            printKey: null },
         { id: 13, title: 'Pre Dispatch Insp. (PDIR)',    formNo: 'AOT/F/QA/40',   resp: 'Quality Engineer',    icon: 'bi-truck',              color: '#10b981', bg: '#d1fae5', fillRoute: '/pdi-report-form',         printKey: 'pdiprint-report' },
+=======
+        { id: 9,  title: 'Sample Inspection Report',     formNo: 'AOT/F/QA/21',   resp: 'Quality Engineer',    icon: 'bi-search',             color: '#3b82f6', bg: '#eff6ff', fillRoute: '/Sample-Ins-Form',                    printKey: 'pdi-report-form' },
+        { id: 10, title: 'Deviation Approval Form',      formNo: 'AOT/F/PROD/04', resp: 'Production Engineer', icon: 'bi-file-earmark-check', color: '#8b5cf6', bg: '#ede9fe', fillRoute: '/Deviation-Approval-Form', printKey: null },
+        { id: 11, title: 'RM Quality Plan',              formNo: 'AOT/F/QA/25',   resp: 'Quality Engineer',    icon: 'bi-diagram-3',          color: '#10b981', bg: '#d1fae5', fillRoute: null,                       printKey: null },
+        { id: 12, title: 'Goods Receipt Note (GRN)',     formNo: 'Not Reqd.',      resp: 'Store Incharge',      icon: 'bi-receipt',            color: '#06b6d4', bg: '#cffafe', fillRoute: '/Good-Receipt',            printKey: null },
+        { id: 13, title: 'Pre Dispatch Insp. (PDIR)',    formNo: 'AOT/F/QA/40',   resp: 'Quality Engineer',    icon: 'bi-truck',              color: '#10b981', bg: '#d1fae5', fillRoute: '/pri-dispatch-ins',            printKey: 'pdi-report-form' },
+>>>>>>> Stashed changes
     ];
 
     const handleCardClick = (report) => {

@@ -38,6 +38,7 @@ import GoodReceiptFrom from './components/All_Deperments_Hub/QaHub/GoodReceiptFr
 import PokaYokeChecksheet from './components/All_Deperments_Hub/QaHub/PokaYokeChecksheet';
 import ReworkRepair from './components/All_Deperments_Hub/QaHub/ReworkRepair';
 import InspectionForm from './components/All_Deperments_Hub/QaHub/InspectionForm';
+<<<<<<< Updated upstream
 import PdiReportForm from './components/All_Deperments_Hub/QaHub/PdiReportForm';
 import SampleInspectionReport from './components/All_Deperments_Hub/QaHub/SampleInspectionReport';
 
@@ -52,7 +53,11 @@ import Inspectionprint from './components/All_Deperments_Hub/QaHub/Inspectionpri
 import IncomingMaterialprint from './components/All_Deperments_Hub/QaHub/IncomingMaterialprint';
 import SampleInspectionprint from './components/All_Deperments_Hub/QaHub/SampleInspectionprint';
 
+=======
+import PreDispatchInsForm from './components/All_Deperments_Hub/QaHub/PreDispatchInsForm';
+
 // ========== ProductionHub & HrSafetyHub IMPORTS ==========
+>>>>>>> Stashed changes
 import ProductionHub from './components/All_Deperments_Hub/ProductionHub/ProductionHub';
 import Operator5S from './components/All_Deperments_Hub/ProductionHub/Operator_5s';
 import Operator5sprint from './components/All_Deperments_Hub/ProductionHub/Operator5sprint';
@@ -64,6 +69,8 @@ import DailyProdForm from './components/All_Deperments_Hub/ProductionHub/DailyPr
 import TipChangeMonitorForm from './components/All_Deperments_Hub/ProductionHub/TipChangeMonitorForm';
 import TipChangeMonitorprint from './components/All_Deperments_Hub/ProductionHub/TipChangeMonitorprint';
 import M_ChangeTrackForm from './components/All_Deperments_Hub/ProductionHub/M_ChangeTrackForm';
+<<<<<<< Updated upstream
+
 
 import MachineHistoryCard from './components/All_Deperments_Hub/MaintenanceHub/forms/MachineHistoryCard';
 import DailyPowerPressChecksheet from './components/All_Deperments_Hub/MaintenanceHub/forms/DailyPowerPressChecksheet';
@@ -71,11 +78,31 @@ import DailyPowerPressChecksheetprint from './components/All_Deperments_Hub/Main
 import ToolHistoryForm from './components/All_Deperments_Hub/MaintenanceHub/forms/ToolHistoryForm';
 import MachineBreakDownForm from './components/All_Deperments_Hub/MaintenanceHub/forms/MachineBreakDownForm';
 import ToolPrevMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/forms/ToolPrevMaintenanceForm';
+
+
+import MachineHistoryCardprint from './components/All_Deperments_Hub/MaintenanceHub/MachineHistoryCardprint';
+
+
+import ToolHistoryReport from './components/All_Deperments_Hub/MaintenanceHub/ToolHistoryReport';
+
+import MachineBreakdownSummaryPrint from './components/All_Deperments_Hub/MaintenanceHub/MachineBreakdownSummaryPrint';
+
+
+=======
+import MachineHistoryCard from './components/All_Deperments_Hub/MaintenanceHub/MachineHistoryCard';
+import DailyPowerPressChecksheet from '././components/All_Deperments_Hub/MaintenanceHub/DailyPowerPressChecksheet'
+import ToolHistoryForm from './components/All_Deperments_Hub/MaintenanceHub/ToolHistoryForm';
+// import MachineBreakDownForm from './components/All_Deperments_Hub/MaintenanceHub/MachineBreakDownForm';
+import ToolPrevMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/ToolPrevMaintenanceForm';
+>>>>>>> Stashed changes
 import SampleInsForm from './components/All_Deperments_Hub/QaHub/SampleInsForm';
 import For_M_Change_Ins_Form from './components/All_Deperments_Hub/ProductionHub/For_M_Change_Ins_Form';
 import DeviationApprovalForm from './components/All_Deperments_Hub/QaHub/DeviationApprovalForm';
+import MachineBreakDownForm from './components/All_Deperments_Hub/MaintenanceHub/MachineBreakDownForm';
 import './App.css';
 import ForMChangeInsPrint from './components/All_Deperments_Hub/ProductionHub/ForMChangeInsPrint';
+import ToolBreakdownForm from './components/All_Deperments_Hub/MaintenanceHub/ToolBreakdownForm';
+
 
 import BinTrollingprint from './components/All_Deperments_Hub/ProductionHub/BinTrollingprint';
 import DailyReports from './components/All_Deperments_Hub/MaintenanceHub/views/DailyReports';
@@ -142,7 +169,7 @@ function App() {
           <Route path="/qms/patrol-inspection" element={<ProtectedRoute><PatrolInspection /></ProtectedRoute>} />
           <Route path="/qms/inspection-form" element={<ProtectedRoute><InspectionForm /></ProtectedRoute>} />
           <Route path="/qms/raw-material-form" element={<ProtectedRoute><RawMaterialForm /></ProtectedRoute>} />
-          <Route path="/qms/pdi-report-form" element={<ProtectedRoute><PdiReportForm /></ProtectedRoute>} />
+          {/* <Route path="/qms/pdi-report-form" element={<ProtectedRoute><PdiReportForm /></ProtectedRoute>} /> */}
 
           {/* ========== PLANT ROUTES ========== */}
           <Route path="/plant1" element={<ProtectedRoute><Plant1Live onLogout={handleLogout} /></ProtectedRoute>} />
@@ -178,7 +205,11 @@ function App() {
           <Route path="/Good-Receipt" element={<ProtectedRoute><GoodReceiptFrom /></ProtectedRoute>} />
           <Route path="/Poka-Yoke" element={<ProtectedRoute><PokaYokeChecksheet /></ProtectedRoute>} />
           <Route path="/Rework" element={<ProtectedRoute><ReworkRepair /></ProtectedRoute>} />
+<<<<<<< Updated upstream
           <Route path="/sample-inspection" element={<ProtectedRoute><SampleInspectionReport /></ProtectedRoute>} />
+=======
+          <Route path="/pri-dispatch-ins" element={<ProtectedRoute><PreDispatchInsForm/></ProtectedRoute>} />
+>>>>>>> Stashed changes
 
           {/* QA HUB PRINT ROUTES */}
           <Route path="/incomingmaterial-report" element={<ProtectedRoute><IncomingMaterialprint /></ProtectedRoute>} />
@@ -199,47 +230,37 @@ function App() {
 
           {/* ========== PRODUCTION HUB ROUTES ========== */}
           <Route path="/production-hub" element={<ProtectedRoute><ProductionHub /></ProtectedRoute>} />
-          <Route path="/Operator5S" element={<ProtectedRoute><Operator5S /></ProtectedRoute>} />
-          <Route path="/Operator5S-Report" element={<ProtectedRoute><Operator5sprint /></ProtectedRoute>} />
-          <Route path="/Daily-Prod-Plan-Form" element={<ProtectedRoute><DailyProdForm /></ProtectedRoute>} />
-          <Route path="/Bin-Trolly-Cleaning-Form" element={<ProtectedRoute><BinTrollingForm /></ProtectedRoute>} />
-          <Route path="/Tip-Change-Monitor-Form" element={<ProtectedRoute><TipChangeMonitorForm /></ProtectedRoute>} />
-          <Route path="/Tip-Change-Monitor-Report" element={<ProtectedRoute><TipChangeMonitorprint /></ProtectedRoute>} />
-          <Route path="/4M-Change-Tracking-Form" element={<ProtectedRoute><M_ChangeTrackForm /></ProtectedRoute>} />
-          <Route path="/4-M-Ins-Form" element={<ProtectedRoute><For_M_Change_Ins_Form /></ProtectedRoute>} />
-          <Route path="/4M-Change-Inspection-Report" element={<ProtectedRoute><ForMChangeInsPrint /></ProtectedRoute>} />
-          <Route path="/Bin-Trolly-Cleaning-Report" element={<ProtectedRoute><BinTrollingprint currentReport={null} /></ProtectedRoute>} />
-          <Route path="/Daily-Prod-Plan-Report" element={<ProtectedRoute><DailyProdprint currentReport={null} /></ProtectedRoute>} />
-          <Route path="/4M-Change-Tracking-Report" element={<ProtectedRoute><ForMChangeRecordPrint currentReport={null} /></ProtectedRoute>} />
 
-          {/* ========== MAINTENANCE HUB ROUTES ========== */}
-          {/* Main Hub */}
-          <Route path="/Maintenance-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
-          <Route path="/Maintenance/Machine-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
-          <Route path="/Maintenance/Tool-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+          <Route path="/Operator5S" element={<ProtectedRoute><Operator5S/></ProtectedRoute>}/>
+           <Route path="/Operator5S-Report" element={<ProtectedRoute><Operator5sprint/></ProtectedRoute>} />
+           <Route path="/Daily-Prod-Plan-Form" element={<ProtectedRoute><DailyProdForm /></ProtectedRoute>} />
+            <Route path="/Bin-Trolly-Cleaning-Form" element={<ProtectedRoute><BinTrollingForm /></ProtectedRoute>} />
+            <Route path="/Tip-Change-Monitor-Form" element={<ProtectedRoute><TipChangeMonitorForm /></ProtectedRoute>} />
+            <Route path="/Tip-Change-Monitor-Report" element={<ProtectedRoute><TipChangeMonitorprint /></ProtectedRoute>} />
+            <Route path="/4M-Change-Tracking-Form" element={<ProtectedRoute><M_ChangeTrackForm/></ProtectedRoute>}/>
+            <Route path='/Machine-Card-Form' element={<ProtectedRoute><MachineHistoryCard/></ProtectedRoute>}/>
+            <Route path='/Tool-History-Form' element={<ProtectedRoute><ToolHistoryForm/></ProtectedRoute>}/>
+            <Route path='/Daily-PowerPress-Checksheet' element={<ProtectedRoute><DailyPowerPressChecksheet/></ProtectedRoute>}/>
+<<<<<<< Updated upstream
+            <Route path="/Daily-PowerPress-Report" element={<ProtectedRoute><DailyPowerPressChecksheetprint /></ProtectedRoute>} />
+            <Route path='/Tool-Breakdown-Form' element={<ProtectedRoute><MachineBreakDownForm/></ProtectedRoute>}/>
+=======
 
-          {/* Tool Modular Routes */}
-          <Route path="/Maintenance/Tool/*" element={<ProtectedRoute><ToolRoutes /></ProtectedRoute>} />
+            {/* <Route path='/Tool-Breakdown-Form' element={<ProtectedRoute><MachineBreakDownForm/></ProtectedRoute>}/> */}
+>>>>>>> Stashed changes
+            <Route path='/Tool-PM-Checklist-Form' element={<ProtectedRoute><ToolPrevMaintenanceForm/></ProtectedRoute>}/>
+            <Route path='/Sample-Ins-Form' element={<ProtectedRoute><SampleInsForm/></ProtectedRoute>}/>
+            <Route path='/4-M-Ins-Form' element={<ProtectedRoute><For_M_Change_Ins_Form/></ProtectedRoute>}/>
+            <Route path='/Deviation-Approval-Form' element={<ProtectedRoute><DeviationApprovalForm/></ProtectedRoute>}/>
+            <Route path='/4M-Change-Inspection-Report' element={<ProtectedRoute><ForMChangeInsPrint/></ProtectedRoute>}/>
+            <Route path='/Machine-Breakdown-Slip' element={<ProtectedRoute><MachineBreakDownForm/></ProtectedRoute>}/>
+            <Route path='/Tool-Breakdown-Form' element={<ProtectedRoute><ToolBreakdownForm/></ProtectedRoute>}/>
 
-          {/* Machine Modular Routes */}
-          <Route path="/Maintenance/Machine/*" element={<ProtectedRoute><MachineRoutes /></ProtectedRoute>} />
 
-          {/* Individual Maintenance Forms */}
-          <Route path='/Machine-Card-Form' element={<ProtectedRoute><MachineHistoryCard /></ProtectedRoute>} />
-          <Route path='/Tool-History-Form' element={<ProtectedRoute><ToolHistoryForm /></ProtectedRoute>} />
-          <Route path='/Daily-PowerPress-Checksheet' element={<ProtectedRoute><DailyPowerPressChecksheet /></ProtectedRoute>} />
-          <Route path="/Daily-PowerPress-Report" element={<ProtectedRoute><DailyPowerPressChecksheetprint /></ProtectedRoute>} />
-          <Route path='/Tool-Breakdown-Form' element={<ProtectedRoute><MachineBreakDownForm /></ProtectedRoute>} />
-          <Route path='/Tool-PM-Checklist-Form' element={<ProtectedRoute><ToolPrevMaintenanceForm /></ProtectedRoute>} />
-          <Route path="/Weekly-VMC-Form" element={<ProtectedRoute><MachinePreventForm /></ProtectedRoute>} />
-          <Route path='/Weekly-CNC-Form' element={<ProtectedRoute><CNCPreventiveMaintenanceForm /></ProtectedRoute>} />
-          <Route path='/Weekly-Power-Press-Form' element={<ProtectedRoute><PowerPressForm /></ProtectedRoute>} />
-          <Route path="/Maintenance/Daily-Reports" element={<ProtectedRoute><DailyReports /></ProtectedRoute>} />
 
-          {/* Other Forms */}
-          <Route path='/Sample-Ins-Form' element={<ProtectedRoute><SampleInsForm /></ProtectedRoute>} />
-          <Route path='/Deviation-Approval-Form' element={<ProtectedRoute><DeviationApprovalForm /></ProtectedRoute>} />
-
+           <Route path="/Bin-Trolly-Cleaning-Report" element={<BinTrollingprint currentReport={null} />} />
+           <Route path="/Daily-Prod-Plan-Report" element={<DailyProdprint currentReport={null}/>} />
+           <Route path="/4M-Change-Tracking-Report" element={<ForMChangeRecordPrint currentReport={null} />} />
           {/* ========== 404 NOT FOUND ========== */}
           <Route 
             path="*" 
