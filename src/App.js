@@ -38,26 +38,23 @@ import GoodReceiptFrom from './components/All_Deperments_Hub/QaHub/GoodReceiptFr
 import PokaYokeChecksheet from './components/All_Deperments_Hub/QaHub/PokaYokeChecksheet';
 import ReworkRepair from './components/All_Deperments_Hub/QaHub/ReworkRepair';
 import InspectionForm from './components/All_Deperments_Hub/QaHub/InspectionForm';
-<<<<<<< Updated upstream
-import PdiReportForm from './components/All_Deperments_Hub/QaHub/PdiReportForm';
+// import PdiReportForm from './components/All_Deperments_Hub/QaHub/PdiReportForm';
 import SampleInspectionReport from './components/All_Deperments_Hub/QaHub/SampleInspectionReport';
+import PreDispatchInsForm from './components/All_Deperments_Hub/QaHub/PreDispatchInsForm';
 
+// QA HUB PRINT IMPORTS
 import RedBinprint from './components/All_Deperments_Hub/QaHub/RedBinprint';
 import RedBinAttendanceprint from './components/All_Deperments_Hub/QaHub/RedBinAttendanceprint';
 import Scrapnoteprint from './components/All_Deperments_Hub/QaHub/Scrapnoteprint';
 import Reworkrepairprint from './components/All_Deperments_Hub/QaHub/Reworkrepairprint';
-import PdiReportprint from './components/All_Deperments_Hub/QaHub/PdiReportprint';
+ import PdiReportprint from './components/All_Deperments_Hub/QaHub/PdiReportprint';
 import PokaYokeChecksheetprint from './components/All_Deperments_Hub/QaHub/PokaYokeChecksheetprint';
 import DeviationApprovalprint from './components/All_Deperments_Hub/QaHub/DeviationApprovalprint';
 import Inspectionprint from './components/All_Deperments_Hub/QaHub/Inspectionprint';
 import IncomingMaterialprint from './components/All_Deperments_Hub/QaHub/IncomingMaterialprint';
 import SampleInspectionprint from './components/All_Deperments_Hub/QaHub/SampleInspectionprint';
 
-=======
-import PreDispatchInsForm from './components/All_Deperments_Hub/QaHub/PreDispatchInsForm';
-
 // ========== ProductionHub & HrSafetyHub IMPORTS ==========
->>>>>>> Stashed changes
 import ProductionHub from './components/All_Deperments_Hub/ProductionHub/ProductionHub';
 import Operator5S from './components/All_Deperments_Hub/ProductionHub/Operator_5s';
 import Operator5sprint from './components/All_Deperments_Hub/ProductionHub/Operator5sprint';
@@ -68,49 +65,32 @@ import BinTrollingForm from './components/All_Deperments_Hub/ProductionHub/BinTr
 import DailyProdForm from './components/All_Deperments_Hub/ProductionHub/DailyProdForm';
 import TipChangeMonitorForm from './components/All_Deperments_Hub/ProductionHub/TipChangeMonitorForm';
 import TipChangeMonitorprint from './components/All_Deperments_Hub/ProductionHub/TipChangeMonitorprint';
-import M_ChangeTrackForm from './components/All_Deperments_Hub/ProductionHub/M_ChangeTrackForm';
-<<<<<<< Updated upstream
+import MChangeTrackForm from './components/All_Deperments_Hub/ProductionHub/M_ChangeTrackForm';
 
-
+// ========== Maintenance Hub IMPORTS ==========
 import MachineHistoryCard from './components/All_Deperments_Hub/MaintenanceHub/forms/MachineHistoryCard';
 import DailyPowerPressChecksheet from './components/All_Deperments_Hub/MaintenanceHub/forms/DailyPowerPressChecksheet';
 import DailyPowerPressChecksheetprint from './components/All_Deperments_Hub/MaintenanceHub/forms/DailyPowerPressChecksheetprint';
 import ToolHistoryForm from './components/All_Deperments_Hub/MaintenanceHub/forms/ToolHistoryForm';
 import MachineBreakDownForm from './components/All_Deperments_Hub/MaintenanceHub/forms/MachineBreakDownForm';
 import ToolPrevMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/forms/ToolPrevMaintenanceForm';
-
-
-import MachineHistoryCardprint from './components/All_Deperments_Hub/MaintenanceHub/MachineHistoryCardprint';
-
-
-import ToolHistoryReport from './components/All_Deperments_Hub/MaintenanceHub/ToolHistoryReport';
-
-import MachineBreakdownSummaryPrint from './components/All_Deperments_Hub/MaintenanceHub/MachineBreakdownSummaryPrint';
-
-
-=======
-import MachineHistoryCard from './components/All_Deperments_Hub/MaintenanceHub/MachineHistoryCard';
-import DailyPowerPressChecksheet from '././components/All_Deperments_Hub/MaintenanceHub/DailyPowerPressChecksheet'
-import ToolHistoryForm from './components/All_Deperments_Hub/MaintenanceHub/ToolHistoryForm';
-// import MachineBreakDownForm from './components/All_Deperments_Hub/MaintenanceHub/MachineBreakDownForm';
-import ToolPrevMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/ToolPrevMaintenanceForm';
->>>>>>> Stashed changes
-import SampleInsForm from './components/All_Deperments_Hub/QaHub/SampleInsForm';
-import For_M_Change_Ins_Form from './components/All_Deperments_Hub/ProductionHub/For_M_Change_Ins_Form';
-import DeviationApprovalForm from './components/All_Deperments_Hub/QaHub/DeviationApprovalForm';
-import MachineBreakDownForm from './components/All_Deperments_Hub/MaintenanceHub/MachineBreakDownForm';
-import './App.css';
-import ForMChangeInsPrint from './components/All_Deperments_Hub/ProductionHub/ForMChangeInsPrint';
-import ToolBreakdownForm from './components/All_Deperments_Hub/MaintenanceHub/ToolBreakdownForm';
-
-
-import BinTrollingprint from './components/All_Deperments_Hub/ProductionHub/BinTrollingprint';
+import ToolBreakdownForm from './components/All_Deperments_Hub/MaintenanceHub/forms/ToolBreakdownForm';
+import MachinePreventForm from './components/All_Deperments_Hub/MaintenanceHub/forms/MachinePreventMainForm';
+import CncPreventiveMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/forms/CncPreventiveMaintenanceForm';
+import PowerPressForm from './components/All_Deperments_Hub/MaintenanceHub/forms/PowerPressPreventiveMaintenanceForm';
 import DailyReports from './components/All_Deperments_Hub/MaintenanceHub/views/DailyReports';
+
+// ========== Other IMPORTS ==========
+import SampleInsForm from './components/All_Deperments_Hub/QaHub/SampleInsForm';
+import ForMChangeInsForm from './components/All_Deperments_Hub/ProductionHub/For_M_Change_Ins_Form';
+import DeviationApprovalForm from './components/All_Deperments_Hub/QaHub/DeviationApprovalForm';
+import ForMChangeInsPrint from './components/All_Deperments_Hub/ProductionHub/ForMChangeInsPrint';
+import BinTrollingprint from './components/All_Deperments_Hub/ProductionHub/BinTrollingprint';
 import DailyProdprint from './components/All_Deperments_Hub/ProductionHub/DailyProdprint';
 import ForMChangeRecordPrint from './components/All_Deperments_Hub/ProductionHub/ForMChangeRecordPrint';
-import MachinePreventForm from './components/All_Deperments_Hub/MaintenanceHub/forms/MachinePreventMainForm';
-import CNCPreventiveMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/forms/CncPreventiveMaintenanceForm';
-import PowerPressForm from './components/All_Deperments_Hub/MaintenanceHub/forms/PowerPressPreventiveMaintenanceForm';
+import './App.css';
+
+// ========== Routes IMPORTS ==========
 import MachineRoutes from './routes/MachineRoutes';
 import ToolRoutes from './routes/ToolRoutes';
 
@@ -149,12 +129,12 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          {/* PUBLIC ROUTES */}
+          {/* ========== PUBLIC ROUTES ========== */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Auth onLogin={handleLogin} />} />
           <Route path="/signup" element={<SignUpPage onLogin={handleLogin} />} />
 
-          {/* DASHBOARD & PRODUCTION */}
+          {/* ========== DASHBOARD & PRODUCTION ========== */}
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/Production-history" element={<ProtectedRoute><ProductionHistory /></ProtectedRoute>} />
 
@@ -196,6 +176,22 @@ function App() {
           <Route path="/notifications" element={<ProtectedRoute><Notifications onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/support" element={<ProtectedRoute><Support onLogout={handleLogout} /></ProtectedRoute>} />
 
+          {/* ========== MAINTENANCE HUB ROUTES ========== */}
+          <Route path="/maintenance-hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+          <Route path="/Maintenance-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+          <Route path="/Maintenance/Machine-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+          <Route path="/Maintenance/Tool-Hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
+          
+          {/* Maintenance Modular Routes */}
+          <Route path="/Maintenance/Tool/*" element={<ProtectedRoute><ToolRoutes /></ProtectedRoute>} />
+          <Route path="/Maintenance/Machine/*" element={<ProtectedRoute><MachineRoutes /></ProtectedRoute>} />
+          
+          {/* Maintenance Forms */}
+          <Route path="/Weekly-VMC-Form" element={<ProtectedRoute><MachinePreventForm /></ProtectedRoute>} />
+          <Route path="/Weekly-CNC-Form" element={<ProtectedRoute><CncPreventiveMaintenanceForm /></ProtectedRoute>} />
+          <Route path="/Weekly-Power-Press-Form" element={<ProtectedRoute><PowerPressForm /></ProtectedRoute>} />
+          <Route path="/Maintenance/Daily-Reports" element={<ProtectedRoute><DailyReports /></ProtectedRoute>} />
+
           {/* ========== QA HUB ROUTES ========== */}
           <Route path="/qa-hub" element={<ProtectedRoute><QaHub /></ProtectedRoute>} />
           <Route path="/Incoming-Material" element={<ProtectedRoute><IncomingMaterialInsp /></ProtectedRoute>} />
@@ -206,8 +202,7 @@ function App() {
           <Route path="/Poka-Yoke" element={<ProtectedRoute><PokaYokeChecksheet /></ProtectedRoute>} />
           <Route path="/Rework" element={<ProtectedRoute><ReworkRepair /></ProtectedRoute>} />
           <Route path="/sample-inspection" element={<ProtectedRoute><SampleInspectionReport /></ProtectedRoute>} />
-          <Route path="/pri-dispatch-ins" element={<ProtectedRoute><PreDispatchInsForm/></ProtectedRoute>} />
-
+          <Route path="/pri-dispatch-ins" element={<ProtectedRoute><PreDispatchInsForm /></ProtectedRoute>} />
 
           {/* QA HUB PRINT ROUTES */}
           <Route path="/incomingmaterial-report" element={<ProtectedRoute><IncomingMaterialprint /></ProtectedRoute>} />
@@ -228,37 +223,30 @@ function App() {
 
           {/* ========== PRODUCTION HUB ROUTES ========== */}
           <Route path="/production-hub" element={<ProtectedRoute><ProductionHub /></ProtectedRoute>} />
+          <Route path="/Operator5S" element={<ProtectedRoute><Operator5S /></ProtectedRoute>} />
+          <Route path="/Operator5S-Report" element={<ProtectedRoute><Operator5sprint /></ProtectedRoute>} />
+          <Route path="/Daily-Prod-Plan-Form" element={<ProtectedRoute><DailyProdForm /></ProtectedRoute>} />
+          <Route path="/Bin-Trolly-Cleaning-Form" element={<ProtectedRoute><BinTrollingForm /></ProtectedRoute>} />
+          <Route path="/Tip-Change-Monitor-Form" element={<ProtectedRoute><TipChangeMonitorForm /></ProtectedRoute>} />
+          <Route path="/Tip-Change-Monitor-Report" element={<ProtectedRoute><TipChangeMonitorprint /></ProtectedRoute>} />
+          <Route path="/4M-Change-Tracking-Form" element={<ProtectedRoute><MChangeTrackForm /></ProtectedRoute>} />
+          <Route path="/Machine-Card-Form" element={<ProtectedRoute><MachineHistoryCard /></ProtectedRoute>} />
+          <Route path="/Tool-History-Form" element={<ProtectedRoute><ToolHistoryForm /></ProtectedRoute>} />
+          <Route path="/Daily-PowerPress-Checksheet" element={<ProtectedRoute><DailyPowerPressChecksheet /></ProtectedRoute>} />
+          <Route path="/Daily-PowerPress-Report" element={<ProtectedRoute><DailyPowerPressChecksheetprint /></ProtectedRoute>} />
+          <Route path="/Tool-Breakdown-Form" element={<ProtectedRoute><ToolBreakdownForm /></ProtectedRoute>} />
+          <Route path="/Tool-PM-Checklist-Form" element={<ProtectedRoute><ToolPrevMaintenanceForm /></ProtectedRoute>} />
+          <Route path="/Sample-Ins-Form" element={<ProtectedRoute><SampleInsForm /></ProtectedRoute>} />
+          <Route path="/4-M-Ins-Form" element={<ProtectedRoute><ForMChangeInsForm /></ProtectedRoute>} />
+          <Route path="/Deviation-Approval-Form" element={<ProtectedRoute><DeviationApprovalForm /></ProtectedRoute>} />
+          <Route path="/4M-Change-Inspection-Report" element={<ProtectedRoute><ForMChangeInsPrint /></ProtectedRoute>} />
+          <Route path="/Machine-Breakdown-Slip" element={<ProtectedRoute><MachineBreakDownForm /></ProtectedRoute>} />
+          
+          {/* Production Print Routes */}
+          <Route path="/Bin-Trolly-Cleaning-Report" element={<BinTrollingprint currentReport={null} />} />
+          <Route path="/Daily-Prod-Plan-Report" element={<DailyProdprint currentReport={null} />} />
+          <Route path="/4M-Change-Tracking-Report" element={<ForMChangeRecordPrint currentReport={null} />} />
 
-          <Route path="/Operator5S" element={<ProtectedRoute><Operator5S/></ProtectedRoute>}/>
-           <Route path="/Operator5S-Report" element={<ProtectedRoute><Operator5sprint/></ProtectedRoute>} />
-           <Route path="/Daily-Prod-Plan-Form" element={<ProtectedRoute><DailyProdForm /></ProtectedRoute>} />
-            <Route path="/Bin-Trolly-Cleaning-Form" element={<ProtectedRoute><BinTrollingForm /></ProtectedRoute>} />
-            <Route path="/Tip-Change-Monitor-Form" element={<ProtectedRoute><TipChangeMonitorForm /></ProtectedRoute>} />
-            <Route path="/Tip-Change-Monitor-Report" element={<ProtectedRoute><TipChangeMonitorprint /></ProtectedRoute>} />
-            <Route path="/4M-Change-Tracking-Form" element={<ProtectedRoute><M_ChangeTrackForm/></ProtectedRoute>}/>
-            <Route path='/Machine-Card-Form' element={<ProtectedRoute><MachineHistoryCard/></ProtectedRoute>}/>
-            <Route path='/Tool-History-Form' element={<ProtectedRoute><ToolHistoryForm/></ProtectedRoute>}/>
-            <Route path='/Daily-PowerPress-Checksheet' element={<ProtectedRoute><DailyPowerPressChecksheet/></ProtectedRoute>}/>
-
-            <Route path="/Daily-PowerPress-Report" element={<ProtectedRoute><DailyPowerPressChecksheetprint /></ProtectedRoute>} />
-            <Route path='/Tool-Breakdown-Form' element={<ProtectedRoute><MachineBreakDownForm/></ProtectedRoute>}/>
-
-
-            {/* <Route path='/Tool-Breakdown-Form' element={<ProtectedRoute><MachineBreakDownForm/></ProtectedRoute>}/> */}
-
-            <Route path='/Tool-PM-Checklist-Form' element={<ProtectedRoute><ToolPrevMaintenanceForm/></ProtectedRoute>}/>
-            <Route path='/Sample-Ins-Form' element={<ProtectedRoute><SampleInsForm/></ProtectedRoute>}/>
-            <Route path='/4-M-Ins-Form' element={<ProtectedRoute><For_M_Change_Ins_Form/></ProtectedRoute>}/>
-            <Route path='/Deviation-Approval-Form' element={<ProtectedRoute><DeviationApprovalForm/></ProtectedRoute>}/>
-            <Route path='/4M-Change-Inspection-Report' element={<ProtectedRoute><ForMChangeInsPrint/></ProtectedRoute>}/>
-            <Route path='/Machine-Breakdown-Slip' element={<ProtectedRoute><MachineBreakDownForm/></ProtectedRoute>}/>
-            <Route path='/Tool-Breakdown-Form' element={<ProtectedRoute><ToolBreakdownForm/></ProtectedRoute>}/>
-
-
-
-           <Route path="/Bin-Trolly-Cleaning-Report" element={<BinTrollingprint currentReport={null} />} />
-           <Route path="/Daily-Prod-Plan-Report" element={<DailyProdprint currentReport={null}/>} />
-           <Route path="/4M-Change-Tracking-Report" element={<ForMChangeRecordPrint currentReport={null} />} />
           {/* ========== 404 NOT FOUND ========== */}
           <Route 
             path="*" 
@@ -266,7 +254,22 @@ function App() {
               <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#0f172a', color: 'white', fontSize: '24px', flexDirection: 'column', gap: '20px'}}>
                 <div style={{ fontSize: '72px', fontWeight: 'bold' }}>404</div>
                 <div>Page Not Found</div>
-                <button onClick={() => window.location.href = '/'} style={{padding: '12px 24px', background: 'linear-gradient(to right, #06b6d4, #fbbf24)', border: 'none', borderRadius: '8px', color: '#0f172a', fontSize: '16px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.3s ease'}}>Go to Home</button>
+                <button 
+                  onClick={() => window.location.href = '/'} 
+                  style={{
+                    padding: '12px 24px', 
+                    background: 'linear-gradient(to right, #06b6d4, #fbbf24)', 
+                    border: 'none', 
+                    borderRadius: '8px', 
+                    color: '#0f172a', 
+                    fontSize: '16px', 
+                    cursor: 'pointer', 
+                    fontWeight: 'bold', 
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  Go to Home
+                </button>
               </div>
             } 
           />
