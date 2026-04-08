@@ -114,7 +114,7 @@ function App() {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
   };
-
+//protected routes
   const ProtectedRoute = ({ children }) => {
     console.log('🔒 Protected Route Check - isAuthenticated:', isAuthenticated);
     if (!isAuthenticated) {
