@@ -91,7 +91,7 @@ import MachineBreakdownSummaryPrint from './components/All_Deperments_Hub/Mainte
 
 
 import For_M_Change_Ins_Form from './components/All_Deperments_Hub/ProductionHub/For_M_Change_Ins_Form';
-import DeviationApprovForm from './components/All_Deperments_Hub/QaHub/DeviationApprovalForm';
+import DeviationApprovalForm from './components/All_Deperments_Hub/QaHub/DeviationApprovalForm';
 import './App.css';
 import ForMChangeInsPrint from './components/All_Deperments_Hub/ProductionHub/ForMChangeInsPrint';
 
@@ -185,7 +185,7 @@ function App() {
           <Route path="/Rework" element={<ProtectedRoute><ReworkRepair /></ProtectedRoute>} />
           <Route path="/pdi-report-form" element={<ProtectedRoute><PdiReportForm /></ProtectedRoute>} />
           <Route path="/sample-inspection" element={<ProtectedRoute><SampleInspectionReport /></ProtectedRoute>} />
-          <Route path='Deviation-Approval-Form' element={<ProtectedRoute><DeviationApprovForm/></ProtectedRoute>}/>
+          <Route path='Deviation-Approval-Form' element={<ProtectedRoute><DeviationApprovalForm/></ProtectedRoute>}/>
           {/*----- QaHub Print Pages -----*/}
           <Route path="/incomingmaterial-report" element={<ProtectedRoute><IncomingMaterialprint /></ProtectedRoute>} />
           <Route path="/redbin-analysis-report" element={<ProtectedRoute><RedBinprint /></ProtectedRoute>} />
