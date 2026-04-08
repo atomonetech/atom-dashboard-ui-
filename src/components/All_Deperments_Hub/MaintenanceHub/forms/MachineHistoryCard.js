@@ -85,7 +85,7 @@ const MachineHistoryCard = () => {
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-2 sm:gap-3">
                             <button
-                                onClick={() => navigate('/maintenance-hub')}
+                                onClick={() => navigate('/Maintenance/Machine/daily')}
                                 className="p-1.5 sm:p-2 hover:bg-slate-100 rounded-lg transition-colors"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

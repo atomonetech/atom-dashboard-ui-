@@ -192,7 +192,7 @@ const ToolHistoryForm = () => {
             <div className="mb-3 sm:mb-4">
               <button 
                 className="inline-flex items-center gap-1.5 text-white hover:text-white/90 transition-all rounded-lg bg-white/20 backdrop-blur-sm px-3 py-1.5 sm:px-4 sm:py-2 group"
-                onClick={() => window.location.href = '/maintenance-hub'}
+                onClick={() => window.location.href = '/Maintenance/Tool/daily'}
               >
                 <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform group-hover:-translate-x-1" />
                 <span className="text-xs sm:text-sm font-medium">Back to Maintenance Hub</span>

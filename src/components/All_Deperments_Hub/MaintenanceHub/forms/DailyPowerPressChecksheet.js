@@ -334,7 +334,7 @@ const DailyPowerPressChecksheet = () => {
             `}</style>
 
             <nav className="pp-navbar">
-                <div className="pp-brand" onClick={() => navigate('/maintenance-hub')}>
+                <div className="pp-brand" onClick={() => navigate('/Maintenance/Machine/daily')}>
                     <i className="bi bi-arrow-left-circle back-arrow"></i>
                     <div className="pp-brand-icon">🖨️</div>
                     <span className="pp-brand-text" style={{ color: '#df8008' }}>Daily Power Press Checksheet</span>

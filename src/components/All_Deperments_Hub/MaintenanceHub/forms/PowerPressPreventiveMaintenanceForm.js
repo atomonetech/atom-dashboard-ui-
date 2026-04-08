@@ -263,7 +263,7 @@ const PowerPressPreventiveMaintenanceForm = () => {
       <div className="mx-auto mb-3 no-print animate-fade-in" style={{ maxWidth: '1200px' }}>
         <button 
           className="btn btn-outline-custom rounded-pill"
-          onClick={() => navigate('/Maintenance/Machine/Weekly-Reports')}
+          onClick={() => navigate('/Maintenance/Machine/weekly')}
           style={{ fontSize: '0.85rem' }}
         >
           ← Back to Weekly Hub

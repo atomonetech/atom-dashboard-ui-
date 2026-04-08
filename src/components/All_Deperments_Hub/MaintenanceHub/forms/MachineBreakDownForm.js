@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Wrench, Clock, Calendar, User, CheckCircle, XCircle, Save, RotateCcw } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Save, RotateCcw } from 'lucide-react';
 
 const MachineBreakDownForm = () => {
   const [language, setLanguage] = useState('english');
@@ -166,7 +166,7 @@ const MachineBreakDownForm = () => {
     console.log('Navigating back to Maintenance Hub');
     // Navigate to maintenance hub - using window.location.href for direct navigation
     // You can replace this with your routing logic (React Router, Next.js, etc.)
-    window.location.href = '/maintenance-hub';
+    window.location.href = '/Maintenance/Machine/daily';
     // If using React Router, you would use: navigate('/maintenance-hub');
   };
 
