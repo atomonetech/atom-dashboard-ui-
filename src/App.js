@@ -1,8 +1,10 @@
 import './index.css';              
 import 'bootstrap/dist/css/bootstrap.min.css';
-import Count52Live from './components/Count52Live';
+import './App.css';
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
+// Core Components
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
 import AssignMachine from './components/AssignMachine';
@@ -25,7 +27,6 @@ import ReportEditor from './components/qms/ReportEditor';
 import PatrolInspection from './components/qms/PatrolInspection';
 import ReportsDashboard from './components/qms/ReportsDashboard';
 import RawMaterialForm from './components/qms/RawMaterialForm'; 
-import MaintenanceHub from './components/All_Deperments_Hub/MaintenanceHub/MaintenanceHub';
 
 
 // ========== QaHub IMPORTS ==========
@@ -40,7 +41,10 @@ import ReworkRepair from './components/All_Deperments_Hub/QaHub/ReworkRepair';
 import InspectionForm from './components/All_Deperments_Hub/QaHub/InspectionForm';
 import PdiReportForm from './components/All_Deperments_Hub/QaHub/PdiReportForm';
 import SampleInspectionReport from './components/All_Deperments_Hub/QaHub/SampleInspectionReport';
+import DeviationApprovalForm from './components/All_Deperments_Hub/QaHub/DeviationApprovalForm';
+import SampleInsForm from './components/All_Deperments_Hub/QaHub/SampleInsForm';
 
+// Print Components (QA)
 import RedBinprint from './components/All_Deperments_Hub/QaHub/RedBinprint';
 import RedBinAttendanceprint from './components/All_Deperments_Hub/QaHub/RedBinAttendanceprint';
 import Scrapnoteprint from './components/All_Deperments_Hub/QaHub/Scrapnoteprint';
@@ -68,6 +72,8 @@ import M_ChangeTrackForm from './components/All_Deperments_Hub/ProductionHub/M_C
 
 
 
+// ========== Maintenance Hub IMPORTS ==========
+import MaintenanceHub from './components/All_Deperments_Hub/MaintenanceHub/MaintenanceHub';
 import MachineHistoryCard from './components/All_Deperments_Hub/MaintenanceHub/forms/MachineHistoryCard';
 import DailyPowerPressChecksheet from '././components/All_Deperments_Hub/MaintenanceHub/forms/DailyPowerPressChecksheet'
 import DailyPowerPressChecksheetprint from './components/All_Deperments_Hub/MaintenanceHub/forms/DailyPowerPressChecksheetprint';
@@ -84,9 +90,8 @@ import ToolHistoryReport from './components/All_Deperments_Hub/MaintenanceHub/To
 import MachineBreakdownSummaryPrint from './components/All_Deperments_Hub/MaintenanceHub/MachineBreakdownSummaryPrint';
 
 
-import SampleInsForm from './components/All_Deperments_Hub/QaHub/SampleInsForm';
 import For_M_Change_Ins_Form from './components/All_Deperments_Hub/ProductionHub/For_M_Change_Ins_Form';
-import DeviationApprovalForm from './components/All_Deperments_Hub/QaHub/DeviationApprovalForm';
+import DeviationApprovForm from './components/All_Deperments_Hub/QaHub/DeviationApprovalForm';
 import './App.css';
 import ForMChangeInsPrint from './components/All_Deperments_Hub/ProductionHub/ForMChangeInsPrint';
 
@@ -103,24 +108,14 @@ function App() {
     localStorage.setItem('isAuthenticated', isAuthenticated);
   }, [isAuthenticated]);
 
-  const handleLogin = () => {
-    console.log('✅ Login successful - Auth TRUE');
-    setIsAuthenticated(true);
-  };
-
+  const handleLogin = () => setIsAuthenticated(true);
   const handleLogout = () => {
-    console.log('🚪 Logout - Auth FALSE');
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
   };
 
   const ProtectedRoute = ({ children }) => {
-    console.log('🔒 Protected Route Check - isAuthenticated:', isAuthenticated);
-    if (!isAuthenticated) {
-      console.log('❌ Not authenticated - Redirecting to /login');
-      return <Navigate to="/login" replace />;
-    }
-    console.log('✅ Authenticated - Rendering component');
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
     return children;
   };
 
@@ -147,24 +142,22 @@ function App() {
           <Route path="/qms/report/:reportId" element={<ProtectedRoute><ReportDetail /></ProtectedRoute>} />
           <Route path="/qms/report/:reportId/edit" element={<ProtectedRoute><ReportEditor /></ProtectedRoute>} />
           <Route path="/qms/patrol-inspection" element={<ProtectedRoute><PatrolInspection /></ProtectedRoute>} />
-          <Route path="/qms/inspection-form" element={<ProtectedRoute><InspectionForm /></ProtectedRoute>} />
           <Route path="/qms/raw-material-form" element={<ProtectedRoute><RawMaterialForm /></ProtectedRoute>} />
           <Route path="/qms/pdi-report-form" element={<ProtectedRoute><PdiReportForm /></ProtectedRoute>} />
 
-          {/* ========== PLANT ROUTES ========== */}
+          {/* ========== LIVE PLANT STATUS ========== */}
           <Route path="/plant1" element={<ProtectedRoute><Plant1Live onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/plant1-live" element={<ProtectedRoute><Plant1Live onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/plant2" element={<ProtectedRoute><Plant2Live onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/plant2-live" element={<ProtectedRoute><Plant2Live onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/machines-status" element={<ProtectedRoute><MachinesStatus onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/count52" element={<ProtectedRoute><Count52Live onLogout={handleLogout} /></ProtectedRoute>} />
 
           {/* ========== OPERATIONS & ASSIGNMENTS ========== */}
           <Route path="/assignment" element={<ProtectedRoute><AssignMachine onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/assign-machine" element={<ProtectedRoute><AssignMachine onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/machine-assignments" element={<ProtectedRoute><MachineAssignments onLogout={handleLogout} /></ProtectedRoute>} />
-
-          {/* ========== IDLE REPORTS ========== */}
           <Route path="/idle-case" element={<ProtectedRoute><IdleCase onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path="/idle-report-submit" element={<ProtectedRoute><IdleCase onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/idle-reports-list" element={<ProtectedRoute><IdleReportsList onLogout={handleLogout} /></ProtectedRoute>} />
 
           {/* ========== MACHINES STATUS ========== */}
@@ -192,6 +185,7 @@ function App() {
           <Route path="/Rework" element={<ProtectedRoute><ReworkRepair /></ProtectedRoute>} />
           <Route path="/pdi-report-form" element={<ProtectedRoute><PdiReportForm /></ProtectedRoute>} />
           <Route path="/sample-inspection" element={<ProtectedRoute><SampleInspectionReport /></ProtectedRoute>} />
+          <Route path='Deviation-Approval-Form' element={<ProtectedRoute><DeviationApprovForm/></ProtectedRoute>}/>
           {/*----- QaHub Print Pages -----*/}
           <Route path="/incomingmaterial-report" element={<ProtectedRoute><IncomingMaterialprint /></ProtectedRoute>} />
           <Route path="/redbin-analysis-report" element={<ProtectedRoute><RedBinprint /></ProtectedRoute>} />
@@ -244,13 +238,11 @@ function App() {
             
           
           {/* ========== 404 NOT FOUND ========== */}
-          <Route 
-            path="*" 
-            element={
+          <Route path="*" element={
               <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#0f172a', color: 'white', fontSize: '24px', flexDirection: 'column', gap: '20px'}}>
                 <div style={{ fontSize: '72px', fontWeight: 'bold' }}>404</div>
                 <div>Page Not Found</div>
-                <button onClick={() => window.location.href = '/'} style={{padding: '12px 24px', background: 'linear-gradient(to right, #06b6d4, #fbbf24)', border: 'none', borderRadius: '8px', color: '#0f172a', fontSize: '16px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.3s ease'}}>Go to Home</button>
+                <button onClick={() => window.location.href = '/'} style={{padding: '12px 24px', background: 'linear-gradient(to right, #06b6d4, #fbbf24)', border: 'none', borderRadius: '8px', color: '#0f172a', fontSize: '16px', cursor: 'pointer', fontWeight: 'bold'}}>Go to Home</button>
               </div>
             } 
           />
