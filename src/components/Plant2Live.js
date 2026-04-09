@@ -1,9 +1,6 @@
-// src/components/Plant2Live.js
-// FINAL VERSION - Backend idle_time priority + Hour reset + Live idle
-
 import React, { useEffect, useState, useRef } from 'react';
 
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = 'http://192.168.0.34:8000/';
 
 const convertToIST = (utcTimeString) => {
   if (!utcTimeString) return 'Unknown';
