@@ -508,7 +508,7 @@ export default function Sidebar({ onLogout }) {
                           initial={{ opacity: 0, scale: 0 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0 }}
-                          className={`relative z-10 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${colors.badge} border whitespace-nowrap`}
+                          className={`relative z-10 px-2 py-0.5 rounded-full text-xs font-semibold ${colors.badge} border whitespace-nowrap`}
                         >
                           {item.badge}
                         </motion.span>
@@ -525,7 +525,7 @@ export default function Sidebar({ onLogout }) {
           })}
         </nav>
 
-        {/* Divider - Thinner margin */}
+        {/* Divider */}
         <div className="mx-2 border-t border-indigo-500/10" />
 
         {/* Bottom Section - Reduced padding */}
@@ -620,8 +620,8 @@ export default function Sidebar({ onLogout }) {
               </div>
               
               <div className="flex-1 min-w-0 relative z-10">
-                <p className="text-slate-200 text-[11px] truncate font-medium">Admin User</p>
-                <p className="text-slate-500 text-[9px] truncate">admin@atomone.in</p>
+                <p className="text-slate-200 text-sm truncate font-medium">Admin User</p>
+                <p className="text-slate-500 text-xs truncate">admin@atomone.in</p>
               </div>
 
               <motion.button
@@ -633,7 +633,7 @@ export default function Sidebar({ onLogout }) {
                 }}
                 className="relative z-10 text-red-400 hover:text-red-300 transition-colors flex-shrink-0"
               >
-                <LogOut className="w-3 h-3" />
+                <LogOut className="w-4 h-4" />
               </motion.button>
             </motion.div>
           ) : (
