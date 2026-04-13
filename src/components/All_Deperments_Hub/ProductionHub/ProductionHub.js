@@ -8,7 +8,6 @@ const ProductionHub = () => {
 
     const productionReports = [
         { id: 1, title: 'Daily Production Plan / Report', formNo: 'AOT-F-PROD-03', resp: 'Production Engineer', icon: 'bi-graph-up-arrow', color: '#3b82f6', bg: '#eff6ff' },
-        { id: 2, title: 'Set up and patrol insp. report', formNo: 'AOT/F/QA/15', resp: 'Quality Engineer', icon: 'bi-clipboard-check', color: '#10b981', bg: '#d1fae5' },
         { id: 3, title: 'Operator 5S Checklist', formNo: 'AOT-F-PROD-13A', resp: 'Operator', icon: 'bi-stars', color: '#f59e0b', bg: '#fef3c7' },
         { id: 4, title: 'Bins Trolley Cleaning', formNo: 'AOT-F-PROD-02A', resp: 'Helper', icon: 'bi-cart-check', color: '#06b6d4', bg: '#cffafe' },
         { id: 5, title: 'Tip Change monitoring sheet', formNo: 'AOT-F-QA-05B', resp: 'Die Setting Supv.', icon: 'bi-sliders', color: '#8b5cf6', bg: '#ede9fe' },
@@ -21,7 +20,6 @@ const ProductionHub = () => {
     const navigateToForm = (id, title) => {
         switch (id) {
             case 1: navigate('/Daily-Prod-Plan-Form'); break;
-            case 2: navigate('/Setup-Patrol-Ins-Form'); break;
             case 3: navigate('/Operator5S'); break;
             case 4: navigate('/Bin-Trolly-Cleaning-Form'); break;
             case 5: navigate('/Tip-Change-Monitor-Form'); break;
@@ -37,7 +35,6 @@ const ProductionHub = () => {
     const navigateToReport = (id, title) => {
         switch (id) {
             case 1: navigate('/Daily-Prod-Plan-Report'); break;
-            case 2: navigate('/Setup-Patrol-Ins-Report'); break;
             case 3: navigate('/Operator5S-Report'); break;
             case 4: navigate('/Bin-Trolly-Cleaning-Report'); break;
             case 5: navigate('/Tip-Change-Monitor-Report'); break;

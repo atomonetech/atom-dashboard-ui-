@@ -31,8 +31,8 @@ const TipChangeMonitorForm = () => {
     });
   };
 
-  // Handle form submit
-  const handleSubmit = (e) => {
+  // Handle form submit (Updated with Backend API Call)
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validate form
@@ -48,22 +48,44 @@ const TipChangeMonitorForm = () => {
       return;
     }
 
-    // Prepare data with timestamp
-    const submissionData = {
-      ...formData,
-      prdQty: parseInt(formData.prdQty),
-      currentDate: new Date().toISOString(),
-      dressingFrequency: "AFTER 900 NOS",
+    // Prepare data matching Django Model fields (snake_case)
+    const payloadData = {
+      part_name: formData.partName,
+      prd_qty: parseInt(formData.prdQty),
+      tip_change: formData.tipChange,
+      tip_dressing: formData.tipDressing,
+      dressing_status: formData.dressingStatus,
     };
 
-    // Log to console (will be replaced with database call)
-    console.log("Data to be saved to database:", submissionData);
+    console.log("Sending data to backend:", payloadData);
 
-    // Show success message
-    alert("Data saved successfully! (Check console for data)");
+    try {
+      // Call to Django Backend API
+      // Make sure your Django server is running on localhost:8000
+      const response = await fetch("http://localhost:8000/api/save-tip-data/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payloadData),
+      });
 
-    // Reset form after successful submission
-    handleReset();
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log("Data saved to database successfully:", responseData);
+        alert("Data saved successfully!");
+        
+        // Reset form after successful submission
+        handleReset();
+      } else {
+        const errorData = await response.json();
+        console.error("Backend validation error:", errorData);
+        alert("Failed to save data. Please check inputs.");
+      }
+    } catch (error) {
+      console.error("Network or Server error:", error);
+      alert("Error connecting to the server. Make sure Django backend is running.");
+    }
   };
 
   const handleBack = () => {
@@ -72,7 +94,6 @@ const TipChangeMonitorForm = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6">
-
       {/* Back Button */}
       <button
         className="flex items-center gap-2 bg-[#916cf6] hover:bg-[#7b55e0] px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-white transition-colors mb-4 sm:mb-5 md:mb-6 font-medium text-sm sm:text-base w-fit"
