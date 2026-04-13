@@ -4,23 +4,22 @@ import { useNavigate } from 'react-router-dom';
 const QaHub = () => {
     const navigate = useNavigate();
 
-    // Modal state
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
 
     const qaReports = [
-        { id: 1,  title: 'Incoming Material Insp.',      formNo: 'AOT/F/QA/01',   resp: 'Quality Engineer',    icon: 'bi-box-seam',           color: '#3b82f6', bg: '#eff6ff', fillRoute: '/Incoming-Material',       printKey: 'incomingmaterial-report' },
-        { id: 2,  title: 'Red Bin Analysis - NC Reg.',   formNo: 'AOT/F/QC/02',   resp: 'CFT',                 icon: 'bi-trash3',             color: '#ef4444', bg: '#fef2f2', fillRoute: '/RedBin-Form',             printKey: 'redbin-analysis-report' },
-        { id: 3,  title: 'Scrap Note',                   formNo: 'AOT/F/QC/04',   resp: 'Quality Engineer',    icon: 'bi-file-earmark-x',     color: '#ef4444', bg: '#fef2f2', fillRoute: '/Scrap-Note',              printKey: 'scrap-note-report' },
-        { id: 4,  title: 'Red Bin Attendance Sheet',     formNo: 'AOT/F/QC/05',   resp: 'Quality Engineer',    icon: 'bi-person-x',           color: '#f59e0b', bg: '#fef3c7', fillRoute: '/Redbin-Attendance',       printKey: 'redbin-attendance-report' },
-        { id: 5,  title: 'Daily Poka Yokes Check',       formNo: 'AOT/F/QC/07A',  resp: 'Operator',            icon: 'bi-shield-check',       color: '#10b981', bg: '#d1fae5', fillRoute: '/Poka-Yoke',               printKey: 'PokaYoke-report'},
-        { id: 7,  title: 'Set up & Patrol Insp. (FPIR)', formNo: 'AOT/F/QA/15',   resp: 'Quality Engineer',    icon: 'bi-clipboard-check',    color: '#06b6d4', bg: '#cffafe', fillRoute: '/inspection-form',         printKey: 'inspection-report' },
-        { id: 8,  title: 'Rework / Repair Report',       formNo: 'AOT/F/QA/20',   resp: 'Rework Operator',     icon: 'bi-tools',              color: '#f59e0b', bg: '#fef3c7', fillRoute: '/Rework',                  printKey: 'rework-report' },
-        { id: 9,  title: 'Sample Inspection Report',     formNo: 'AOT/F/QA/21',   resp: 'Quality Engineer',    icon: 'bi-search',             color: '#3b82f6', bg: '#eff6ff', fillRoute: '/sample-inspection',       printKey: 'sample-inspection-report' },
-        { id: 10, title: 'Deviation Approval Form',      formNo: 'AOT/F/PROD/04', resp: 'Production Engineer', icon: 'bi-file-earmark-check', color: '#8b5cf6', bg: '#ede9fe', fillRoute: '/Deviation-Approval-Form', printKey: 'Deviation-report' },
-        { id: 11, title: 'RM Quality Plan',              formNo: 'AOT/F/QA/25',   resp: 'Quality Engineer',    icon: 'bi-diagram-3',          color: '#10b981', bg: '#d1fae5', fillRoute: null,                       printKey: null },
-        { id: 12, title: 'Goods Receipt Note (GRN)',     formNo: 'Not Reqd.',     resp: 'Store Incharge',      icon: 'bi-receipt',            color: '#06b6d4', bg: '#cffafe', fillRoute: '/Good-Receipt',            printKey: null },
-        { id: 13, title: 'Pre Dispatch Insp. (PDIR)',    formNo: 'AOT/F/QA/40',   resp: 'Quality Engineer',    icon: 'bi-truck',              color: '#10b981', bg: '#d1fae5', fillRoute: '/pdi-report-form',         printKey: 'pdiprint-report' },
+        { id: 1,  title: 'Incoming Material Insp.',      formNo: 'AOT/F/QA/01',   resp: 'Quality Engineer',    icon: 'bi-box-seam',           color: '#3b82f6', bg: '#eff6ff', fillRoute: '/Incoming-Material',       printKey: 'incomingmaterial-report', viewKey: 'incoming-material-view' },
+        { id: 2,  title: 'Red Bin Analysis - NC Reg.',   formNo: 'AOT/F/QC/02',   resp: 'CFT',                 icon: 'bi-trash3',             color: '#ef4444', bg: '#fef2f2', fillRoute: '/RedBin-Form',             printKey: 'redbin-analysis-report',  viewKey: 'redbin-view' },
+        { id: 3,  title: 'Scrap Note',                   formNo: 'AOT/F/QC/04',   resp: 'Quality Engineer',    icon: 'bi-file-earmark-x',     color: '#ef4444', bg: '#fef2f2', fillRoute: '/Scrap-Note',              printKey: 'scrap-note-report',       viewKey: 'scrap-note-view' },
+        { id: 4,  title: 'Red Bin Attendance Sheet',     formNo: 'AOT/F/QC/05',   resp: 'Quality Engineer',    icon: 'bi-person-x',           color: '#f59e0b', bg: '#fef3c7', fillRoute: '/Redbin-Attendance',       printKey: 'redbin-attendance-report',viewKey: 'redbin-attendance-view' },
+        { id: 5,  title: 'Daily Poka Yokes Check',       formNo: 'AOT/F/QC/07A',  resp: 'Operator',            icon: 'bi-shield-check',       color: '#10b981', bg: '#d1fae5', fillRoute: '/Poka-Yoke',               printKey: 'PokaYoke-report',         viewKey: 'pokayoke-view' },
+        { id: 7,  title: 'Set up & Patrol Insp. (FPIR)', formNo: 'AOT/F/QA/15',   resp: 'Quality Engineer',    icon: 'bi-clipboard-check',    color: '#06b6d4', bg: '#cffafe', fillRoute: '/inspection-form',         printKey: 'inspection-report',       viewKey: 'inspection-view' },
+        { id: 8,  title: 'Rework / Repair Report',       formNo: 'AOT/F/QA/20',   resp: 'Rework Operator',     icon: 'bi-tools',              color: '#f59e0b', bg: '#fef3c7', fillRoute: '/Rework',                  printKey: 'rework-report',           viewKey: 'rework-view' },
+        { id: 9,  title: 'Sample Inspection Report',     formNo: 'AOT/F/QA/21',   resp: 'Quality Engineer',    icon: 'bi-search',             color: '#3b82f6', bg: '#eff6ff', fillRoute: '/sample-inspection',       printKey: 'sample-inspection-report',viewKey: 'sample-inspection-view' },
+        { id: 10, title: 'Deviation Approval Form',      formNo: 'AOT/F/PROD/04', resp: 'Production Engineer', icon: 'bi-file-earmark-check', color: '#8b5cf6', bg: '#ede9fe', fillRoute: '/Deviation-Approval-Form', printKey: 'Deviation-report',        viewKey: 'deviation-view' },
+        { id: 11, title: 'RM Quality Plan',              formNo: 'AOT/F/QA/25',   resp: 'Quality Engineer',    icon: 'bi-diagram-3',          color: '#10b981', bg: '#d1fae5', fillRoute: null,                       printKey: null,                      viewKey: null },
+        { id: 12, title: 'Goods Receipt Note (GRN)',     formNo: 'Not Reqd.',     resp: 'Store Incharge',      icon: 'bi-receipt',            color: '#06b6d4', bg: '#cffafe', fillRoute: '/Good-Receipt',            printKey: null,                      viewKey: 'grn-view' },
+        { id: 13, title: 'Pre Dispatch Insp. (PDIR)',    formNo: 'AOT/F/QA/40',   resp: 'Quality Engineer',    icon: 'bi-truck',              color: '#10b981', bg: '#d1fae5', fillRoute: '/pdi-report-form',         printKey: 'pdiprint-report',         viewKey: 'pdi-view' },
     ];
 
     const handleCardClick = (report) => {
@@ -39,7 +38,6 @@ const QaHub = () => {
 
     const handlePrintData = () => {
         if (selectedCard?.printKey) {
-            // Yahan hum exact printKey ko route bana rahe hain, jaise /PokaYoke ya /Deviation
             navigate(`/${selectedCard.printKey}`);
         } else {
             alert(`"${selectedCard?.title}" ka print page abhi under development hai.`);
@@ -47,7 +45,15 @@ const QaHub = () => {
         setModalOpen(false);
     };
 
-    // ── Default: Cards view ──
+    const handleViewData = () => {
+        if (selectedCard?.viewKey) {
+            navigate(`/qa-view/${selectedCard.viewKey}`);
+        } else {
+            alert(`"${selectedCard?.title}" ka view page abhi under development hai.`);
+        }
+        setModalOpen(false);
+    };
+
     return (
         <div className="hub-wrapper">
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -120,7 +126,7 @@ const QaHub = () => {
 
                         {/* Fill Data */}
                         <button className="modal-action-btn" onClick={handleFillData}>
-                            <div className="modal-btn-icon" style={{background:'#eff6ff',color:'#3b82f6'}}>
+                            <div className="modal-btn-icon" style={{background:'#f1f5f9', color:'#0f172a'}}>
                                 <i className="bi bi-pencil-square"></i>
                             </div>
                             <div>
@@ -130,9 +136,21 @@ const QaHub = () => {
                             <i className="bi bi-chevron-right ms-auto text-muted" style={{fontSize:'0.85rem'}}></i>
                         </button>
 
+                        {/* View Data */}
+                        <button className="modal-action-btn" onClick={handleViewData}>
+                            <div className="modal-btn-icon" style={{background:'#f1f5f9', color:'#0f172a'}}>
+                                <i className="bi bi-eye"></i>
+                            </div>
+                            <div>
+                                <p style={{fontWeight:700,fontSize:'0.9rem',margin:0,color:'#0f172a'}}>View Data</p>
+                                <p style={{fontSize:'0.75rem',color:'#64748b',margin:0}}>Database ke saved records dekhen</p>
+                            </div>
+                            <i className="bi bi-chevron-right ms-auto text-muted" style={{fontSize:'0.85rem'}}></i>
+                        </button>
+
                         {/* Print Data */}
                         <button className="modal-action-btn" onClick={handlePrintData}>
-                            <div className="modal-btn-icon" style={{background:'#f0fdf4',color:'#10b981'}}>
+                            <div className="modal-btn-icon" style={{background:'#f1f5f9', color:'#0f172a'}}>
                                 <i className="bi bi-printer"></i>
                             </div>
                             <div>
@@ -141,6 +159,7 @@ const QaHub = () => {
                             </div>
                             <i className="bi bi-chevron-right ms-auto text-muted" style={{fontSize:'0.85rem'}}></i>
                         </button>
+
                     </div>
                 </div>
             )}

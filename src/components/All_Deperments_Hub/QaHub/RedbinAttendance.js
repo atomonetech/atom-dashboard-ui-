@@ -3,11 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { ClipboardList } from "lucide-react";
 import { CiCalendarDate } from "react-icons/ci";
 import { IoMdArrowBack, IoIosArrowDown } from "react-icons/io";
+import axios from "axios"; 
 
 const today = new Date();
 const formattedDate = `${String(today.getDate()).padStart(2,'0')}-${String(today.getMonth()+1).padStart(2,'0')}-${today.getFullYear()}`;
 const currentMonth = today.toLocaleString('default', { month: 'long' });
 const currentYear  = today.getFullYear();
+
+// Backend API URL
+const API_SAVE = "http://192.168.0.34:8000/api/red-bin-attendance/";
 
 const DESIGNATIONS = [
   "Quality Engineer","Production Engineer","Operator","Supervisor",
@@ -62,40 +66,42 @@ export default function RedbinAttendance() {
 
   const removeRow = (i) => setRows(p => p.filter((_, idx) => idx !== i));
 
-  const handleSave = () => {
-    const savedAt = new Date().toLocaleString();
+  // 👇 Data backend mein bhejne ka naya logic
+  const handleSave = async () => {
     const day = today.getDate();
+    const isoDate = today.toISOString().split("T")[0]; // YYYY-MM-DD format for Django DateField
 
-    console.group("╔══════════════════════════════════════════════════");
-    console.log("║  📋 RED BIN ATTENDANCE SHEET — SAVED");
-    console.log("║  Form No: AOT/F/QC/05  |  Saved At:", savedAt);
-    console.log("║  Month:", currentMonth, currentYear);
-    console.groupEnd();
-
-    console.group("👥 ATTENDANCE DATA (" + rows.length + " employees)");
-    const tableData = rows.map((r, i) => ({
-      "SR."        : i + 1,
-      "Name"       : r.name        || "—",
-      "Designation": r.designation || "—",
-      [`${day} ${currentMonth.slice(0,3)} (Today)`]: r.attendance[day] || "—",
+    // Database model se match karne ke liye payload taiyaar kar rahe hain
+    const payload = rows.map(r => ({
+      date: isoDate,
+      month: currentMonth,
+      year: currentYear,
+      employee_name: r.name,
+      designation: r.designation,
+      status: r.attendance[day] || "" // "P", "A", ya ""
     }));
-    console.table(tableData);
-    console.groupEnd();
 
-    const presentCount = rows.filter(r => r.attendance[day] === "P").length;
-    const absentCount  = rows.filter(r => r.attendance[day] === "A").length;
-    const pendingCount = rows.filter(r => !r.attendance[day]).length;
-    console.group("📊 SUMMARY — " + day + " " + currentMonth);
-    console.log("  ✅ Present :", presentCount);
-    console.log("  ❌ Absent  :", absentCount);
-    console.log("  ⬜ Unmarked:", pendingCount);
-    console.groupEnd();
+    if (payload.length === 0) {
+      alert("No attendance data to save.");
+      return;
+    }
 
-    setSaveMsg("✓ Saved & Reset!");
-    setRows([]);
-    setSelectedName("");
-    setSelectedDesignation("");
-    setTimeout(() => setSaveMsg(""), 2500);
+    try {
+      // Backend ko data bhej rahe hain
+      const response = await axios.post(API_SAVE, payload);
+      
+      if (response.status === 201 || response.status === 200) {
+        alert("Attendance data has been saved successfully!"); // 👇 Ye English popup add kiya hai
+        setSaveMsg("✓ Saved to Database!");
+        setRows([]);
+        setSelectedName("");
+        setSelectedDesignation("");
+        setTimeout(() => setSaveMsg(""), 2500);
+      }
+    } catch (error) {
+      console.error("Error saving attendance to database:", error.response?.data || error.message);
+      alert("Error saving data. Please check backend connection.");
+    }
   };
 
   const handleReset = () => {

@@ -34,9 +34,10 @@ const InspectionForm = () => {
     const [selectedTool, setSelectedTool] = useState('');
     const [partNumber, setPartNumber] = useState('');
     const [modelName, setModelName] = useState('');
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const todayDate = new Date().toISOString().split('T')[0];
+    const [selectedDate] = useState(todayDate);
 
-    const API_URL = "http://127.0.0.1:8000/api";
+    const API_URL = "http://192.168.0.34:8000/api";
     const [specList, setSpecList] = useState([]); 
 
     const [dbLogs, setDbLogs] = useState([]); 
@@ -506,7 +507,7 @@ const InspectionForm = () => {
                 <div className="card-custom animate-pop" style={{animationDelay: '0.1s'}}>
                     <div className="card-header-custom">
                         <h6 className="card-title-custom"><i className="bi bi-sliders text-primary"></i> Process Context Filters</h6>
-                        <input type="date" className="form-control-light w-auto fw-bold" style={{padding: '0.4rem 0.8rem', color: 'var(--accent-primary)'}} value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
+                        <input type="date" className="form-control-light w-auto fw-bold" style={{padding: '0.4rem 0.8rem', color: 'var(--accent-primary)', cursor: 'not-allowed', backgroundColor: '#f1f5f9'}} value={selectedDate} readOnly />
                     </div>
                     <div className="card-body-custom">
                         <div className="row g-3">

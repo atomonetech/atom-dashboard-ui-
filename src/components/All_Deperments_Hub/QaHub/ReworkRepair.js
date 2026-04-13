@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { FiScissors } from "react-icons/fi";
 import { IoIosArrowDown } from "react-icons/io";
+import axios from "axios";
 
 let _id = 0;
 const nextId = () => ++_id;
@@ -8,27 +9,6 @@ const nextId = () => ++_id;
 const today = new Date();
 const formattedDate = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
 
-const PARTS_DATA = [
-  { desc: "INLET PIPE / OUTLET PIPE YTAMC", partNos: ["PT-YTAMC-01", "PT-YTAMC-02"] },
-  { desc: "Steel Bracket Assembly", partNos: ["PT-001-A", "PT-001-B", "PT-001-C"] },
-  { desc: "Aluminium Sheet 2MM", partNos: ["PT-002-A", "PT-002-B"] },
-  { desc: "Rubber Seal Ring", partNos: ["PT-003-A", "PT-003-B", "PT-003-C"] },
-  { desc: "Plastic Cover Panel", partNos: ["PT-004-A", "PT-004-B"] },
-  { desc: "Copper Rod 12MM", partNos: ["PT-005-A", "PT-005-B", "PT-005-C"] },
-  { desc: "Bolt M10 x 50", partNos: ["PT-006-A", "PT-006-B"] },
-  { desc: "Bearing 6205 ZZ", partNos: ["PT-007-A", "PT-007-B", "PT-007-C"] },
-];
-
-const SPECS = [
-  "NO BURR, NO PUNCHING MISS", "24 NOS",
-  "60", "120", "180", "24.3", "61.6", "28.7", "8.8", "266.8",
-  "3.5-5KG/CM2", "3.5-4.5 KG/CM2", "5-6.5 KG/CM2", "6-7 KG/CM2",
-  "240", "OILING TO BE DONE ON PART BEFORE PUNCHING", "NO BLANK SHORT, NO BURR ETC",
-];
-
-const NON_CONFORMANCE_OPTIONS = ["Dent", "Burr", "Scratch", "Rust", "Dimensional Deviation", "Surface Defect", "Wrong Grade", "Visual Defect", "Thread Damage", "Porosity", "Crack", "Bend/Deformation"];
-
-const getPartNos = (desc) => desc ? (PARTS_DATA.find(p => p.desc === desc)?.partNos || []) : [];
 const emptyCard = () => ({ partDesc: "", partNo: "", spec: "", nonConformance: "", reworkQty: "" });
 const makeRow = (card) => ({
   id: nextId(),
@@ -72,13 +52,6 @@ const SelectField = ({ value, onChange, options, placeholder, disabled }) => (
 
 const LBL = { fontSize: 11, fontWeight: 700, color: "#111827", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 5, display: "block" };
 
-const initialState = () => ({
-  date: formattedDate,
-  rows: [],
-  card: emptyCard(),
-  remark: "",
-});
-
 export default function ReworkRepair() {
   const [date, setDate] = useState(formattedDate);
   const [rows, setRows] = useState([]);
@@ -87,7 +60,36 @@ export default function ReworkRepair() {
   const [remark, setRemark] = useState("");
   const [saveMsg, setSaveMsg] = useState("");
 
+  const [backendParts, setBackendParts] = useState([]); 
+  const [backendSpecs, setBackendSpecs] = useState([]);
+
   useEffect(() => {
+    const fetchDropdowns = async () => {
+      try {
+        const partsRes = await axios.get("http://192.168.0.34:8000/api/master-dropdown/?filter=all_parts");
+        const rawParts = partsRes.data; 
+        
+        const groupedMap = {};
+        rawParts.forEach(([pName, pNo]) => {
+            if (!groupedMap[pName]) groupedMap[pName] = new Set();
+            if (pNo) groupedMap[pName].add(pNo);
+        });
+        
+        const formattedParts = Object.keys(groupedMap).map(k => ({
+            desc: k,
+            partNos: Array.from(groupedMap[k])
+        }));
+        setBackendParts(formattedParts);
+
+        const specsRes = await axios.get("http://192.168.0.34:8000/api/master-dropdown/?filter=spec");
+        setBackendSpecs(specsRes.data);
+      } catch (error) {
+        console.error("Error fetching dropdown data:", error);
+      }
+    };
+
+    fetchDropdowns();
+
     const check = () => setIsMobile(window.innerWidth < 768);
     check(); window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
@@ -95,18 +97,41 @@ export default function ReworkRepair() {
 
   const handleAddRow = () => {
     const { partDesc, partNo, spec, nonConformance, reworkQty } = card;
-    if (partDesc && partNo && spec && nonConformance && reworkQty !== "") {
+    if (partDesc && partNo && spec && nonConformance.trim() !== "" && reworkQty !== "") {
       setRows(prev => [...prev, makeRow(card)]);
       setCard(emptyCard());
     }
   };
+
+  // 🔥 AUTO-ADD ROW LOGIC
+  useEffect(() => {
+    const { partDesc, partNo, spec, nonConformance, reworkQty } = card;
+    
+    // Agar saari fields completely fill ho chuki hain
+    if (partDesc && partNo && spec && nonConformance.trim() !== "" && reworkQty !== "") {
+      const timer = setTimeout(() => {
+        handleAddRow();
+      }, 800); // 800ms tak ruko taaki user type karna complete kar le
+      
+      return () => clearTimeout(timer); // Agar user aur type kar raha hai toh timer reset hoga
+    }
+  }, [card]);
 
   const handleQtyKeyDown = (e) => { if (e.key === "Enter") handleAddRow(); };
 
   const updateCard = (field, val) => {
     setCard(prev => {
       const next = { ...prev, [field]: val };
-      if (field === "partDesc") next.partNo = "";
+      
+      // Auto-fill Part No on Part Name selection
+      if (field === "partDesc") {
+        const selectedPart = backendParts.find(p => p.desc === val);
+        if (selectedPart && selectedPart.partNos && selectedPart.partNos.length > 0) {
+          next.partNo = selectedPart.partNos[0];
+        } else {
+          next.partNo = "";
+        }
+      }
       return next;
     });
   };
@@ -125,51 +150,47 @@ export default function ReworkRepair() {
   const toggleStatus = (i, type) => setRows(prev => prev.map((r, idx) => idx === i ? { ...r, okStatus: r.okStatus === type ? null : type } : r));
   const removeRow = i => setRows(prev => prev.filter((_, idx) => idx !== i));
 
-  // ── SAVE handler
-  const handleSave = () => {
-    const savedAt = new Date().toLocaleString();
+  const handleSave = async () => {
+    const [day, month, year] = date.split('-');
+    const dbDate = `${year}-${month}-${day}`;
 
-    console.group("╔══════════════════════════════════════════════════");
-    console.log("║  ✂️  REWORK / REPAIR REPORT — SAVED");
-    console.log("║  Form No: AOT/F/QA/20  |  Saved At:", savedAt);
-    console.log("║  Date:", date);
-    console.groupEnd();
+    const payload = {
+      date: dbDate,
+      remark: remark,
+      items: rows.map(r => ({
+        part_name: r.partDesc,
+        part_no: r.partNo,
+        spec: r.spec,
+        non_conformance: r.nonConformance,
+        rework_qty: r.reworkQty || 0,
+        status: r.okStatus, 
+        inspected_by: r.inspectedBy,
+        observations: r.observations 
+      }))
+    };
 
-    console.group("🔧 REWORK ROWS (" + rows.length + " rows)");
-    const tableData = rows.map((r, i) => ({
-      "SR."             : i + 1,
-      "Part Name"       : r.partDesc       || "—",
-      "Part No."        : r.partNo         || "—",
-      "Spec."           : r.spec           || "—",
-      "Non Conformance" : r.nonConformance || "—",
-      "Rework Qty"      : r.reworkQty      !== "" ? r.reworkQty : "—",
-      "Result"          : r.okStatus === "ok" ? "✅ OK" : r.okStatus === "notok" ? "❌ NOT OK" : "⬜ Pending",
-      "Inspected By"    : r.inspectedBy    || "—",
-      ...r.observations.reduce((acc, v, j) => ({ ...acc, [`Obs ${j+1}`]: v || "—" }), {}),
-    }));
-    console.table(tableData);
-    console.groupEnd();
+    if (payload.items.length === 0) {
+      alert("Please add at least one row before saving.");
+      return;
+    }
 
-    const okCount     = rows.filter(r => r.okStatus === "ok").length;
-    const notOkCount  = rows.filter(r => r.okStatus === "notok").length;
-    const totalQty    = rows.reduce((sum, r) => sum + (parseFloat(r.reworkQty) || 0), 0);
-    console.group("📊 SUMMARY");
-    console.log("  ✅ OK         :", okCount);
-    console.log("  ❌ NOT OK     :", notOkCount);
-    console.log("  ⬜ Pending    :", rows.length - okCount - notOkCount);
-    console.log("  📦 Total Qty  :", totalQty);
-    if (remark) console.log("  📝 Remark     :", remark);
-    console.groupEnd();
-
-    setSaveMsg("✓ Saved & Reset!");
-    setRows([]);
-    setCard(emptyCard());
-    setRemark("");
-    setDate(formattedDate);
-    setTimeout(() => setSaveMsg(""), 2500);
+    try {
+      const response = await axios.post("http://192.168.0.34:8000/api/rework-report/", payload);
+      if (response.data.success) {
+        alert("Data has been saved successfully!"); // 🔥 YAHAN POPUP ADD KIYA HAI
+        setSaveMsg("✓ Saved & Reset!");
+        setRows([]);
+        setCard(emptyCard());
+        setRemark("");
+        setDate(formattedDate);
+        setTimeout(() => setSaveMsg(""), 2500);
+      }
+    } catch (error) {
+      console.error("Save error:", error);
+      alert("Failed to save data to database.");
+    }
   };
 
-  // ── RESET handler
   const handleReset = () => {
     if (window.confirm("Are you sure you want to reset all data?")) {
       setDate(formattedDate);
@@ -180,29 +201,13 @@ export default function ReworkRepair() {
     }
   };
 
-  const cardPartNos = getPartNos(card.partDesc);
   const maxObs = rows.length > 0 ? Math.max(...rows.map(r => r.observations.length)) : 5;
 
-  const obsCellStyle = {
-    padding: "4px 2px",
-    border: "1px solid #e5e7eb",
-    verticalAlign: "middle",
-  };
-
+  const obsCellStyle = { padding: "4px 2px", border: "1px solid #e5e7eb", verticalAlign: "middle" };
   const obsInputStyle = {
-    width: "100%",
-    minWidth: 32,
-    padding: "6px 2px",
-    border: "1px solid #d1d5db",
-    borderRadius: 5,
-    textAlign: "center",
-    fontSize: 12,
-    color: "#111827",
-    background: "#fff",
-    fontFamily: "'Inter',sans-serif",
-    outline: "none",
-    boxSizing: "border-box",
-    display: "block",
+    width: "100%", minWidth: 32, padding: "6px 2px", border: "1px solid #d1d5db",
+    borderRadius: 5, textAlign: "center", fontSize: 12, color: "#111827",
+    background: "#fff", fontFamily: "'Inter',sans-serif", outline: "none", boxSizing: "border-box", display: "block"
   };
 
   return (
@@ -236,44 +241,11 @@ export default function ReworkRepair() {
         .rework-table .col-insp  { width: 104px; }
         .rework-table .col-del   { width: 32px; }
 
-        .save-btn {
-          height: 38px;
-          padding: 0 22px;
-          border-radius: 8px;
-          background: #2563eb;
-          color: #fff;
-          border: none;
-          font-weight: 700;
-          font-size: 13px;
-          cursor: pointer;
-          font-family: 'Inter', sans-serif;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
-          box-shadow: 0 2px 8px rgba(37,99,235,0.18);
-          white-space: nowrap;
-        }
+        .save-btn { height: 38px; padding: 0 22px; border-radius: 8px; background: #2563eb; color: #fff; border: none; font-weight: 700; font-size: 13px; cursor: pointer; font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 6px; transition: background 0.15s, transform 0.12s, box-shadow 0.15s; box-shadow: 0 2px 8px rgba(37,99,235,0.18); white-space: nowrap; }
         .save-btn:hover { background: #1d4ed8; box-shadow: 0 4px 14px rgba(37,99,235,0.28); transform: translateY(-1px); }
         .save-btn:active { background: #1e40af; transform: scale(0.97); box-shadow: none; }
 
-        .reset-btn {
-          height: 38px;
-          padding: 0 18px;
-          border-radius: 8px;
-          background: #f1f5f9;
-          color: #374151;
-          border: 1.5px solid #d1d5db;
-          font-weight: 700;
-          font-size: 13px;
-          cursor: pointer;
-          font-family: 'Inter', sans-serif;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.12s;
-          white-space: nowrap;
-        }
+        .reset-btn { height: 38px; padding: 0 18px; border-radius: 8px; background: #f1f5f9; color: #374151; border: 1.5px solid #d1d5db; font-weight: 700; font-size: 13px; cursor: pointer; font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 6px; transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.12s; white-space: nowrap; }
         .reset-btn:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; transform: translateY(-1px); }
         .reset-btn:active { transform: scale(0.97); }
       `}</style>
@@ -302,41 +274,61 @@ export default function ReworkRepair() {
 
         {/* Quick-add form */}
         <div style={{ padding: isMobile ? "14px" : "18px 22px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "2fr 1.3fr 1.6fr 1.6fr 0.75fr auto", gap: 14, alignItems: "end" }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "2.2fr 1.4fr 1.4fr 2fr 1fr", gap: 14, alignItems: "end" }}>
             <div>
               <label style={LBL}>Part Name :-</label>
-              <SelectField value={card.partDesc} onChange={e => updateCard("partDesc", e.target.value)} options={PARTS_DATA.map(p => p.desc)} placeholder="Select Part Name..." />
+              <SelectField 
+                value={card.partDesc} 
+                onChange={e => updateCard("partDesc", e.target.value)} 
+                options={backendParts.map(p => p.desc)} 
+                placeholder="Select Part Name..." 
+              />
             </div>
             <div>
               <label style={LBL}>Part No. :-</label>
-              <SelectField value={card.partNo} onChange={e => updateCard("partNo", e.target.value)} options={cardPartNos} placeholder={card.partDesc ? "Select Part No..." : "Select Part first..."} disabled={!card.partDesc} />
+              <input 
+                type="text"
+                value={card.partNo} 
+                onChange={e => updateCard("partNo", e.target.value)} 
+                placeholder={card.partDesc ? "Auto-filled Part No..." : "Select Part first..."} 
+                style={{ 
+                    ...fieldBase, 
+                    background: card.partDesc ? "#f8fafc" : "#f1f5f9", 
+                    fontWeight: 600, 
+                    color: "#475569" 
+                }}
+              />
             </div>
             <div>
               <label style={LBL}>Spec. :-</label>
-              <SelectField value={card.spec} onChange={e => updateCard("spec", e.target.value)} options={SPECS} placeholder="Select Spec..." />
+              <SelectField 
+                value={card.spec} 
+                onChange={e => updateCard("spec", e.target.value)} 
+                options={backendSpecs} 
+                placeholder="Select Spec..." 
+              />
             </div>
             <div>
               <label style={LBL}>Details of Non Conformance :-</label>
-              <SelectField value={card.nonConformance} onChange={e => updateCard("nonConformance", e.target.value)} options={NON_CONFORMANCE_OPTIONS} placeholder="Select..." />
+              <input 
+                type="text"
+                value={card.nonConformance} 
+                onChange={e => updateCard("nonConformance", e.target.value)} 
+                onBlur={handleAddRow} 
+                placeholder="Type Defect Details..." 
+                style={fieldBase}
+              />
             </div>
             <div>
               <label style={LBL}>Rework Qty. :-</label>
-              <input value={card.reworkQty} onChange={e => updateCard("reworkQty", e.target.value)} onKeyDown={handleQtyKeyDown} type="number" min="0" placeholder="0"
-                style={{ ...fieldBase, textAlign: "center", fontWeight: card.reworkQty !== "" ? 600 : 400 }} />
-            </div>
-            <div>
-              <label style={{ ...LBL, opacity: 0 }}>Add</label>
-              <button
-                onClick={handleAddRow}
-                disabled={!(card.partDesc && card.partNo && card.spec && card.nonConformance && card.reworkQty !== "")}
-                style={{
-                  height: 38, paddingLeft: 18, paddingRight: 18, borderRadius: 8,
-                  background: (card.partDesc && card.partNo && card.spec && card.nonConformance && card.reworkQty !== "") ? "#2563eb" : "#e5e7eb",
-                  color: (card.partDesc && card.partNo && card.spec && card.nonConformance && card.reworkQty !== "") ? "#fff" : "#9ca3af",
-                  border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer",
-                  fontFamily: "'Inter',sans-serif", whiteSpace: "nowrap", transition: "all 0.15s",
-                }}
-              >+ Add Row</button>
+              <input 
+                value={card.reworkQty} 
+                onChange={e => updateCard("reworkQty", e.target.value)} 
+                onKeyDown={handleQtyKeyDown} 
+                onBlur={handleAddRow}
+                type="number" min="0" placeholder="0"
+                style={{ ...fieldBase, textAlign: "center", fontWeight: card.reworkQty !== "" ? 600 : 400 }} 
+              />
             </div>
           </div>
         </div>
@@ -522,7 +514,7 @@ export default function ReworkRepair() {
                 style={{ width: "100%", padding: "9px 12px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 13, color: "#111827", background: "#fff", fontFamily: "'Inter',sans-serif", boxSizing: "border-box", outline: "none", resize: "vertical", lineHeight: 1.6 }} />
             </div>
 
-            {/* ── Bottom Save & Reset (inside table section) ── */}
+            {/* ── Bottom Save & Reset ── */}
             <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
               {saveMsg && (
                 <span className="save-toast" style={{ fontSize: 12, fontWeight: 700, color: "#16a34a", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 8, padding: "5px 12px" }}>

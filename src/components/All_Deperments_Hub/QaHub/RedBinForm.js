@@ -1,95 +1,116 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios"; 
 
 const RedBinForm = () => {
   const navigate = useNavigate();
-
-  // Initialize with today's date in YYYY-MM-DD format
   const today = new Date().toISOString().split("T")[0];
 
+  // Backend URLs
+  const API_DROPDOWN = "http://192.168.0.34:8000/api/master-dropdown";
+  const API_SUBMIT = "http://192.168.0.34:8000/api/red-bin-analysis/";
+
   const [formData, setFormData] = useState({
-    date: today,
-    partNameModel: "",
-    defectDetail: "",
+    entry_date: today, // Model field name se match kiya
+    part_name_model: "",
+    defect_detail: "",
     operation: "",
-    totalRejQty: "",
-    reason: "",
-    actionTaken: "",
-    responsiblePerson: "",
-    targetDate: "",
-    completionDate: "",
+    total_rej_qty: "",
+    root_cause_reason: "", // Model field name
+    action_taken: "",
+    responsible_person: "",
+    target_date: "",
+    completion_date: "",
   });
+
+  const [partOptions, setPartOptions] = useState([]);
+  const [operationOptions, setOperationOptions] = useState([]);
+
+  // 👇 1. Component load hote hi saare Parts fetch karo
+  useEffect(() => {
+    axios.get(`${API_DROPDOWN}?filter=all_parts`)
+      .then(response => {
+        // Sirf names ki list set karein
+        const namesOnly = response.data.map(item => Array.isArray(item) ? item[0] : item);
+        setPartOptions(namesOnly);
+      })
+      .catch(error => console.error("Error fetching parts:", error));
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+
+    // 👇 2. Agar Part Name change hua hai, toh uske related Operations fetch karo
+    if (name === "part_name_model" && value !== "") {
+      setFormData((prev) => ({ ...prev, operation: "" }));
+      setOperationOptions([]); 
+      
+      axios.get(`${API_DROPDOWN}?filter=operations_by_part&part=${encodeURIComponent(value)}`)
+        .then(response => {
+          setOperationOptions(response.data);
+        })
+        .catch(error => console.error("Error fetching operations:", error));
+    }
   };
 
-  const handleSubmit = (e) => {
+  // 👇 3. Backend mein data save karne ka logic
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Submitting Red Bin Analysis Report:", formData);
-    alert("Red Bin Analysis Report Saved Successfully!");
+    try {
+      const response = await axios.post(API_SUBMIT, formData);
+      if (response.status === 201 || response.status === 200) {
+        alert("Red Bin Analysis Report Saved Successfully!");
+        handleReset();
+      }
+    } catch (error) {
+      console.error("Submit Error:", error.response?.data);
+      alert("Error saving report. Check console for details.");
+    }
   };
 
   const handleReset = () => {
     setFormData({
-      date: today,
-      partNameModel: "",
-      defectDetail: "",
+      entry_date: today,
+      part_name_model: "",
+      defect_detail: "",
       operation: "",
-      totalRejQty: "",
-      reason: "",
-      actionTaken: "",
-      responsiblePerson: "",
-      targetDate: "",
-      completionDate: "",
+      total_rej_qty: "",
+      root_cause_reason: "",
+      action_taken: "",
+      responsible_person: "",
+      target_date: "",
+      completion_date: "",
     });
+    setOperationOptions([]); 
   };
 
   return (
     <div className="min-h-screen bg-slate-50 py-2 px-3 sm:py-3 sm:px-4 md:py-4 font-sans mt-2">
-      {/* Main Form Container - max-w-4xl */}
       <div className="w-full max-w-4xl mx-auto">
-        {/* Form Card */}
         <div className="bg-white rounded-xl shadow-xl overflow-hidden border-t-4" style={{ borderColor: "#f04343" }}>
-          {/* Header Section */}
+          
           <div className="bg-gradient-to-r from-white to-red-50 px-4 py-3 sm:px-5 sm:py-4 border-b border-slate-100">
-            {/* Back Button */}
             <div className="mb-2 sm:mb-3">
               <button
                 onClick={() => navigate("/qa-hub")}
                 className="inline-flex items-center text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg shadow-md transition-all active:scale-95 group"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2.5}
-                  stroke="currentColor"
-                  className="w-3.5 h-3.5 mr-1.5 transition-transform group-hover:-translate-x-1"
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 mr-1.5 transition-transform group-hover:-translate-x-1">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                 </svg>
                 Back to QA Hub
               </button>
             </div>
             
-            {/* Main Heading and Entry Date */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <div className="flex items-center gap-2">
-                <div
-                  className="p-1.5 sm:p-2 rounded-lg text-white shadow-lg shrink-0"
-                  style={{ backgroundColor: "#f04343" }}
-                >
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className="w-4 h-4 sm:w-5 sm:h-5" 
-                    fill="currentColor" 
-                    viewBox="0 0 16 16"
-                  >
+                <div className="p-1.5 sm:p-2 rounded-lg text-white shadow-lg shrink-0" style={{ backgroundColor: "#f04343" }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5" />
                   </svg>
                 </div>
@@ -100,13 +121,12 @@ const RedBinForm = () => {
                 </div>
               </div>
 
-              {/* Entry Date */}
               <div className="w-full sm:w-auto bg-white border-2 border-red-100 rounded-lg px-2 py-1.5 flex items-center justify-between sm:justify-center gap-2 shadow-sm">
                 <span className="text-[8px] sm:text-[9px] font-black text-red-600 uppercase whitespace-nowrap">Entry Date</span>
                 <input
                   type="date"
-                  name="date"
-                  value={formData.date}
+                  name="entry_date"
+                  value={formData.entry_date}
                   onChange={handleChange}
                   className="text-xs font-bold text-slate-700 outline-none cursor-pointer bg-transparent"
                 />
@@ -115,38 +135,46 @@ const RedBinForm = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="p-4 sm:p-5">
-            {/* Operation & Part Details - All in one row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-4">
               <div>
+                <label className="block text-[9px] sm:text-[10px] font-black text-slate-500 uppercase mb-1">Part Name / Model</label>
+                <select
+                  name="part_name_model"
+                  value={formData.part_name_model}
+                  onChange={handleChange}
+                  className="w-full border-2 border-slate-100 bg-slate-50 rounded-lg p-2 text-sm focus:bg-white focus:border-slate-500 outline-none text-slate-700 transition-all font-semibold"
+                  required
+                >
+                  <option value="">Select Part Name</option>
+                  {partOptions.map((part, index) => (
+                    <option key={index} value={part}>{part}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <label className="block text-[9px] sm:text-[10px] font-black text-slate-500 uppercase mb-1">Operation</label>
-                <input
+                <select
                   name="operation"
                   value={formData.operation}
                   onChange={handleChange}
-                  type="text"
-                  placeholder="e.g. Pressing"
                   className="w-full border-2 border-slate-100 bg-slate-50 rounded-lg p-2 text-sm focus:bg-white focus:border-slate-500 outline-none text-slate-700 transition-all font-semibold"
                   required
-                />
+                  disabled={!formData.part_name_model} 
+                >
+                  <option value="">Select Operation</option>
+                  {operationOptions.map((op, index) => (
+                    <option key={index} value={op}>{op}</option>
+                  ))}
+                </select>
               </div>
-              <div>
-                <label className="block text-[9px] sm:text-[10px] font-black text-slate-500 uppercase mb-1">Part Name / Model</label>
-                <input
-                  name="partNameModel"
-                  value={formData.partNameModel}
-                  onChange={handleChange}
-                  type="text"
-                  className="w-full border-2 border-slate-100 bg-slate-50 rounded-lg p-2 text-sm focus:bg-white focus:border-slate-500 outline-none text-slate-700 transition-all font-semibold"
-                  placeholder="Enter Model"
-                  required
-                />
-              </div>
+
               <div>
                 <label className="block text-[9px] sm:text-[10px] font-black text-slate-500 uppercase mb-1">Total Rejection Qty</label>
                 <div className="flex items-center">
                   <input
-                    name="totalRejQty"
-                    value={formData.totalRejQty}
+                    name="total_rej_qty"
+                    value={formData.total_rej_qty}
                     onChange={handleChange}
                     type="number"
                     className="w-full border-2 border-slate-100 bg-slate-50 rounded-l-lg p-2 text-sm focus:bg-white focus:border-slate-500 outline-none text-slate-700 transition-all font-semibold"
@@ -160,13 +188,12 @@ const RedBinForm = () => {
               </div>
             </div>
 
-            {/* Analysis Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4">
               <div>
                 <label className="block text-[9px] sm:text-[10px] font-black text-slate-500 uppercase mb-1">Defect Detail</label>
                 <textarea
-                  name="defectDetail"
-                  value={formData.defectDetail}
+                  name="defect_detail"
+                  value={formData.defect_detail}
                   onChange={handleChange}
                   rows="2"
                   className="w-full border-2 border-slate-100 bg-slate-50 rounded-lg p-2 text-sm focus:bg-white focus:border-slate-500 outline-none text-slate-700 font-medium resize-y"
@@ -177,8 +204,8 @@ const RedBinForm = () => {
               <div>
                 <label className="block text-[9px] sm:text-[10px] font-black text-slate-500 uppercase mb-1">Root Cause / Reason</label>
                 <textarea
-                  name="reason"
-                  value={formData.reason}
+                  name="root_cause_reason"
+                  value={formData.root_cause_reason}
                   onChange={handleChange}
                   rows="2"
                   className="w-full border-2 border-slate-100 bg-slate-50 rounded-lg p-2 text-sm focus:bg-white focus:border-slate-500 outline-none text-slate-700 font-medium resize-y"
@@ -188,7 +215,6 @@ const RedBinForm = () => {
               </div>
             </div>
 
-            {/* Corrective Action Taken */}
             <div className="mb-4">
               <label className="block text-[10px] sm:text-xs font-black text-red-600 uppercase mb-1.5 flex items-center gap-1.5">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -197,8 +223,8 @@ const RedBinForm = () => {
                 Corrective Action Taken
               </label>
               <textarea
-                name="actionTaken"
-                value={formData.actionTaken}
+                name="action_taken"
+                value={formData.action_taken}
                 onChange={handleChange}
                 rows="2"
                 className="w-full border-2 border-slate-200 rounded-lg p-2 text-sm focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none text-slate-700 transition-all resize-y"
@@ -207,13 +233,12 @@ const RedBinForm = () => {
               />
             </div>
 
-            {/* Responsibility Section */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
               <div>
                 <label className="block text-[9px] sm:text-[10px] font-black text-slate-500 uppercase mb-1">Responsible Person</label>
                 <input
-                  name="responsiblePerson"
-                  value={formData.responsiblePerson}
+                  name="responsible_person"
+                  value={formData.responsible_person}
                   onChange={handleChange}
                   type="text"
                   placeholder="Name of In-charge"
@@ -224,8 +249,8 @@ const RedBinForm = () => {
               <div>
                 <label className="block text-[9px] sm:text-[10px] font-black text-slate-500 uppercase mb-1">Target Date</label>
                 <input
-                  name="targetDate"
-                  value={formData.targetDate}
+                  name="target_date"
+                  value={formData.target_date}
                   onChange={handleChange}
                   type="date"
                   className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:border-slate-500 outline-none text-slate-700"
@@ -235,8 +260,8 @@ const RedBinForm = () => {
               <div className="sm:col-span-2">
                 <label className="block text-[9px] sm:text-[10px] font-black text-slate-500 uppercase mb-1">Completion Date</label>
                 <input
-                  name="completionDate"
-                  value={formData.completionDate}
+                  name="completion_date"
+                  value={formData.completion_date}
                   onChange={handleChange}
                   type="date"
                   className="w-full border border-slate-300 rounded-lg p-2 text-sm focus:border-slate-500 outline-none text-slate-700"
@@ -244,7 +269,6 @@ const RedBinForm = () => {
               </div>
             </div>
 
-            {/* Footer Actions */}
             <div className="flex flex-col-reverse sm:flex-row gap-2 justify-end items-stretch sm:items-center border-t border-slate-100 pt-3">
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <button

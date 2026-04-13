@@ -323,12 +323,12 @@ import ForMChangeInsForm from './components/All_Deperments_Hub/ProductionHub/For
 import MaintenanceHub from './components/All_Deperments_Hub/MaintenanceHub/MaintenanceHub';
 import MachineHistoryCard from './components/All_Deperments_Hub/MaintenanceHub/forms/MachineHistoryCard';
 import DailyPowerPressChecksheet from './components/All_Deperments_Hub/MaintenanceHub/forms/DailyPowerPressChecksheet';
-import DailyPowerPressChecksheetprint from './components/All_Deperments_Hub/MaintenanceHub/forms/DailyPowerPressChecksheetprint';
+import DailyPowerPressChecksheetprint from './components/All_Deperments_Hub/MaintenanceHub/Report/DailyPowerPressChecksheetprint';
 import ToolHistoryForm from './components/All_Deperments_Hub/MaintenanceHub/forms/ToolHistoryForm';
 import MachineBreakDownForm from './components/All_Deperments_Hub/MaintenanceHub/forms/MachineBreakDownForm';
 import ToolPrevMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/forms/ToolPrevMaintenanceForm';
-import MachineHistoryCardprint from './components/All_Deperments_Hub/MaintenanceHub/MachineHistoryCardprint';
-import MachineBreakdownSummaryPrint from './components/All_Deperments_Hub/MaintenanceHub/MachineBreakdownSummaryPrint';
+import MachineHistoryCardprint from './components/All_Deperments_Hub/MaintenanceHub/Report/MachineHistoryCardprint';
+import MachineBreakdownSummaryPrint from './components/All_Deperments_Hub/MaintenanceHub/Report/MachineBreakdownSummaryPrint';
 import MachinePreventForm from './components/All_Deperments_Hub/MaintenanceHub/forms/MachinePreventMainForm';
 import CNCPreventiveMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/forms/CNCPreventiveMaintenanceForm';
 import PowerPressForm from './components/All_Deperments_Hub/MaintenanceHub/forms/PowerPressPreventiveMaintenanceForm';
@@ -542,7 +542,7 @@ function App() {
           <Route path='/Machine-Card-Report' element={<ProtectedRoute><MachineHistoryCardprint/></ProtectedRoute>}/>
           <Route path='/Machine-Breakdown-Report' element={<ProtectedRoute><MachineBreakdownSummaryPrint/></ProtectedRoute>}/>
           <Route path="/Daily-PowerPress-Report" element={<ProtectedRoute><DailyPowerPressChecksheetprint /></ProtectedRoute>} />
-          
+          <Route path="/qa-view/:formKey" element={<Qaview />} />
           {/* 404 NOT FOUND */}
           <Route path="*" element={
               <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#0f172a', color: 'white', fontSize: '24px', flexDirection: 'column', gap: '20px'}}>

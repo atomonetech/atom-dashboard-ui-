@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// 🔥 Machine Data se reports import ki
 import { machineDailyReports } from '../data/machineData';
 
 const MachineDailyReport = () => {
@@ -24,6 +23,18 @@ const MachineDailyReport = () => {
         closeModal();
     };
 
+    // ✅ Print navigate function
+    const navigateToPrint = (reportId) => {
+        const basePath = "/Maintenance/Machine";
+        switch (reportId) {
+            case "power_press_check": navigate(`${basePath}/power-press-checksheet/print`); break;
+            case "mc_history": navigate(`${basePath}/history-card/print`); break;
+            case "mc_breakdown": navigate(`${basePath}/breakdown-form/print`); break;
+            default: alert("🚧 Print page coming soon!");
+        }
+        closeModal();
+    };
+
     const closeModal = () => {
         setShowOptionsModal(false);
         setSelectedCard(null);
@@ -36,31 +47,27 @@ const MachineDailyReport = () => {
             
             <style>{`
                 .maintenance-page-wrapper { position: relative; min-height: 100vh; background-color: #f1f4f9; font-family: 'Inter', sans-serif; }
-                
-                /* Fixed Navbar */
                 .hub-main-navbar { position: fixed; top: 0; width: 100%; height: 75px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 1px solid #eef2f6; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
                 .nav-brand-section { font-weight: 800; color: #4f46e5; font-size: 1.25rem; display: flex; align-items: center; gap: 12px; cursor: pointer; }
-                
                 .main-content-area { padding: 110px 20px 80px; max-width: 1200px; margin: 0 auto; }
                 .back-link { cursor: pointer; color: #64748b; font-weight: 700; margin-bottom: 1.5rem; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
                 .back-link:hover { color: #4f46e5; }
-
                 .report-card-ui { background: white; border-radius: 20px; padding: 30px 25px; text-align: left; border: 1px solid #eef2f6; transition: 0.3s; cursor: pointer; height: 100%; position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
                 .report-card-ui:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
                 .card-header-line { position: absolute; top: 0; left: 0; right: 0; height: 5px; border-radius: 20px 20px 0 0; }
-                
                 .icon-box-wrapper { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 25px; }
                 .card-main-title { font-weight: 800; color: #0f172a; font-size: 1.25rem; margin-bottom: 20px; }
                 .meta-pill-ui { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 8px 14px; border-radius: 10px; border: 1px solid #f1f5f9; font-size: 0.8rem; color: #64748b; font-weight: 600; width: fit-content; margin-bottom: 8px; }
                 .meta-pill-ui b { color: #0f172a; }
-                
                 .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 100000; }
                 .modal-content-custom { background: white; border-radius: 24px; padding: 35px; max-width: 400px; width: 90%; text-align: center; }
-                .fill-btn { width: 100%; padding: 14px; background: #4f46e5; color: white; border: none; border-radius: 12px; font-weight: 700; margin-bottom: 10px; transition: 0.2s; }
+                .fill-btn { width: 100%; padding: 14px; background: #4f46e5; color: white; border: none; border-radius: 12px; font-weight: 700; margin-bottom: 10px; transition: 0.2s; cursor: pointer; }
                 .fill-btn:hover { background: #4338ca; }
+                .print-btn { width: 100%; padding: 14px; background: #f8fafc; color: #64748b; border: 1px solid #eef2f6; border-radius: 12px; font-weight: 700; margin-bottom: 10px; transition: 0.2s; cursor: pointer; }
+                .print-btn:hover { background: #f1f5f9; }
             `}</style>
 
-            {/* Fixed Navbar */}
+            {/* Navbar */}
             <nav className="hub-main-navbar">
                 <div className="nav-brand-section" onClick={() => navigate('/Maintenance/Machine')}>
                     <i className="bi bi-gear-fill"></i> Machine Daily Reports
@@ -104,10 +111,18 @@ const MachineDailyReport = () => {
                         <div style={{width:'50px', height:'50px', borderRadius:'12px', background:`${selectedCard.color}15`, color:selectedCard.color, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'1.5rem'}}>
                             <i className={`bi ${selectedCard.icon}`}></i>
                         </div>
-                        <h4 className="fw-bold mb-4 text-slate-700">{selectedCard.title}</h4>
+                        <h4 className="fw-bold mb-4" style={{color: '#0f172a'}}>{selectedCard.title}</h4>
+
+                        {/* Fill Button */}
                         <button className="fill-btn shadow-sm" onClick={() => navigateToForm(selectedCard.id)}>
                             <i className="bi bi-pencil-square me-2"></i> Fill New Entry
                         </button>
+
+                        {/* ✅ Print Button — ab navigate karega */}
+                        <button className="print-btn" onClick={() => navigateToPrint(selectedCard.id)}>
+                            <i className="bi bi-printer me-2"></i> Print Summary
+                        </button>
+
                         <button className="btn btn-light w-100 py-3 rounded-3 text-muted fw-bold" onClick={closeModal}>
                             Cancel
                         </button>

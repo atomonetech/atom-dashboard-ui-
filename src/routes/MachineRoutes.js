@@ -6,6 +6,10 @@ import MachineBreakDownForm from '../components/All_Deperments_Hub/MaintenanceHu
 import MachinePreventMainForm from '../components/All_Deperments_Hub/MaintenanceHub/forms/MachinePreventMainForm';
 import CncPreventiveMaintenanceForm from '../components/All_Deperments_Hub/MaintenanceHub/forms/CNCPreventiveMaintenanceForm';
 import WeeklyReports from '../components/All_Deperments_Hub/MaintenanceHub/views/ToolWeekly';
+import DailyPowerPressChecksheetPrint from '../components/All_Deperments_Hub/MaintenanceHub/Report/DailyPowerPressChecksheetprint';
+
+// Routes ke andar add karo:
+
 
 const MachineRoutes = () => {
     return (
@@ -18,6 +22,7 @@ const MachineRoutes = () => {
             <Route path="weekly-reports" element={<WeeklyReports />} />
             {/* 19 Machines ke liye dynamic route agar aapne banaya hai */}
             <Route path="preventive-:machineName" element={<MachinePreventMainForm />} />
+            <Route path="power-press-checksheet/print" element={<DailyPowerPressChecksheetPrint />} />
         </Routes>
     );
 };
