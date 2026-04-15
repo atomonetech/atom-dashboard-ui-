@@ -14,9 +14,8 @@ import {
   MessageSquare,
   RotateCcw,
   Send,
-  Eye,
-  EyeOff,
-  Hash
+  Hash,
+  Loader2
 } from "lucide-react";
 
 const For_M_Change_Ins_Form = () => {
@@ -29,7 +28,7 @@ const For_M_Change_Ins_Form = () => {
   const year = currentDate.getFullYear();
   const formattedDate = `${day}.${month}.${year}`;
 
-  // Initial empty form state with separate partName and partNo
+  // Initial empty form state
   const initialFormState = {
     partName: "",
     partNo: "",
@@ -44,11 +43,9 @@ const For_M_Change_Ins_Form = () => {
     remarks: ""
   };
 
-  // Form state - all fields initialized to empty strings
+  // Form states
   const [formData, setFormData] = useState(initialFormState);
-  
-  // State for password visibility toggle (example of eye icon usage)
-  const [showPreview, setShowPreview] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -67,66 +64,101 @@ const For_M_Change_Ins_Form = () => {
     }));
   };
 
-  // Handle form reset - sets all fields to empty strings
+  // Handle form reset
   const handleReset = () => {
     setFormData(initialFormState);
   };
 
   // Handle form submit
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add current date to submitted data for reference
-    const submitData = {
-      ...formData,
-      submissionDate: formattedDate
-    };
-    console.log("Form Submitted:", submitData);
-    alert("Form data saved to console (F12 to view)");
     
-    // Automatically reset the form after submission
-    handleReset();
-  };
+    // React State ko Django Fields mein map karna
+    const payload = {
+      part_name: formData.partName,
+      part_no: formData.partNo,
+      operation: formData.operation,
+      lot_qty: formData.lotQty ? parseInt(formData.lotQty) : null,
+      ok_qty: formData.okQty ? parseInt(formData.okQty) : null,
+      rej_qty: formData.rejQty ? parseInt(formData.rejQty) : null,
+      parameter_specs: formData.paramSpec,
+      
+      // Before Array Mapping
+      before_1: formData.before[0],
+      before_2: formData.before[1],
+      before_3: formData.before[2],
+      before_4: formData.before[3],
+      before_5: formData.before[4],
+      
+      // After Array Mapping
+      after_1: formData.after[0],
+      after_2: formData.after[1],
+      after_3: formData.after[2],
+      after_4: formData.after[3],
+      after_5: formData.after[4],
+      
+      inspected_by: formData.inspBy,
+      remarks: formData.remarks
+    };
 
-  // Toggle preview mode (eye icon functionality)
-  const togglePreview = () => {
-    setShowPreview(!showPreview);
+    setIsLoading(true);
+
+    try {
+      // Django API ko hit karna
+      const response = await fetch('http://127.0.0.1:8000/api/save-4m-change/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        // Success
+        alert(result.message);
+        handleReset(); // Form clear karna
+      } else {
+        // Backend Validation Error
+        console.error('Backend Error:', result);
+        alert('Error saving data: ' + (result.error || 'Please check console.'));
+      }
+    } catch (error) {
+      // Network Error
+      console.error('Network Error:', error);
+      alert('Failed to connect to the server. Make sure Django is running.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-red-50 p-4 font-sans">
-      {/* Main Form Card - smaller width */}
+      {/* Main Form Card */}
       <div className="max-w-4xl mx-auto">
-        {/* Back Button with icon - just above the form */}
+        
+        {/* Back Button */}
         <div className="mb-3 flex justify-between items-center">
           <button
+            type="button"
             onClick={() => navigate("/production-hub")}
             className="inline-flex items-center gap-2 text-red-500 hover:text-red-600 transition-colors text-sm font-medium bg-white/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-red-200 shadow-sm hover:shadow-md"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Production Hub
           </button>
-          
-          {/* Eye icon for preview toggle */}
-          <button
-            type="button"
-            onClick={togglePreview}
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors text-sm font-medium bg-white/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-gray-200 shadow-sm hover:shadow-md"
-            title={showPreview ? "Hide preview" : "Show preview"}
-          >
-            {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            {showPreview ? "Hide Preview" : "Preview"}
-          </button>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border border-red-200 overflow-hidden transition-all duration-300 hover:shadow-2xl">
-            {/* Header with darker red gradient - responsive date positioning */}
+            
+            {/* Header */}
             <div className="bg-gradient-to-r from-red-600 to-red-500 px-6 py-5 border-b border-red-300">
-              {/* Desktop layout: title left, date right */}
               <div className="hidden sm:flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <ClipboardList className="h-6 w-6 text-white/90" />
-                  <h1 className="text-xl md:text-2xl font-bold text-white">
+                  <h1 className="text-xl md:text-2xl font-bold text-white tracking-wide">
                     4M CHANGE INSPECTION REPORT
                   </h1>
                 </div>
@@ -136,11 +168,10 @@ const For_M_Change_Ins_Form = () => {
                 </div>
               </div>
               
-              {/* Mobile layout: title above, date below */}
               <div className="sm:hidden flex flex-col items-center gap-3">
                 <div className="flex items-center gap-2">
                   <ClipboardList className="h-5 w-5 text-white/90" />
-                  <h1 className="text-xl font-bold text-white text-center">
+                  <h1 className="text-xl font-bold text-white text-center tracking-wide">
                     4M CHANGE INSPECTION REPORT
                   </h1>
                 </div>
@@ -151,273 +182,187 @@ const For_M_Change_Ins_Form = () => {
               </div>
             </div>
 
-            {/* Preview Panel - shown when eye icon is toggled */}
-            {showPreview && (
-              <div className="bg-red-50/80 backdrop-blur-sm px-6 py-4 border-b border-red-200 animate-pulse">
-                <div className="flex items-center gap-2 text-red-600 mb-2">
-                  <Eye className="h-4 w-4" />
-                  <span className="text-sm font-semibold">Live Preview Mode</span>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                  <div className="bg-white/80 p-2 rounded border border-red-100">
-                    <span className="text-gray-500">Part Name:</span>
-                    <span className="ml-1 font-medium text-red-600">{formData.partName || "—"}</span>
-                  </div>
-                  <div className="bg-white/80 p-2 rounded border border-red-100">
-                    <span className="text-gray-500">Part No:</span>
-                    <span className="ml-1 font-medium text-red-600">{formData.partNo || "—"}</span>
-                  </div>
-                  <div className="bg-white/80 p-2 rounded border border-red-100">
-                    <span className="text-gray-500">Operation:</span>
-                    <span className="ml-1 font-medium text-red-600">{formData.operation || "—"}</span>
-                  </div>
-                  <div className="bg-white/80 p-2 rounded border border-red-100">
-                    <span className="text-gray-500">Lot/Ok/Rej:</span>
-                    <span className="ml-1 font-medium text-red-600">{formData.lotQty || "0"}/{formData.okQty || "0"}/{formData.rejQty || "0"}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Form Body - compact input fields */}
+            {/* Form Body */}
             <div className="p-6 space-y-6">
-              {/* Row 1: Part Name and Part No with icons */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1 group">
-                  <label className="text-xs font-semibold text-gray-600 flex items-center gap-1">
-                    <Package className="h-3 w-3 text-red-400" />
-                    PART NAME
+              
+              {/* Row 1: Part Name and Part No */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="flex flex-col">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase">
+                    <Package className="inline h-3 w-3 mr-1 text-red-500" />
+                    Part Name
                   </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="partName"
-                      value={formData.partName}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 pl-8 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-200 bg-white text-sm text-slate-700 transition-all group-hover:border-red-300"
-                      placeholder="Enter part name"
-                    />
-                    <Package className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                  </div>
+                  <input
+                    type="text"
+                    name="partName"
+                    value={formData.partName}
+                    onChange={handleChange}
+                    placeholder="Enter part name"
+                    className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 placeholder-slate-400"
+                  />
                 </div>
-                <div className="space-y-1 group">
-                  <label className="text-xs font-semibold text-gray-600 flex items-center gap-1">
-                    <Hash className="h-3 w-3 text-red-400" />
-                    PART NO.
+                <div className="flex flex-col">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase">
+                    <Hash className="inline h-3 w-3 mr-1 text-red-500" />
+                    Part No.
                   </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="partNo"
-                      value={formData.partNo}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 pl-8 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-200 bg-white text-sm text-slate-700 transition-all group-hover:border-red-300"
-                      placeholder="Enter part number"
-                    />
-                    <Hash className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                  </div>
+                  <input
+                    type="text"
+                    name="partNo"
+                    value={formData.partNo}
+                    onChange={handleChange}
+                    placeholder="Enter part number"
+                    className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 placeholder-slate-400"
+                  />
                 </div>
               </div>
 
               {/* Row 2: Operation */}
-              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                <div className="space-y-1 group">
-                  <label className="text-xs font-semibold text-gray-600 flex items-center gap-1">
-                    <Wrench className="h-3 w-3 text-red-400" />
-                    OPERATION
+              <div className="flex flex-col">
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase">
+                  <Wrench className="inline h-3 w-3 mr-1 text-red-500" />
+                  Operation
+                </label>
+                <input
+                  type="text"
+                  name="operation"
+                  value={formData.operation}
+                  onChange={handleChange}
+                  placeholder="Enter operation"
+                  className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 placeholder-slate-400"
+                />
+              </div>
+
+              {/* Row 3: Quantities & Specs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="flex flex-col">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase">
+                    <Layers className="inline h-3 w-3 mr-1 text-red-500" />
+                    Lot Qty
                   </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="operation"
-                      value={formData.operation}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 pl-8 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-200 bg-white text-sm text-slate-700 transition-all group-hover:border-red-300"
-                      placeholder="Enter operation"
-                    />
-                    <Wrench className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                  </div>
+                  <input type="number" name="lotQty" value={formData.lotQty} onChange={handleChange} placeholder="e.g. 100" className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 placeholder-slate-400" />
+                </div>
+                <div className="flex flex-col">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase">
+                    <CheckCircle className="inline h-3 w-3 mr-1 text-green-500" />
+                    OK Qty
+                  </label>
+                  <input type="number" name="okQty" value={formData.okQty} onChange={handleChange} placeholder="e.g. 95" className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 placeholder-slate-400" />
+                </div>
+                <div className="flex flex-col">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase">
+                    <XCircle className="inline h-3 w-3 mr-1 text-red-500" />
+                    Rej. Qty
+                  </label>
+                  <input type="number" name="rejQty" value={formData.rejQty} onChange={handleChange} placeholder="e.g. 5" className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 placeholder-slate-400" />
+                </div>
+                <div className="flex flex-col">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase">
+                    <Gauge className="inline h-3 w-3 mr-1 text-red-500" />
+                    Parameter/Specs
+                  </label>
+                  <input type="text" name="paramSpec" value={formData.paramSpec} onChange={handleChange} placeholder="Enter specs" className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 placeholder-slate-400" />
                 </div>
               </div>
 
-              {/* Row 3: Quantity & Specs with icons */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-1 group">
-                  <label className="text-xs font-semibold text-gray-600 flex items-center gap-1">
-                    <Layers className="h-3 w-3 text-red-400" />
-                    LOT QTY
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="lotQty"
-                      value={formData.lotQty}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 pl-8 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-200 bg-white text-sm text-slate-700"
-                      placeholder="e.g. 100"
-                    />
-                    <Layers className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                  </div>
-                </div>
-                <div className="space-y-1 group">
-                  <label className="text-xs font-semibold text-gray-600 flex items-center gap-1">
-                    <CheckCircle className="h-3 w-3 text-green-500" />
-                    OK QTY
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="okQty"
-                      value={formData.okQty}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 pl-8 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-200 bg-white text-sm text-slate-700"
-                      placeholder="e.g. 95"
-                    />
-                    <CheckCircle className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                  </div>
-                </div>
-                <div className="space-y-1 group">
-                  <label className="text-xs font-semibold text-gray-600 flex items-center gap-1">
-                    <XCircle className="h-3 w-3 text-red-500" />
-                    REJ.QTY
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="rejQty"
-                      value={formData.rejQty}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 pl-8 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-200 bg-white text-sm text-slate-700"
-                      placeholder="e.g. 5"
-                    />
-                    <XCircle className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                  </div>
-                </div>
-                <div className="space-y-1 group">
-                  <label className="text-xs font-semibold text-gray-600 flex items-center gap-1">
-                    <Gauge className="h-3 w-3 text-red-400" />
-                    PARAMETER/SPECS
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="paramSpec"
-                      value={formData.paramSpec}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 pl-8 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-200 bg-white text-sm text-slate-700"
-                      placeholder="Enter specs"
-                    />
-                    <Gauge className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Row 4: Before (Retroactive) - 5 fields with icons */}
+              {/* Row 4: Before (Retroactive) */}
               <div>
-                <h3 className="text-sm font-bold text-gray-700 mb-3 border-b border-red-200 pb-1 flex items-center gap-2">
+                <div className="flex items-center gap-2 border-b border-red-200 pb-2 mb-4">
                   <Layers className="h-4 w-4 text-red-500" />
-                  BEFORE (RETROACTIVE)
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">BEFORE (RETROACTIVE)</h3>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   {[0, 1, 2, 3, 4].map((index) => (
-                    <div key={`before-${index}`} className="space-y-1 group">
-                      <label className="text-xs font-medium text-gray-500 flex items-center gap-1">
-                        <span className="w-4 h-4 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-[10px] font-bold">
-                          {index + 1}
-                        </span>
-                      </label>
+                    <div key={`before-${index}`} className="flex flex-col relative">
+                      <span className="absolute -top-2 left-2 bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full z-10">
+                        {index + 1}
+                      </span>
                       <input
                         type="text"
                         value={formData.before[index]}
                         onChange={(e) => handleArrayChange('before', index, e.target.value)}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-200 bg-white text-sm text-slate-700"
                         placeholder={`Value ${index + 1}`}
+                        className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 placeholder-slate-400 mt-1"
                       />
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Row 5: After / Setup Approval - 5 fields with icons */}
+              {/* Row 5: After / Setup Approval */}
               <div>
-                <h3 className="text-sm font-bold text-gray-700 mb-3 border-b border-red-200 pb-1 flex items-center gap-2">
+                <div className="flex items-center gap-2 border-b border-green-200 pb-2 mb-4">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  AFTER / SETUP APPROVAL
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">AFTER / SETUP APPROVAL</h3>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   {[0, 1, 2, 3, 4].map((index) => (
-                    <div key={`after-${index}`} className="space-y-1 group">
-                      <label className="text-xs font-medium text-gray-500 flex items-center gap-1">
-                        <span className="w-4 h-4 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-[10px] font-bold">
-                          {index + 1}
-                        </span>
-                      </label>
+                    <div key={`after-${index}`} className="flex flex-col relative">
+                      <span className="absolute -top-2 left-2 bg-green-100 text-green-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full z-10">
+                        {index + 1}
+                      </span>
                       <input
                         type="text"
                         value={formData.after[index]}
                         onChange={(e) => handleArrayChange('after', index, e.target.value)}
-                        className="w-full px-2 py-1.5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-200 bg-white text-sm text-slate-700"
                         placeholder={`Value ${index + 1}`}
+                        className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 text-slate-700 placeholder-slate-400 mt-1"
                       />
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Row 6: Inspector and Remarks with icons */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1 group">
-                  <label className="text-xs font-semibold text-gray-600 flex items-center gap-1">
-                    <User className="h-3 w-3 text-red-400" />
-                    INSP. BY
+              {/* Row 6: Inspector and Remarks */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="flex flex-col">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase">
+                    <User className="inline h-3 w-3 mr-1 text-red-500" />
+                    Insp. By
                   </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="inspBy"
-                      value={formData.inspBy}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 pl-8 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-200 bg-white text-sm text-slate-700"
-                      placeholder="Inspector name"
-                    />
-                    <User className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                  </div>
+                  <input
+                    type="text"
+                    name="inspBy"
+                    value={formData.inspBy}
+                    onChange={handleChange}
+                    placeholder="Inspector name"
+                    className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 placeholder-slate-400"
+                  />
                 </div>
-                <div className="space-y-1 group">
-                  <label className="text-xs font-semibold text-gray-600 flex items-center gap-1">
-                    <MessageSquare className="h-3 w-3 text-red-400" />
-                    REMARKS
+                <div className="flex flex-col">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase">
+                    <MessageSquare className="inline h-3 w-3 mr-1 text-red-500" />
+                    Remarks
                   </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      name="remarks"
-                      value={formData.remarks}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 pl-8 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-200 bg-white text-sm text-slate-700"
-                      placeholder="Any remarks"
-                    />
-                    <MessageSquare className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                  </div>
+                  <input
+                    type="text"
+                    name="remarks"
+                    value={formData.remarks}
+                    onChange={handleChange}
+                    placeholder="Any remarks"
+                    className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 placeholder-slate-400"
+                  />
                 </div>
               </div>
 
-              {/* Form Actions with icons */}
-              <div className="flex justify-end gap-3 pt-4">
+              {/* Form Actions */}
+              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-5 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="inline-flex items-center gap-2 bg-gray-100 text-slate-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition-all shadow-sm font-medium border border-gray-300"
+                  disabled={isLoading}
+                  className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-[#f8f9fa] text-slate-700 px-5 py-2.5 rounded-lg hover:bg-slate-100 transition-all font-medium border border-slate-300 text-sm disabled:opacity-50"
                 >
                   <RotateCcw className="h-4 w-4" />
                   Reset Form
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-2 rounded-lg hover:from-red-600 hover:to-red-700 transition-all shadow-md font-medium"
+                  disabled={isLoading}
+                  className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-[#e03131] text-white px-5 py-2.5 rounded-lg hover:bg-[#c92a2a] transition-all shadow-sm font-medium text-sm disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  <Send className="h-4 w-4" />
-                  Submit Inspection Report
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  {isLoading ? 'Submitting...' : 'Submit Inspection Report'}
                 </button>
               </div>
             </div>
