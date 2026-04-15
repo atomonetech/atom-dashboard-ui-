@@ -10,7 +10,8 @@ const formatDisplay = (dateStr) => {
   return dateStr;
 };
 
-const MIN_ROWS = 30;
+
+const MIN_ROWS = 29; 
 
 const ToolHistoryReport = ({ items = [], currentReport, onEditForm, onBack }) => {
   const navigate = useNavigate();
@@ -22,23 +23,23 @@ const ToolHistoryReport = ({ items = [], currentReport, onEditForm, onBack }) =>
 
   const TOTAL_ROWS = Math.max(MIN_ROWS, historyItems.length);
 
-  // ── Common Tailwind Classes for Cells ──
-  const TH = 'border border-black font-bold text-center align-middle bg-white text-black px-1 py-1 text-[10px] break-words leading-tight uppercase';
-  const TD = 'border border-black text-center align-middle px-1 py-1 text-black text-[11px] overflow-hidden';
+  // ── Common Tailwind Classes ──
+  const TH = 'border border-black font-bold text-center align-middle bg-white text-black px-1 py-1 text-[10px] whitespace-normal break-words leading-tight uppercase';
+  const TD = 'border border-black text-center align-middle px-1 py-1 text-black text-[11px] whitespace-normal break-words overflow-hidden';
 
-  const MetaLabel = 'border border-black font-semibold bg-white text-black text-[10px] px-1 py-1 text-center whitespace-nowrap';
-  const MetaValue = 'border border-black font-bold bg-white text-black text-[10px] px-1 py-1 text-center whitespace-nowrap';
+  const MetaLabel = 'border border-black font-semibold bg-white text-black text-[10px] px-1 py-1 text-center whitespace-normal break-words leading-tight';
+  const MetaValue = 'border border-black font-bold bg-white text-black text-[10px] px-1 py-1 text-center whitespace-normal break-words';
 
-  const InfoLabel = "border border-black text-left align-middle bg-white px-2 py-1 text-[10px] uppercase font-bold text-black whitespace-nowrap";
-  const InfoValue = "border border-black text-left align-middle bg-white px-2 py-1 text-[11px] font-normal text-black";
+  const InfoLabel = "border border-black text-left align-middle bg-white px-2 py-1 text-[10px] uppercase font-bold text-black whitespace-normal break-words leading-tight";
+  const InfoValue = "border border-black text-left align-middle bg-white px-2 py-1 text-[11px] font-normal text-black whitespace-normal break-words";
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] p-4 text-black flex justify-center print:p-0 print:bg-white">
+    <div className="min-h-screen bg-[#f5f5f5] p-4 text-black flex justify-center print:p-0 print:bg-white overflow-hidden">
       
       {/* ── Top Bar (Buttons) - Hidden in Print ── */}
       <div className="flex justify-end items-center gap-3 mb-3 absolute top-4 right-4 print:hidden">
         <button 
-          onClick={() => onBack ? onBack() : navigate(-1)} 
+          onClick={() => onBack ? onBack() : navigate("/maintenance-hub")} 
           className="bg-[#607d8b] hover:bg-[#4d646f] text-white border-none px-5 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors shadow-md"
         >
           <i className="bi bi-arrow-left-circle-fill"></i> Back
@@ -78,31 +79,30 @@ const ToolHistoryReport = ({ items = [], currentReport, onEditForm, onBack }) =>
       `}</style>
 
       {/* ── Main A4 Print Container ── */}
-      <div className="bg-white shadow-2xl font-sans w-[210mm] min-h-[297mm] box-border mx-auto p-[6mm] print:w-full print:min-h-0 print:h-auto print:p-0 print:shadow-none print:m-0 relative mt-12 print:mt-0">
+      <div className="bg-white shadow-2xl font-sans w-[210mm] max-w-full min-h-[297mm] box-border mx-auto p-[6mm] print:w-full print:max-w-full print:min-h-0 print:h-auto print:p-0 print:shadow-none print:m-0 relative mt-12 print:mt-0">
         
-        <table className="w-full border-collapse table-fixed border border-black">
-          {/* Defined Colgroup to perfectly align vertical lines as per the image */}
+        <table className="w-full max-w-full border-collapse table-fixed border border-black">
+          
           <colgroup>
-            <col className="w-[9%]" />  {/* 1. DATE / PART NAME Label */}
-            <col className="w-[7%]" />  {/* 2. PROD. */}
-            <col className="w-[15%]" /> {/* 3. RESHARPENING STROKE */}
-            <col className="w-[19%]" /> {/* 4. CUMULATIVE PROD. */}
-            <col className="w-[18%]" /> {/* 5. PROBLEM REPORTED / CUSTOMER NAME Label */}
-            <col className="w-[16%]" /> {/* 6. ACTION TAKEN */}
-            <col className="w-[8%]" />  {/* 7. UPDATED IN 4M */}
-            <col className="w-[8%]" />  {/* 8. REMARKS */}
+            <col className="w-[14%]" />
+            <col className="w-[7%]" /> 
+            <col className="w-[12%]" />
+            <col className="w-[15%]" />
+            <col className="w-[20%]" />
+            <col className="w-[14%]" />
+            <col className="w-[8%]" /> 
+            <col className="w-[10%]" />
           </colgroup>
 
           {/* ════════════ THEAD ════════════ */}
           <thead className="table-header-group">
-            {/* Top Header / Logo Area */}
             <tr className="h-[22px]">
-              <th colSpan={2} rowSpan={3} className="border border-black p-1 align-middle text-center bg-white">
+              <th colSpan={2} rowSpan={3} className="border border-black p-1 align-middle text-center bg-white overflow-hidden">
                 <img src={atomone} alt="ATOM ONE" className="max-h-[45px] max-w-full block mx-auto object-contain" />
               </th>
               
               <th colSpan={4} rowSpan={3} className="border border-black text-center align-middle bg-white">
-                <h1 className="text-[20px] font-bold uppercase tracking-[1px] m-0 text-black">
+                <h1 className="text-[20px] font-bold uppercase tracking-[1px] m-0 text-black whitespace-normal break-words">
                   TOOL HISTORY CARD
                 </h1>
               </th>
@@ -121,7 +121,6 @@ const ToolHistoryReport = ({ items = [], currentReport, onEditForm, onBack }) =>
               <th className={MetaValue}>{formatDisplay(currentReport?.doc_date) || '14.10.2024'}</th>
             </tr>
 
-            {/* Tool Information Fields mapped precisely to table columns */}
             <tr className="h-[26px]">
               <th className={InfoLabel}>PART NAME</th>
               <th colSpan={3} className={InfoValue}>{currentReport?.part_name || ''}</th>
@@ -146,21 +145,24 @@ const ToolHistoryReport = ({ items = [], currentReport, onEditForm, onBack }) =>
             <tr className="h-[26px]">
               <th className={InfoLabel}>MODEL</th>
               <th colSpan={3} className={InfoValue}>{currentReport?.model || ''}</th>
-              <th colSpan={4} className={InfoValue}></th> {/* Empty right span to match image */}
+              <th colSpan={4} className={InfoValue}></th> 
             </tr>
 
-            {/* Data Columns Header */}
             <tr className="h-[35px]">
               <th className={TH}>DATE</th>
               <th className={TH}>PROD.</th>
               <th className={TH}>RESHARPENING<br/>STROKE</th>
               <th className={TH}>CUMULATIVE<br/>PROD. TILL DATE</th>
-              <th className={TH}>PROBLEM REPORTED IF<br/>ANY</th>
+              <th className={TH}>PROBLEM REPORTED IF ANY</th>
               <th className={TH}>ACTION TAKEN</th>
-              <th className={TH}>UPDATED IN 4M<br/>RECORD(Y/N)</th>
+              <th className={TH}>UPDATED IN 4M RECORD(Y/N)</th>
               <th className={TH}>REMARKS</th>
             </tr>
           </thead>
+
+
+
+      
 
           {/* ════════════ TBODY ════════════ */}
           <tbody>
@@ -174,7 +176,7 @@ const ToolHistoryReport = ({ items = [], currentReport, onEditForm, onBack }) =>
                   <td className={`${TD} bg-white`}>{row?.resharpening_stroke || ''}</td>
                   <td className={`${TD} bg-white`}>{row?.cumulative_prod || ''}</td>
                   <td className={`${TD} bg-white text-left pl-[6px]`}>{row?.problem || ''}</td>
-                  <td className={`${TD} bg-white text-center`}>{row?.action_taken || (i === 0 && !row ? '----' : '')}</td>
+                  <td className={`${TD} bg-white text-center`}>{row?.action_taken || ''}</td>
                   <td className={`${TD} bg-white`}>{row?.update_4m || ''}</td>
                   <td className={`${TD} bg-white text-left pl-[4px]`}>{row?.remarks || ''}</td>
                 </tr>
@@ -182,24 +184,25 @@ const ToolHistoryReport = ({ items = [], currentReport, onEditForm, onBack }) =>
             })}
           </tbody>
 
-          {/* ════════════ TFOOT ════════════ */}
+          {/* ════════════ TFOOT (Line Alignment Fixed Using colSpan) ════════════ */}
           <tfoot className="table-footer-group">
             <tr>
-              <td colSpan={8} className="border border-black p-0 h-[40px] bg-white">
-                <div className="flex w-full h-full">
-                  <div className="w-1/2 border-r border-black px-3 py-3 flex items-start">
-                    <span className="font-bold text-[11px] whitespace-nowrap mr-2 text-black uppercase">PREPARED BY :</span>
-                    <span className="flex-grow text-[11px] text-black">
-                      {currentReport?.prepared_by || ''}
-                    </span>
-                  </div>
-                  <div className="w-1/2 px-3 py-3 flex items-start">
-                    <span className="font-bold text-[11px] whitespace-nowrap mr-2 text-black uppercase">APPROVED BY :</span>
-                    <span className="flex-grow text-[11px] text-black">
-                      {currentReport?.approved_by || ''}
-                    </span>
-                  </div>
-                </div>
+              {/* Columns 1, 2, 3 -> PREPARED BY */}
+              <td colSpan={3} className="border border-black px-2 py-3 bg-white text-left align-top h-[40px]">
+                <span className="font-bold text-[11px] mr-2 text-black uppercase">PREPARED BY :</span>
+                <span className="text-[11px] text-black break-words whitespace-normal">{currentReport?.prepared_by || ''}</span>
+              </td>
+              
+              {/* Columns 4, 5 -> CHECKED BY */}
+              <td colSpan={2} className="border border-black px-2 py-3 bg-white text-left align-top h-[40px]">
+                <span className="font-bold text-[11px] mr-2 text-black uppercase">CHECKED BY :</span>
+                <span className="text-[11px] text-black break-words whitespace-normal">{currentReport?.checked_by || ''}</span>
+              </td>
+              
+              {/* Columns 6, 7, 8 -> APPROVED BY */}
+              <td colSpan={3} className="border border-black px-2 py-3 bg-white text-left align-top h-[40px]">
+                <span className="font-bold text-[11px] mr-2 text-black uppercase">APPROVED BY :</span>
+                <span className="text-[11px] text-black break-words whitespace-normal">{currentReport?.approved_by || ''}</span>
               </td>
             </tr>
           </tfoot>

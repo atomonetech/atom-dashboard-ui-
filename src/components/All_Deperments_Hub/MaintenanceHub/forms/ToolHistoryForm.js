@@ -19,21 +19,18 @@ import {
 } from 'lucide-react';
 
 const ToolHistoryForm = () => {
-  // Three gradient colors for header
   const gradientColors = {
     start: '#4158D0',
     middle: '#C850C0',
     end: '#FFCC70'
   };
 
-  // Get current date in DD.MM.YYYY format for display
   const currentDate = new Date().toLocaleDateString('en-GB', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
   }).replace(/\//g, '.');
 
-  // Get current date in YYYY-MM-DD format for input field
   const getCurrentDateForInput = () => {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -42,21 +39,19 @@ const ToolHistoryForm = () => {
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  // Initial state for tool information
   const initialToolInfo = {
+    customerName: '',
     partName: '',
     partNo: '',
     toolName: '',
     model: '',
-    customerName: '',
     estimatedToolLife: '',
     estimatedMaintenanceFrequency: ''
   };
 
-  // Single history record state with auto-filled date
   const [toolInfo, setToolInfo] = useState(initialToolInfo);
   const [historyRecord, setHistoryRecord] = useState({
-    date: getCurrentDateForInput(), // Auto-filled with current date
+    date: getCurrentDateForInput(),
     prod: '',
     resharpeningStroke: '',
     cumulativeProd: '',
@@ -66,129 +61,143 @@ const ToolHistoryForm = () => {
     remarks: ''
   });
 
-  // State for notification
-  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customers, setCustomers] = useState([]);
+  const [partNames, setPartNames] = useState([]);
 
-  // Handle tool info changes
+  // 1. Fetch Customers on Component Load
+  useEffect(() => {
+    fetch('http://192.168.0.34:8000/api/master-dropdown/?filter=customer')
+      .then(res => res.json())
+      .then(data => setCustomers(data))
+      .catch(err => console.error("Error fetching customers:", err));
+  }, []);
+
+  // 2. Handle Customer Change -> Fetch Part Names
+  const handleCustomerChange = async (e) => {
+    const cust = e.target.value;
+    setToolInfo(prev => ({ ...prev, customerName: cust, partName: '', partNo: '', model: '' }));
+    
+    if (cust) {
+      try {
+        const res = await fetch(`http://192.168.0.34:8000/api/master-dropdown/?filter=part&cust=${encodeURIComponent(cust)}`);
+        const data = await res.json();
+        setPartNames(data);
+      } catch (err) {
+        console.error("Error fetching parts:", err);
+      }
+    } else {
+      setPartNames([]);
+    }
+  };
+
+  // 3. Handle Part Name Change -> Fetch Part No AND Model Auto-fill
+  const handlePartNameChange = async (e) => {
+    const part = e.target.value;
+    setToolInfo(prev => ({ ...prev, partName: part, partNo: '', model: '' }));
+
+    if (part) {
+      try {
+        const resNo = await fetch(`http://192.168.0.34:8000/api/master-dropdown/?filter=part_no&part=${encodeURIComponent(part)}`);
+        const dataNo = await resNo.json();
+        
+        const resModel = await fetch(`http://192.168.0.34:8000/api/master-dropdown/?filter=model_by_part&part=${encodeURIComponent(part)}`);
+        const dataModel = await resModel.json();
+        
+        setToolInfo(prev => ({ 
+          ...prev, 
+          partNo: (dataNo && dataNo.length > 0) ? dataNo[0] : '',
+          model: (dataModel && dataModel.length > 0) ? dataModel[0] : ''
+        }));
+      } catch (err) {
+        console.error("Error fetching part details:", err);
+      }
+    }
+  };
+
   const handleToolInfoChange = (e) => {
     const { name, value } = e.target;
-    setToolInfo(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setToolInfo(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handle history record changes
   const handleHistoryRecordChange = (field, value) => {
-    setHistoryRecord(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setHistoryRecord(prev => ({ ...prev, [field]: value }));
   };
 
-  // Show notification
-  const showNotification = (message, type) => {
-    setNotification({ show: true, message, type });
-    setTimeout(() => {
-      setNotification({ show: false, message: '', type: '' });
-    }, 3000);
-  };
-
-  // Validate form data
+  // Validation function with Native Alert
   const validateForm = () => {
-    const requiredToolFields = ['partName', 'partNo', 'toolName'];
+    const requiredToolFields = ['customerName', 'partName', 'partNo', 'toolName'];
     for (const field of requiredToolFields) {
       if (!toolInfo[field]?.trim()) {
-        showNotification(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`, 'warning');
+        window.alert(`⚠️ Attention! Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
         return false;
       }
     }
     return true;
   };
 
-  // Save data to console
-  const saveData = () => {
+  const saveData = async () => {
     if (!validateForm()) return;
+    setIsSubmitting(true);
 
     const formData = {
       toolInformation: toolInfo,
       historyRecord: historyRecord,
-      timestamp: new Date().toISOString(),
-      formId: `TOOL-${Date.now()}`
+      filledDate: getCurrentDateForInput(),
     };
 
-    console.log('='.repeat(60));
-    console.log('📋 TOOL HISTORY CARD DATA SAVED');
-    console.log('='.repeat(60));
-    console.log('🆔 Form ID:', formData.formId);
-    console.log('⏰ Timestamp:', new Date().toLocaleString());
-    console.log('\n🔧 TOOL INFORMATION:');
-    console.table({
-      'Part Name': formData.toolInformation.partName || '(empty)',
-      'Part No.': formData.toolInformation.partNo || '(empty)',
-      'Tool Name': formData.toolInformation.toolName || '(empty)',
-      'Model': formData.toolInformation.model || '(empty)',
-      'Customer': formData.toolInformation.customerName || '(empty)',
-      'Tool Life': formData.toolInformation.estimatedToolLife || '(empty)',
-      'Maintenance Freq.': formData.toolInformation.estimatedMaintenanceFrequency || '(empty)'
-    });
+    try {
+      const response = await fetch('http://192.168.0.34:8000/api/tool-history/save/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
 
-    console.log('\n📊 HISTORY RECORD:');
-    console.log('Date:', formData.historyRecord.date || '-');
-    console.log('PROD:', formData.historyRecord.prod || '-');
-    console.log('Resharpening Stroke:', formData.historyRecord.resharpeningStroke || '-');
-    console.log('Cumulative PROD:', formData.historyRecord.cumulativeProd || '-');
-    console.log('Problem Reported:', formData.historyRecord.problemReported || '-');
-    console.log('Action Taken:', formData.historyRecord.actionTaken || '-');
-    console.log('4M Update:', formData.historyRecord.updatedIn4M || '-');
-    console.log('Remarks:', formData.historyRecord.remarks || '-');
+      const result = await response.json();
 
-    console.log('='.repeat(60));
-    showNotification('Data saved successfully! Check console for details.', 'success');
+      if (result.success) {
+        // 🔥 NATIVE SUCCESS POPUP 🔥
+        window.alert('✅ Success! Tool History Record saved successfully in the database.');
+        setToolInfo(initialToolInfo);
+        setHistoryRecord({
+          date: getCurrentDateForInput(),
+          prod: '', resharpeningStroke: '', cumulativeProd: '', 
+          problemReported: '', actionTaken: '', updatedIn4M: '', remarks: ''
+        });
+        setPartNames([]); 
+      } else {
+        // 🔥 NATIVE ERROR POPUP 🔥
+        window.alert('❌ Error! Failed to save data: ' + (result.error || 'Please try again.'));
+      }
+    } catch (error) {
+      // 🔥 NATIVE NETWORK ERROR POPUP 🔥
+      window.alert('❌ Network Error! Could not connect to the server.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // Reset form
   const resetForm = () => {
+    // 🔥 NATIVE CONFIRM POPUP 🔥
     if (window.confirm('Are you sure you want to reset all form data?')) {
       setToolInfo(initialToolInfo);
       setHistoryRecord({
-        date: getCurrentDateForInput(), // Reset with current date
-        prod: '',
-        resharpeningStroke: '',
-        cumulativeProd: '',
-        problemReported: '',
-        actionTaken: '',
-        updatedIn4M: '',
-        remarks: ''
+        date: getCurrentDateForInput(),
+        prod: '', resharpeningStroke: '', cumulativeProd: '', 
+        problemReported: '', actionTaken: '', updatedIn4M: '', remarks: ''
       });
-      showNotification('Form has been reset', 'info');
+      setPartNames([]);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white py-3 px-3 sm:py-4 sm:px-4 md:py-6 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-white py-3 px-3 sm:py-4 sm:px-4 md:py-6 font-sans relative">
       <div className="w-full max-w-5xl mx-auto">
-        {/* Notification Toast */}
-        {notification.show && (
-          <div className={`fixed top-4 right-4 z-50 p-3 sm:p-4 rounded-lg shadow-lg animate-slideIn ${
-            notification.type === 'success' ? 'bg-green-500' :
-            notification.type === 'warning' ? 'bg-yellow-500' :
-            'bg-blue-500'
-          } text-white max-w-[90%] sm:max-w-md text-xs sm:text-sm`}>
-            {notification.message}
-          </div>
-        )}
-
-        {/* Main Form Card */}
         <div className="bg-white rounded-xl shadow-xl overflow-hidden">
-          {/* Header Section with Back Button Inside */}
           <div 
             className="px-4 py-3 sm:px-5 sm:py-4"
-            style={{ 
-              background: `linear-gradient(135deg, ${gradientColors.start}, ${gradientColors.middle}, ${gradientColors.end})`,
-            }}
+            style={{ background: `linear-gradient(135deg, ${gradientColors.start}, ${gradientColors.middle}, ${gradientColors.end})` }}
           >
-            {/* Back Button - First */}
             <div className="mb-3 sm:mb-4">
               <button 
                 className="inline-flex items-center gap-1.5 text-white hover:text-white/90 transition-all rounded-lg bg-white/20 backdrop-blur-sm px-3 py-1.5 sm:px-4 sm:py-2 group"
@@ -199,7 +208,6 @@ const ToolHistoryForm = () => {
               </button>
             </div>
             
-            {/* Heading and Date */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div className="flex items-center gap-2 sm:gap-3">
                 <History className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white drop-shadow-lg" />
@@ -207,8 +215,6 @@ const ToolHistoryForm = () => {
                   TOOL HISTORY CARD
                 </h1>
               </div>
-              
-              {/* Date Display */}
               <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg">
                 <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                 <span className="text-xs sm:text-sm md:text-base text-white font-semibold">
@@ -218,10 +224,7 @@ const ToolHistoryForm = () => {
             </div>
           </div>
 
-          {/* Main Form Content */}
           <div className="p-4 sm:p-5 md:p-6 lg:p-8">
-            
-            {/* Tool Information Section */}
             <div className="mb-6 sm:mb-7 md:mb-8">
               <h2 className="text-sm sm:text-base md:text-lg font-semibold mb-3 pb-2 border-b-2" style={{ borderBottomColor: gradientColors.middle }}>
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#4158D0] to-[#C850C0]">
@@ -230,25 +233,40 @@ const ToolHistoryForm = () => {
               </h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
-                {/* Left Column */}
                 <div className="space-y-3 sm:space-y-4">
-                  {/* PART NAME */}
+                  <div>
+                    <label className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-slate-600 uppercase mb-1.5">
+                      <Users className="w-3.5 h-3.5" style={{ color: gradientColors.middle }} />
+                      CUSTOMER NAME <span className="text-red-500">*</span>
+                    </label>
+                    <select 
+                      name="customerName"
+                      value={toolInfo.customerName}
+                      onChange={handleCustomerChange}
+                      className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 text-sm focus:bg-white focus:border-[#4158D0] outline-none transition-all text-slate-700 cursor-pointer"
+                    >
+                      <option value="">-- Select Customer --</option>
+                      {customers.map((c, i) => <option key={i} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+
                   <div>
                     <label className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-slate-600 uppercase mb-1.5">
                       <Link className="w-3.5 h-3.5" style={{ color: gradientColors.middle }} />
                       PART NAME <span className="text-red-500">*</span>
                     </label>
-                    <input 
-                      type="text" 
+                    <select 
                       name="partName"
                       value={toolInfo.partName}
-                      onChange={handleToolInfoChange}
-                      className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 text-sm focus:bg-white focus:border-[#4158D0] outline-none transition-all text-slate-700"
-                      placeholder="Enter part name"
-                    />
+                      onChange={handlePartNameChange}
+                      disabled={!toolInfo.customerName}
+                      className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 text-sm focus:bg-white focus:border-[#4158D0] outline-none transition-all text-slate-700 cursor-pointer disabled:opacity-60"
+                    >
+                      <option value="">-- Select Part Name --</option>
+                      {partNames.map((p, i) => <option key={i} value={p}>{p}</option>)}
+                    </select>
                   </div>
 
-                  {/* PART NO. */}
                   <div>
                     <label className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-slate-600 uppercase mb-1.5">
                       <Hash className="w-3.5 h-3.5" style={{ color: gradientColors.middle }} />
@@ -258,13 +276,12 @@ const ToolHistoryForm = () => {
                       type="text" 
                       name="partNo"
                       value={toolInfo.partNo}
-                      onChange={handleToolInfoChange}
-                      className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 text-sm focus:bg-white focus:border-[#4158D0] outline-none transition-all text-slate-700"
-                      placeholder="Enter part number"
+                      readOnly
+                      className="w-full bg-slate-100 border-2 border-slate-200 rounded-lg p-2.5 text-sm outline-none text-slate-500 cursor-not-allowed"
+                      placeholder="Auto-filled part number"
                     />
                   </div>
 
-                  {/* TOOL NAME */}
                   <div>
                     <label className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-slate-600 uppercase mb-1.5">
                       <Wrench className="w-3.5 h-3.5" style={{ color: gradientColors.middle }} />
@@ -279,8 +296,9 @@ const ToolHistoryForm = () => {
                       placeholder="Enter tool name"
                     />
                   </div>
+                </div>
 
-                  {/* MODEL */}
+                <div className="space-y-3 sm:space-y-4">
                   <div>
                     <label className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-slate-600 uppercase mb-1.5">
                       <Package className="w-3.5 h-3.5" style={{ color: gradientColors.middle }} />
@@ -290,32 +308,12 @@ const ToolHistoryForm = () => {
                       type="text" 
                       name="model"
                       value={toolInfo.model}
-                      onChange={handleToolInfoChange}
-                      className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 text-sm focus:bg-white focus:border-[#4158D0] outline-none transition-all text-slate-700"
-                      placeholder="Enter model"
-                    />
-                  </div>
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-3 sm:space-y-4">
-                  {/* CUSTOMER NAME */}
-                  <div>
-                    <label className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-slate-600 uppercase mb-1.5">
-                      <Users className="w-3.5 h-3.5" style={{ color: gradientColors.middle }} />
-                      CUSTOMER NAME
-                    </label>
-                    <input 
-                      type="text" 
-                      name="customerName"
-                      value={toolInfo.customerName}
-                      onChange={handleToolInfoChange}
-                      className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 text-sm focus:bg-white focus:border-[#4158D0] outline-none transition-all text-slate-700"
-                      placeholder="Enter customer name"
+                      readOnly
+                      className="w-full bg-slate-100 border-2 border-slate-200 rounded-lg p-2.5 text-sm outline-none text-slate-500 cursor-not-allowed"
+                      placeholder="Auto-filled model"
                     />
                   </div>
 
-                  {/* ESTIMATED TOOL LIFE */}
                   <div>
                     <label className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-slate-600 uppercase mb-1.5">
                       <Clock className="w-3.5 h-3.5" style={{ color: gradientColors.middle }} />
@@ -331,7 +329,6 @@ const ToolHistoryForm = () => {
                     />
                   </div>
 
-                  {/* ESTIMATED MAINTENANCE FREQUENCY */}
                   <div>
                     <label className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-slate-600 uppercase mb-1.5">
                       <Clock className="w-3.5 h-3.5" style={{ color: gradientColors.middle }} />
@@ -350,15 +347,13 @@ const ToolHistoryForm = () => {
               </div>
             </div>
 
-            {/* Tool History Information */}
             <div className="mb-6 sm:mb-7 md:mb-8">
               <h2 className="text-sm sm:text-base md:text-lg font-semibold mb-3 pb-2 border-b-2" style={{ borderBottomColor: gradientColors.middle }}>
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#4158D0] to-[#C850C0]">
-                  Tool History Information
+                  Tool History Record
                 </span>
               </h2>
 
-              {/* Single Record Card */}
               <div 
                 className="border-2 border-slate-200 rounded-lg p-4 sm:p-5 shadow-sm"
                 style={{ borderLeftColor: gradientColors.middle, borderLeftWidth: '4px' }}
@@ -367,9 +362,7 @@ const ToolHistoryForm = () => {
                   <span className="font-bold text-slate-700 text-xs sm:text-sm uppercase tracking-wide">Current History Record</span>
                 </div>
 
-                {/* Two-column layout for record fields */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-                  {/* Left Column */}
                   <div className="space-y-3 sm:space-y-4">
                     <div>
                       <label className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-slate-600 uppercase mb-1.5">
@@ -427,7 +420,6 @@ const ToolHistoryForm = () => {
                     </div>
                   </div>
 
-                  {/* Right Column */}
                   <div className="space-y-3 sm:space-y-4">
                     <div>
                       <label className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-slate-600 uppercase mb-1.5">
@@ -466,7 +458,7 @@ const ToolHistoryForm = () => {
                         <select 
                           value={historyRecord.updatedIn4M}
                           onChange={(e) => handleHistoryRecordChange('updatedIn4M', e.target.value)}
-                          className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 text-sm focus:bg-white focus:border-[#4158D0] outline-none transition-all text-slate-700"
+                          className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 text-sm focus:bg-white focus:border-[#4158D0] outline-none transition-all text-slate-700 cursor-pointer"
                         >
                           <option value="">Select</option>
                           <option value="Y">Yes (Y)</option>
@@ -493,7 +485,6 @@ const ToolHistoryForm = () => {
               </div>
             </div>
 
-            {/* Save and Reset Buttons */}
             <div className="mt-6 sm:mt-8 flex flex-col-reverse sm:flex-row justify-end gap-3">
               <button
                 onClick={resetForm}
@@ -504,35 +495,18 @@ const ToolHistoryForm = () => {
               </button>
               <button
                 onClick={saveData}
-                className="flex items-center justify-center gap-2 px-5 py-2.5 text-white rounded-lg transition-all hover:opacity-90 hover:shadow-md text-xs sm:text-sm font-bold uppercase tracking-wide"
+                disabled={isSubmitting}
+                className="flex items-center justify-center gap-2 px-5 py-2.5 text-white rounded-lg transition-all hover:opacity-90 hover:shadow-md text-xs sm:text-sm font-bold uppercase tracking-wide disabled:opacity-50"
                 style={{ 
                   background: `linear-gradient(135deg, ${gradientColors.middle}, ${gradientColors.end})`,
                 }}
               >
-                <Save className="w-3.5 h-3.5" />
-                Save Data
+                {isSubmitting ? 'Saving...' : <><Save className="w-3.5 h-3.5" /> Save Data</>}
               </button>
             </div>
           </div>
         </div>
       </div>
-
-      {/* CSS for animations */}
-      <style jsx>{`
-        @keyframes slideIn {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-        .animate-slideIn {
-          animation: slideIn 0.3s ease-out;
-        }
-      `}</style>
     </div>
   );
 };

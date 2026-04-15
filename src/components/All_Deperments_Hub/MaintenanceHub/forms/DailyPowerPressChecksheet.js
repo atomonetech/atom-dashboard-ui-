@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+const BASE_URL = 'http://192.168.0.34:8000';
 
 const checkData = [
     {
@@ -62,6 +64,12 @@ const checkData = [
 
 const UNITS = ['bar', 'kg/cm²', 'PSI', 'MPa'];
 
+// UPDATE: Ensure these values match the "plant" field in your Django Operator model
+const PLANT_MAP = {
+    'Plant 1': 'plant_1',
+    'Plant 2': 'plant_2',
+};
+
 const buildChecks = () =>
     checkData.flatMap(item =>
         item.subPoints.map((_, spi) => ({ sNo: item.sNo, spi, status: '', value: '', unit: 'bar' }))
@@ -91,17 +99,17 @@ const ObsCell = ({ sNo, spi, hasInput, checks, updateCheck }) => {
     );
 };
 
-const CheckBtns = ({ sNo, spi, btnClass = 'check-btn', checks, setStatus }) => {
+const CheckBtns = ({ sNo, spi, checks, setStatus }) => {
     const chk = checks.find(c => c.sNo === sNo && c.spi === spi);
     return (
         <div className="d-flex justify-content-center gap-2">
             <button
-                className={`${btnClass} ${chk?.status === 'OK' ? 'ok-active' : 'ok-idle'}`}
+                className={`check-btn ${chk?.status === 'OK' ? 'ok-active' : 'ok-idle'}`}
                 onClick={() => setStatus(sNo, spi, 'OK')}
                 title="OK"
             >✓</button>
             <button
-                className={`${btnClass} ${chk?.status === 'NG' ? 'ng-active' : 'ng-idle'}`}
+                className={`check-btn ${chk?.status === 'NG' ? 'ng-active' : 'ng-idle'}`}
                 onClick={() => setStatus(sNo, spi, 'NG')}
                 title="NG"
             >✗</button>
@@ -113,13 +121,66 @@ const DailyPowerPressChecksheet = () => {
     const navigate = useNavigate();
     const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+    const [plant, setPlant] = useState('');
     const [operatorName, setOperatorName] = useState('');
+    const [operators, setOperators] = useState([]);
+    const [operatorsLoading, setOperatorsLoading] = useState(false);
+
     const [machineNo, setMachineNo] = useState('');
+    const [machineList, setMachineList] = useState([]);
+    const [machinesLoading, setMachinesLoading] = useState(false);
+
     const [shift, setShift] = useState('');
     const [checks, setChecks] = useState(buildChecks());
 
-    // ✅ Teeno fill hone par hi table dikhega
-    const formReady = operatorName.trim() !== '' && machineNo.trim() !== '' && shift !== '';
+    // UPDATED EFFECT: Handles dynamic fetching and resetting
+    useEffect(() => {
+        if (!plant) {
+            setOperators([]);
+            setMachineList([]);
+            setOperatorName('');
+            setMachineNo('');
+            return;
+        }
+
+        const plantKey = PLANT_MAP[plant];
+
+        // 1. Reset dependent selections immediately when plant changes
+        setOperatorName('');
+        setMachineNo('');
+
+        // 2. Operators fetch filtered by plant
+        setOperatorsLoading(true);
+        fetch(`${BASE_URL}/api/operators/?plant=${plantKey}`)
+            .then(r => r.json())
+            .then(data => {
+                // Assuming backend response: { success: true, operators: [{id: 1, name: 'Amit'}, ...] }
+                if (data.success) {
+                    setOperators(data.operators);
+                } else {
+                    setOperators([]);
+                }
+            })
+            .catch((err) => {
+                console.error("Fetch Error:", err);
+                setOperators([]);
+            })
+            .finally(() => setOperatorsLoading(false));
+
+        // 3. Machines fetch filtered by plant
+        setMachinesLoading(true);
+        fetch(`${BASE_URL}/api/machines/list/?plant=${plantKey}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) setMachineList(data.machines);
+                else setMachineList([]);
+            })
+            .catch(() => setMachineList([]))
+            .finally(() => setMachinesLoading(false));
+
+    }, [plant]);
+
+    const formReady = operatorName.trim() !== '' && plant !== '' && machineNo.trim() !== '' && shift !== '';
 
     const getCheck = (sNo, spi) => checks.find(c => c.sNo === sNo && c.spi === spi);
     const updateCheck = (sNo, spi, patch) =>
@@ -129,17 +190,26 @@ const DailyPowerPressChecksheet = () => {
 
     const allDone = checks.every(c => c.status !== '');
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!formReady) {
-            alert('⚠️ Bhai, pehle Operator Name, Machine No. aur Shift toh fill kar de!');
+             alert('⚠️ Please fill in all required details (Operator, Plant, Machine, Shift) before proceeding.');
             return;
         }
         if (!allDone) {
-            alert('⚠️ Arey bhai, saare check points complete kar pehle save karne se pehle.');
+            alert('⚠️ Please complete all checkpoints before saving.');
             return;
         }
+
+        // Convert DD/MM/YYYY to YYYY-MM-DD for Django
+        const dateParts = today.split('/');
+        const backendDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+
         const payload = {
-            operatorName, machineNo, shift, date: today,
+            plant: plant,
+            operator_name: operatorName,
+            machine_no: machineNo,
+            shift: shift,
+            date: backendDate,
             checkpoints: checkData.flatMap(item =>
                 item.subPoints.map((sp, spi) => {
                     const chk = getCheck(item.sNo, spi);
@@ -155,18 +225,41 @@ const DailyPowerPressChecksheet = () => {
                 })
             ),
         };
-        console.log('Backend ko ye payload jayega bhai:', payload);
-        setOperatorName('');
-        setMachineNo('');
-        setShift('');
-        setChecks(buildChecks());
-        alert('✅ Badhai ho! Daily Power Press Checksheet successfully save ho gayi!');
+        
+        console.log('Sending Payload to Database:', payload);
+
+        try {
+            const response = await fetch(`${BASE_URL}/api/checksheets/daily-power-press/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (data.success || response.ok) {
+                // Reset after success logic
+                setPlant('');
+                setOperatorName('');
+                setMachineNo('');
+                setShift('');
+                setChecks(buildChecks());
+                alert('✅ Badhai ho! Daily Power Press Checksheet database me successfully save ho gayi!');
+            } else {
+                console.error("Backend Error:", data);
+                alert(`⚠️ Data save nahi ho paya! Error: ${data.error || 'Check console'}`);
+            }
+        } catch (error) {
+            console.error('Network Error:', error);
+            alert('⚠️ Server se connect nahi ho paya! Apni backend IP aur connection check karo.');
+        }
     };
-
-
 
     return (
         <div className="pp-wrapper">
+            {/* CSS & External Links remain same as your original */}
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -217,119 +310,60 @@ const DailyPowerPressChecksheet = () => {
                     width: 36px; height: 36px; background: #f1f5f9; border-radius: 9px;
                     display: flex; align-items: center; justify-content: center; color: #0f172a; font-size: 1.1rem; flex-shrink: 0;
                 }
-                .header-meta { font-size: 0.8rem; color: #64748b; font-weight: 700; margin-left: auto; display: flex; gap: 15px; }
+                .header-meta { font-size: 0.8rem; color: #64748b; font-weight: 700; margin-left: auto; display: flex; gap: 15px; align-items: center; }
+                .date-meta { background: #fff3e0; color: #df8008; padding: 4px 12px; border-radius: 8px; border: 1px solid #ffe8cc; }
                 .field-label {
                     font-size: 0.75rem; font-weight: 800; color: #64748b;
                     text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block;
                 }
                 .field-label .required-star { color: #ef4444; margin-left: 2px; }
-                .field-input, .field-value {
+                .field-input {
                     background: #f8fafc; border: 1px solid #cbd5e1; color: #0f172a;
                     border-radius: 10px; padding: 0.7rem 1rem; font-size: 0.95rem; font-weight: 700; width: 100%;
-                    height: 46px; display: flex; align-items: center;
-                    transition: 0.2s; outline: none; font-family: 'Inter', sans-serif;
+                    height: 46px; transition: 0.2s; outline: none; font-family: 'Inter', sans-serif;
                 }
-
-                .field-value { color: #0f172a; background: #f1f5f9; border-color: #cbd5e1; }
-                .field-input:focus { border-color: #df8008; box-shadow: 0 0 0 3px rgba(223,128,8,0.15); background: #fff;}
-                .field-input::placeholder { color: #94a3b8; font-weight: 500; }
-
-
-
-                /* ✅ TABLE SLIDE-DOWN */
+                .field-input:focus { border-color: #df8008; box-shadow: 0 0 0 3px rgba(223,128,8,0.15); background: #fff; }
+                .field-input:disabled { opacity: 0.5; cursor: not-allowed; background: #f1f5f9; }
                 .table-section { animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
                 @keyframes slideDown {
                     from { opacity: 0; transform: translateY(-18px); }
                     to   { opacity: 1; transform: translateY(0); }
                 }
-
                 .table-wrapper { border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; }
-                .desktop-table { display: block; }
-                .mobile-cards  { display: none; }
-                .pp-table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+                .pp-table { width: 100%; border-collapse: collapse; }
                 .pp-table thead tr { background: #f1f5f9; }
                 .pp-table th {
                     color: #475569; font-size: 0.75rem; font-weight: 800;
                     text-transform: uppercase; letter-spacing: 0.5px;
-                    padding: 1rem; border-bottom: 2px solid #e2e8f0; white-space: nowrap; vertical-align: middle;
+                    padding: 1rem; border-bottom: 2px solid #e2e8f0; text-align: center;
                 }
                 .pp-table td {
                     padding: 0.85rem 1rem; vertical-align: middle;
                     border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; color: #081a43; font-weight: 600;
                 }
-                .pp-table tbody tr:hover { background: #f8fafc; }
-                .pp-table tbody tr:last-child td { border-bottom: none; }
                 .sno-cell { text-align: center; font-weight: 900; color: #0f172a; font-size: 1.1rem; }
-                .cp-cell  { font-weight: 800; color: #1e293b; }
-                .spec-cell { color: #475569; font-weight: 600; line-height: 1.4; }
                 .method-badge {
                     display: inline-flex; align-items: center; justify-content: center;
                     background: #f1f5f9; border: 1px solid #e2e8f0; color: #475569;
-                    border-radius: 6px; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;
+                    border-radius: 6px; padding: 4px 10px; font-size: 0.75rem; font-weight: 700;
                 }
-                .obs-input, .m-obs-input {
-                    border: 1px solid #cbd5e1; background: #fff; border-radius: 8px;
-                    font-weight: 700; color: #1e293b; outline: none;
-                    font-family: 'Inter', sans-serif; text-align: center; height: 36px;
+                .obs-input { border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 8px; width: 85px; text-align: center; font-weight: 700; }
+                .unit-select { border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px; background: #f1f5f9; font-weight: 700; }
+                .check-btn {
+                    width: 38px; height: 38px; border-radius: 50%; border: 2px solid; background: #fff;
+                    display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
                 }
-                .obs-input { padding: 4px 8px; font-size: 0.85rem; width: 85px; }
-                .unit-select, .m-unit-select {
-                    border: 1px solid #cbd5e1; background: #f1f5f9; border-radius: 8px;
-                    font-weight: 700; color: #475569; outline: none;
-                    font-family: 'Inter', sans-serif; cursor: pointer; height: 36px;
-                }
-                .unit-select { padding: 4px 6px; font-size: 0.8rem; width: 80px; }
-                .obs-input:focus, .unit-select:focus { border-color: #df8008; box-shadow: 0 0 0 2px rgba(223,128,8,0.15); }
-                .check-btn, .m-check-btn {
-                    border-radius: 50%; font-weight: 900; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-                    cursor: pointer; border: 2px solid; display: flex;
-                    align-items: center; justify-content: center; background: #fff; line-height: 1;
-                }
-                .check-btn { width: 38px; height: 38px; font-size: 1.1rem; }
                 .ok-idle, .ng-idle { border-color: #e2e8f0; color: #cbd5e1; }
-                .ok-active { border-color: #10b981; background: #10b981; color: #fff; transform: scale(1.1); box-shadow: 0 4px 10px rgba(16,185,129,0.3); }
-                .ng-active { border-color: #ef4444; background: #ef4444; color: #fff; transform: scale(1.1); box-shadow: 0 4px 10px rgba(239,68,68,0.3); }
-                .check-btn:hover { transform: scale(1.08); }
-                .submit-info { color: #64748b; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-              .btn-submit {
+                .ok-active { border-color: #10b981; background: #10b981; color: #fff; }
+                .ng-active { border-color: #ef4444; background: #ef4444; color: #fff; }
+                .btn-submit {
                     background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
                     color: #fff; border: none; border-radius: 12px; font-weight: 800;
                     padding: 0.9rem 2rem; width: 100%; font-size: 1.05rem; cursor: pointer;
-                    transition: 0.25s; box-shadow: 0 6px 16px rgba(217,119,6,0.25);
-                    letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; gap: 8px;
+                    display: flex; align-items: center; justify-content: center; gap: 8px;
                 }
-                .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(217,119,6,0.35); }
-
                 @media (max-width: 992px) {
                     .desktop-table { display: none; }
-                    .mobile-cards  { display: block; }
-                    .m-check-card {
-                        background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
-                        padding: 1.25rem; margin-bottom: 1rem;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                    }
-                    .m-check-card-header { display: flex; gap: 12px; margin-bottom: 1rem; border-bottom: 1px dashed #e2e8f0; padding-bottom: 0.8rem; }
-                    .m-sno {
-                        width: 30px; height: 30px; background: #f1f5f9; border-radius: 50%;
-                        display: flex; align-items: center; justify-content: center;
-                        font-weight: 900; color: #64748b; font-size: 0.9rem; flex-shrink: 0;
-                    }
-                    .m-checkpoint { font-weight: 800; color: #1e293b; font-size: 1rem; margin-bottom: 4px; }
-                    .m-spec  { color: #64748b; font-size: 0.85rem; font-weight: 500; }
-                    .m-row   { display: flex; flex-direction: column; gap: 12px; }
-                    .m-row-inner { display: flex; align-items: center; justify-content: space-between; width: 100%; }
-                    .m-obs-wrap { display: flex; align-items: center; gap: 6px; }
-                    .m-obs-input { width: 100px; padding: 6px 10px; font-size: 0.9rem; }
-                    .m-unit-select { width: 85px; padding: 6px; font-size: 0.85rem; }
-                    .m-check-btn { width: 44px; height: 44px; font-size: 1.25rem; }
-
-                }
-                @media (max-width: 768px) {
-                    .pp-navbar { padding: 0 1rem; height: 60px; }
-                    .pp-brand-text, .header-meta { display: none; }
-                    .pp-main { padding: 76px 12px 60px; }
-                    .pp-card { padding: 1.25rem; }
-                    .submit-info { font-size: 0.8rem; margin-bottom: 10px; }
                 }
             `}</style>
 
@@ -337,7 +371,7 @@ const DailyPowerPressChecksheet = () => {
                 <div className="pp-brand" onClick={() => navigate('/Maintenance/Machine/daily')}>
                     <i className="bi bi-arrow-left-circle back-arrow"></i>
                     <div className="pp-brand-icon">🖨️</div>
-                    <span className="pp-brand-text" style={{ color: '#df8008' }}>Daily Power Press Checksheet</span>
+                    <span style={{ color: '#df8008' }}>Daily Power Press Checksheet</span>
                 </div>
                 <div className="nav-right">
                     <span className="doc-badge">AOT-F-MM-02</span>
@@ -346,98 +380,137 @@ const DailyPowerPressChecksheet = () => {
             </nav>
 
             <div className="pp-main">
-
-                {/* ── HEADER FORM CARD ── */}
                 <div className="pp-card">
                     <div className="pp-card-header">
                         <div className="icon-box"><i className="bi bi-clipboard2-pulse"></i></div>
-                        Daily Power Press Checksheet
-                        <span className="header-meta">
-                            <span><i className="bi bi-repeat me-1"></i>Daily</span>
-                            <span><i className="bi bi-person me-1"></i>Operator</span>
-                        </span>
+                        Checksheet Information
+                        <div className="header-meta">
+                            <span className="date-meta"><i className="bi bi-calendar3 me-2"></i>{today}</span>
+                        </div>
                     </div>
 
                     <div className="row g-4">
                         <div className="col-12 col-md-6 col-lg-3">
-                            <label className="field-label">
-                                Operator Name <span className="required-star">*</span>
-                            </label>
-                            <input
+                            <label className="field-label">Plant <span className="required-star">*</span></label>
+                            <select
                                 className="field-input"
-                                placeholder="e.g. Ramesh Kumar"
+                                value={plant}
+                                onChange={e => setPlant(e.target.value)}
+                            >
+                                <option value="">-- Select Plant --</option>
+                                {Object.keys(PLANT_MAP).map(p => (
+                                    <option key={p} value={p}>{p}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="col-12 col-md-6 col-lg-3">
+                            <label className="field-label">Operator Name <span className="required-star">*</span></label>
+                            <select
+                                className="field-input"
                                 value={operatorName}
                                 onChange={e => setOperatorName(e.target.value)}
-                            />
+                                disabled={!plant || operatorsLoading}
+                            >
+                                <option value="">
+                                    {operatorsLoading
+                                        ? 'Loading Operators...'
+                                        : !plant
+                                            ? '-- Select Plant First --'
+                                            : '-- Select Operator --'}
+                                </option>
+                                {operators.map(op => (
+                                    // Use op.id as key and op.name as value (ensure backend returns these fields)
+                                    <option key={op.id} value={op.name}>{op.name}</option>
+                                ))}
+                            </select>
                         </div>
+
                         <div className="col-12 col-md-6 col-lg-3">
-                            <label className="field-label">
-                                Machine No. <span className="required-star">*</span>
-                            </label>
-                            <input
+                            <label className="field-label">Machine No. <span className="required-star">*</span></label>
+                            <select
                                 className="field-input"
-                                placeholder="e.g. PP-001"
                                 value={machineNo}
                                 onChange={e => setMachineNo(e.target.value)}
-                            />
+                                disabled={!plant || machinesLoading}
+                            >
+                                <option value="">
+                                    {machinesLoading
+                                        ? 'Loading Machines...'
+                                        : !plant
+                                            ? '-- Select Plant First --'
+                                            : '-- Select Machine --'}
+                                </option>
+                                {machineList.map(m => (
+                                    <option key={m} value={m}>Machine {m}</option>
+                                ))}
+                            </select>
                         </div>
+
                         <div className="col-12 col-md-6 col-lg-3">
-                            <label className="field-label">
-                                Shift <span className="required-star">*</span>
-                            </label>
+                            <label className="field-label">Shift <span className="required-star">*</span></label>
                             <select
                                 className="field-input"
                                 value={shift}
                                 onChange={e => setShift(e.target.value)}
-                                style={{ cursor: 'pointer' }}
                             >
                                 <option value="">-- Select Shift --</option>
                                 <option value="A">Morning (08:30AM – 08:00PM)</option>
-                                <option value="B">Night  (08:30PM – 08:00AM)</option>
+                                <option value="B">Night (08:30PM – 08:00AM)</option>
                             </select>
-                        </div>
-                        <div className="col-12 col-md-6 col-lg-3">
-                            <label className="field-label">Date</label>
-                            <div className="field-value">
-                                <i className="bi bi-calendar3 me-2"></i>{today}
-                            </div>
                         </div>
                     </div>
                 </div>
 
-
-
-                {/* ── CHECKSHEET: sirf formReady hone par dikhega ── */}
                 {formReady && (
                     <div className="table-section">
-
-                        {/* Desktop Table */}
                         <div className="pp-card desktop-table" style={{ padding: '0' }}>
                             <div className="table-wrapper">
                                 <table className="pp-table">
                                     <thead>
                                         <tr>
-                                            <th style={{ width: '6%' }} className="text-center">S.No.</th>
+                                            <th style={{ width: '6%' }}>S.No.</th>
                                             <th style={{ width: '16%' }}>Check Point</th>
                                             <th style={{ width: '28%' }}>Specification</th>
-                                            <th style={{ width: '16%' }} className="text-center">Checking Method</th>
-                                            <th style={{ width: '18%' }} className="text-center">Observed Value</th>
-                                            <th style={{ width: '16%' }} className="text-center">Check (✓ / ✗)</th>
+                                            <th style={{ width: '16%' }}>Method</th>
+                                            <th style={{ width: '18%' }}>Observed Value</th>
+                                            <th style={{ width: '16%' }}>Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {checkData.map(item =>
                                             item.subPoints.map((sp, spi) => (
                                                 <tr key={`${item.sNo}-${spi}`}>
-                                                    {spi === 0 && <td rowSpan={item.subPoints.length} className="sno-cell">{item.sNo}</td>}
-                                                    {spi === 0 && <td rowSpan={item.subPoints.length} className="cp-cell">{item.checkPoint}</td>}
-                                                    <td className="spec-cell">{sp.specification}</td>
-                                                    <td className="text-center"><span className="method-badge">{sp.checkingMethod}</span></td>
+                                                    {spi === 0 && (
+                                                        <td rowSpan={item.subPoints.length} className="sno-cell">
+                                                            {item.sNo}
+                                                        </td>
+                                                    )}
+                                                    {spi === 0 && (
+                                                        <td rowSpan={item.subPoints.length}>
+                                                            {item.checkPoint}
+                                                        </td>
+                                                    )}
+                                                    <td>{sp.specification}</td>
                                                     <td className="text-center">
-                                                        <ObsCell sNo={item.sNo} spi={spi} hasInput={sp.hasInput} checks={checks} updateCheck={updateCheck} />
+                                                        <span className="method-badge">{sp.checkingMethod}</span>
+                                                    </td>
+                                                    <td className="text-center">
+                                                        <ObsCell
+                                                            sNo={item.sNo}
+                                                            spi={spi}
+                                                            hasInput={sp.hasInput}
+                                                            checks={checks}
+                                                            updateCheck={updateCheck}
+                                                        />
                                                     </td>
                                                     <td>
-                                                        <CheckBtns sNo={item.sNo} spi={spi} checks={checks} setStatus={setStatus} />
+                                                        <CheckBtns
+                                                            sNo={item.sNo}
+                                                            spi={spi}
+                                                            checks={checks}
+                                                            setStatus={setStatus}
+                                                        />
                                                     </td>
                                                 </tr>
                                             ))
@@ -447,72 +520,23 @@ const DailyPowerPressChecksheet = () => {
                             </div>
                         </div>
 
-                        {/* Mobile Cards */}
-                        <div className="mobile-cards">
-                            {checkData.map(item =>
-                                item.subPoints.map((sp, spi) => (
-                                    <div className="m-check-card" key={`m-${item.sNo}-${spi}`}>
-                                        <div className="m-check-card-header">
-                                            {spi === 0 ? <div className="m-sno">{item.sNo}</div> : <div style={{ width: 30 }} />}
-                                            <div>
-                                                {spi === 0 && <div className="m-checkpoint">{item.checkPoint}</div>}
-                                                <div className="m-spec">{sp.specification}</div>
-                                            </div>
-                                        </div>
-                                        <div className="m-row">
-                                            <div className="m-row-inner">
-                                                <span className="method-badge">{sp.checkingMethod}</span>
-                                                {sp.hasInput ? (
-                                                    <div className="m-obs-wrap">
-                                                        <input
-                                                            className="m-obs-input"
-                                                            type="number"
-                                                            step="0.1"
-                                                            placeholder="Value"
-                                                            value={getCheck(item.sNo, spi)?.value || ''}
-                                                            onChange={e => updateCheck(item.sNo, spi, { value: e.target.value })}
-                                                        />
-                                                        <select
-                                                            className="m-unit-select"
-                                                            value={getCheck(item.sNo, spi)?.unit || 'bar'}
-                                                            onChange={e => updateCheck(item.sNo, spi, { unit: e.target.value })}
-                                                        >
-                                                            {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
-                                                        </select>
-                                                    </div>
-                                                ) : (
-                                                    <span style={{ color: '#cbd5e1', fontSize: '0.9rem', fontWeight: 700 }}>No value</span>
-                                                )}
-                                            </div>
-                                            <div className="m-row-inner justify-content-end">
-                                                <CheckBtns sNo={item.sNo} spi={spi} btnClass="m-check-btn" checks={checks} setStatus={setStatus} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-
-                        {/* Submit */}
-                        <div className="pp-card">
+                        <div className="pp-card mt-4">
                             <div className="row g-3 align-items-center">
                                 <div className="col-12 col-md-8">
-                                    <div className="submit-info">
-                                        <i className="bi bi-info-circle-fill" style={{ color: '#df8008', fontSize: '1.2rem' }}></i>
-                                        Ensure all checkpoints are marked OK or Not OK before saving.
-                                    </div>
+                                    <span className="text-muted fw-bold">
+                                        <i className="bi bi-info-circle me-2"></i>
+                                        Double check all values before submitting.
+                                    </span>
                                 </div>
                                 <div className="col-12 col-md-4">
                                     <button className="btn-submit" onClick={handleSubmit}>
-                                        <i className="bi bi-check2-all"></i> Save Checksheet
+                                        <i className="bi bi-cloud-arrow-up"></i> Save Checksheet
                                     </button>
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 )}
-
             </div>
         </div>
     );
