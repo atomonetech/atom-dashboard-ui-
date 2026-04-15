@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const fiveSData = [
@@ -14,7 +14,7 @@ const fiveSData = [
     {
         s: "2'S'",
         points: [
-            { eng: "Arrange all items at your workplace systematically in their designated places so they can be easily found when needed.", hin: "अपने कार्य स्थल की सभी वस्तुओं को निर्धारित स्थान पर क्रम से लगा कर रखें ताकि आवश्यकता के समय आसानी से मिलजाएं।", guj: "તમારા કાર્યસ્થળની તમામ વસ્તુઓને નિર્ધારિત જગ્યાએ યોગ્ય ક્રમમાં ગોઠવો જેથી જરૂર પડે ત્યારે સરળતાથી મળી શકે." },
+            { eng: "Arrange all items at your workplace systematically in their designated places so they can be easily found when needed.", hin: "अपने कार्य स्थल की सभी वस्तुओं को निर्धारित स्थान पर क्रम से लगा कर रखें ताकि आवश्यकता চৈতন্য समय आसानी से मिलजाएं।", guj: "તમારા કાર્યસ્થળની તમામ વસ્તુઓને નિર્ધારિત જગ્યાએ યોગ્ય ક્રમમાં ગોઠવો જેથી જરૂર પડે ત્યારે સરળતાથી મળી શકે." },
             { eng: "Clean all necessary items kept at your workplace.", hin: "अपने कार्य स्थल पर रखी हुई सभी आवश्यक वस्तुओं की सफाई करें।", guj: "કાર્યસ્થળ પર રહેલી તમામ જરૂરી વસ્તુઓની સફાઈ કરો." },
             { eng: "If you do not know the designated place of any item, contact your supervisor and keep it in the place suggested by them.", hin: "किसी वस्तु का निर्धारित स्थान पता न हो तो अपने सुपर वाइज़र से संपर्क करें और उसे बताये गये स्थान पर रखें।", guj: "જો કોઈ વસ્તુની નિર્ધારિત જગ્યા ખબર ન હોય તો તમારા સુપરવાઈઝર સાથે સંપર્ક કરો અને જણાવેલી જગ્યાએ મૂકો." }
         ]
@@ -55,15 +55,44 @@ const Operator5S = () => {
 
     const [lang, setLang] = useState('eng');
     const [zoneLeader, setZoneLeader] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // NAYA: Poka-Yoke lock status
+    const [isAlreadyFilled, setIsAlreadyFilled] = useState(false);
+    
     const [checks, setChecks] = useState(
         fiveSData.flatMap((s, si) =>
             s.points.map((_, pi) => ({ sIdx: si, pIdx: pi, status: '' }))
         )
     );
 
+    // Component Load hone par check karega
+    useEffect(() => {
+        const checkTodayStatus = async () => {
+            try {
+                const dbDate = new Date().toISOString().split('T')[0];
+                // APNE BACKEND URL SE REPLACE KAREIN
+                const response = await fetch(`http://192.168.0.34:8000/api/check-5s-status/?date=${dbDate}&area=P.Shop_Parking`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.isFilled) {
+                        setIsAlreadyFilled(true);
+                    }
+                }
+            } catch (error) {
+                console.error("Error checking today's status:", error);
+                // Note: Agar API ready nahi hai aur form lock test karna hai, toh upar useState(false) ko useState(true) kar ke dekhein.
+            }
+        };
+
+        checkTodayStatus();
+    }, []);
+
     const getCheck = (si, pi) => checks.find(c => c.sIdx === si && c.pIdx === pi);
 
     const setStatus = (si, pi, status) => {
+        if (isAlreadyFilled) return; // Locked
         setChecks(prev => prev.map(c =>
             c.sIdx === si && c.pIdx === pi
                 ? { ...c, status: c.status === status ? '' : status }
@@ -82,7 +111,9 @@ const Operator5S = () => {
         );
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
+        if (isAlreadyFilled) return;
+        
         if (!zoneLeader) {
             alert('⚠️ Please fill Zone Leader.');
             return;
@@ -92,11 +123,12 @@ const Operator5S = () => {
             return;
         }
 
-        // Prepare submission data
+        const dbDate = new Date().toISOString().split('T')[0];
+
         const submissionData = {
             area: "P.Shop & Parking area",
             zoneLeader: zoneLeader,
-            date: today,
+            date: dbDate,
             language: lang,
             checks: fiveSData.map((s, si) => ({
                 s: s.s,
@@ -113,38 +145,42 @@ const Operator5S = () => {
                 completedChecks: checks.filter(c => c.status !== '').length,
                 okCount: checks.filter(c => c.status === 'OK').length,
                 ngCount: checks.filter(c => c.status === 'NG').length
-            },
-            submittedAt: new Date().toISOString()
+            }
         };
 
-        // Log to console
-        console.log('=== 5S Check Sheet Submission ===');
-        console.log('Submission Data:', submissionData);
-        console.log('Zone Leader:', zoneLeader);
-        console.log('Date:', today);
-        console.log('Language:', lang);
-        console.log('Check Results:', checks.map((c, idx) => ({
-            index: idx + 1,
-            s: fiveSData[c.sIdx].s,
-            point: fiveSData[c.sIdx].points[c.pIdx][lang === 'eng' ? 'eng' : lang === 'hin' ? 'hin' : 'guj'],
-            status: c.status || 'Not Checked'
-        })));
-        console.log('Summary:', submissionData.summary);
-        console.log('=== End of Submission ===');
+        setIsSubmitting(true);
 
-        alert('✅ 5S Checksheet saved successfully!');
-        
-        // Reset the form after submission
-        resetForm();
+        try {
+            const response = await fetch('http://192.168.0.34:8000/api/save-5s-checksheet/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(submissionData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert('✅ 5S Checksheet saved successfully to the database!');
+                setIsAlreadyFilled(true); // Save hone ke turant baad form lock ho jayega
+            } else {
+                alert('❌ Failed to save: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error("Error submitting checksheet:", error);
+            alert('❌ Network error! Could not connect to the server.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
         <div className="min-h-screen bg-slate-50">
-            {/* Clean Navbar - Original Style */}
+            {/* Navbar */}
             <div className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        {/* Left Side - Logo and Title */}
                         <div className="flex items-center gap-2 sm:gap-3">
                             <button
                                 onClick={() => navigate('/production-hub')}
@@ -166,7 +202,6 @@ const Operator5S = () => {
                             </div>
                         </div>
 
-                        {/* Right Side - Language and Document Info */}
                         <div className="flex items-center gap-2 sm:gap-3">
                             <select
                                 value={lang}
@@ -184,7 +219,6 @@ const Operator5S = () => {
                                 <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Rev: 01</span>
                             </div>
                             
-                            {/* Mobile version - compact doc info */}
                             <div className="flex sm:hidden items-center gap-1 bg-slate-100 px-2 py-1 rounded-lg">
                                 <span className="text-[8px] font-bold text-slate-600 uppercase">AOT-F-PROD-13A</span>
                                 <span className="text-slate-400 text-[8px]">|</span>
@@ -195,10 +229,34 @@ const Operator5S = () => {
                 </div>
             </div>
 
-            {/* Main Content */}
             <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+                
+                {/* Error Banner - Shows only if already filled */}
+                {isAlreadyFilled && (
+                    <div className="bg-red-50 border-l-4 border-red-600 p-4 mb-6 rounded-r-lg shadow-sm animate-fade-in">
+                        <div className="flex items-start gap-3">
+                            <span className="text-red-500 text-lg">⚠️</span>
+                            <div>
+                                <h3 className="text-red-700 font-bold text-sm sm:text-base mb-1">
+                                    {lang === 'eng' ? 'Data Already Filled!' : lang === 'hin' ? 'डेटा पहले ही भरा जा चुका है!' : 'ડેટા પહેલેથી જ ભરાઈ ગયું છે!'}
+                                </h3>
+                                <p className="text-red-600 text-xs sm:text-sm font-medium mb-1">
+                                    {lang === 'eng' 
+                                        ? "This area's 5S checksheet has already been submitted for today." 
+                                        : lang === 'hin' 
+                                        ? "इस एरिया का 5S डेटा आज के लिए पहले ही भरा जा चुका है।" 
+                                        : "આ વિસ્તારનું 5S ડેટા આજ માટે પહેલેથી જ ભરાઈ ગયું છે."}
+                                </p>
+                                <p className="text-red-500 text-[10px] sm:text-xs">
+                                    {lang === 'eng' ? 'You cannot submit again.' : lang === 'hin' ? 'आप दोबारा सबमिट नहीं कर सकते।' : 'તમે ફરીથી સબમિટ કરી શકતા નથી.'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Header Card */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6 mb-5 sm:mb-6">
+                <div className={`bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6 mb-5 sm:mb-6 transition-all ${isAlreadyFilled ? 'opacity-70 pointer-events-none' : ''}`}>
                     <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -218,15 +276,21 @@ const Operator5S = () => {
                             <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase mb-1">Zone Leader</label>
                             <input
                                 type="text"
-                                className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 sm:p-3 text-sm font-semibold text-slate-700 outline-none focus:border-amber-500 focus:bg-white transition-all"
+                                className={`w-full border-2 rounded-lg p-2.5 sm:p-3 text-sm font-semibold outline-none transition-all ${
+                                    isAlreadyFilled 
+                                    ? 'bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed select-none' // Locked State
+                                    : 'bg-slate-50 border-slate-200 text-slate-700 focus:border-amber-500 focus:bg-white' // Active State
+                                }`}
                                 placeholder={lang === 'eng' ? 'e.g. Mr. Simran' : lang === 'hin' ? 'जैसे श्री सिमरन' : 'દા.ત. શ્રી સિમરન'}
                                 value={zoneLeader}
                                 onChange={e => setZoneLeader(e.target.value)}
+                                disabled={isAlreadyFilled}
+                                readOnly={isAlreadyFilled}
                             />
                         </div>
                         <div>
                             <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase mb-1">Date</label>
-                            <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-2.5 sm:p-3 text-sm font-bold text-amber-700">
+                            <div className={`border-2 rounded-lg p-2.5 sm:p-3 text-sm font-bold ${isAlreadyFilled ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
@@ -237,67 +301,79 @@ const Operator5S = () => {
                 </div>
 
                 {/* 5S Sections */}
-                {fiveSData.map((s, si) => {
-                    const col = sColors[si];
-                    let srNo = 0;
-                    for (let i = 0; i < si; i++) srNo += fiveSData[i].points.length;
+                <div className={`transition-all ${isAlreadyFilled ? 'opacity-70 pointer-events-none' : ''}`}>
+                    {fiveSData.map((s, si) => {
+                        const col = sColors[si];
+                        let srNo = 0;
+                        for (let i = 0; i < si; i++) srNo += fiveSData[i].points.length;
 
-                    return (
-                        <div key={si} className="rounded-xl mb-5 sm:mb-6 overflow-hidden border-2" style={{ borderColor: col.border, backgroundColor: col.bg + '55' }}>
-                            <div className="px-3 sm:px-4 py-2.5 sm:py-3" style={{ backgroundColor: col.bg, borderBottom: `2px solid ${col.border}` }}>
-                                <span className="inline-block rounded-lg px-3 py-1 text-sm sm:text-base font-black text-white" style={{ backgroundColor: col.badge }}>{s.s}</span>
+                        return (
+                            <div key={si} className="rounded-xl mb-5 sm:mb-6 overflow-hidden border-2" style={{ borderColor: isAlreadyFilled ? '#cbd5e1' : col.border, backgroundColor: isAlreadyFilled ? '#f8fafc' : col.bg + '55' }}>
+                                <div className="px-3 sm:px-4 py-2.5 sm:py-3" style={{ backgroundColor: isAlreadyFilled ? '#e2e8f0' : col.bg, borderBottom: `2px solid ${isAlreadyFilled ? '#cbd5e1' : col.border}` }}>
+                                    <span className="inline-block rounded-lg px-3 py-1 text-sm sm:text-base font-black text-white" style={{ backgroundColor: isAlreadyFilled ? '#94a3b8' : col.badge }}>{s.s}</span>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full bg-white">
+                                        <thead className="bg-slate-100">
+                                            <tr>
+                                                <th className="px-2 sm:px-3 py-2 text-center text-[10px] sm:text-xs font-black text-slate-600 uppercase w-12">S.No</th>
+                                                <th className="px-2 sm:px-3 py-2 text-left text-[10px] sm:text-xs font-black text-slate-600 uppercase">
+                                                    {lang === 'eng' ? 'Check Point' : lang === 'hin' ? 'जांच बिंदु' : 'ચેક પ્વાઇન્ટ'}
+                                                </th>
+                                                <th className="px-2 sm:px-3 py-2 text-center text-[10px] sm:text-xs font-black text-slate-600 uppercase w-24 sm:w-32">
+                                                    {lang === 'eng' ? 'Check' : lang === 'hin' ? 'जांच' : 'તપાસ'}
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {s.points.map((pt, pi) => {
+                                                const chk = getCheck(si, pi);
+                                                return (
+                                                    <tr key={pi} className="border-b border-slate-200">
+                                                        <td className="px-2 sm:px-3 py-2 text-center text-xs sm:text-sm font-bold text-slate-500">{srNo + pi + 1}</td>
+                                                        <td className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 leading-relaxed">
+                                                            {lang === 'eng' ? pt.eng : lang === 'hin' ? pt.hin : pt.guj}
+                                                        </td>
+                                                        <td className="px-2 sm:px-3 py-2">
+                                                            <div className="flex items-center justify-center gap-2 sm:gap-3">
+                                                                <button
+                                                                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full font-bold text-base sm:text-lg transition-all flex items-center justify-center border-2 ${
+                                                                        isAlreadyFilled
+                                                                        ? 'border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed' // Locked State
+                                                                        : chk?.status === 'OK' 
+                                                                            ? 'border-green-500 bg-green-100 text-green-700 scale-110 shadow-md' 
+                                                                            : 'border-slate-300 bg-white text-slate-400 hover:border-green-400'
+                                                                    }`}
+                                                                    onClick={() => setStatus(si, pi, 'OK')}
+                                                                    disabled={isAlreadyFilled}
+                                                                >
+                                                                    ✓
+                                                                </button>
+                                                                <button
+                                                                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full font-bold text-base sm:text-lg transition-all flex items-center justify-center border-2 ${
+                                                                        isAlreadyFilled
+                                                                        ? 'border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed' // Locked State
+                                                                        : chk?.status === 'NG' 
+                                                                            ? 'border-red-500 bg-red-100 text-red-700 scale-110 shadow-md' 
+                                                                            : 'border-slate-300 bg-white text-slate-400 hover:border-red-400'
+                                                                    }`}
+                                                                    onClick={() => setStatus(si, pi, 'NG')}
+                                                                    disabled={isAlreadyFilled}
+                                                                >
+                                                                    ✗
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead className="bg-slate-100">
-                                        <tr>
-                                            <th className="px-2 sm:px-3 py-2 text-center text-[10px] sm:text-xs font-black text-slate-600 uppercase w-12">S.No</th>
-                                            <th className="px-2 sm:px-3 py-2 text-left text-[10px] sm:text-xs font-black text-slate-600 uppercase">
-                                                {lang === 'eng' ? 'Check Point' : lang === 'hin' ? 'जांच बिंदु' : 'ચેક પ્વાઇન્ટ'}
-                                            </th>
-                                            <th className="px-2 sm:px-3 py-2 text-center text-[10px] sm:text-xs font-black text-slate-600 uppercase w-24 sm:w-32">
-                                                {lang === 'eng' ? 'Check' : lang === 'hin' ? 'जांच' : 'તપાસ'}
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {s.points.map((pt, pi) => {
-                                            const chk = getCheck(si, pi);
-                                            return (
-                                                <tr key={pi} className="border-b border-slate-200">
-                                                    <td className="px-2 sm:px-3 py-2 text-center text-xs sm:text-sm font-bold text-slate-500">{srNo + pi + 1}</td>
-                                                    <td className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 leading-relaxed">
-                                                        {lang === 'eng' ? pt.eng : lang === 'hin' ? pt.hin : pt.guj}
-                                                    </td>
-                                                    <td className="px-2 sm:px-3 py-2">
-                                                        <div className="flex items-center justify-center gap-2 sm:gap-3">
-                                                            <button
-                                                                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full font-bold text-base sm:text-lg transition-all flex items-center justify-center border-2 ${chk?.status === 'OK' 
-                                                                    ? 'border-green-500 bg-green-100 text-green-700 scale-110 shadow-md' 
-                                                                    : 'border-slate-300 bg-white text-slate-400 hover:border-green-400'}`}
-                                                                onClick={() => setStatus(si, pi, 'OK')}
-                                                            >
-                                                                ✓
-                                                            </button>
-                                                            <button
-                                                                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full font-bold text-base sm:text-lg transition-all flex items-center justify-center border-2 ${chk?.status === 'NG' 
-                                                                    ? 'border-red-500 bg-red-100 text-red-700 scale-110 shadow-md' 
-                                                                    : 'border-slate-300 bg-white text-slate-400 hover:border-red-400'}`}
-                                                                onClick={() => setStatus(si, pi, 'NG')}
-                                                            >
-                                                                ✗
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
 
                 {/* Submit Card */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6">
@@ -314,14 +390,24 @@ const Operator5S = () => {
                                     : 'સહેજ કરતા પહેલા તમામ ચેક પ્વાઇન્ટ ચિહ્નિત કરો.'}
                             </span>
                         </div>
+                        
                         <button
-                            className="px-6 sm:px-8 py-2.5 sm:py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide shadow-md hover:shadow-lg transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
+                            className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide transition-all flex items-center gap-2 w-full sm:w-auto justify-center ${
+                                isAlreadyFilled || isSubmitting 
+                                ? 'bg-slate-300 text-slate-500 cursor-not-allowed border-transparent shadow-none' // Locked state styling
+                                : 'bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg'
+                            }`}
                             onClick={handleSubmit}
+                            disabled={isSubmitting || isAlreadyFilled}
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                            </svg>
-                            {lang === 'eng' ? 'Save Checksheet' : lang === 'hin' ? 'चेकशीट सहेजें' : 'ચેકશીટ સહેજ કરો'}
+                            {isSubmitting ? 'Saving...' : isAlreadyFilled ? 'Locked' : (
+                                <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                    </svg>
+                                    {lang === 'eng' ? 'Save Checksheet' : lang === 'hin' ? 'चेकशीट सहेजें' : 'ચેકશીટ સહેજ કરો'}
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>

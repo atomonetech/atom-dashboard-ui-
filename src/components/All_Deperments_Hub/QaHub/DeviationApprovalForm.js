@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Calendar, Clock, FileText, UserCheck, Eye, RotateCcw, AlertTriangle } from 'lucide-react';
+import axios from 'axios'; // 👈 Axios import kiya API call ke liye
 
 const DeviationApprovalForm = () => {
   const gradientColors = {
@@ -7,6 +8,9 @@ const DeviationApprovalForm = () => {
     middle: '#C850C0',
     end: '#FFCC70'
   };
+
+  // 👈 Backend API URL for saving Deviation Approval
+  const API_SAVE = "http://192.168.0.34:8000/api/save-deviation/";
 
   const [formData, setFormData] = useState({
     toolNameNo: '',
@@ -46,11 +50,35 @@ const DeviationApprovalForm = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  // 👇 Yahan database me save karne ka logic add kiya hai
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    alert('Deviation Approval Form Submitted Successfully!');
-    resetForm();
+    
+    // Frontend state variables ko Backend database columns se map kar rahe hain
+    const dataToSave = {
+      tool_name_no: formData.toolNameNo,
+      location: formData.location,
+      problem: formData.problem,
+      reason_for_deviation: formData.reasonForDeviation,
+      date: formData.date,
+      duration: formData.duration,
+      prod_incharge: formData.prodIncharge,
+      qa_incharge: formData.qaIncharge,
+      remarks: formData.remarks
+    };
+
+    try {
+      // Backend ko data bhej rahe hain
+      const response = await axios.post(API_SAVE, dataToSave);
+      
+      if (response.status === 201 || response.status === 200) {
+        alert('Deviation Approval Form Saved to Database Successfully!');
+        resetForm();
+      }
+    } catch (error) {
+      console.error('Error saving data:', error);
+      alert('Failed to save data. Please check backend connection.');
+    }
   };
 
   const resetForm = () => {

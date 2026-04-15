@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 
 const atomone = '/logo1.jpg';
 
-// Mahino ka array bahar nikal liya hai taki dono jagah use ho sake
 const MONTH_NAMES = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
 
 const S5_DATA = [
@@ -32,7 +31,7 @@ const S5_DATA = [
 ];
 
 const getDaysInMonth = (monthName, year) => {
-  if (!monthName || !year) return 31; // Agar blank hai toh default 31 days banenge
+  if (!monthName || !year) return 31; 
   const mIndex = MONTH_NAMES.indexOf(monthName.toUpperCase());
   if (mIndex === -1) return 31;
   return new Date(year, mIndex + 1, 0).getDate();
@@ -42,25 +41,26 @@ const Operator5sprint = ({ area = "P.Shop & Parking area" }) => {
   const navigate = useNavigate();
   const filterRef = useRef(null);
 
-  // Current date setup taki filter menu mein aaj ka month/year default dikhe
   const currentDate = new Date();
   const currentMonthName = MONTH_NAMES[currentDate.getMonth()];
   const currentYearStr = currentDate.getFullYear().toString();
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
-  // Filter Dropdown ki initial values
   const [filterMonth, setFilterMonth] = useState(currentMonthName);
   const [filterYear, setFilterYear] = useState(currentYearStr);
   
-  // ✅ Table ki actual values (Initially Blank/Khali set ki gayi hain)
   const [appliedMonth, setAppliedMonth] = useState("");
   const [appliedYear, setAppliedYear] = useState("");
 
-  // ✅ Agar applied values khali hain, toh table by default 31 days ki banegi
+  // NAYA: Backend se aya hua data store karne ke liye
+  const [monthlyData, setMonthlyData] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+
   const daysCount = (appliedMonth && appliedYear) ? getDaysInMonth(appliedMonth, parseInt(appliedYear)) : 31;
   const daysArray = Array.from({ length: daysCount }, (_, i) => i + 1);
 
+  // Close filter dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (filterRef.current && !filterRef.current.contains(event.target)) {
@@ -71,14 +71,66 @@ const Operator5sprint = ({ area = "P.Shop & Parking area" }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // NAYA: Fetch Data Function
+  const fetchMonthlyData = async (monthName, year) => {
+    if (!monthName || !year) return;
+    
+    const monthIndex = MONTH_NAMES.indexOf(monthName.toUpperCase()) + 1;
+    setIsLoading(true);
+    
+    try {
+      // Backend API call (Agar port alag hai to 8000 change kar lena)
+      const response = await fetch(`http://192.168.0.34:8000/api/get-5s-monthly/?month=${monthIndex}&year=${year}&area=${area}`);
+      const result = await response.json();
+      
+      if (result.success) {
+        // Data ko aasan format me convert kar rahe hain grid me dikhane ke liye
+        const formattedData = {};
+        
+        result.data.forEach(report => {
+          // Date me se din (day) nikalna (e.g. "2024-04-15" -> 15)
+          const day = parseInt(report.date.split('-')[2], 10);
+          formattedData[day] = {};
+          
+          report.observations.forEach(obs => {
+            if (!formattedData[day][obs.s_category]) {
+              formattedData[day][obs.s_category] = {};
+            }
+            // Point ka text match karke uska status store karna
+            formattedData[day][obs.s_category][obs.check_point] = obs.status;
+          });
+        });
+        
+        setMonthlyData(formattedData);
+      } else {
+        console.error("Failed to fetch data", result.error);
+        setMonthlyData({});
+      }
+    } catch (error) {
+      console.error("Network error while fetching 5S data", error);
+      setMonthlyData({});
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleApplyFilter = () => {
     setAppliedMonth(filterMonth);
     setAppliedYear(filterYear);
     setIsFilterOpen(false);
+    // Jab filter apply ho, tabhi backend se data mangwayein
+    fetchMonthlyData(filterMonth, filterYear);
   };
 
+  // Jab component pehli baar load ho, to current month ka data automatic mangwa lo
+  useEffect(() => {
+    setAppliedMonth(currentMonthName);
+    setAppliedYear(currentYearStr);
+    fetchMonthlyData(currentMonthName, currentYearStr);
+  }, []);
+
   const TH = 'border border-black font-bold text-center align-middle bg-[#f5f5f5] text-black px-1 py-1 text-[10px] uppercase';
-  const TD = 'border border-black text-center align-middle bg-white px-1 py-1 text-black text-[10px] uppercase';
+  const TD = 'border border-black text-center align-middle bg-white px-1 py-1 text-[10px] uppercase';
   const InfoLabel = 'border border-black font-bold bg-[#f5f5f5] text-[10px] px-2 py-1 text-left uppercase';
   const InfoValue = 'border border-black font-semibold bg-white text-[10px] px-2 py-1 text-center uppercase';
 
@@ -90,7 +142,7 @@ const Operator5sprint = ({ area = "P.Shop & Parking area" }) => {
         <button onClick={() => navigate("/production-hub")} className="bg-[#607d8b] text-white px-4 py-2 rounded font-bold text-sm">Back</button>
 
         <div className="relative" ref={filterRef}>
-          <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="bg-[#3b5998] text-white px-4 py-2 rounded font-bold text-sm">
+          <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="bg-[#3b5998] text-white px-4 py-2 rounded font-bold text-sm flex items-center gap-2">
             <i className="bi bi-funnel-fill"></i> Filter Month/Year
           </button>
 
@@ -112,7 +164,9 @@ const Operator5sprint = ({ area = "P.Shop & Parking area" }) => {
                   ))}
                 </select>
               </div>
-              <button onClick={handleApplyFilter} className="w-full bg-[#4285F4] text-white py-2 rounded text-sm font-bold">Apply Changes</button>
+              <button onClick={handleApplyFilter} className="w-full bg-[#4285F4] text-white py-2 rounded text-sm font-bold">
+                Apply Changes
+              </button>
             </div>
           )}
         </div>
@@ -127,12 +181,18 @@ const Operator5sprint = ({ area = "P.Shop & Parking area" }) => {
         }
       `}</style>
 
+      {/* Loading Indicator for Frontend User */}
+      {isLoading && (
+        <div className="fixed top-20 right-10 bg-white border border-blue-200 text-blue-700 px-4 py-2 rounded shadow-lg z-50 animate-pulse font-bold">
+           Fetching data from database...
+        </div>
+      )}
+
       <div className="bg-white mx-auto shadow-lg w-[420mm] h-[297mm] box-border p-[4mm] print:w-full print:h-[100vh] flex flex-col">
         <table className="w-full h-full border-collapse table-fixed border border-black">
           <colgroup>
             <col className="w-[5%]" />
             <col className="w-[25%]" />
-            {/* ✅ Only daysCount columns */}
             {daysArray.map((_, i) => (
               <col key={i} style={{ width: `${70.0 / daysCount}%` }} />
             ))}
@@ -162,7 +222,6 @@ const Operator5sprint = ({ area = "P.Shop & Parking area" }) => {
               <th className={TH}>Area:</th>
               <th className="border border-black px-2 text-left text-[10px]">{area}</th>
               <th colSpan={7} className={TH}>Date ---&gt;</th>
-              {/* ✅ Applied values khali honge toh yahan sirf "Year:" aur "Month:" dikhega */}
               <th colSpan={8} className={TH}>Year: {appliedYear}</th>
               <th colSpan={daysCount - 15} className={TH}>Month: {appliedMonth}</th>
             </tr>
@@ -180,15 +239,39 @@ const Operator5sprint = ({ area = "P.Shop & Parking area" }) => {
               section.points.map((point, idx) => (
                 <tr key={`${section.s}-${idx}`}>
                   {idx === 0 && (
-                    <td rowSpan={section.points.length} className={`${TD} font-bold bg-gray-50 text-sm`}>
+                    <td rowSpan={section.points.length} className={`${TD} font-bold bg-gray-50 text-sm text-black`}>
                       {section.s}
                     </td>
                   )}
-                  <td className={`${TD} text-left px-2 font-medium`}>{point}</td>
-                  {/* ✅ Only daysCount cells */}
-                  {daysArray.map((day) => (
-                    <td key={day} className={TD}></td>
-                  ))}
+                  <td className={`${TD} text-left px-2 font-medium text-black`}>{point}</td>
+                  
+                  {/* NAYA: Yahan data fill ho raha hai backend se */}
+                  {daysArray.map((day) => {
+                    // Check karo kya is day, is S-category aur is point ka koi data hai
+                    const status = monthlyData[day]?.[section.s]?.[point];
+                    
+                    let displayIcon = "";
+                    // Default black color aur bold text set kar diya
+                    let textColor = "text-black font-black text-sm sm:text-base";
+                    
+                    if (status === 'OK') {
+                      displayIcon = "✓";
+                    } else if (status === 'NG') {
+                      displayIcon = "X"; 
+                    }
+
+                    return (
+                      <td key={day} className={`${TD} ${textColor}`}>
+                        {displayIcon}
+                      </td>
+                    );
+
+                    return (
+                      <td key={day} className={`${TD} ${textColor}`}>
+                        {displayIcon}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))
             ))}
@@ -205,7 +288,6 @@ const Operator5sprint = ({ area = "P.Shop & Parking area" }) => {
             <tr>
               <td className={TH}>Monday</td>
               <td className={TD}></td>
-              {/* ✅ Remarks colspan = daysCount */}
               <td colSpan={daysCount} rowSpan={7} className="border border-black p-2 align-top text-left font-bold text-sm">
                 REMARKS -
               </td>

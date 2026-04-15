@@ -10,7 +10,7 @@ const formatDisplay = (dateStr) => {
   return dateStr;
 };
 
-// पेज को परफेक्ट भरने के लिए 19 Rows
+
 const MIN_ROWS = 19;
 
 const MachineBreakdownSummaryPrint = ({ items = [], currentReport, onEditForm, onBack }) => {
@@ -33,7 +33,7 @@ const MachineBreakdownSummaryPrint = ({ items = [], currentReport, onEditForm, o
   return (
     <div className="min-h-screen bg-[#f5f5f5] p-4 text-black flex justify-center print:p-0 print:bg-white overflow-hidden">
       
-      {/* ── Top Bar (Buttons) - Print में यह छिप जाएगा ── */}
+      
       <div className="flex justify-end items-center gap-3 mb-3 absolute top-4 right-4 print:hidden z-10">
         <button 
           onClick={() => navigate("/maintenance-hub")} 
@@ -64,7 +64,7 @@ const MachineBreakdownSummaryPrint = ({ items = [], currentReport, onEditForm, o
         @media print {
           @page { 
             size: A4 landscape; 
-            margin: 5mm !important; /* चारों तरफ से 5mm का छोटा मार्जिन */
+            margin: 5mm !important; 
           }
           body { 
             -webkit-print-color-adjust: exact !important; 
@@ -74,7 +74,7 @@ const MachineBreakdownSummaryPrint = ({ items = [], currentReport, onEditForm, o
             padding: 0 !important;
           }
           html, body {
-            height: 100%; /* पेज की पूरी हाइट लेगा */
+            height: 100%; 
             page-break-after: avoid;
             page-break-before: avoid;
           }
@@ -82,12 +82,10 @@ const MachineBreakdownSummaryPrint = ({ items = [], currentReport, onEditForm, o
       `}</style>
 
       {/* ── Main A4 Print Container ── */}
-      {/* यहाँ 'flex flex-col' और 'h-[210mm]' जोड़ा गया है। 
-        इससे अंदर की टेबल बची हुई पूरी जगह को खींचकर (stretch करके) भर लेगी। 
-      */}
+      
       <div className="bg-white shadow-2xl font-sans w-[297mm] h-[210mm] box-border mx-auto p-[5mm] print:w-full print:h-[100vh] print:p-0 print:shadow-none print:m-0 relative mt-12 print:mt-0 flex flex-col">
         
-        {/* टेबल में 'h-full' लगा दिया गया है ताकि यह कंटेनर के बराबर खिंच जाए */}
+        
         <table className="w-full border-collapse table-fixed border border-black h-full flex-grow">
           
           <colgroup>
@@ -143,12 +141,12 @@ const MachineBreakdownSummaryPrint = ({ items = [], currentReport, onEditForm, o
           </thead>
 
           {/* ════════════ TBODY ════════════ */}
-          {/* Tbody भी बची हुई जगह को आपस में बराबर बाँट लेगा */}
+          
           <tbody>
             {Array.from({ length: TOTAL_ROWS }, (_, i) => {
               const row = historyItems[i] || null;
               
-              {/* यहाँ से h-[30px] हटा दिया गया है ताकि यह ऑटोमैटिक खिंच (Stretch) जाए */}
+              
               return (
                 <tr key={i} className="break-inside-avoid">
                   <td className={`${TD} font-medium`}>{row?.sr_no || (row ? i + 1 : '')}</td>

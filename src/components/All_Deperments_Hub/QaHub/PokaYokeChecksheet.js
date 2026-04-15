@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -44,7 +42,10 @@ const sopDatabase = {
 const PokaYokeChecksheet = () => {
     const navigate = useNavigate();
 
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    // ✅ Fixed: Sirf aaj ki date, change nahi hogi
+    const todayDate = new Date().toISOString().split('T')[0];
+    const [selectedDate] = useState(todayDate);
+
     const [selectedPlant, setSelectedPlant] = useState('');
     const [selectedMachine, setSelectedMachine] = useState('');
     const [machineList, setMachineList] = useState([]);
@@ -59,7 +60,6 @@ const PokaYokeChecksheet = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showWarning, setShowWarning] = useState(false);
 
-    // Load Machine List when Plant changes
     useEffect(() => {
         if (selectedPlant === 'Plant 1') {
             const p1 = Array.from({ length: 57 }, (_, i) => `PP-${String(i + 1).padStart(2, '0')}`);
@@ -73,7 +73,6 @@ const PokaYokeChecksheet = () => {
         setSelectedMachine('');
     }, [selectedPlant]);
 
-    // Check if selected machine is already filled
     useEffect(() => {
         if (selectedMachine && selectedPlant) {
             const isFilled = existingDataList.some(data => data.machine_no === selectedMachine);
@@ -83,7 +82,6 @@ const PokaYokeChecksheet = () => {
         }
     }, [selectedMachine, existingDataList, selectedPlant]);
 
-    // Fetch today's saved data (Simple - No check_points)
     useEffect(() => {
         const fetchTodayData = async () => {
             if (!selectedPlant) {
@@ -92,20 +90,14 @@ const PokaYokeChecksheet = () => {
             }
 
             setIsLoadingData(true);
-            console.log(`Fetching data for ${selectedPlant} on ${selectedDate}`);
 
             try {
                 const url = `http://192.168.0.34:8000/api/get_today_pokayoke_data/?plant_name=${encodeURIComponent(selectedPlant)}&date=${selectedDate}`;
-                console.log("API URL:", url);
-
                 const res = await fetch(url);
                 const result = await res.json();
 
-                console.log("API Response Received:", result);
-
                 if (result.success) {
                     setExistingDataList(result.data || []);
-                    console.log(`Loaded ${result.data?.length || 0} records`);
                 } else {
                     setExistingDataList([]);
                 }
@@ -163,7 +155,6 @@ const PokaYokeChecksheet = () => {
             return;
         }
 
-        // Check if this machine already has data for today
         const alreadyExistsForThisMachine = existingDataList.some(data => 
             data.machine_no === selectedMachine
         );
@@ -224,7 +215,6 @@ const PokaYokeChecksheet = () => {
         }
     };
 
-    // Simple Existing Data Modal (No check points)
     const ExistingDataModal = () => {
         if (!selectedExistingData) return null;
         
@@ -361,11 +351,18 @@ const PokaYokeChecksheet = () => {
                         <h2 className="font-bold text-gray-900 text-base sm:text-lg">Plant & Machine Selection</h2>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                        {/* ✅ Date — Fixed, read-only, sirf aaj ki */}
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 block">Date (तारीख)</label>
-                            <input type="date" className="w-full bg-slate-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition text-slate-700"
-                                value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
+                            <input
+                                type="date"
+                                className="w-full bg-slate-100 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 cursor-not-allowed"
+                                value={selectedDate}
+                                readOnly
+                            />
                         </div>
+
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 block">Select Plant (प्लांट चुनें)</label>
                             <select className="w-full bg-slate-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition text-slate-700"
@@ -423,7 +420,7 @@ const PokaYokeChecksheet = () => {
                     </div>
                 )}
 
-                {/* Simple History Table - No Check Points */}
+                {/* History Table */}
                 {selectedPlant && (
                     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm mb-6">
                         <div className="p-4 sm:p-6 pb-0">
@@ -479,7 +476,7 @@ const PokaYokeChecksheet = () => {
                     </div>
                 )}
 
-                {/* New Checksheet Entry - Your Original */}
+                {/* New Checksheet Entry */}
                 {selectedMachine && !showWarning && (
                     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm mb-6">
                         <div className="p-4 sm:p-6 pb-0">

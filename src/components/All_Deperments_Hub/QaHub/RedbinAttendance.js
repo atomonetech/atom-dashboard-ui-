@@ -1,13 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // 👇 useEffect import kiya
 import { useNavigate } from "react-router-dom";
 import { ClipboardList } from "lucide-react";
 import { CiCalendarDate } from "react-icons/ci";
 import { IoMdArrowBack, IoIosArrowDown } from "react-icons/io";
+import axios from "axios"; 
 
 const today = new Date();
 const formattedDate = `${String(today.getDate()).padStart(2,'0')}-${String(today.getMonth()+1).padStart(2,'0')}-${today.getFullYear()}`;
 const currentMonth = today.toLocaleString('default', { month: 'long' });
 const currentYear  = today.getFullYear();
+
+// Backend API URL
+const API_SAVE = "http://192.168.0.34:8000/api/redbin-attendance/save/";
 
 const DESIGNATIONS = [
   "Quality Engineer","Production Engineer","Operator","Supervisor",
@@ -34,6 +38,26 @@ export default function RedbinAttendance() {
   const [selectedDesignation, setSelectedDesignation] = useState("");
   const [rows, setRows] = useState([]);
   const [saveMsg, setSaveMsg] = useState("");
+
+  // 👇 ERUDA INTEGRATION: Ye useEffect page load hote hi Eruda inject kar dega
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/eruda';
+    script.async = true;
+    script.onload = () => {
+      if (window.eruda) {
+        window.eruda.init();
+      }
+    };
+    document.body.appendChild(script);
+
+    // Clean up function agar component unmount ho
+    return () => {
+      if (window.eruda) window.eruda.destroy();
+      document.body.removeChild(script);
+    };
+  }, []);
+  // 👆 Eruda Integration End
 
   const handleNameChange = (name) => {
     setSelectedName(name);
@@ -62,40 +86,39 @@ export default function RedbinAttendance() {
 
   const removeRow = (i) => setRows(p => p.filter((_, idx) => idx !== i));
 
-  const handleSave = () => {
-    const savedAt = new Date().toLocaleString();
+  const handleSave = async () => {
     const day = today.getDate();
+    const isoDate = today.toISOString().split("T")[0];
 
-    console.group("╔══════════════════════════════════════════════════");
-    console.log("║  📋 RED BIN ATTENDANCE SHEET — SAVED");
-    console.log("║  Form No: AOT/F/QC/05  |  Saved At:", savedAt);
-    console.log("║  Month:", currentMonth, currentYear);
-    console.groupEnd();
-
-    console.group("👥 ATTENDANCE DATA (" + rows.length + " employees)");
-    const tableData = rows.map((r, i) => ({
-      "SR."        : i + 1,
-      "Name"       : r.name        || "—",
-      "Designation": r.designation || "—",
-      [`${day} ${currentMonth.slice(0,3)} (Today)`]: r.attendance[day] || "—",
+    const payload = rows.map(r => ({
+      date: isoDate,
+      month: currentMonth,
+      year: currentYear,
+      employee_name: r.name,
+      designation: r.designation,
+      status: r.attendance[day] || ""
     }));
-    console.table(tableData);
-    console.groupEnd();
 
-    const presentCount = rows.filter(r => r.attendance[day] === "P").length;
-    const absentCount  = rows.filter(r => r.attendance[day] === "A").length;
-    const pendingCount = rows.filter(r => !r.attendance[day]).length;
-    console.group("📊 SUMMARY — " + day + " " + currentMonth);
-    console.log("  ✅ Present :", presentCount);
-    console.log("  ❌ Absent  :", absentCount);
-    console.log("  ⬜ Unmarked:", pendingCount);
-    console.groupEnd();
+    if (payload.length === 0) {
+      alert("No attendance data to save.");
+      return;
+    }
 
-    setSaveMsg("✓ Saved & Reset!");
-    setRows([]);
-    setSelectedName("");
-    setSelectedDesignation("");
-    setTimeout(() => setSaveMsg(""), 2500);
+    try {
+      const response = await axios.post(API_SAVE, payload);
+      
+      if (response.status === 201 || response.status === 200) {
+        alert("Attendance data has been saved successfully!"); 
+        setSaveMsg("✓ Saved to Database!");
+        setRows([]);
+        setSelectedName("");
+        setSelectedDesignation("");
+        setTimeout(() => setSaveMsg(""), 2500);
+      }
+    } catch (error) {
+      console.error("Error saving attendance to database:", error.response?.data || error.message);
+      alert("Error saving data. Please check backend connection.");
+    }
   };
 
   const handleReset = () => {
