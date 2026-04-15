@@ -8,30 +8,11 @@ const nextId = () => ++_id;
 const today = new Date();
 const formattedDate = `${String(today.getDate()).padStart(2,'0')}-${String(today.getMonth()+1).padStart(2,'0')}-${today.getFullYear()}`;
 
-const SUPPLIERS        = ["ATOMONE TECHNOLOGIES PVT.LTD","JINDAL STAINLESS LTD","TATA MOTORS LTD","MAHINDRA & MAHINDRA LTD","BOSCH INDIA LTD","BHARAT FORGE LTD"];
-const CUSTOMERS        = ["ATOMONE TECHNOLOGIES PVT.LTD","TATA MOTORS LTD","MAHINDRA & MAHINDRA LTD","MARUTI SUZUKI INDIA LTD","HONDA CARS INDIA LTD"];
-const PARTS_DATA       = [
-  { desc:"INLET PIPE / OUTLET PIPE YTAMC", partNos:["PT-YTAMC-01","PT-YTAMC-02"] },
-  { desc:"Steel Bracket Assembly",         partNos:["PT-001-A","PT-001-B","PT-001-C"] },
-  { desc:"Aluminium Sheet 2MM",            partNos:["PT-002-A","PT-002-B"] },
-  { desc:"Rubber Seal Ring",               partNos:["PT-003-A","PT-003-B","PT-003-C"] },
-  { desc:"Plastic Cover Panel",            partNos:["PT-004-A","PT-004-B"] },
-  { desc:"Copper Rod 12MM",                partNos:["PT-005-A","PT-005-B","PT-005-C"] },
-  { desc:"Bolt M10 x 50",                  partNos:["PT-006-A","PT-006-B"] },
-  { desc:"Bearing 6205 ZZ",                partNos:["PT-007-A","PT-007-B","PT-007-C"] },
-];
-const GRADES           = ["SUH409L","SS304","SS316","SS202","MS","EN8","EN24","HCHCr","SAILMA350","IS2062"];
-const MTC_OPTIONS      = ["YES","NO","N/A"];
-const GA_NGA_OPTIONS   = ["GA","NGA","N/A"];
-const INSPECTION_METHODS = ["Micrometer","VC","MEASURING TAPE","VISUAL","Vernier Caliper","Height Gauge","CMM","Weighing Scale","Hardness Tester","Thread Gauge","Go / No-Go Gauge","Surface Roughness Tester","Magnetic Particle Test","Ultrasonic Test"];
-const DEFAULT_PARAMS   = [
-  { parameter:"SHEET THICKNESS", specification:"1 ± 0.08 mm",                            inspMethod:"Micrometer" },
-  { parameter:"SHEET WIDTH",     specification:"80 ± 1 mm",                              inspMethod:"VC" },
-  { parameter:"SHEET LENGTH",    specification:"1250 ± 10 mm",                           inspMethod:"MEASURING TAPE" },
-  { parameter:"APPEARANCE",      specification:"FREE FROM DENT, BURR, SCRATCHES & RUST", inspMethod:"VISUAL" },
-];
-const PARAMETERS = ["APPEARANCE","SHEET THICKNESS","SHEET WIDTH","SHEET LENGTH","WIDTH","LENGTH","THICKNESS","DIAMETER","HEIGHT","WEIGHT","FLATNESS","STRAIGHTNESS","SURFACE FINISH","HARDNESS","THREAD","OUTER DIAMETER","INNER DIAMETER"];
-const SPECS      = ["As per drawing","FREE FROM DENT, BURR, SCRATCHES & RUST","1 ± 0.08 mm","80 ± 1 mm","1250 ± 10 mm","±0.1 MM","±0.2 MM","±0.5 MM","±1.0 MM","Min 50 HRC","Max 60 HRC","Ra 1.6","Ra 3.2"];
+// HARDCODED SUPPLIER AS REQUESTED
+const SUPPLIERS = ["ATOMONE TECHNOLOGIES PVT.LTD"];
+
+// PURANA STATIC GRADES ARRAY WAPAS ADD KIYA
+const GRADES = ["SUH409L","SS304","SS316","SS202","MS","EN8","EN24","HCHCr","SAILMA350","IS2062"];
 
 const emptyRow = () => ({ id:nextId(), parameter:"", specification:"", inspMethod:"", observations:Array(5).fill(""), remark:"" });
 
@@ -46,90 +27,46 @@ const SelectWrapper = ({ children, color="#64748b" }) => (
 
 function fldStyle(v, disabled=false) {
   return {
-    width:"100%",
-    padding:"10px 32px 10px 12px",
-    border:`1.5px solid ${v ? "#6182f7" : "#bfdbfe"}`,
-    borderRadius:10,
-    fontSize:13,
-    fontWeight: v ? 600 : 400,
-    background: disabled ? "#f1f5f9" : "#f8fafc",
-    color: v ? "#1e293b" : "#64748b",
-    outline:"none",
-    cursor: disabled ? "not-allowed" : "pointer",
-    fontFamily:"'DM Sans',sans-serif",
-    boxSizing:"border-box",
-    opacity: disabled ? 0.6 : 1,
-    WebkitAppearance:"none",
-    appearance:"none"
+    width:"100%", padding:"10px 32px 10px 12px", border:`1.5px solid ${v ? "#6182f7" : "#bfdbfe"}`,
+    borderRadius:10, fontSize:13, fontWeight: v ? 600 : 400, background: disabled ? "#f1f5f9" : "#f8fafc",
+    color: v ? "#1e293b" : "#64748b", outline:"none", cursor: disabled ? "not-allowed" : "pointer",
+    fontFamily:"'DM Sans',sans-serif", boxSizing:"border-box", opacity: disabled ? 0.6 : 1,
+    WebkitAppearance:"none", appearance:"none"
   };
 }
 
 function selStyle(v) {
   return {
-    width:"100%",
-    padding:"9px 28px 9px 8px",
-    border:`1.5px solid ${v ? "#6182f7" : "#bfdbfe"}`,
-    borderRadius:8,
-    fontSize:13,
-    background:"#f8fafc",
-    color: v ? "#1e293b" : "#64748b",
-    outline:"none",
-    cursor:"pointer",
-    fontFamily:"'DM Sans',sans-serif",
-    fontWeight: v ? 600 : 400,
-    WebkitAppearance:"none",
-    appearance:"none"
+    width:"100%", padding:"9px 28px 9px 8px", border:`1.5px solid ${v ? "#6182f7" : "#bfdbfe"}`,
+    borderRadius:8, fontSize:13, background:"#f8fafc", color: v ? "#1e293b" : "#64748b",
+    outline:"none", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontWeight: v ? 600 : 400,
+    WebkitAppearance:"none", appearance:"none"
   };
 }
 
 function methodStyle(v) {
   return {
-    width:"100%",
-    padding:"9px 28px 9px 8px",
-    border:`1.5px solid ${v ? "#6182f7" : "#c7d2fe"}`,
-    borderRadius:8,
-    fontSize:13,
-    background:"#f8fafc",
-    color: v ? "#1e293b" : "#64748b",
-    outline:"none",
-    cursor:"pointer",
-    fontFamily:"'DM Sans',sans-serif",
-    fontWeight: v ? 600 : 400,
-    WebkitAppearance:"none",
-    appearance:"none"
+    width:"100%", padding:"9px 28px 9px 8px", border:`1.5px solid ${v ? "#6182f7" : "#c7d2fe"}`,
+    borderRadius:8, fontSize:13, background:"#f8fafc", color: v ? "#1e293b" : "#64748b",
+    outline:"none", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontWeight: v ? 600 : 400,
+    WebkitAppearance:"none", appearance:"none"
   };
 }
 
 function rkStyle(v) {
   return {
-    width:"100%",
-    padding:"9px 28px 9px 8px",
-    border:"1.5px solid #bfdbfe",
-    borderRadius:8,
-    fontSize:13,
-    background: v==="OK" ? "#d1fae5" : v==="NOT OK" ? "#fee2e2" : "#f8fafc",
-    color: v==="OK" ? "#065f46" : v==="NOT OK" ? "#991b1b" : "#64748b",
-    fontWeight: v ? 700 : 400,
-    outline:"none",
-    cursor:"pointer",
-    fontFamily:"'DM Sans',sans-serif",
-    WebkitAppearance:"none",
-    appearance:"none"
+    width:"100%", padding:"9px 28px 9px 8px", border:"1.5px solid #bfdbfe", borderRadius:8,
+    fontSize:13, background: v==="OK" ? "#d1fae5" : v==="NOT OK" ? "#fee2e2" : "#f8fafc",
+    color: v==="OK" ? "#065f46" : v==="NOT OK" ? "#991b1b" : "#64748b", fontWeight: v ? 700 : 400,
+    outline:"none", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", WebkitAppearance:"none", appearance:"none"
   };
 }
 
 function obsStyle(v) {
   return {
-    width:"100%",
-    padding:"9px 4px",
-    border:`1px solid ${v ? "#3b82f6" : "#bfdbfe"}`,
-    borderRadius:7,
-    fontSize:13,
-    textAlign:"center",
-    background: v ? "#dbeafe" : "#f8fafc",
-    outline:"none",
-    fontFamily:"'DM Sans',sans-serif",
-    boxSizing:"border-box"
+    width:"100%", padding:"9px 4px", border:`1px solid ${v ? "#3b82f6" : "#bfdbfe"}`,
+    borderRadius:7, fontSize:13, textAlign:"center", background: v ? "#dbeafe" : "#f8fafc",
+    outline:"none", fontFamily:"'DM Sans',sans-serif", boxSizing:"border-box"
   };
 }
 
@@ -140,12 +77,7 @@ const TD = ({ children, style={} }) => (
   <td style={{ padding:"5px 4px", fontSize:11, textAlign:"center", color:"#1e293b", border:"1px solid #dbeafe", ...style }}>{children}</td>
 );
 
-const DEFAULT_STATE = () => ({
-  supplier:"", customer:"", partDesc:"", partNo:"",
-  date:formattedDate, grade:"", mtc:"", gaNga:"",
-  coilNo:"", invoiceNo:"", qty:"",
-  rows: DEFAULT_PARAMS.map(p => ({...emptyRow(), parameter:p.parameter, specification:p.specification, inspMethod:p.inspMethod}))
-});
+const API_BASE_URL = "http://192.168.0.34:8000/api/master-dropdown/"; 
 
 export default function IncomingMaterialInsp() {
   const [supplier,  setSupplier]  = useState("");
@@ -159,78 +91,91 @@ export default function IncomingMaterialInsp() {
   const [coilNo,    setCoilNo]    = useState("");
   const [invoiceNo, setInvoiceNo] = useState("");
   const [qty,       setQty]       = useState("");
-  const [rows,      setRows]      = useState(DEFAULT_PARAMS.map(p => ({...emptyRow(), parameter:p.parameter, specification:p.specification, inspMethod:p.inspMethod})));
+  
+  // NAYE FIELDS ADD KIYE
+  const [preparedBy, setPreparedBy] = useState("");
+  const [checkedBy,  setCheckedBy]  = useState("");
+  const [approvedBy, setApprovedBy] = useState("");
+
+  const [rows,      setRows]      = useState([emptyRow(), emptyRow(), emptyRow(), emptyRow()]);
   const [isMobile,  setIsMobile]  = useState(false);
   const [saveMsg,   setSaveMsg]   = useState("");
 
+  const [customersList, setCustomersList] = useState([]);
+  const [partDescList, setPartDescList]   = useState([]);
+  const [partNosList, setPartNosList]     = useState([]);
+  const [methodsList, setMethodsList]     = useState([]);
+  const [paramsList, setParamsList]       = useState([]);
+  const [specsList, setSpecsList]         = useState([]);
+  
+  const mtcList   = ["YES", "NO", "N/A"];
+  const gaNgaList = ["GA", "NGA", "N/A"];
+
   useEffect(() => {
+    const fetchMasterData = async () => {
+      try {
+        const [custRes, specRes, methodRes, paramRes] = await Promise.all([
+          fetch(`${API_BASE_URL}?filter=customer`),
+          fetch(`${API_BASE_URL}?filter=spec`),
+          fetch(`${API_BASE_URL}?filter=method`),
+          fetch(`${API_BASE_URL}?filter=parameter`)
+        ]);
+
+        if (custRes.ok) setCustomersList(await custRes.json());
+        if (specRes.ok) setSpecsList(await specRes.json());
+        if (methodRes.ok) setMethodsList(await methodRes.json());
+        if (paramRes.ok) setParamsList(await paramRes.json());
+      } catch (error) {
+        console.error("Error fetching master dropdowns:", error);
+      }
+    };
+
+    fetchMasterData();
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  const partNos        = partDesc ? (PARTS_DATA.find(p=>p.desc===partDesc)?.partNos||[]) : [];
-  const handlePartDesc = v => { setPartDesc(v); setPartNo(""); };
-  const updateRow      = (i,field,val) => setRows(prev => prev.map((r,idx) => idx===i ? {...r,[field]:val} : r));
-  const updateObs      = (i,j,val)     => setRows(prev => prev.map((r,idx) => { if(idx!==i) return r; const o=[...r.observations]; o[j]=val; return {...r,observations:o}; }));
-  const addRow         = () => setRows(prev => [...prev, emptyRow()]);
-  const removeRow      = i  => setRows(prev => prev.filter((_,idx)=>idx!==i));
+  useEffect(() => {
+    if (customer) {
+      fetch(`${API_BASE_URL}?filter=part&cust=${encodeURIComponent(customer)}`)
+        .then(r => r.json())
+        .then(data => setPartDescList(data))
+        .catch(err => console.error(err));
+    } else {
+      setPartDescList([]);
+    }
+  }, [customer]);
+
+  useEffect(() => {
+    if (partDesc) {
+      fetch(`${API_BASE_URL}?filter=part_no&part=${encodeURIComponent(partDesc)}`)
+        .then(r => r.json())
+        .then(data => {
+          setPartNosList(data);
+          if (data && data.length > 0) {
+            setPartNo(data[0]); 
+          }
+        })
+        .catch(err => console.error(err));
+    } else {
+      setPartNosList([]);
+      setPartNo("");
+    }
+  }, [partDesc]);
+
+  const handleCustomerChange = (v) => { setCustomer(v); setPartDesc(""); setPartNo(""); };
+  const handlePartDescChange = (v) => { setPartDesc(v); setPartNo(""); };
+
+  const updateRow = (i,field,val) => setRows(prev => prev.map((r,idx) => idx===i ? {...r,[field]:val} : r));
+  const updateObs = (i,j,val)     => setRows(prev => prev.map((r,idx) => { if(idx!==i) return r; const o=[...r.observations]; o[j]=val; return {...r,observations:o}; }));
+  const addRow    = () => setRows(prev => [...prev, emptyRow()]);
+  const removeRow = i  => setRows(prev => prev.filter((_,idx)=>idx!==i));
 
   const handleSave = () => {
-    const savedAt = new Date().toLocaleString();
-
-    console.group("╔══════════════════════════════════════════════════");
-    console.log("║  📦 INCOMING MATERIAL INSPECTION REPORT — SAVED");
-    console.log("║  Form No: AOT/F/QA/01  |  Saved At:", savedAt);
-    console.groupEnd();
-
-    console.group("📋 HEADER INFO");
-    console.table([{
-      "Supplier Name"     : supplier    || "—",
-      "Customer Name"     : customer    || "—",
-      "Part Name"         : partDesc    || "—",
-      "Part No."          : partNo      || "—",
-      "Date"              : date        || "—",
-      "Grade"             : grade       || "—",
-      "MTC"               : mtc         || "—",
-      "GA / NGA"          : gaNga       || "—",
-      "Coil No."          : coilNo      || "—",
-      "Invoice/Challan No": invoiceNo   || "—",
-      "QTY"               : qty         || "—",
-    }]);
-    console.groupEnd();
-
-    console.group("🔬 INSPECTION PARAMETERS (" + rows.length + " rows)");
-    const tableData = rows.map((r, i) => ({
-      "SR."          : i + 1,
-      "Parameter"    : r.parameter    || "—",
-      "Specification": r.specification|| "—",
-      "Insp. Method" : r.inspMethod   || "—",
-      "Obs 1"        : r.observations[0] || "—",
-      "Obs 2"        : r.observations[1] || "—",
-      "Obs 3"        : r.observations[2] || "—",
-      "Obs 4"        : r.observations[3] || "—",
-      "Obs 5"        : r.observations[4] || "—",
-      "Remark"       : r.remark       || "—",
-    }));
-    console.table(tableData);
-    console.groupEnd();
-
-    const okCount    = rows.filter(r => r.remark === "OK").length;
-    const notOkCount = rows.filter(r => r.remark === "NOT OK").length;
-    console.group("📊 SUMMARY");
-    console.log("  ✅ OK      :", okCount);
-    console.log("  ❌ NOT OK  :", notOkCount);
-    console.log("  ⬜ Pending :", rows.length - okCount - notOkCount);
-    console.groupEnd();
-
-    // Reset all fields after save
-    setSupplier(""); setCustomer(""); setPartDesc(""); setPartNo("");
-    setDate(formattedDate); setGrade(""); setMtc(""); setGaNga("");
-    setCoilNo(""); setInvoiceNo(""); setQty("");
-    setRows(DEFAULT_PARAMS.map(p => ({...emptyRow(), parameter:p.parameter, specification:p.specification, inspMethod:p.inspMethod})));
-    setSaveMsg("✓ Saved & Reset!");
+    console.log("Saved Data:", { supplier, customer, partDesc, partNo, date, grade, mtc, gaNga, coilNo, invoiceNo, qty, preparedBy, checkedBy, approvedBy, rows });
+    setSaveMsg("✓ Saved Successfully!");
     setTimeout(() => setSaveMsg(""), 2500);
   };
 
@@ -239,17 +184,19 @@ export default function IncomingMaterialInsp() {
       setSupplier(""); setCustomer(""); setPartDesc(""); setPartNo("");
       setDate(formattedDate); setGrade(""); setMtc(""); setGaNga("");
       setCoilNo(""); setInvoiceNo(""); setQty("");
-      setRows(DEFAULT_PARAMS.map(p => ({...emptyRow(), parameter:p.parameter, specification:p.specification, inspMethod:p.inspMethod})));
+      setPreparedBy(""); setCheckedBy(""); setApprovedBy("");
+      setRows([emptyRow(), emptyRow(), emptyRow(), emptyRow()]);
       setSaveMsg("");
     }
   };
 
-  const headerFilled = !!(supplier && partDesc && partNo && qty);
+  const headerFilled = !!(supplier && customer && partDesc && partNo && qty);
   const okCount      = rows.filter(r=>r.remark==="OK").length;
   const notOkCount   = rows.filter(r=>r.remark==="NOT OK").length;
 
   const grid4 = { display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap:14 };
   const grid6 = { display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(6,1fr)", gap:14 };
+  const grid3 = { display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap:20 };
 
   return (
     <div style={{ minHeight:"100vh", background:"#f8fafc", fontFamily:"'DM Sans',sans-serif", padding: isMobile?"12px 8px":"24px 12px", display:"flex", flexDirection:"column", alignItems:"center" }}>
@@ -260,30 +207,10 @@ export default function IncomingMaterialInsp() {
         select option { background: #ffffff !important; color: #1e293b !important; font-weight: 400; }
         @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
         .save-toast { animation: fadeIn 0.25s ease; }
-
-        .imi-save-btn {
-          height: 38px; padding: 0 20px; border-radius: 9px;
-          background: #1d4ed8; color: #fff; border: none;
-          font-weight: 700; font-size: 13px; cursor: pointer;
-          font-family: 'DM Sans',sans-serif;
-          display: flex; align-items: center; gap: 6px;
-          transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
-          box-shadow: 0 2px 8px rgba(29,78,216,0.22);
-          white-space: nowrap;
-        }
+        .imi-save-btn { height: 38px; padding: 0 20px; border-radius: 9px; background: #1d4ed8; color: #fff; border: none; font-weight: 700; font-size: 13px; cursor: pointer; font-family: 'DM Sans',sans-serif; display: flex; align-items: center; gap: 6px; transition: background 0.15s, transform 0.12s, box-shadow 0.15s; box-shadow: 0 2px 8px rgba(29,78,216,0.22); white-space: nowrap; }
         .imi-save-btn:hover { background: #1e40af; box-shadow: 0 4px 14px rgba(29,78,216,0.30); transform: translateY(-1px); }
         .imi-save-btn:active { background: #1e3a8a; transform: scale(0.97); box-shadow: none; }
-
-        .imi-reset-btn {
-          height: 38px; padding: 0 16px; border-radius: 9px;
-          background: #eff6ff; color: #1e3a8a;
-          border: 1.5px solid #bfdbfe;
-          font-weight: 700; font-size: 13px; cursor: pointer;
-          font-family: 'DM Sans',sans-serif;
-          display: flex; align-items: center; gap: 6px;
-          transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.12s;
-          white-space: nowrap;
-        }
+        .imi-reset-btn { height: 38px; padding: 0 16px; border-radius: 9px; background: #eff6ff; color: #1e3a8a; border: 1.5px solid #bfdbfe; font-weight: 700; font-size: 13px; cursor: pointer; font-family: 'DM Sans',sans-serif; display: flex; align-items: center; gap: 6px; transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.12s; white-space: nowrap; }
         .imi-reset-btn:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; transform: translateY(-1px); }
         .imi-reset-btn:active { transform: scale(0.97); }
       `}</style>
@@ -291,8 +218,7 @@ export default function IncomingMaterialInsp() {
 
       {/* HEADER CARD */}
       <div style={{ width:"100%", maxWidth:1100, background:"#fff", borderRadius:16, boxShadow:"0 4px 24px rgba(59,130,246,0.12)", border:"1.5px solid #bfdbfe", overflow:"hidden", marginBottom:16 }}>
-
-        {/* Top Bar */}
+        
         <div style={{ display:"flex", alignItems: isMobile?"flex-start":"center", flexDirection: isMobile?"column":"row", justifyContent:"space-between", gap:10, padding: isMobile?"14px 14px":"14px 24px", borderBottom:"1px solid #dbeafe", background:"linear-gradient(90deg,#eff6ff,#f0f7ff)" }}>
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
             <button onClick={()=>window.history.back()} style={{ width:36, height:36, borderRadius:9, background:"#dbeafe", border:"none", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, cursor:"pointer" }}>
@@ -308,12 +234,10 @@ export default function IncomingMaterialInsp() {
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:8, alignSelf: isMobile?"flex-end":"center" }}>
             <label style={{ ...LBL, marginBottom:0, fontSize:10 }}>Date:</label>
-            <input value={date} onChange={e=>setDate(e.target.value)}
-              style={{ padding:"7px 11px", border:"1.5px solid #3b82f6", borderRadius:8, fontSize:13, fontWeight:700, color:"#0f172a", background:"#f8fafc", outline:"none", fontFamily:"'DM Sans',sans-serif", width:120 }}/>
+            <input value={date} onChange={e=>setDate(e.target.value)} style={{ padding:"7px 11px", border:"1.5px solid #3b82f6", borderRadius:8, fontSize:13, fontWeight:700, color:"#0f172a", background:"#f8fafc", outline:"none", fontFamily:"'DM Sans',sans-serif", width:120 }}/>
           </div>
         </div>
 
-        {/* Row 1 */}
         <div style={{ padding: isMobile?"14px":"18px 24px 0" }}>
           <div style={grid4}>
             <div>
@@ -321,25 +245,25 @@ export default function IncomingMaterialInsp() {
               <SelectWrapper color={supplier ? "#1e293b" : "#64748b"}>
                 <select value={supplier} onChange={e=>setSupplier(e.target.value)} style={fldStyle(supplier)}>
                   <option value="">Select...</option>
-                  {SUPPLIERS.map(s=><option key={s}>{s}</option>)}
+                  {SUPPLIERS.map(s=><option key={s} value={s}>{s}</option>)}
                 </select>
               </SelectWrapper>
             </div>
             <div>
               <label style={LBL}>Customer Name :-</label>
               <SelectWrapper color={customer ? "#1e293b" : "#64748b"}>
-                <select value={customer} onChange={e=>setCustomer(e.target.value)} style={fldStyle(customer)}>
+                <select value={customer} onChange={e=>handleCustomerChange(e.target.value)} style={fldStyle(customer)}>
                   <option value="">Select...</option>
-                  {CUSTOMERS.map(c=><option key={c}>{c}</option>)}
+                  {customersList.map((c, idx)=><option key={idx} value={c}>{c}</option>)}
                 </select>
               </SelectWrapper>
             </div>
             <div>
               <label style={LBL}>Part Name :-</label>
-              <SelectWrapper color={partDesc ? "#1e293b" : "#64748b"}>
-                <select value={partDesc} onChange={e=>handlePartDesc(e.target.value)} style={fldStyle(partDesc)}>
-                  <option value="">Select...</option>
-                  {PARTS_DATA.map(p=><option key={p.desc}>{p.desc}</option>)}
+              <SelectWrapper color={!customer ? "#bfdbfe" : partDesc ? "#1e293b" : "#64748b"}>
+                <select value={partDesc} onChange={e=>handlePartDescChange(e.target.value)} disabled={!customer} style={fldStyle(partDesc,!customer)}>
+                  <option value="">{customer?"Select Part...":"Select Customer first..."}</option>
+                  {partDescList.map((p, idx)=><option key={idx} value={p}>{p}</option>)}
                 </select>
               </SelectWrapper>
             </div>
@@ -348,14 +272,13 @@ export default function IncomingMaterialInsp() {
               <SelectWrapper color={!partDesc ? "#bfdbfe" : partNo ? "#1e293b" : "#64748b"}>
                 <select value={partNo} onChange={e=>setPartNo(e.target.value)} disabled={!partDesc} style={fldStyle(partNo,!partDesc)}>
                   <option value="">{partDesc?"Select Part No...":"Select Part first..."}</option>
-                  {partNos.map(p=><option key={p}>{p}</option>)}
+                  {partNosList.map((p, idx)=><option key={idx} value={p}>{p}</option>)}
                 </select>
               </SelectWrapper>
             </div>
           </div>
         </div>
 
-        {/* Row 2 */}
         <div style={{ padding: isMobile?"10px 14px 16px":"12px 24px 20px" }}>
           <div style={grid6}>
             <div>
@@ -363,7 +286,7 @@ export default function IncomingMaterialInsp() {
               <SelectWrapper color={grade ? "#1e293b" : "#64748b"}>
                 <select value={grade} onChange={e=>setGrade(e.target.value)} style={fldStyle(grade)}>
                   <option value="">Select...</option>
-                  {GRADES.map(g=><option key={g}>{g}</option>)}
+                  {GRADES.map((g, idx)=><option key={idx} value={g}>{g}</option>)}
                 </select>
               </SelectWrapper>
             </div>
@@ -372,7 +295,7 @@ export default function IncomingMaterialInsp() {
               <SelectWrapper color={mtc ? "#1e293b" : "#64748b"}>
                 <select value={mtc} onChange={e=>setMtc(e.target.value)} style={fldStyle(mtc)}>
                   <option value="">Select...</option>
-                  {MTC_OPTIONS.map(m=><option key={m}>{m}</option>)}
+                  {mtcList.map(m=><option key={m} value={m}>{m}</option>)}
                 </select>
               </SelectWrapper>
             </div>
@@ -381,7 +304,7 @@ export default function IncomingMaterialInsp() {
               <SelectWrapper color={gaNga ? "#1e293b" : "#64748b"}>
                 <select value={gaNga} onChange={e=>setGaNga(e.target.value)} style={fldStyle(gaNga)}>
                   <option value="">Select...</option>
-                  {GA_NGA_OPTIONS.map(g=><option key={g}>{g}</option>)}
+                  {gaNgaList.map(g=><option key={g} value={g}>{g}</option>)}
                 </select>
               </SelectWrapper>
             </div>
@@ -403,15 +326,14 @@ export default function IncomingMaterialInsp() {
         {!headerFilled && (
           <div style={{ padding:"0 14px 14px" }}>
             <div style={{ background:"#eff6ff", border:"1px solid #bfdbfe", borderRadius:10, padding:"10px 14px", fontSize:12, color:"#0f172a", fontWeight:600 }}>
-              ⚠️ Please fill Supplier, Part Name, Part No & QTY to generate the inspection table
+              ⚠️ Please fill Supplier, Customer, Part Name, Part No & QTY to generate the inspection table
             </div>
           </div>
         )}
       </div>
 
-      {/* INSPECTION SECTION */}
       {headerFilled && (
-        <div style={{ width:"100%", maxWidth:1100, background:"#fff", borderRadius:16, boxShadow:"0 6px 32px rgba(59,130,246,0.13)", border:"1.5px solid #93c5fd", overflow:"hidden" }}>
+        <div style={{ width:"100%", maxWidth:1100, background:"#fff", borderRadius:16, boxShadow:"0 6px 32px rgba(59,130,246,0.13)", border:"1.5px solid #93c5fd", overflow:"hidden", marginBottom:40 }}>
           <div style={{ padding: isMobile?"14px":"20px 24px" }}>
 
             <div style={{ marginBottom:14, display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:8 }}>
@@ -423,7 +345,6 @@ export default function IncomingMaterialInsp() {
               </div>
             </div>
 
-            {/* DESKTOP */}
             {!isMobile && (
               <div style={{ overflowX:"auto", borderRadius:10, border:"2px solid #1e3a8a", marginBottom:14 }}>
                 <table style={{ width:"100%", borderCollapse:"collapse", minWidth:1000, fontSize:11 }}>
@@ -450,21 +371,24 @@ export default function IncomingMaterialInsp() {
                         <TD>
                           <SelectWrapper color={row.parameter ? "#1e293b" : "#64748b"}>
                             <select value={row.parameter} onChange={e=>updateRow(i,"parameter",e.target.value)} style={selStyle(row.parameter)}>
-                              <option value="">Select...</option>{PARAMETERS.map(p=><option key={p}>{p}</option>)}
+                              <option value="">Select...</option>
+                              {paramsList.map((p, idx)=><option key={idx} value={p}>{p}</option>)}
                             </select>
                           </SelectWrapper>
                         </TD>
                         <TD>
                           <SelectWrapper color={row.specification ? "#1e293b" : "#64748b"}>
                             <select value={row.specification} onChange={e=>updateRow(i,"specification",e.target.value)} style={selStyle(row.specification)}>
-                              <option value="">Select...</option>{SPECS.map(s=><option key={s}>{s}</option>)}
+                              <option value="">Select...</option>
+                              {specsList.map((s, idx)=><option key={idx} value={s}>{s}</option>)}
                             </select>
                           </SelectWrapper>
                         </TD>
                         <TD>
                           <SelectWrapper color={row.inspMethod ? "#1e293b" : "#64748b"}>
                             <select value={row.inspMethod} onChange={e=>updateRow(i,"inspMethod",e.target.value)} style={methodStyle(row.inspMethod)}>
-                              <option value="">Select...</option>{INSPECTION_METHODS.map(m=><option key={m}>{m}</option>)}
+                              <option value="">Select...</option>
+                              {methodsList.map((m, idx)=><option key={idx} value={m}>{m}</option>)}
                             </select>
                           </SelectWrapper>
                         </TD>
@@ -486,7 +410,6 @@ export default function IncomingMaterialInsp() {
               </div>
             )}
 
-            {/* MOBILE */}
             {isMobile && (
               <div style={{ display:"flex", flexDirection:"column", gap:12, marginBottom:14 }}>
                 {rows.map((row,i)=>(
@@ -504,7 +427,8 @@ export default function IncomingMaterialInsp() {
                           <label style={{ ...LBL, fontSize:10 }}>Parameter</label>
                           <SelectWrapper color={row.parameter ? "#1e293b" : "#64748b"}>
                             <select value={row.parameter} onChange={e=>updateRow(i,"parameter",e.target.value)} style={selStyle(row.parameter)}>
-                              <option value="">Select...</option>{PARAMETERS.map(p=><option key={p}>{p}</option>)}
+                              <option value="">Select...</option>
+                              {paramsList.map((p, idx)=><option key={idx} value={p}>{p}</option>)}
                             </select>
                           </SelectWrapper>
                         </div>
@@ -512,7 +436,8 @@ export default function IncomingMaterialInsp() {
                           <label style={{ ...LBL, fontSize:10 }}>Specification</label>
                           <SelectWrapper color={row.specification ? "#1e293b" : "#64748b"}>
                             <select value={row.specification} onChange={e=>updateRow(i,"specification",e.target.value)} style={selStyle(row.specification)}>
-                              <option value="">Select...</option>{SPECS.map(s=><option key={s}>{s}</option>)}
+                              <option value="">Select...</option>
+                              {specsList.map((s, idx)=><option key={idx} value={s}>{s}</option>)}
                             </select>
                           </SelectWrapper>
                         </div>
@@ -522,7 +447,8 @@ export default function IncomingMaterialInsp() {
                           <label style={{ ...LBL, fontSize:10 }}>Insp. Method</label>
                           <SelectWrapper color={row.inspMethod ? "#1e293b" : "#64748b"}>
                             <select value={row.inspMethod} onChange={e=>updateRow(i,"inspMethod",e.target.value)} style={methodStyle(row.inspMethod)}>
-                              <option value="">Select...</option>{INSPECTION_METHODS.map(m=><option key={m}>{m}</option>)}
+                              <option value="">Select...</option>
+                              {methodsList.map((m, idx)=><option key={idx} value={m}>{m}</option>)}
                             </select>
                           </SelectWrapper>
                         </div>
@@ -552,9 +478,27 @@ export default function IncomingMaterialInsp() {
               </div>
             )}
 
-            <button onClick={addRow} style={{ width:"100%", padding: isMobile?"12px":"9px", borderRadius:10, border:"2px dashed #93c5fd", background:"#f8fafc", color:"#2563eb", fontWeight:700, fontSize: isMobile?14:12, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", marginBottom:16 }}>
+            <button onClick={addRow} style={{ width:"100%", padding: isMobile?"12px":"9px", borderRadius:10, border:"2px dashed #93c5fd", background:"#f8fafc", color:"#2563eb", fontWeight:700, fontSize: isMobile?14:12, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", marginBottom:24 }}>
               ＋ Add Parameter Row
             </button>
+
+            {/* AUTHORIZATION SECTION (NEWLY ADDED) */}
+            <div style={{ borderTop:"1.5px solid #dbeafe", paddingTop:20, marginBottom:24 }}>
+               <div style={grid3}>
+                  <div>
+                    <label style={LBL}>Prepared By :-</label>
+                    <input value={preparedBy} onChange={e=>setPreparedBy(e.target.value)} placeholder="Name / Sign" style={fldStyle(preparedBy)}/>
+                  </div>
+                  <div>
+                    <label style={LBL}>Checked By :-</label>
+                    <input value={checkedBy} onChange={e=>setCheckedBy(e.target.value)} placeholder="Name / Sign" style={fldStyle(checkedBy)}/>
+                  </div>
+                  <div>
+                    <label style={LBL}>Approved By :-</label>
+                    <input value={approvedBy} onChange={e=>setApprovedBy(e.target.value)} placeholder="Name / Sign" style={fldStyle(approvedBy)}/>
+                  </div>
+               </div>
+            </div>
 
             {/* Bottom Save & Reset */}
             <div style={{ display:"flex", justifyContent:"flex-end", gap:10, flexWrap:"wrap", alignItems:"center" }}>

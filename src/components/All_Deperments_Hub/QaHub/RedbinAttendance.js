@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // 👇 useEffect import kiya
 import { useNavigate } from "react-router-dom";
 import { ClipboardList } from "lucide-react";
 import { CiCalendarDate } from "react-icons/ci";
@@ -11,7 +11,7 @@ const currentMonth = today.toLocaleString('default', { month: 'long' });
 const currentYear  = today.getFullYear();
 
 // Backend API URL
-const API_SAVE = "http://192.168.0.34:8000/api/red-bin-attendance/";
+const API_SAVE = "http://192.168.0.34:8000/api/redbin-attendance/save/";
 
 const DESIGNATIONS = [
   "Quality Engineer","Production Engineer","Operator","Supervisor",
@@ -38,6 +38,26 @@ export default function RedbinAttendance() {
   const [selectedDesignation, setSelectedDesignation] = useState("");
   const [rows, setRows] = useState([]);
   const [saveMsg, setSaveMsg] = useState("");
+
+  // 👇 ERUDA INTEGRATION: Ye useEffect page load hote hi Eruda inject kar dega
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/eruda';
+    script.async = true;
+    script.onload = () => {
+      if (window.eruda) {
+        window.eruda.init();
+      }
+    };
+    document.body.appendChild(script);
+
+    // Clean up function agar component unmount ho
+    return () => {
+      if (window.eruda) window.eruda.destroy();
+      document.body.removeChild(script);
+    };
+  }, []);
+  // 👆 Eruda Integration End
 
   const handleNameChange = (name) => {
     setSelectedName(name);
@@ -66,19 +86,17 @@ export default function RedbinAttendance() {
 
   const removeRow = (i) => setRows(p => p.filter((_, idx) => idx !== i));
 
-  // 👇 Data backend mein bhejne ka naya logic
   const handleSave = async () => {
     const day = today.getDate();
-    const isoDate = today.toISOString().split("T")[0]; // YYYY-MM-DD format for Django DateField
+    const isoDate = today.toISOString().split("T")[0];
 
-    // Database model se match karne ke liye payload taiyaar kar rahe hain
     const payload = rows.map(r => ({
       date: isoDate,
       month: currentMonth,
       year: currentYear,
       employee_name: r.name,
       designation: r.designation,
-      status: r.attendance[day] || "" // "P", "A", ya ""
+      status: r.attendance[day] || ""
     }));
 
     if (payload.length === 0) {
@@ -87,11 +105,10 @@ export default function RedbinAttendance() {
     }
 
     try {
-      // Backend ko data bhej rahe hain
       const response = await axios.post(API_SAVE, payload);
       
       if (response.status === 201 || response.status === 200) {
-        alert("Attendance data has been saved successfully!"); // 👇 Ye English popup add kiya hai
+        alert("Attendance data has been saved successfully!"); 
         setSaveMsg("✓ Saved to Database!");
         setRows([]);
         setSelectedName("");

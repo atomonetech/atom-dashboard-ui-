@@ -41,6 +41,7 @@ export const toolReports = [
     icon: "bi-tools",
     color: "#8b5cf6",
     bgColor: "#ede9fe",
+    isLive: true,
   },
   {
     id: "tool_stroke",
@@ -51,6 +52,7 @@ export const toolReports = [
     icon: "bi-activity",
     color: "#06b6d4",
     bgColor: "#cffafe",
+    isLive: false,
   },
   {
     id: "tool_pm_check",
@@ -61,6 +63,7 @@ export const toolReports = [
     icon: "bi-card-checklist",
     color: "#10b981",
     bgColor: "#d1fae5",
+    isLive: true,
   },
   {
     id: "tool_breakdown",
@@ -71,6 +74,7 @@ export const toolReports = [
     icon: "bi-hammer",
     color: "#ef4444",
     bgColor: "#fef2f2",
+    isLive: false,
   },
 ];
 

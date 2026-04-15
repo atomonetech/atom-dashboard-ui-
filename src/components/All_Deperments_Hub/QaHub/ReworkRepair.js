@@ -175,7 +175,7 @@ export default function ReworkRepair() {
     }
 
     try {
-      const response = await axios.post("http://192.168.0.34:8000/api/rework-report/", payload);
+      const response = await axios.post("http://192.168.0.34:8000/api/rework/save/", payload);
       if (response.data.success) {
         alert("Data has been saved successfully!"); // 🔥 YAHAN POPUP ADD KIYA HAI
         setSaveMsg("✓ Saved & Reset!");

@@ -8,7 +8,7 @@ const ScrapNoteForm = () => {
   
   const API_BASE = "http://192.168.0.34:8000/api/master-dropdown";
   // 👇 New endpoint for saving data
-  const API_SAVE = "http://192.168.0.34:8000/api/scrap-entry/";
+  const API_SAVE = "http://192.168.0.34:8000/api/scrap-note/save/";
 
   const initialState = {
     date: today,

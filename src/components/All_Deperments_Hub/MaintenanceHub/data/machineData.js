@@ -45,6 +45,7 @@ export const machineDailyReports = [
         icon: "bi-clock-history",
         color: "#3b82f6",
         bgColor: "#eff6ff",
+        isLive: true,
     },
     {
         id: "power_press_check",
@@ -55,6 +56,7 @@ export const machineDailyReports = [
         icon: "bi-speedometer2",
         color: "#f59e0b",
         bgColor: "#fef3c7",
+        isLive: true,
     },
     {
         id: "mc_breakdown",
@@ -65,6 +67,7 @@ export const machineDailyReports = [
         icon: "bi-exclamation-triangle",
         color: "#ef4444",
         bgColor: "#fef2f2",
+        isLive: true,
     },
 ];
 
@@ -100,4 +103,5 @@ export const weeklyMachineSubReports = machinesWithColors.map((m) => ({
     icon: "bi-gear-fill",
     color: m.color,
     bgColor: m.bgColor,
+    isLive: false
 }));

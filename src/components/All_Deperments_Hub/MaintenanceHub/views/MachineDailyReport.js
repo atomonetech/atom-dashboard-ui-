@@ -12,25 +12,27 @@ const MachineDailyReport = () => {
         setShowOptionsModal(true);
     };
 
-    const navigateToForm = (reportId) => {
+    // 🔥 Unified Action Handler (Fill, View, Print)
+    const handleAction = (actionType) => {
         const basePath = "/Maintenance/Machine";
-        switch (reportId) {
-            case "mc_history": navigate(`${basePath}/history-card`); break;
-            case "power_press_check": navigate(`${basePath}/power-press-checksheet`); break;
-            case "mc_breakdown": navigate(`${basePath}/breakdown-form`); break;
-            default: alert("🚧 Form logic coming soon!");
-        }
-        closeModal();
-    };
+        const reportId = selectedCard.id;
 
-    // ✅ Print navigate function
-    const navigateToPrint = (reportId) => {
-        const basePath = "/Maintenance/Machine";
-        switch (reportId) {
-            case "power_press_check": navigate(`${basePath}/power-press-checksheet/print`); break;
-            case "mc_history": navigate(`${basePath}/history-card/print`); break;
-            case "mc_breakdown": navigate(`${basePath}/breakdown-form/print`); break;
-            default: alert("🚧 Print page coming soon!");
+        if (actionType === 'fill') {
+            switch (reportId) {
+                case "mc_history": navigate(`${basePath}/history-card`); break;
+                case "power_press_check": navigate(`${basePath}/power-press-checksheet`); break;
+                case "mc_breakdown": navigate(`${basePath}/breakdown-form`); break;
+                default: alert("🚧 Form logic coming soon!");
+            }
+        } else if (actionType === 'view') {
+            navigate(`/maintenance-view/${reportId}`);
+        } else if (actionType === 'print') {
+            switch (reportId) {
+                case "power_press_check": navigate(`${basePath}/power-press-checksheet/print`); break;
+                case "mc_history": navigate(`${basePath}/history-card/print`); break;
+                case "mc_breakdown": navigate(`${basePath}/breakdown-form/print`); break;
+                default: alert("🚧 Print page coming soon!");
+            }
         }
         closeModal();
     };
@@ -52,19 +54,46 @@ const MachineDailyReport = () => {
                 .main-content-area { padding: 110px 20px 80px; max-width: 1200px; margin: 0 auto; }
                 .back-link { cursor: pointer; color: #64748b; font-weight: 700; margin-bottom: 1.5rem; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
                 .back-link:hover { color: #4f46e5; }
-                .report-card-ui { background: white; border-radius: 20px; padding: 30px 25px; text-align: left; border: 1px solid #eef2f6; transition: 0.3s; cursor: pointer; height: 100%; position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+                .report-card-ui { background: white; border-radius: 20px; padding: 30px 25px; text-align: left; border: 1px solid #eef2f6; transition: 0.3s; cursor: pointer; height: 100%; position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); overflow: hidden; }
                 .report-card-ui:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
                 .card-header-line { position: absolute; top: 0; left: 0; right: 0; height: 5px; border-radius: 20px 20px 0 0; }
                 .icon-box-wrapper { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 25px; }
-                .card-main-title { font-weight: 800; color: #0f172a; font-size: 1.25rem; margin-bottom: 20px; }
+                .card-main-title { font-weight: 800; color: #0f172a; font-size: 1.25rem; margin-bottom: 20px; padding-right: 140px; }
                 .meta-pill-ui { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 8px 14px; border-radius: 10px; border: 1px solid #f1f5f9; font-size: 0.8rem; color: #64748b; font-weight: 600; width: fit-content; margin-bottom: 8px; }
                 .meta-pill-ui b { color: #0f172a; }
-                .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 100000; }
-                .modal-content-custom { background: white; border-radius: 24px; padding: 35px; max-width: 400px; width: 90%; text-align: center; }
-                .fill-btn { width: 100%; padding: 14px; background: #4f46e5; color: white; border: none; border-radius: 12px; font-weight: 700; margin-bottom: 10px; transition: 0.2s; cursor: pointer; }
-                .fill-btn:hover { background: #4338ca; }
-                .print-btn { width: 100%; padding: 14px; background: #f8fafc; color: #64748b; border: 1px solid #eef2f6; border-radius: 12px; font-weight: 700; margin-bottom: 10px; transition: 0.2s; cursor: pointer; }
-                .print-btn:hover { background: #f1f5f9; }
+
+                /* ✅ Live / Under Development Badges - matched with QaHub */
+                .status-badge {
+                    position: absolute; top: 16px; right: 16px;
+                    padding: 5px 10px;
+                    border-radius: 4px;
+                    font-size: 0.65rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    display: flex; align-items: center; gap: 6px;
+                }
+                .status-live { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+                .status-dev  { background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; }
+
+                /* Icon Animations */
+                .pulse-icon { animation: pulseAnim 2s infinite; font-size: 0.8rem; }
+                @keyframes pulseAnim {
+                    0%   { opacity: 1; transform: scale(1); }
+                    50%  { opacity: 0.5; transform: scale(0.8); }
+                    100% { opacity: 1; transform: scale(1); }
+                }
+                .spin-icon { animation: spinAnim 4s linear infinite; font-size: 0.8rem; }
+                @keyframes spinAnim { 100% { transform: rotate(360deg); } }
+
+                /* Modal */
+                .modal-overlay-ui { position: fixed; inset: 0; background: rgba(15,23,42,0.6); display: flex; align-items: center; justify-content: center; z-index: 20000; backdrop-filter: blur(4px); animation: fadeIn 0.15s ease; }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                .modal-action-btn { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 8px; border: 1.5px solid #e2e8f0; background: #fff; cursor: pointer; text-align: left; width: 100%; transition: all 0.2s; margin-bottom: 10px; font-family: 'Inter', sans-serif; }
+                .modal-action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.09); border-color: #cbd5e1; }
+                .modal-action-btn:last-child { margin-bottom: 0; }
+                .modal-btn-icon { width: 42px; height: 42px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
             `}</style>
 
             {/* Navbar */}
@@ -89,6 +118,16 @@ const MachineDailyReport = () => {
                         <div key={report.id} className="col-md-6 col-lg-4">
                             <div className="report-card-ui" onClick={() => handleCardClick(report)}>
                                 <div className="card-header-line" style={{backgroundColor: report.color}}></div>
+
+                                {/* ✅ Live / Dev Badge */}
+                                <div className={`status-badge ${report.isLive ? 'status-live' : 'status-dev'}`}>
+                                    {report.isLive ? (
+                                        <><i className="bi bi-broadcast pulse-icon"></i> Live</>
+                                    ) : (
+                                        <><i className="bi bi-gear-wide-connected spin-icon"></i> Under Development</>
+                                    )}
+                                </div>
+
                                 <div className="icon-box-wrapper" style={{backgroundColor: `${report.color}15`, color: report.color}}>
                                     <i className={`bi ${report.icon}`}></i>
                                 </div>
@@ -104,28 +143,61 @@ const MachineDailyReport = () => {
                 </div>
             </div>
 
-            {/* Options Modal */}
+            {/* Modal */}
             {showOptionsModal && selectedCard && (
-                <div className="modal-overlay" onClick={closeModal}>
-                    <div className="modal-content-custom" onClick={(e) => e.stopPropagation()}>
-                        <div style={{width:'50px', height:'50px', borderRadius:'12px', background:`${selectedCard.color}15`, color:selectedCard.color, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'1.5rem'}}>
-                            <i className={`bi ${selectedCard.icon}`}></i>
+                <div className="modal-overlay-ui" onClick={closeModal}>
+                    <div style={{background:'#fff', borderRadius:'12px', padding:'2rem', width:'100%', maxWidth:'400px', position:'relative', animation: 'slideUp 0.2s ease'}} onClick={(e) => e.stopPropagation()}>
+                        
+                        <button style={{position:'absolute', top:'14px', right:'16px', background:'#f1f5f9', border:'none', borderRadius:'4px', width:'32px', height:'32px', cursor:'pointer'}} onClick={closeModal}>
+                            <i className="bi bi-x-lg text-muted"></i>
+                        </button>
+
+                        <div style={{display:'flex', alignItems:'center', gap:14, marginBottom:16}}>
+                            <div style={{width:46, height:46, borderRadius:8, background:`${selectedCard.color}15`, color:selectedCard.color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.4rem'}}>
+                                <i className={`bi ${selectedCard.icon}`}></i>
+                            </div>
+                            <div style={{textAlign: 'left'}}>
+                                <p style={{fontWeight:800, fontSize:'0.95rem', margin:0, color:'#0f172a'}}>{selectedCard.title}</p>
+                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Form: {selectedCard.formNo || "N/A"}</p>
+                            </div>
                         </div>
-                        <h4 className="fw-bold mb-4" style={{color: '#0f172a'}}>{selectedCard.title}</h4>
 
-                        {/* Fill Button */}
-                        <button className="fill-btn shadow-sm" onClick={() => navigateToForm(selectedCard.id)}>
-                            <i className="bi bi-pencil-square me-2"></i> Fill New Entry
+                        <div style={{borderTop:'1px solid #f1f5f9', margin:'16px 0'}}></div>
+                        <p style={{fontSize:'0.78rem', color:'#94a3b8', fontWeight:600, marginBottom:14, textTransform:'uppercase', letterSpacing:'0.06em', textAlign: 'left'}}>What would you like to do?</p>
+
+                        <button className="modal-action-btn" onClick={() => handleAction('fill')}>
+                            <div className="modal-btn-icon" style={{background:'#eff6ff', color:'#3b82f6'}}>
+                                <i className="bi bi-pencil-square"></i>
+                            </div>
+                            <div>
+                                <p style={{fontWeight:700, fontSize:'0.9rem', margin:0, color:'#0f172a'}}>Fill Data</p>
+                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Form mein naya data bharein</p>
+                            </div>
+                            <i className="bi bi-chevron-right ms-auto text-muted"></i>
                         </button>
 
-                        {/* ✅ Print Button — ab navigate karega */}
-                        <button className="print-btn" onClick={() => navigateToPrint(selectedCard.id)}>
-                            <i className="bi bi-printer me-2"></i> Print Summary
+                        <button className="modal-action-btn" onClick={() => handleAction('view')}>
+                            <div className="modal-btn-icon" style={{background:'#fef2f2', color:'#ef4444'}}>
+                                <i className="bi bi-eye"></i>
+                            </div>
+                            <div>
+                                <p style={{fontWeight:700, fontSize:'0.9rem', margin:0, color:'#0f172a'}}>View Data</p>
+                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Database ke saved records dekhen</p>
+                            </div>
+                            <i className="bi bi-chevron-right ms-auto text-muted"></i>
                         </button>
 
-                        <button className="btn btn-light w-100 py-3 rounded-3 text-muted fw-bold" onClick={closeModal}>
-                            Cancel
+                        <button className="modal-action-btn" onClick={() => handleAction('print')}>
+                            <div className="modal-btn-icon" style={{background:'#f0fdf4', color:'#10b981'}}>
+                                <i className="bi bi-printer"></i>
+                            </div>
+                            <div>
+                                <p style={{fontWeight:700, fontSize:'0.9rem', margin:0, color:'#0f172a'}}>Print Data</p>
+                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Saved records print karein</p>
+                            </div>
+                            <i className="bi bi-chevron-right ms-auto text-muted"></i>
                         </button>
+
                     </div>
                 </div>
             )}

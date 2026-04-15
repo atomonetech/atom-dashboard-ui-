@@ -13,8 +13,14 @@ const ToolPrevMaintenanceForm = () => {
   const [selectedCheckpoint, setSelectedCheckpoint] = useState('');
   const [formData, setFormData] = useState({});
   const [currentDate, setCurrentDate] = useState('');
-  const [showSuccess, setShowSuccess] = useState(false);
+  
+  // API and UI State
   const [isSaving, setIsSaving] = useState(false);
+  const [availablePartNames, setAvailablePartNames] = useState([]);
+  const [isLoadingParts, setIsLoadingParts] = useState(false);
+
+  // Constants
+  const BASE_API_URL = 'http://192.168.0.34:8000/api';
 
   // Simplified data: List of items only
   const itemsList = [
@@ -61,7 +67,44 @@ const ToolPrevMaintenanceForm = () => {
   useEffect(() => {
     const today = new Date();
     setCurrentDate(today.toLocaleDateString('en-GB').replace(/\//g, '.'));
+    fetchAllParts();
   }, []);
+
+  const fetchAllParts = async () => {
+    setIsLoadingParts(true);
+    try {
+      const response = await fetch(`${BASE_API_URL}/master-dropdown/?filter=all_parts`);
+      if (response.ok) {
+        const data = await response.json();
+        const uniqueParts = [...new Set(data.map(item => item[0]))].filter(Boolean);
+        setAvailablePartNames(uniqueParts);
+      }
+    } catch (error) {
+      console.error("Failed to fetch parts:", error);
+    } finally {
+      setIsLoadingParts(false);
+    }
+  };
+
+  const handlePartNameSelect = async (e) => {
+    const selectedPart = e.target.value;
+    setPartName(selectedPart);
+    setPartNo(''); 
+
+    if (selectedPart) {
+      try {
+        const response = await fetch(`${BASE_API_URL}/master-dropdown/?filter=part_no&part=${encodeURIComponent(selectedPart)}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.length > 0) {
+            setPartNo(data[0]); 
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch part number:", error);
+      }
+    }
+  };
 
   const handleInputChange = (field, value) => {
     const key = `${selectedItem}-${selectedCheckpoint}`;
@@ -82,93 +125,58 @@ const ToolPrevMaintenanceForm = () => {
     setFormData({});
   };
 
-  const saveToDatabase = async (data) => {
-    // This function simulates saving to a database
-    // Replace this with your actual API endpoint
-    try {
-      // Example API call - uncomment and modify according to your backend
-      // const response = await fetch('your-api-endpoint/maintenance-records', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(data),
-      // });
-      
-      // if (!response.ok) {
-      //   throw new Error('Failed to save data');
-      // }
-      
-      // For now, save to localStorage as backup
-      const savedRecords = JSON.parse(localStorage.getItem('maintenanceRecords') || '[]');
-      savedRecords.push({ ...data, id: Date.now() });
-      localStorage.setItem('maintenanceRecords', JSON.stringify(savedRecords));
-      
-      console.log('Data saved to database:', data);
-      return { success: true };
-    } catch (error) {
-      console.error('Error saving to database:', error);
-      throw error;
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate required fields
+    // 🔥 NATIVE ALERT FOR VALIDATION 🔥
     if (!toolName || !maintenancePerson) {
-      alert('Please fill in all required fields: Tool Name and Maintenance Person');
+      window.alert('⚠️ Attention! Please fill in all required fields: Tool Name and Maintenance Person.');
       return;
     }
 
     setIsSaving(true);
     
-    // Prepare data for saving
-    const maintenanceData = {
+    const payload = {
       toolName,
       partName,
       partNo,
       operationNo,
       maintenancePerson,
-      selectedItem,
-      selectedCheckpoint,
       formData,
-      currentDate,
-      timestamp: new Date().toISOString()
     };
     
     try {
-      // Save to database
-      await saveToDatabase(maintenanceData);
+      const response = await fetch(`${BASE_API_URL}/tool-pm/save/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
       
-      // Show success message
-      setShowSuccess(true);
-      
-      // Reset all form fields after successful save
-      resetForm();
-      
-      // Auto-hide success message after 3 seconds
-      setTimeout(() => setShowSuccess(false), 3000);
+      const result = await response.json();
+
+      if(result.success) {
+        // 🔥 NATIVE ALERT FOR SUCCESS 🔥
+        window.alert('✅ Success! Tool Preventive Maintenance record saved successfully in the database.');
+        resetForm();
+      } else {
+        window.alert("❌ Error! Failed to save data: " + result.error);
+      }
       
     } catch (error) {
-      alert('Failed to save data. Please try again.');
+      window.alert('❌ Network Error! Could not connect to the server. Please try again.');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleBack = () => {
-    // Navigate back to maintenance hub
-    // If using react-router, use: navigate('/maintenance-hub');
-    // For now, we'll use window.history
-    window.history.back();
+    window.location.href = '/Maintenance/Tool/daily';
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-2 md:p-6 flex justify-center">
       <div className="w-full max-w-7xl">
         
-        {/* Header with Back Button */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
           <button
             onClick={handleBack}
@@ -180,9 +188,7 @@ const ToolPrevMaintenanceForm = () => {
           </button>
         </div>
 
-        {/* Main Form Card */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
-          {/* Form Header with Date on Right */}
           <div className="p-5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3" style={{ backgroundColor: '#10b981', color: 'white' }}>
             <div className="flex items-center gap-2">
               <Wrench size={22} />
@@ -196,7 +202,6 @@ const ToolPrevMaintenanceForm = () => {
 
           <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-6">
             
-            {/* Metadata Section - Responsive Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Tool Name *</label>
@@ -205,28 +210,32 @@ const ToolPrevMaintenanceForm = () => {
                   value={toolName} 
                   onChange={(e) => setToolName(e.target.value)} 
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-slate-700" 
-                  placeholder="Enter Tool Name (e.g. BLANKING)" 
+                  placeholder="Enter Tool Name" 
                   required 
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Part Name</label>
-                <input 
-                  type="text" 
+                <select 
                   value={partName} 
-                  onChange={(e) => setPartName(e.target.value)} 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-slate-700" 
-                  placeholder="Part name" 
-                />
+                  onChange={handlePartNameSelect} 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500 bg-white" 
+                  disabled={isLoadingParts}
+                >
+                  <option value="">{isLoadingParts ? 'Loading...' : '-- Select Part --'}</option>
+                  {availablePartNames.map((name, idx) => (
+                    <option key={idx} value={name}>{name}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-600 mb-1">Part No.</label>
                 <input 
                   type="text" 
                   value={partNo} 
-                  onChange={(e) => setPartNo(e.target.value)} 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-slate-700" 
-                  placeholder="Part no." 
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-slate-500 bg-gray-100 cursor-not-allowed outline-none" 
+                  placeholder="Auto-fills on selection" 
                 />
               </div>
               <div>
@@ -235,7 +244,7 @@ const ToolPrevMaintenanceForm = () => {
                   type="text" 
                   value={operationNo} 
                   onChange={(e) => setOperationNo(e.target.value)} 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-slate-700" 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500" 
                   placeholder="Op no." 
                 />
               </div>
@@ -245,14 +254,13 @@ const ToolPrevMaintenanceForm = () => {
                   type="text" 
                   value={maintenancePerson} 
                   onChange={(e) => setMaintenancePerson(e.target.value)} 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-slate-700" 
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500" 
                   placeholder="Name" 
                   required 
                 />
               </div>
             </div>
 
-            {/* Item and Checkpoint Selection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">1. Select Item</label>
@@ -263,7 +271,7 @@ const ToolPrevMaintenanceForm = () => {
                     const item = itemsList.find(i => i.item === e.target.value);
                     setSelectedCheckpoint(item?.checkpoints[0] || '');
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white cursor-pointer text-slate-700"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-emerald-500 text-slate-700"
                 >
                   <option value="">-- Choose Item --</option>
                   {itemsList.map((obj, idx) => (
@@ -278,7 +286,7 @@ const ToolPrevMaintenanceForm = () => {
                   value={selectedCheckpoint} 
                   onChange={(e) => setSelectedCheckpoint(e.target.value)} 
                   disabled={!selectedItem}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white disabled:bg-gray-100 cursor-pointer text-slate-700"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white disabled:bg-gray-100 outline-none focus:ring-2 focus:ring-emerald-500 text-slate-700"
                 >
                   <option value="">-- Choose Checkpoint --</option>
                   {currentItemData?.checkpoints.map((cp, idx) => (
@@ -288,16 +296,15 @@ const ToolPrevMaintenanceForm = () => {
               </div>
             </div>
 
-            {/* Entry Table */}
             {selectedItem && selectedCheckpoint && (
               <div className="mt-4 border border-gray-200 rounded-lg overflow-x-auto">
                 <table className="w-full border-collapse min-w-[700px]">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="border-b p-3 text-left text-xs font-bold text-gray-600 uppercase">Specs / Method</th>
-                      <th className="border-b p-3 text-left text-xs font-bold text-gray-600 uppercase w-40">Before Maint.</th>
-                      <th className="border-b p-3 text-left text-xs font-bold text-gray-600 uppercase w-40">After Maint.</th>
-                      <th className="border-b p-3 text-left text-xs font-bold text-gray-600 uppercase">Remarks</th>
+                      <th className="border-b p-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Specs / Method</th>
+                      <th className="border-b p-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-40">Before Maint.</th>
+                      <th className="border-b p-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider w-40">After Maint.</th>
+                      <th className="border-b p-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Remarks</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -340,24 +347,21 @@ const ToolPrevMaintenanceForm = () => {
               </div>
             )}
 
-            {/* Buttons Section */}
             <div className="flex justify-end pt-4 border-t">
               <div className="flex gap-3">
-                {/* Reset Button */}
                 <button 
                   type="button"
-                  onClick={resetForm}
-                  className="px-6 py-3 text-gray-700 bg-gray-100 rounded-xl font-bold text-sm transition-all shadow-md hover:bg-gray-200 flex items-center justify-center gap-2"
+                  onClick={() => { if(window.confirm('Reset form?')) resetForm(); }}
+                  className="px-6 py-3 text-gray-700 bg-gray-100 rounded-lg font-bold text-sm transition-all shadow-md hover:bg-gray-200 flex items-center justify-center gap-2"
                 >
                   <RotateCcw size={18} />
                   Reset
                 </button>
 
-                {/* Submit Button */}
                 <button 
                   type="submit" 
                   disabled={isSaving}
-                  className="px-8 py-3 text-white rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" 
+                  className="px-8 py-3 text-white rounded-lg font-bold text-sm transition-all shadow-md flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" 
                   style={{ backgroundColor: '#10b981' }}
                 >
                   <Save size={18} />
@@ -367,14 +371,6 @@ const ToolPrevMaintenanceForm = () => {
             </div>
           </form>
         </div>
-
-        {/* Toast Notification */}
-        {showSuccess && (
-          <div className="fixed bottom-6 right-6 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-2 animate-bounce z-50">
-            <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
-            Record Saved Successfully! Form has been reset.
-          </div>
-        )}
       </div>
     </div>
   );

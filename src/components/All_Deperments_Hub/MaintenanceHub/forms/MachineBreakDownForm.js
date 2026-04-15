@@ -126,48 +126,53 @@ const MachineBreakDownForm = () => {
     setShowResetConfirm(false);
   };
 
-  const handleSubmit = (e) => {
+  // --- API INTEGRATION ADDED HERE ---
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Create submission data with timestamp
+    // Create submission data
     const submissionData = {
       ...formData,
-      submissionDate: new Date().toISOString(),
-      submissionDateTime: new Date().toLocaleString(),
-      language: language,
-      formType: 'Machine Breakdown Intimation',
-      status: formData.status
+      language: language
     };
     
-    // Log to console
-    console.log('========== FORM SUBMISSION ==========');
-    console.log('Submission Time:', new Date().toLocaleString());
-    console.log('Language:', language);
-    console.log('Form Data:', submissionData);
-    console.log('=====================================');
-    
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Backend ko API request bhejna
+      const response = await fetch('http://192.168.0.34:8000/api/machine-breakdown/save/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submissionData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setShowSuccess(true);
+        alert("✅ Success: Breakdown report has been submitted successfully!");
+        
+        // Reset form after successful submission
+        resetForm();
+        
+        // Hide success message after 3 seconds
+        setTimeout(() => {
+          setShowSuccess(false);
+        }, 3000);
+      } else {
+        alert("❌ Error: " + (result.error || "Failed to submit form"));
+      }
+    } catch (error) {
+      console.error("Submission Error:", error);
+      alert("❌ Network Error: Could not connect to the server.");
+    } finally {
       setIsSubmitting(false);
-      setShowSuccess(true);
-      
-      // Reset form after successful submission
-      resetForm();
-      
-      // Hide success message after 3 seconds
-      setTimeout(() => {
-        setShowSuccess(false);
-      }, 3000);
-    }, 1000);
+    }
   };
 
   const handleBack = () => {
-    console.log('Navigating back to Maintenance Hub');
-    // Navigate to maintenance hub - using window.location.href for direct navigation
-    // You can replace this with your routing logic (React Router, Next.js, etc.)
     window.location.href = '/Maintenance/Machine/daily';
-    // If using React Router, you would use: navigate('/maintenance-hub');
   };
 
   const toggleLanguage = () => {
@@ -529,7 +534,7 @@ const MachineBreakDownForm = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl hover:from-[#dc2626] hover:to-[#b91c1c] transition-all font-medium text-base sm:text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center order-1 sm:order-2 cursor-pointer"
+                className={`flex-1 bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl transition-all font-medium text-base sm:text-lg shadow-lg flex items-center justify-center order-1 sm:order-2 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:from-[#dc2626] hover:to-[#b91c1c] hover:shadow-xl cursor-pointer'}`}
               >
                 {isSubmitting ? (
                   <>

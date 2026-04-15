@@ -8,7 +8,7 @@ const RedBinForm = () => {
 
   // Backend URLs
   const API_DROPDOWN = "http://192.168.0.34:8000/api/master-dropdown";
-  const API_SUBMIT = "http://192.168.0.34:8000/api/red-bin-analysis/";
+  const API_SUBMIT = "http://192.168.0.34:8000/api/redbin-analysis/save/";
 
   const [formData, setFormData] = useState({
     entry_date: today, // Model field name se match kiya

@@ -21,6 +21,9 @@ const MachineHistoryCard = () => {
     ]);
 
     const [signatures, setSignatures] = useState({ preparedBy: '', approvedBy: '' });
+    
+    // NAYA STATE: Submit button ko disable karne aur loading dikhane ke liye
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // --- HANDLERS ---
     const handleDetailChange = (e) => {
@@ -39,42 +42,60 @@ const MachineHistoryCard = () => {
         }]);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        
         if (!machineDetails.machineName || !machineDetails.machineNo) {
             alert("⚠️ Please fill in the Machine Name and Machine No.");
             return;
         }
+
+        setIsSubmitting(true);
         
         const submissionData = {
             machineDetails,
             historyData,
-            signatures,
-            submittedAt: new Date().toISOString()
+            signatures
         };
         
-        console.log("=== Machine History Card Submission ===");
-        console.log("Machine Details:", machineDetails);
-        console.log("History Records:", historyData);
-        console.log("Signatures:", signatures);
-        console.log("Submission Time:", new Date().toLocaleString());
-        console.log("=== End of Submission ===");
-        
-        alert("✅ Machine History Card successfully updated!");
-        // Reset form after submission
-        setMachineDetails({
-            machineName: '',
-            machineNo: '',
-            machineSpecs: '',
-            location: ''
-        });
-        setHistoryData([
-            { id: 1, date: '', problem: '', actionTaken: '', update4M: '', signature: '', remarks: '' },
-            { id: 2, date: '', problem: '', actionTaken: '', update4M: '', signature: '', remarks: '' },
-            { id: 3, date: '', problem: '', actionTaken: '', update4M: '', signature: '', remarks: '' },
-            { id: 4, date: '', problem: '', actionTaken: '', update4M: '', signature: '', remarks: '' }
-        ]);
-        setSignatures({ preparedBy: '', approvedBy: '' });
+        try {
+            // BACKEND API CALL
+            const response = await fetch('http://192.168.0.34:8000/api/machine-history/save/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(submissionData),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert("✅ Success: Machine History Card successfully updated in database!");
+                
+                // Reset form after successful submission
+                setMachineDetails({
+                    machineName: '',
+                    machineNo: '',
+                    machineSpecs: '',
+                    location: ''
+                });
+                setHistoryData([
+                    { id: 1, date: '', problem: '', actionTaken: '', update4M: '', signature: '', remarks: '' },
+                    { id: 2, date: '', problem: '', actionTaken: '', update4M: '', signature: '', remarks: '' },
+                    { id: 3, date: '', problem: '', actionTaken: '', update4M: '', signature: '', remarks: '' },
+                    { id: 4, date: '', problem: '', actionTaken: '', update4M: '', signature: '', remarks: '' }
+                ]);
+                setSignatures({ preparedBy: '', approvedBy: '' });
+            } else {
+                alert("❌ Error: " + (result.error || "Failed to save data"));
+            }
+        } catch (error) {
+            console.error("Submission Error:", error);
+            alert("❌ Network Error: Could not connect to the server.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -328,13 +349,26 @@ const MachineHistoryCard = () => {
                         </div>
                         <div className="flex flex-col-reverse sm:flex-row gap-3 justify-end">
                             <button 
-                                className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
+                                className={`px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide shadow-md flex items-center justify-center gap-2 w-full sm:w-auto ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:from-blue-600 hover:to-blue-700 hover:shadow-lg transition-all'}`}
                                 onClick={handleSubmit}
+                                disabled={isSubmitting}
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                                </svg>
-                                Save History Card
+                                {isSubmitting ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                        </svg>
+                                        Save History Card
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
