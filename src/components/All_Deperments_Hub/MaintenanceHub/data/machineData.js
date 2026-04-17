@@ -103,5 +103,50 @@ export const weeklyMachineSubReports = machinesWithColors.map((m) => ({
     icon: "bi-gear-fill",
     color: m.color,
     bgColor: m.bgColor,
+<<<<<<< Updated upstream
     isLive: false
 }));
+=======
+}));
+
+// 🔥 4. Machine Monthly Reports
+export const machineMonthlyReports = [
+    {
+        id: "mc_breakdown_summary",
+        title: "M/c Breakdown Summary Sheet",
+        formNo: "AOT-F-MM-05",
+        frequency: "Monthly",
+        responsibility: "Maintenance Manager",
+        icon: "bi-file-earmark-bar-graph",
+        color: "#8b5cf6", // Purple
+        bgColor: "#f5f3ff",
+    },
+    {
+        id: "why_why_analysis",
+        title: "Why Why Analysis",
+        formNo: "AOT-F-MM-06",
+        frequency: "Monthly / Breakdown",
+        responsibility: "Maint Engineer / HOD",
+        icon: "bi-question-diamond",
+        color: "#f43f5e", // Rose
+        bgColor: "#fff1f2",
+    },
+    {
+        id: "critical_spares",
+        title: "Critical Spares Part List",
+        formNo: "AOT-F-MM-07",
+        frequency: "Monthly Review",
+        responsibility: "Store / Maintenance",
+        icon: "bi-tools",
+        color: "#0ea5e9", // Sky Blue
+        bgColor: "#f0f9ff",
+    },
+];
+
+export const machineYearlyReports = [
+    { id: "master_list_mc", title: "Master List of Machine", formNo: "AOT-F-MM-08", frequency: "Yearly", responsibility: "Maint. Head", icon: "bi-list-check", color: "#6366f1", bgColor: "#eef2ff" },
+    { id: "annual_preventive_plan", title: "Annual Preventive Maintenance Plan", formNo: "AOT-F-MM-09", frequency: "Annual", responsibility: "Maint. Engineer", icon: "bi-calendar3", color: "#10b981", bgColor: "#ecfdf5" },
+    { id: "mc_overhauling_list", title: "List of Machine for Overhauling", formNo: "AOT-F-MM-10", frequency: "Yearly", responsibility: "HOD Maint.", icon: "bi-wrench-adjustable-circle", color: "#f59e0b", bgColor: "#fffbeb" },
+    { id: "annual_overhauling_plan", title: "Annual Overhauling Plan", formNo: "AOT-F-MM-11", frequency: "Annual", responsibility: "Maint. Head", icon: "bi-clipboard-data", color: "#ef4444", bgColor: "#fef2f2" },
+];
+>>>>>>> Stashed changes

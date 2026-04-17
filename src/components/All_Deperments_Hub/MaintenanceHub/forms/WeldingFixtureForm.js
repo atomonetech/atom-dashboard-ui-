@@ -18,13 +18,16 @@ const WeldingFixtureForm = () => {
     return (
         <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', padding: '40px 20px' }}>
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
             
             <div className="container shadow-lg bg-white rounded-4 border-0 p-0 overflow-hidden" style={{ maxWidth: '950px' }}>
                 {/* Professional Header */}
                 <div className="p-4 border-bottom bg-white d-flex justify-content-between align-items-center">
-                    <div>
-                        <h2 className="fw-bold mb-0" style={{ color: '#0f172a', letterSpacing: '-1px' }}>AtomOne</h2>
-                        <p className="text-secondary small mb-0 fw-bold">WELDING FIXTURE MAINTENANCE</p>
+                    <div style={{ cursor: 'pointer' }} onClick={() => navigate(-1)}>
+                        <h2 className="fw-bold mb-0" style={{ color: '#0f172a', letterSpacing: '-1px' }}>
+                            <i className="bi bi-arrow-left me-2 text-primary"></i>AtomOne
+                        </h2>
+                        <p className="text-secondary small mb-0 fw-bold ms-4">WELDING FIXTURE MAINTENANCE</p>
                     </div>
                     <div className="text-end">
                         <h4 className="fw-bold mb-0 text-slate-700" style={{ color: '#334155' }}>Preventive Maintenance Checklist</h4>
@@ -78,7 +81,7 @@ const WeldingFixtureForm = () => {
                         ))}
                     </div>
 
-                    {/* 🔥 STEP 2 LINK (Point 9) */}
+                    {/* 🔥 STEP 2 LINK (Point 9) - Redirection Fixed */}
                     <div className="mt-5 p-4 rounded-4 border-2 d-flex align-items-center justify-content-between shadow-sm" 
                          style={{ borderStyle: 'dashed', borderColor: '#4f46e5', backgroundColor: '#f5f3ff' }}>
                         <div>
@@ -88,7 +91,8 @@ const WeldingFixtureForm = () => {
                         <button 
                             className="btn btn-indigo shadow px-4 py-2 fw-bold text-white" 
                             style={{ backgroundColor: '#4f46e5', borderRadius: '10px', border: 'none' }}
-                            onClick={() => navigate('/Bush-Locating-Pin-Chart')}
+                            // 🔥 Navigating to the route you set in ToolRoutes
+                            onClick={() => navigate('/Maintenance/Tool/bush-check-point')}
                         >
                             Open Technical Chart <i className="bi bi-arrow-right ms-2"></i>
                         </button>

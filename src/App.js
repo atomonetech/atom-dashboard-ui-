@@ -352,29 +352,19 @@ import RawMaterialForm from './components/qms/RawMaterialForm';
 
 // ========== QaHub IMPORTS ==========
 import QaHub from './components/All_Deperments_Hub/QaHub/QaHub';
-import IncomingMaterialInsp from './components/All_Deperments_Hub/QaHub/IncomingMaterialInsp';
-import RedbinAttendance from './components/All_Deperments_Hub/QaHub/RedbinAttendance';
-import RedBinForm from './components/All_Deperments_Hub/QaHub/RedBinForm';
-import ScrapNote from "./components/All_Deperments_Hub/QaHub/ScrapNoteForm";
-import GoodReceiptFrom from './components/All_Deperments_Hub/QaHub/GoodReceiptFrom';
-import PokaYokeChecksheet from './components/All_Deperments_Hub/QaHub/PokaYokeChecksheet';
-import ReworkRepair from './components/All_Deperments_Hub/QaHub/ReworkRepair';
-import InspectionForm from './components/All_Deperments_Hub/QaHub/InspectionForm';
-import PdiReportForm from './components/All_Deperments_Hub/QaHub/PdiReportForm';
-import SampleInspectionReport from './components/All_Deperments_Hub/QaHub/SampleInspectionReport';
-import DeviationApprovalForm from './components/All_Deperments_Hub/QaHub/DeviationApprovalForm';
+// import IncomingMaterialInsp from './components/All_Deperments_Hub/QaHub/IncomingMaterialInsp';
+// import RedbinAttendance from './components/All_Deperments_Hub/QaHub/RedbinAttendance';
+// import RedBinForm from './components/All_Deperments_Hub/QaHub/RedBinForm';
+// import ScrapNote from "./components/All_Deperments_Hub/QaHub/ScrapNoteForm";
+// import GoodReceiptFrom from './components/All_Deperments_Hub/QaHub/GoodReceiptFrom';
+// import PokaYokeChecksheet from './components/All_Deperments_Hub/QaHub/PokaYokeChecksheet';
+// import ReworkRepair from './components/All_Deperments_Hub/QaHub/ReworkRepair';
+// import InspectionForm from './components/All_Deperments_Hub/QaHub/InspectionForm';
+// import PdiReportForm from './components/All_Deperments_Hub/QaHub/PdiReportForm';
+// import SampleInspectionReport from './components/All_Deperments_Hub/QaHub/SampleInspectionReport';
+// import DeviationApprovalForm from './components/All_Deperments_Hub/QaHub/DeviationApprovalForm';
 
-// Print Components (QA)
-import RedBinprint from './components/All_Deperments_Hub/QaHub/RedBinprint';
-import RedBinAttendanceprint from './components/All_Deperments_Hub/QaHub/RedBinAttendanceprint';
-import Scrapnoteprint from './components/All_Deperments_Hub/QaHub/Scrapnoteprint';
-import Reworkrepairprint from './components/All_Deperments_Hub/QaHub/Reworkrepairprint';
-import PdiReportprint from './components/All_Deperments_Hub/QaHub/PdiReportprint';
-import PokaYokeChecksheetprint from './components/All_Deperments_Hub/QaHub/PokaYokeChecksheetprint';
-import DeviationApprovalprint from './components/All_Deperments_Hub/QaHub/DeviationApprovalprint';
-import Inspectionprint from './components/All_Deperments_Hub/QaHub/Inspectionprint';
-import IncomingMaterialprint from './components/All_Deperments_Hub/QaHub/IncomingMaterialprint';
-import SampleInspectionprint from './components/All_Deperments_Hub/QaHub/SampleInspectionprint';
+import { productionRoutes } from './routes/productionRoutes';
 
 // ========== ProductionHub IMPORTS ==========
 import ProductionHub from './components/All_Deperments_Hub/ProductionHub/ProductionHub';
@@ -410,6 +400,7 @@ import MachineDailyReport from './components/All_Deperments_Hub/MaintenanceHub/v
 import MachineWeeklyReports from './components/All_Deperments_Hub/MaintenanceHub/views/MachineWeeklyReport';
 import ToolDailyReports from './components/All_Deperments_Hub/MaintenanceHub/views/ToolDailyReports';
 import ToolWeekly from './components/All_Deperments_Hub/MaintenanceHub/views/ToolWeekly'; 
+import MachineMonthlyReport from './components/All_Deperments_Hub/MaintenanceHub/views/MachineMonthlyReport';
 import MachineRoutes from './routes/MachineRoutes';
 import ToolRoutes from './routes/ToolRoutes';
 import DailyPowerPressChecksheetprint from './components/All_Deperments_Hub/MaintenanceHub/Report/DailyPowerPressChecksheetprint';
@@ -456,7 +447,7 @@ function App() {
   });
 
   // ==========================================
-  // PUSH NOTIFICATION LIFECYCLE
+  // PUSH NOTIFICATION LIFECYCLE hsi
   // ==========================================
   useEffect(() => {
     if ('serviceWorker' in navigator && 'PushManager' in window) {
@@ -555,18 +546,7 @@ function App() {
 
           
           {/* ================= QA HUB ROUTES (Only QA_Hub) ================= */}
-          <Route path="/qa-hub" element={<ProtectedRoute allowedRole="QA_Hub"><QaHub /></ProtectedRoute>} />
-          <Route path="/Incoming-Material" element={<ProtectedRoute allowedRole="QA_Hub"><IncomingMaterialInsp /></ProtectedRoute>} />
-          <Route path="/Redbin-Attendance" element={<ProtectedRoute allowedRole="QA_Hub"><RedbinAttendance /></ProtectedRoute>} />
-          <Route path="/RedBin-Form" element={<ProtectedRoute allowedRole="QA_Hub"><RedBinForm /></ProtectedRoute>} />
-          <Route path="/Scrap-Note" element={<ProtectedRoute allowedRole="QA_Hub"><ScrapNote /></ProtectedRoute>} />
-          <Route path="/Good-Receipt" element={<ProtectedRoute allowedRole="QA_Hub"><GoodReceiptFrom /></ProtectedRoute>} />
-          <Route path="/Poka-Yoke" element={<ProtectedRoute allowedRole="QA_Hub"><PokaYokeChecksheet /></ProtectedRoute>} />
-          <Route path="/inspection-form" element={<ProtectedRoute allowedRole="QA_Hub"><InspectionForm /></ProtectedRoute>} />
-          <Route path="/Rework" element={<ProtectedRoute allowedRole="QA_Hub"><ReworkRepair /></ProtectedRoute>} />
-          <Route path="/sample-inspection" element={<ProtectedRoute allowedRole="QA_Hub"><SampleInspectionReport /></ProtectedRoute>} />
-          <Route path="/Deviation-Approval-Form" element={<ProtectedRoute allowedRole="QA_Hub"><DeviationApprovalForm/></ProtectedRoute>}/>
-          <Route path="/pdi-report-form" element={<ProtectedRoute allowedRole="QA_Hub"><PdiReportForm /></ProtectedRoute>} />
+         
 
           {/* ================= PRODUCTION HUB ROUTES (Only Production_Hub) ================= */}
           <Route path="/production-hub" element={<ProtectedRoute allowedRole="Production_Hub"><ProductionHub /></ProtectedRoute>} />
@@ -609,16 +589,7 @@ function App() {
 
 
             {/* QaHub Print */}
-          <Route path="/incomingmaterial-report" element={<ProtectedRoute><IncomingMaterialprint /></ProtectedRoute>} />
-          <Route path="/redbin-analysis-report" element={<ProtectedRoute><RedBinprint /></ProtectedRoute>} />
-          <Route path="/scrap-note-report" element={<ProtectedRoute><Scrapnoteprint /></ProtectedRoute>} />
-          <Route path="/redbin-attendance-report" element={<ProtectedRoute><RedBinAttendanceprint /></ProtectedRoute>} />
-          <Route path="/PokaYoke-report" element={<ProtectedRoute><PokaYokeChecksheetprint /></ProtectedRoute>} />
-          <Route path="/inspection-report" element={<ProtectedRoute><Inspectionprint /></ProtectedRoute>} />
-          <Route path="/rework-report" element={<ProtectedRoute><Reworkrepairprint /></ProtectedRoute>} />
-          <Route path="/sample-inspection-report" element={<ProtectedRoute><SampleInspectionprint /></ProtectedRoute>} />
-          <Route path="/Deviation-report" element={<ProtectedRoute><DeviationApprovalprint /></ProtectedRoute>} />
-          <Route path="/pdiprint-report" element={<ProtectedRoute><PdiReportprint /></ProtectedRoute>} />
+         
 
                                                  {/* Main Hubs */}
            <Route path="/maintenance-hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
@@ -629,6 +600,9 @@ function App() {
            {/* High Priority Specific Views */}
           <Route path="/Maintenance/Machine/daily" element={<ProtectedRoute><MachineDailyReport/></ProtectedRoute>}/>
           <Route path="/Maintenance/Machine/weekly" element={<ProtectedRoute><MachineWeeklyReports /></ProtectedRoute>} />
+          {/* Pehle jo galat tha usse change karke yeh likho */}
+          <Route path="/Maintenance/Machine/monthly" element={<ProtectedRoute><MachineMonthlyReport /></ProtectedRoute>} />
+         
           <Route path="/Maintenance/Tool/daily" element={<ProtectedRoute><ToolDailyReports /></ProtectedRoute>} />
           <Route path="/Maintenance/Tool/weekly" element={<ProtectedRoute><ToolWeekly /></ProtectedRoute>} />
 

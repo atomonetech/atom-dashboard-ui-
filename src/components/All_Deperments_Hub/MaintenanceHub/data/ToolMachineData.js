@@ -114,3 +114,43 @@ export const toolMaintenanceCards = [
     bgColor: "#ecfdf5",
   }
 ];
+
+// 🔥 4. Tool Monthly Reports
+export const toolMonthlyReports = [
+  {
+    id: "tool_breakdown_summary",
+    title: "Tool Breakdown Summary Sheet",
+    formNo: "AOT-F-TM-05",
+    frequency: "Monthly",
+    responsibility: "Tool Room Manager",
+    icon: "bi-file-earmark-spreadsheet",
+    color: "#8b5cf6", 
+    bgColor: "#f5f3ff",
+  },
+  {
+    id: "why_tool_analysis",
+    title: "Why Tool Analysis",
+    formNo: "AOT-F-TM-06",
+    frequency: "Breakdown / Monthly",
+    responsibility: "Tool Room Engineer",
+    icon: "bi-patch-question",
+    color: "#f43f5e", 
+    bgColor: "#fff1f2",
+  },
+  {
+    id: "tool_critical_spares",
+    title: "Critical Spare Part List",
+    formNo: "AOT-F-TM-07",
+    frequency: "Monthly Review",
+    responsibility: "Store / Tool Room",
+    icon: "bi-box-seam",
+    color: "#0ea5e9", 
+    bgColor: "#f0f9ff",
+  },
+];
+
+export const toolYearlyReports = [
+    { id: "master_list_tool", title: "Master List of Tool", formNo: "AOT-F-TM-08", frequency: "Yearly", responsibility: "Tool Room Head", icon: "bi-hammer", color: "#8b5cf6", bgColor: "#f5f3ff" },
+    { id: "master_list_gauges", title: "Master List of Gauges", formNo: "AOT-F-TM-09", frequency: "Yearly", responsibility: "Quality / Tool Room", icon: "bi-compass", color: "#ec4899", bgColor: "#fce7f3" },
+    { id: "list_welding_fixture", title: "List of Welding Fixture", formNo: "AOT-F-TM-10", frequency: "Yearly", responsibility: "Prod. / Tool Room", icon: "bi-gpu-card", color: "#0ea5e9", bgColor: "#f0f9ff" },
+];
