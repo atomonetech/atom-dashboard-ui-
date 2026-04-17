@@ -21,12 +21,38 @@ const GoodReceiptForm = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  // ── YAHAN UPDATE KIYA GAYA HAI: API Call to 192.168.0.34 ──
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Material Requisition Submitted:", formData);
-    alert("Material Requisition Slip Saved Successfully!");
-    handleReset();
+    
+    try {
+      // Backend IP aur API endpoint hit kar rahe hain
+      const response = await fetch("http://192.168.0.34:8000/api/good-receipt/create/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData), // React state ko JSON me convert kar rahe hain
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        // Success hone par message dikhayega aur form clear karega
+        alert("✅ " + result.message);
+        handleReset();
+      } else {
+        // Agar backend se koi error aati hai
+        console.error("Backend Error:", result.error);
+        alert("❌ Failed to save data: " + (result.error || "Please check inputs."));
+      }
+    } catch (error) {
+      // Agar server bandh ho ya network issue ho
+      console.error("Network Error:", error);
+      alert("❌ Server se connect nahi ho pa raha hai. Please check your network and IP.");
+    }
   };
+  // ──────────────────────────────────────────────────────────
 
   const handleReset = () => {
     setFormData({
@@ -147,6 +173,7 @@ const GoodReceiptForm = () => {
                   <option value="" disabled>Select Department</option>
                   <option value="QA">QA</option>
                   <option value="IT">IT</option>
+                  <option value="IOT">IOT</option>
                   <option value="PRODUCTION">PRODUCTION</option>
                   <option value="HR">HR</option>
                   <option value="MAINTENANCE">MAINTENANCE</option>

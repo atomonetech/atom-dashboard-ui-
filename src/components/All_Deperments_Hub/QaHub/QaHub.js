@@ -18,7 +18,7 @@ const QaHub = () => {
         { id: 9,  title: 'Sample Inspection Report',   formNo: 'AOT/F/QA/21',   resp: 'Quality Engineer',  icon: 'bi-search',             color: '#3b82f6', bg: '#eff6ff', fillRoute: '/sample-inspection',       printKey: 'sample-inspection-report',viewKey: 'sample-inspection-view', isLive: false},
         { id: 10, title: 'Deviation Approval Form',    formNo: 'AOT/F/PROD/04', resp: 'Production Engineer', icon: 'bi-file-earmark-check', color: '#8b5cf6', bg: '#ede9fe', fillRoute: '/Deviation-Approval-Form', printKey: 'Deviation-report',        viewKey: 'deviation-view', isLive: true },
         { id: 11, title: 'RM Quality Plan',            formNo: 'AOT/F/QA/25',   resp: 'Quality Engineer',  icon: 'bi-diagram-3',          color: '#10b981', bg: '#d1fae5', fillRoute: null,                       printKey: null,                      viewKey: null, isLive: false },
-        { id: 12, title: 'Goods Receipt Note (GRN)',   formNo: 'Not Reqd.',     resp: 'Store Incharge',    icon: 'bi-receipt',            color: '#06b6d4', bg: '#cffafe', fillRoute: '/Good-Receipt',            printKey: null,                      viewKey: 'grn-view', isLive: false },
+        { id: 12, title: 'Goods Receipt Note (GRN)',   formNo: 'Not Reqd.',     resp: 'Store Incharge',    icon: 'bi-receipt',            color: '#06b6d4', bg: '#cffafe', fillRoute: '/Good-Receipt',            printKey: null,                      viewKey: 'good-receipt', isLive: true },
         { id: 13, title: 'Pre Dispatch Insp. (PDIR)',  formNo: 'AOT/F/QA/40',   resp: 'Quality Engineer',  icon: 'bi-truck',              color: '#10b981', bg: '#d1fae5', fillRoute: '/pdi-report-form',         printKey: 'pdiprint-report',         viewKey: 'pdi-view', isLive: false},
     ];
 
