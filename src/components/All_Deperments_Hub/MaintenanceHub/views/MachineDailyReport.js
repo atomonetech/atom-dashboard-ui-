@@ -175,6 +175,7 @@ const MachineDailyReport = () => {
                             </div>
                             <i className="bi bi-chevron-right ms-auto text-muted"></i>
                         </button>
+<<<<<<< Updated upstream
 
                         <button className="modal-action-btn" onClick={() => handleAction('view')}>
                             <div className="modal-btn-icon" style={{background:'#f1f5f9', color:'#0f172a'}}>
@@ -185,6 +186,13 @@ const MachineDailyReport = () => {
                                 <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Database ke saved records dekhen</p>
                             </div>
                             <i className="bi bi-chevron-right ms-auto text-muted"></i>
+=======
+                         <button className="fill-btn shadow-sm" onClick={() => navigateToForm(selectedCard.id)}>
+                            <i className="bi bi-pencil-square me-2"></i> View or Print
+                        </button>
+                        <button className="btn btn-light w-100 py-3 rounded-3 text-muted fw-bold" onClick={closeModal}>
+                            Cancel
+>>>>>>> Stashed changes
                         </button>
 
                         <button className="modal-action-btn" onClick={() => handleAction('print')}>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+<<<<<<< Updated upstream
 import { useNavigate } from 'react-router-dom';
 
 const ProductionHub = () => {
@@ -29,19 +30,55 @@ const ProductionHub = () => {
             navigate(selectedCard.fillRoute);
         } else {
             alert(`"${selectedCard?.title}" form abhi under development hai.`);
+=======
+import { useNavigate, useParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { productionReports } from './data/productionData';
+
+const ProductionHub = () => {
+    const navigate = useNavigate();
+    const { category } = useParams();
+    const [showOptionsModal, setShowOptionsModal] = useState(false);
+    const [selectedCard, setSelectedCard] = useState(null);
+
+    const currentCategory = category || 'daily';
+    const filteredReports = productionReports.filter(r => r.category === currentCategory);
+
+    // --- Animation Variants ---
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.08, delayChildren: 0.1 }
+>>>>>>> Stashed changes
         }
         setModalOpen(false);
     };
 
+<<<<<<< Updated upstream
     const handlePrintData = () => {
         if (selectedCard?.printRoute && selectedCard?.isLive) {
             navigate(selectedCard.printRoute);
         } else {
             alert(`"${selectedCard?.title}" ka print page abhi under development hai.`);
+=======
+    const cardVariants = {
+        hidden: { opacity: 0, y: -100 },
+        visible: { 
+            opacity: 1, 
+            y: 0, 
+            transition: { type: "spring", stiffness: 100, damping: 15 } 
+        },
+        hover: { 
+            y: -8,
+            boxShadow: "0 20px 30px -10px rgba(0,0,0,0.1)",
+            transition: { duration: 0.3 }
+>>>>>>> Stashed changes
         }
         setModalOpen(false);
     };
 
+<<<<<<< Updated upstream
     const handleViewData = () => {
         if (selectedCard?.viewKey && selectedCard?.isLive) {
             navigate(`/Production/View/${selectedCard.viewKey}`);
@@ -49,14 +86,45 @@ const ProductionHub = () => {
             alert(`"${selectedCard?.title}" ka view page abhi under development hai.`);
         }
         setModalOpen(false);
+=======
+const handleAction = (action) => {
+    if (!selectedCard) return;
+
+    // 1. Get the base form name from the route (e.g., "Operator-5S-Checklist")
+    // We remove the leading slash if it exists in the data
+    const formName = selectedCard.formRoute.startsWith('/') 
+        ? selectedCard.formRoute.substring(1) 
+        : selectedCard.formRoute;
+
+    const reportName = selectedCard.printRoute.startsWith('/') 
+        ? selectedCard.printRoute.substring(1) 
+        : selectedCard.printRoute;
+
+    // 2. Build the dynamic nested path: /production-hub/daily/Operator-5S-Checklist
+    // This MUST match the path in your productionRoutes.js
+    const targetPath = action === 'fill' 
+        ? `/production-hub/${currentCategory}/${formName}` 
+        : `/production-hub/${currentCategory}/${reportName}`;
+
+    // 3. Navigate to the correct nested route
+    navigate(targetPath, { state: { mode: action } });
+    
+    setShowOptionsModal(false);
+};
+
+    const closeModal = (e) => {
+        if (e) e.stopPropagation();
+        setShowOptionsModal(false);
+        setSelectedCard(null);
+>>>>>>> Stashed changes
     };
 
     return (
-        <div className="hub-wrapper">
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+        <div className="hub-viewport">
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
             
             <style>{`
+<<<<<<< Updated upstream
                 .hub-wrapper { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: #f8fafc !important; z-index: 9999 !important; overflow-y: auto !important; font-family: 'Inter', sans-serif; }
                 .nav-bar { position: sticky; top: 0; background: #fff; height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 10000; }
                 .main-container { padding: 40px 24px; max-width: 1200px; margin: 0 auto; }
@@ -136,10 +204,145 @@ const ProductionHub = () => {
                                 <div className="meta-tag"><i className="bi bi-person-badge text-muted"></i>Resp: <span style={{ color: '#0f172a' }}>{r.resp}</span></div>
                             </div>
                         </div>
+=======
+                @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+
+                .hub-viewport { 
+                    min-height: 100vh; 
+                    background: #f8fafc; 
+                    font-family: 'Plus Jakarta Sans', sans-serif; 
+                    padding-bottom: 80px;
+                }
+
+                /* --- Balanced Navbar --- */
+                .navbar-simple {
+                    background: white;
+                    padding: 0 4%;
+                    height: 65px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 1px solid #edf2f7;
+                    position: sticky;
+                    top: 0;
+                    z-index: 1000;
+                }
+
+                .nav-brand-section { display: flex; align-items: center; gap: 12px; }
+                
+                .back-btn {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 8px;
+                    border: 1px solid #e2e8f0;
+                    color: #64748b;
+                    font-size: 1rem;
+                    cursor: pointer;
+                    transition: 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding-top:12px;
+                }
+                .back-btn:hover { background: #f8fafc; color: #3b82f6; border-color: #3b82f6; }
+
+                .nav-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #1e293b; font-size: 0.95rem; cursor: pointer; }
+
+                /* Hero Section */
+                .hero-section { text-align: center; padding: 60px 20px 30px; }
+                .hero-section h1 { font-size: 3.5rem; font-weight: 800; color: #0f172a; margin-bottom: 12px; }
+                .hero-section p { color: #64748b; font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+
+                /* Tab Switcher */
+                .tab-nav { display: flex; justify-content: center; margin-bottom: 40px; }
+                .tab-container { background: #e2e8f0; padding: 5px; border-radius: 12px; display: flex; gap: 5px; }
+                .tab-link { 
+                    padding: 10px 28px; border: none; border-radius: 10px; font-weight: 700; 
+                    font-size: 0.85rem; color: #64748b; background: transparent; transition: 0.3s; cursor: pointer;
+                }
+                .tab-link.active { background: white; color: #3b82f6; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+                /* Card Grid */
+                .reports-grid { 
+                    display: grid; 
+                    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); 
+                    gap: 25px; 
+                    padding: 0 5%; 
+                    max-width: 1440px; 
+                    margin: 0 auto; 
+                }
+
+                /* Quality Hub Card Style */
+                .card-premium {
+                    background: white; 
+                    border-radius: 16px; 
+                    padding: 30px; 
+                    cursor: pointer;
+                    border: 1px solid #e2e8f0; 
+                    border-top: 5px solid var(--accent);
+                    position: relative; 
+                    transition: transform 0.3s, box-shadow 0.3s;
+                }
+                
+                .icon-circle { 
+                    width: 48px; height: 48px; border-radius: 12px; 
+                    background: #f8fafc; border: 1px solid #e2e8f0; 
+                    display: flex; align-items: center; justify-content: center; 
+                    font-size: 1.3rem; margin-bottom: 25px; color: var(--accent); 
+                }
+                
+                .card-title { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 20px; letter-spacing: -0.01em; }
+                
+                .data-row { display: flex; align-items: center; margin-bottom: 10px; }
+                .data-label { font-size: 0.65rem; font-weight: 800; color: #94a3b8; width: 60px; text-transform: uppercase; }
+                .data-value { 
+                    font-size: 0.75rem; font-weight: 700; color: #475569; 
+                    background: #f1f5f9; padding: 4px 12px; border-radius: 6px; 
+                }
+
+                /* Modal UI */
+                .modal-overlay { 
+                    position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); 
+                    backdrop-filter: blur(8px); display: flex; align-items: center; 
+                    justify-content: center; z-index: 2000; 
+                }
+                .modal-ui { background: white; width: 92%; max-width: 420px; border-radius: 28px; padding: 35px; text-align: center; border-top: 8px solid var(--accent-modal); }
+            `}</style>
+
+            <nav className="navbar-simple">
+                <div className="nav-brand-section">
+                   
+                    <div className="nav-brand" onClick={() => navigate('/dashboard')}>
+                        
+                        <i className="bi bi-chevron-left"></i>
+               
+                        <span>AtomOne Production</span>
+                    </div>
+                </div>
+                <div style={{fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.5px'}}>ATOMONE TECHNOLOGIES</div>
+            </nav>
+
+            <header className="hero-section">
+                <h1>Production Hub</h1>
+                <p>Manage manufacturing plans, operational logs, and output reports efficiently.</p>
+            </header>
+
+            <div className="tab-nav">
+                <div className="tab-container">
+                    {['daily', 'monthly', 'yearly'].map((tab) => (
+                        <button
+                            key={tab}
+                            className={`tab-link ${currentCategory === tab ? 'active' : ''}`}
+                            onClick={() => navigate(`/production-hub/${tab}`)}
+                        >
+                            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                        </button>
+>>>>>>> Stashed changes
                     ))}
                 </div>
             </div>
 
+<<<<<<< Updated upstream
             {/* Modal (QA Hub Style) */}
             {modalOpen && selectedCard && (
                 <div className="modal-overlay" onClick={() => setModalOpen(false)}>
@@ -201,6 +404,72 @@ const ProductionHub = () => {
                     </div>
                 </div>
             )}
+=======
+            <motion.div 
+                className="reports-grid"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                key={currentCategory}
+            >
+                {filteredReports.map((r) => (
+                    <motion.div 
+                        key={r.id}
+                        className="card-premium"
+                        style={{ '--accent': r.color }}
+                        variants={cardVariants}
+                        whileHover="hover"
+                        onClick={() => { setSelectedCard(r); setShowOptionsModal(true); }}
+                    >
+                        <div className="icon-circle">
+                            <i className={r.icon}></i>
+                        </div>
+
+                        <h3 className="card-title">{r.title}</h3>
+
+                        <div className="data-row">
+                            <span className="data-label">Form:</span>
+                            <span className="data-value">{r.formNo}</span>
+                        </div>
+                        <div className="data-row">
+                            <span className="data-label">Freq:</span>
+                            <span className="data-value">{r.category}</span>
+                        </div>
+                    </motion.div>
+                ))}
+            </motion.div>
+
+            <AnimatePresence>
+                {showOptionsModal && selectedCard && (
+                    <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeModal}>
+                        <motion.div 
+                            className="modal-ui" 
+                            style={{ '--accent-modal': selectedCard.color }}
+                            initial={{ scale: 0.9, y: 20 }} 
+                            animate={{ scale: 1, y: 0 }} 
+                            exit={{ scale: 0.9, y: 20 }} 
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <h4 style={{fontWeight: 800, marginBottom: '25px', color: '#0f172a'}}>{selectedCard.title}</h4>
+                            <div className="d-grid gap-2">
+                                <button className="btn btn-primary py-3 rounded-3 fw-bold shadow-sm" style={{background: selectedCard.color, border: 'none'}} onClick={() => handleAction('fill')}>
+                                    Fill New Entry Form
+                                </button>
+                                <button className="btn btn-light py-3 rounded-3 fw-bold text-muted" onClick={() => handleAction('view')}>
+                                    View Log Details
+                                </button>
+                                <button className="btn btn-light py-3 rounded-3 fw-bold text-muted" onClick={() => handleAction('print')}>
+                                    Export to PDF / Print
+                                </button>
+                                <button className="btn btn-link text-danger mt-2 fw-bold text-decoration-none" onClick={closeModal}>
+                                    Cancel
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+>>>>>>> Stashed changes
         </div>
     );
 };
