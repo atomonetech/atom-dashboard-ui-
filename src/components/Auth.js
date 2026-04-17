@@ -1,27 +1,66 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Factory, Zap, Mail, Lock, Eye, EyeOff, Cpu, TrendingUp } from 'lucide-react';
+import { Factory, Zap, Mail, Lock, Eye, EyeOff, Cpu, TrendingUp, User } from 'lucide-react'; // User icon add kiya
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 
-
 export default function Auth({ onLogin }) {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState('');
+  // 🔥 CHANGED: email ki jagah username state use kar rahe hain
+  const [username, setUsername] = useState(''); 
   const [password, setPassword] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(false); // Loading state add ki
 
-  const handleLogin = (e) => {
+  // 🔥 NEW API LOGIN LOGIC
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    if (onLogin) {
-      console.log('🔐 Calling onLogin - Setting auth TRUE');
-      onLogin();
+    try {
+      const response = await fetch('http://192.168.0.34:8000/api/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Token aur Role save karo
+        localStorage.setItem('access_token', data.access);
+        localStorage.setItem('refresh_token', data.refresh);
+        localStorage.setItem('user_role', data.role);
+
+        if (onLogin) {
+          console.log('🔐 Calling onLogin - Setting auth TRUE');
+          onLogin();
+        }
+
+        // 🔥 Role ke hisaab se Redirect
+        if (data.role === 'QA_Hub') {
+          navigate('/qa-hub');
+        } else if (data.role === 'Production_Hub') {
+          navigate('/production-hub');
+        } else if (data.role === 'Maintenance_Hub') {
+          navigate('/maintenance-hub');
+        } else {
+          navigate('/dashboard'); // Default (Agar koi Master Admin ho toh)
+        }
+        
+      } else {
+        alert('Authentication Failed: Please verify your credentials and try again.');
+      }
+    } catch (error) {
+      console.error('Login Error:', error);
+      alert('Unable to connect to the server. Please ensure the backend service is running and try again.');
+    } finally {
+      setIsLoading(false);
     }
-    
-    navigate('/dashboard');
   };
 
   // Feature items with icons
@@ -64,7 +103,7 @@ export default function Auth({ onLogin }) {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % features.length);
-    }, 2500); // Har 2.5 second mein next item
+    }, 2500);
 
     return () => clearInterval(interval);
   }, []);
@@ -100,7 +139,6 @@ export default function Auth({ onLogin }) {
         ))}
       </div>
 
-
       {/* Left Panel */}
       <div className="hidden lg:flex lg:w-1/2 relative">
         <div className="absolute inset-0 bg-gradient-to-br from-[#1e3a8a] via-[#1e293b] to-[#0f172a]" />
@@ -133,8 +171,7 @@ export default function Auth({ onLogin }) {
               <p className="text-slate-400">- Robert Collier</p>
             </div>
 
-
-            {/* ONE ITEM AT A TIME - Show → Slide Up → Disappear */}
+            {/* ONE ITEM AT A TIME */}
             <div className="mt-12 h-[100px] relative overflow-hidden flex items-center justify-center">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -167,7 +204,6 @@ export default function Auth({ onLogin }) {
         </div>
       </div>
 
-
       {/* Right Panel - Login Form */}
       <div className="w-full lg:w-1/2 relative flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <motion.div
@@ -187,7 +223,6 @@ export default function Auth({ onLogin }) {
               </div>
             </div>
 
-
             {/* Title */}
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-yellow-400 bg-clip-text text-transparent">
@@ -196,25 +231,23 @@ export default function Auth({ onLogin }) {
               <p className="text-slate-400 text-sm sm:text-base">Login to access your dashboard</p>
             </div>
 
-
             {/* Form */}
             <form onSubmit={handleLogin} className="space-y-6">
-              {/* Email Field */}
+              {/* Username Field */}
               <div className="space-y-2">
-                <label className="text-slate-300 text-sm font-medium block">Email Address</label>
+                <label className="text-slate-300 text-sm font-medium block">Username</label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
                   <input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    type="text"
+                    placeholder="Enter your username (e.g. himanshu)"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     className="w-full pl-11 pr-4 py-2.5 bg-[#0f172a]/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
                     required
                   />
                 </div>
               </div>
-
 
               {/* Password Field */}
               <div className="space-y-2">
@@ -239,7 +272,6 @@ export default function Auth({ onLogin }) {
                 </div>
               </div>
 
-
               {/* Remember Me & Forgot Password */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -256,16 +288,15 @@ export default function Auth({ onLogin }) {
                 </button>
               </div>
 
-
               {/* Login Button */}
               <Button
                 type="submit"
+                disabled={isLoading}
                 className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-[#0f172a] font-bold h-12 rounded-lg"
                 size="lg"
               >
-                Login
+                {isLoading ? 'Authenticating...' : 'Login'}
               </Button>
-
 
               {/* Divider */}
               <div className="relative">
@@ -276,7 +307,6 @@ export default function Auth({ onLogin }) {
                   <span className="px-4 bg-[#1e293b] text-slate-400">Or</span>
                 </div>
               </div>
-
 
               {/* Sign Up Link */}
               <div className="text-center text-sm">
@@ -291,7 +321,6 @@ export default function Auth({ onLogin }) {
               </div>
             </form>
           </div>
-
 
           {/* Back to Home */}
           <div className="mt-6 text-center">

@@ -179,7 +179,7 @@ const ToolDailyReports = () => {
                         <p style={{fontSize:'0.78rem', color:'#94a3b8', fontWeight:600, marginBottom:14, textTransform:'uppercase', letterSpacing:'0.06em', textAlign: 'left'}}>What would you like to do?</p>
 
                         <button className="modal-action-btn" onClick={() => handleAction('fill')}>
-                            <div className="modal-btn-icon" style={{background:'#eff6ff', color:'#3b82f6'}}>
+                            <div className="modal-btn-icon" style={{background:'#f1f5f9', color:'#0f172a'}}>
                                 <i className="bi bi-pencil-square"></i>
                             </div>
                             <div>
@@ -190,7 +190,7 @@ const ToolDailyReports = () => {
                         </button>
 
                         <button className="modal-action-btn" onClick={() => handleAction('view')}>
-                            <div className="modal-btn-icon" style={{background:'#fef2f2', color:'#ef4444'}}>
+                            <div className="modal-btn-icon" style={{background:'#f1f5f9', color:'#0f172a'}}>
                                 <i className="bi bi-eye"></i>
                             </div>
                             <div>
@@ -201,7 +201,7 @@ const ToolDailyReports = () => {
                         </button>
 
                         <button className="modal-action-btn" onClick={() => handleAction('print')}>
-                            <div className="modal-btn-icon" style={{background:'#f0fdf4', color:'#10b981'}}>
+                            <div className="modal-btn-icon" style={{background:'#f1f5f9', color:'#0f172a'}}>
                                 <i className="bi bi-printer"></i>
                             </div>
                             <div>

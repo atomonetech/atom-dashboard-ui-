@@ -111,6 +111,10 @@ const Dashboard = ({ onLogout }) => {
   const hourlyPollRef = useRef(null);
   const refreshTimerRef = useRef(null);
 
+  // 🔥 CHECK ROLE (WORKER OR ADMIN)
+  const userRole = localStorage.getItem('user_role');
+  const isWorker = userRole === 'QA_Hub' || userRole === 'Production_Hub' || userRole === 'Maintenance_Hub';
+
   // Trigger entrance animation when component mounts
   useEffect(() => {
     setIsPageVisible(true);
@@ -684,10 +688,31 @@ const Dashboard = ({ onLogout }) => {
           </div>
 
           <Sidebar onLogout={onLogout} />
-          {/* logout  */}
 
           <div className="flex-1 overflow-auto relative z-10 mt-5">
-            <div className={`max-w-[1600px] mx-auto ${getContainerPadding()}`}>
+            
+            {/* 🔥 BLUR OVERLAY FOR WORKERS (Only covers main content) 🔥 */}
+            {isWorker && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#0f172a]/70 backdrop-blur-md rounded-l-3xl">
+                <div className="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-md border border-red-100">
+                  <h1 className="text-3xl font-bold text-red-600 mb-2">Access Restricted 🚫</h1>
+                  <p className="text-slate-600 mb-6 font-medium">Aapke paas main Analytics dekhne ki permission nahi hai.</p>
+                  <button
+                    onClick={() => {
+                      if (userRole === 'QA_Hub') window.location.href = '/qa-hub';
+                      if (userRole === 'Production_Hub') window.location.href = '/production-hub';
+                      if (userRole === 'Maintenance_Hub') window.location.href = '/maintenance-hub';
+                    }}
+                    className="w-full bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 shadow-md"
+                  >
+                    Go to My Department
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 🔥 MAIN CONTENT (Blurred if Worker) 🔥 */}
+            <div className={`max-w-[1600px] mx-auto ${getContainerPadding()} ${isWorker ? "blur-md pointer-events-none opacity-40 select-none" : ""}`}>
               {/* HEADER */}
               <motion.div variants={itemVariants} className={`flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 ${getHeaderMargin()}`}>
                 <motion.div variants={headerVariants}>
