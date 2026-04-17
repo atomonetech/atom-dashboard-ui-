@@ -366,7 +366,6 @@ import QaHub from './components/All_Deperments_Hub/QaHub/QaHub';
 
 import { productionRoutes } from './routes/productionRoutes';
 
-<<<<<<< Updated upstream
 // ========== ProductionHub IMPORTS ==========
 import ProductionHub from './components/All_Deperments_Hub/ProductionHub/ProductionHub';
 import ProductionView from './components/All_Deperments_Hub/ProductionHub/ProductionView';
@@ -385,20 +384,6 @@ import ForMChangeInsPrint from './components/All_Deperments_Hub/ProductionHub/Fo
 import BinTrollingprint from './components/All_Deperments_Hub/ProductionHub/BinTrollingprint';
 import DailyProdprint from './components/All_Deperments_Hub/ProductionHub/DailyProdprint';
 import ForMChangeRecordPrint from './components/All_Deperments_Hub/ProductionHub/ForMChangeRecordPrint';
-=======
-// import ProductionHub from './components/All_Deperments_Hub/ProductionHub/ProductionHub';
-// import Operator5S from './components/All_Deperments_Hub/ProductionHub/forms/daily/Operator_5s';
-// import Operator5sprint from './components/All_Deperments_Hub/ProductionHub/Views/daily/Operator5sprint';
- import HrSafetyHub from './components/All_Deperments_Hub/HrSafetyHub/HrSafetyHub';
- import InductionTrainingForm from './components/All_Deperments_Hub/HrSafetyHub/InductionTrainingForm';
- import TrainingHistoryCard from './components/All_Deperments_Hub/HrSafetyHub/TrainingHistoryCard';
-// import BinTrollingForm from './components/All_Deperments_Hub/ProductionHub/forms/daily/BinTrollingForm';
-// import DailyProdForm from './components/All_Deperments_Hub/ProductionHub/forms/daily/DailyProdForm';
-// import TipChangeMonitorForm from './components/All_Deperments_Hub/ProductionHub/TipChangeMonitorForm';
-// import TipChangeMonitorprint from './components/All_Deperments_Hub/ProductionHub/Views/daily/TipChangeMonitorprint';
-// import MChangeTrackForm from './components/All_Deperments_Hub/ProductionHub/forms/daily/M_ChangeTrackForm'; 
-// import ForMChangeInsForm from './components/All_Deperments_Hub/ProductionHub/forms/daily/For_M_Change_Ins_Form'; 
->>>>>>> Stashed changes
 
 // ========== Maintenance Hub IMPORTS ==========
 import MaintenanceHub from './components/All_Deperments_Hub/MaintenanceHub/MaintenanceHub';
@@ -406,15 +391,8 @@ import MaintenanceView from './components/All_Deperments_Hub/MaintenanceHub/Main
 import MachineHistoryCard from './components/All_Deperments_Hub/MaintenanceHub/forms/MachineHistoryCard';
 import DailyPowerPressChecksheet from './components/All_Deperments_Hub/MaintenanceHub/forms/DailyPowerPressChecksheet';
 import ToolHistoryForm from './components/All_Deperments_Hub/MaintenanceHub/forms/ToolHistoryForm';
-<<<<<<< Updated upstream
 import MachineBreakDownForm from './components/All_Deperments_Hub/MaintenanceHub/forms/MachineBreakDownForm';
 import ToolPrevMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/forms/ToolPrevMaintenanceForm';
-=======
-// import MachineBreakDownForm from './components/All_Deperments_Hub/MaintenanceHub/forms/MachineBreakDownForm';
-// import ToolPrevMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/forms/ToolPrevMaintenanceForm';
-import MachineHistoryCardprint from './components/All_Deperments_Hub/MaintenanceHub/MachineHistoryCardprint';
-import MachineBreakdownSummaryPrint from './components/All_Deperments_Hub/MaintenanceHub/MachineBreakdownSummaryPrint';
->>>>>>> Stashed changes
 import MachinePreventForm from './components/All_Deperments_Hub/MaintenanceHub/forms/MachinePreventMainForm';
 import CNCPreventiveMaintenanceForm from './components/All_Deperments_Hub/MaintenanceHub/forms/CNCPreventiveMaintenanceForm';
 import PowerPressForm from './components/All_Deperments_Hub/MaintenanceHub/forms/PowerPressPreventiveMaintenanceForm';
@@ -461,17 +439,6 @@ const AccessDeniedScreen = () => (
   </div>
 );
 
-<<<<<<< Updated upstream
-=======
-import ForMChangeInsPrint from './components/All_Deperments_Hub/ProductionHub/Views/daily/ForMChangeInsPrint';
-import BinTrollingprint from './components/All_Deperments_Hub/ProductionHub/Views/daily/BinTrollingprint';
-import DailyProdprint from './components/All_Deperments_Hub/ProductionHub/Views/daily/DailyProdprint';
-import ForMChangeRecordPrint from './components/All_Deperments_Hub/ProductionHub/Views/daily/ForMChangeRecordPrint';
-import ToolMonthlyReport from './components/All_Deperments_Hub/MaintenanceHub/views/ToolMonthlyReport';
-import MachineYearlyReport from './components/All_Deperments_Hub/MaintenanceHub/views/MachineYearlyReport';
-import ToolYearlyReport from './components/All_Deperments_Hub/MaintenanceHub/views/ToolYearlyReport';
-import QaRoutes from './routes/QaRoutes';
->>>>>>> Stashed changes
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -480,7 +447,7 @@ function App() {
   });
 
   // ==========================================
-  // PUSH NOTIFICATION LIFECYCLE
+  // PUSH NOTIFICATION LIFECYCLE hsi
   // ==========================================
   useEffect(() => {
     if ('serviceWorker' in navigator && 'PushManager' in window) {
@@ -570,33 +537,6 @@ function App() {
           {/* 🔥 MAIN DASHBOARD: Wapas normal kar diya hai 🔥 */}
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard onLogout={handleLogout} /></ProtectedRoute>} />
 
-<<<<<<< Updated upstream
-=======
-          {/* QMS ROUTES */}
-          <Route path="/qms" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} />
-          <Route path="/ReportsDashboard" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} /> 
-          <Route path="/qms/reports-dashboard" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} />
-          <Route path="/qms-dashboard" element={<ProtectedRoute><QMSDashboard onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path="/quality-management" element={<ProtectedRoute><QMSDashboard onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path="/qms/report/:reportId" element={<ProtectedRoute><ReportDetail /></ProtectedRoute>} />
-          <Route path="/qms/report/:reportId/edit" element={<ProtectedRoute><ReportEditor /></ProtectedRoute>} />
-          <Route path="/qms/patrol-inspection" element={<ProtectedRoute><PatrolInspection /></ProtectedRoute>} />
-          <Route path="/qms/raw-material-form" element={<ProtectedRoute><RawMaterialForm /></ProtectedRoute>} />
-          {/* <Route path="/qms/pdi-report-form" element={<ProtectedRoute><PdiReportForm /></ProtectedRoute>} /> */}
-
-          {/* PLANT STATUS */}
-          <Route path="/plant1-live" element={<ProtectedRoute><Plant1Live onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path="/plant2-live" element={<ProtectedRoute><Plant2Live onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path="/machines-status" element={<ProtectedRoute><MachinesStatus onLogout={handleLogout} /></ProtectedRoute>} />
-
-          {/* OPERATIONS */}
-          <Route path="/assignment" element={<ProtectedRoute><AssignMachine onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path="/machine-assignments" element={<ProtectedRoute><MachineAssignments onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path="/idle-case" element={<ProtectedRoute><IdleCase onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path="/idle-reports-list" element={<ProtectedRoute><IdleReportsList onLogout={handleLogout} /></ProtectedRoute>} />
-
-          {/* PROFILE */}
->>>>>>> Stashed changes
           <Route path="/profile" element={<ProtectedRoute><Profile onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Notifications onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/support" element={<ProtectedRoute><Support onLogout={handleLogout} /></ProtectedRoute>} />
@@ -604,21 +544,9 @@ function App() {
           <Route path="/machine-assignments" element={<ProtectedRoute><MachineAssignments onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path='/Production-history' element={<ProtectedRoute><ProductionHistory/></ProtectedRoute>}/>
 
-<<<<<<< Updated upstream
           
           {/* ================= QA HUB ROUTES (Only QA_Hub) ================= */}
-          <Route path="/qa-hub" element={<ProtectedRoute allowedRole="QA_Hub"><QaHub /></ProtectedRoute>} />
-          <Route path="/Incoming-Material" element={<ProtectedRoute allowedRole="QA_Hub"><IncomingMaterialInsp /></ProtectedRoute>} />
-          <Route path="/Redbin-Attendance" element={<ProtectedRoute allowedRole="QA_Hub"><RedbinAttendance /></ProtectedRoute>} />
-          <Route path="/RedBin-Form" element={<ProtectedRoute allowedRole="QA_Hub"><RedBinForm /></ProtectedRoute>} />
-          <Route path="/Scrap-Note" element={<ProtectedRoute allowedRole="QA_Hub"><ScrapNote /></ProtectedRoute>} />
-          <Route path="/Good-Receipt" element={<ProtectedRoute allowedRole="QA_Hub"><GoodReceiptFrom /></ProtectedRoute>} />
-          <Route path="/Poka-Yoke" element={<ProtectedRoute allowedRole="QA_Hub"><PokaYokeChecksheet /></ProtectedRoute>} />
-          <Route path="/inspection-form" element={<ProtectedRoute allowedRole="QA_Hub"><InspectionForm /></ProtectedRoute>} />
-          <Route path="/Rework" element={<ProtectedRoute allowedRole="QA_Hub"><ReworkRepair /></ProtectedRoute>} />
-          <Route path="/sample-inspection" element={<ProtectedRoute allowedRole="QA_Hub"><SampleInspectionReport /></ProtectedRoute>} />
-          <Route path="/Deviation-Approval-Form" element={<ProtectedRoute allowedRole="QA_Hub"><DeviationApprovalForm/></ProtectedRoute>}/>
-          <Route path="/pdi-report-form" element={<ProtectedRoute allowedRole="QA_Hub"><PdiReportForm /></ProtectedRoute>} />
+         
 
           {/* ================= PRODUCTION HUB ROUTES (Only Production_Hub) ================= */}
           <Route path="/production-hub" element={<ProtectedRoute allowedRole="Production_Hub"><ProductionHub /></ProtectedRoute>} />
@@ -661,72 +589,11 @@ function App() {
 
 
             {/* QaHub Print */}
-          <Route path="/incomingmaterial-report" element={<ProtectedRoute><IncomingMaterialprint /></ProtectedRoute>} />
-          <Route path="/redbin-analysis-report" element={<ProtectedRoute><RedBinprint /></ProtectedRoute>} />
-          <Route path="/scrap-note-report" element={<ProtectedRoute><Scrapnoteprint /></ProtectedRoute>} />
-          <Route path="/redbin-attendance-report" element={<ProtectedRoute><RedBinAttendanceprint /></ProtectedRoute>} />
-          <Route path="/PokaYoke-report" element={<ProtectedRoute><PokaYokeChecksheetprint /></ProtectedRoute>} />
-          <Route path="/inspection-report" element={<ProtectedRoute><Inspectionprint /></ProtectedRoute>} />
-          <Route path="/rework-report" element={<ProtectedRoute><Reworkrepairprint /></ProtectedRoute>} />
-          <Route path="/sample-inspection-report" element={<ProtectedRoute><SampleInspectionprint /></ProtectedRoute>} />
-          <Route path="/Deviation-report" element={<ProtectedRoute><DeviationApprovalprint /></ProtectedRoute>} />
-          <Route path="/pdiprint-report" element={<ProtectedRoute><PdiReportprint /></ProtectedRoute>} />
+         
 
                                                  {/* Main Hubs */}
            <Route path="/maintenance-hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
           <Route path="/maintenance-view/:formKey" element={<ProtectedRoute><MaintenanceView /></ProtectedRoute>} />
-=======
-          {/* QaHub Pages */}
-          <Route path="/qa-hub" element={<ProtectedRoute><QaHub /></ProtectedRoute>} />
-          {/* <Route path="/Incoming-Material" element={<ProtectedRoute><IncomingMaterialInsp /></ProtectedRoute>} />
-          <Route path="/Redbin-Attendance" element={<ProtectedRoute><RedbinAttendance /></ProtectedRoute>} />
-          <Route path="/RedBin-Form" element={<ProtectedRoute><RedBinForm /></ProtectedRoute>} />
-          <Route path="/Scrap-Note" element={<ProtectedRoute><ScrapNote /></ProtectedRoute>} />
-          <Route path="/Good-Receipt" element={<ProtectedRoute><GoodReceiptFrom /></ProtectedRoute>} />
-          <Route path="/Poka-Yoke" element={<ProtectedRoute><PokaYokeChecksheet /></ProtectedRoute>} />
-          <Route path="/inspection-form" element={<ProtectedRoute><InspectionForm /></ProtectedRoute>} />
-          <Route path="/Rework" element={<ProtectedRoute><ReworkRepair /></ProtectedRoute>} />
-          <Route path="/sample-inspection" element={<ProtectedRoute><SampleInspectionReport /></ProtectedRoute>} />
-          <Route path="/Deviation-Approval-Form" element={<ProtectedRoute><DeviationApprovalForm/></ProtectedRoute>}/> */}
-
-          {productionRoutes}
-          <Route path="/production-hub/*" element={<productionRoutes />} />
-          {/* QaHub Print */}
-          
-          {/* ========== 🔥 QA HUB MODULAR ROUTES 🔥 ========== */}
-       {/* This route shows the 3 Cards initially */}
-          <Route path="/qa-hub" element={<ProtectedRoute><QaHub /></ProtectedRoute>} />
-        
-         
-          <Route path="/qa-hub/*" element={<ProtectedRoute><QaHub /></ProtectedRoute>} />
-
-          <Route path="/qa-hub-form/*" element={<ProtectedRoute><QaRoutes /></ProtectedRoute>} />
-          {/* HrSafetyHub */}
-          <Route path="/hiring-departments" element={<ProtectedRoute><HrSafetyHub /></ProtectedRoute>} />
-          <Route path="/Induction-Training" element={<ProtectedRoute><InductionTrainingForm /></ProtectedRoute>} />
-          <Route path="/Training-History" element={<ProtectedRoute><TrainingHistoryCard /></ProtectedRoute>} />
-
-          {/* ProductionHub */}
-          {/* <Route path="/production-hub" element={<ProtectedRoute><ProductionHub /></ProtectedRoute>} />
-          <Route path="/Operator5S" element={<ProtectedRoute><Operator5S/></ProtectedRoute>}/>
-          <Route path="/Operator5S-Report" element={<ProtectedRoute><Operator5sprint/></ProtectedRoute>} />
-          <Route path="/Daily-Prod-Plan-Form" element={<ProtectedRoute><DailyProdForm /></ProtectedRoute>} />
-          <Route path="/Bin-Trolly-Cleaning-Form" element={<ProtectedRoute><BinTrollingForm /></ProtectedRoute>} />
-          <Route path="/Tip-Change-Monitor-Form" element={<ProtectedRoute><TipChangeMonitorForm /></ProtectedRoute>} />
-          <Route path="/Tip-Change-Monitor-Report" element={<ProtectedRoute><TipChangeMonitorprint /></ProtectedRoute>} />
-          <Route path="/4M-Change-Tracking-Form" element={<ProtectedRoute><MChangeTrackForm/></ProtectedRoute>}/>
-          <Route path='/4-M-Ins-Form' element={<ProtectedRoute><ForMChangeInsForm/></ProtectedRoute>}/> */}
-          <Route path='/4M-Change-Inspection-Report' element={<ProtectedRoute><ForMChangeInsPrint/></ProtectedRoute>}/>
-          <Route path="/Bin-Trolly-Cleaning-Report" element={<BinTrollingprint currentReport={null} />} />
-          <Route path="/Daily-Prod-Plan-Report" element={<DailyProdprint currentReport={null}/>} />
-          <Route path="/4M-Change-Tracking-Report" element={<ForMChangeRecordPrint currentReport={null} />} />
-
-          {}
-
-          {/* ========== 🔥 MAINTENANCE HUB ROUTES 🔥 ========== */}
-          {/* Main Hubs */}
-          <Route path="/maintenance-hub" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
->>>>>>> Stashed changes
           <Route path="/Maintenance/Machine" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
           <Route path="/Maintenance/Tool" element={<ProtectedRoute><MaintenanceHub /></ProtectedRoute>} />
 
@@ -735,20 +602,14 @@ function App() {
           <Route path="/Maintenance/Machine/weekly" element={<ProtectedRoute><MachineWeeklyReports /></ProtectedRoute>} />
           {/* Pehle jo galat tha usse change karke yeh likho */}
           <Route path="/Maintenance/Machine/monthly" element={<ProtectedRoute><MachineMonthlyReport /></ProtectedRoute>} />
-          <Route path="/Maintenance/Machine/yearly" element={<ProtectedRoute><MachineYearlyReport /></ProtectedRoute>} />
+         
           <Route path="/Maintenance/Tool/daily" element={<ProtectedRoute><ToolDailyReports /></ProtectedRoute>} />
           <Route path="/Maintenance/Tool/weekly" element={<ProtectedRoute><ToolWeekly /></ProtectedRoute>} />
-<<<<<<< Updated upstream
 
              {/* Reports & Print */}
             <Route path='/Machine-Card-Report' element={<ProtectedRoute><MachineHistoryCardprint/></ProtectedRoute>}/>
             <Route path='/Machine-Breakdown-Report' element={<ProtectedRoute><MachineBreakdownSummaryPrint/></ProtectedRoute>}/>
             <Route path="/Daily-PowerPress-Report" element={<ProtectedRoute><DailyPowerPressChecksheetprint /></ProtectedRoute>} />
-=======
-          <Route path="/Maintenance/Tool/monthly" element={<ProtectedRoute><ToolMonthlyReport /></ProtectedRoute>} />
-          <Route path="/Maintenance/Tool/yearly" element={<ProtectedRoute><ToolYearlyReport /></ProtectedRoute>} />
-          
->>>>>>> Stashed changes
           {/* Wildcard Sub-Routes */}
           <Route path="/Maintenance/Machine/*" element={<ProtectedRoute><MachineRoutes /></ProtectedRoute>} />
           <Route path="/Maintenance/Tool/*" element={<ProtectedRoute><ToolRoutes /></ProtectedRoute>} />
@@ -756,28 +617,11 @@ function App() {
           <Route path="/Production/View/:formKey" element={<ProtectedRoute><ProductionView /></ProtectedRoute>} />
     
 
-<<<<<<< Updated upstream
  
            {/* HrSafetyHub */}
            <Route path="/hiring-departments" element={<ProtectedRoute><HrSafetyHub /></ProtectedRoute>} />
            <Route path="/Induction-Training" element={<ProtectedRoute><InductionTrainingForm /></ProtectedRoute>} />
            <Route path="/Training-History" element={<ProtectedRoute><TrainingHistoryCard /></ProtectedRoute>} />   
-=======
-          {/* Forms */}
-          <Route path='/Machine-Card-Form' element={<ProtectedRoute><MachineHistoryCard/></ProtectedRoute>}/>
-          <Route path='/Tool-History-Form' element={<ProtectedRoute><ToolHistoryForm/></ProtectedRoute>}/>
-          <Route path='/Daily-PowerPress-Checksheet' element={<ProtectedRoute><DailyPowerPressChecksheet/></ProtectedRoute>}/>
-          <Route path="/Weekly-VMC-Form" element={<ProtectedRoute><MachinePreventForm /></ProtectedRoute>} />
-          <Route path='/Weekly-CNC-Form' element={<ProtectedRoute><CNCPreventiveMaintenanceForm/></ProtectedRoute>}/>
-          <Route path='/Weekly-Power-Press-Form' element={<ProtectedRoute><PowerPressForm/></ProtectedRoute>}/>
-
-          {/* Reports & Print*/}
-          <Route path='/Machine-Card-Report' element={<ProtectedRoute><MachineHistoryCardprint/></ProtectedRoute>}/>
-          <Route path='/Machine-Breakdown-Report' element={<ProtectedRoute><MachineBreakdownSummaryPrint/></ProtectedRoute>}/>
-          <Route path="/Daily-PowerPress-Report" element={<ProtectedRoute><DailyPowerPressChecksheetprint /></ProtectedRoute>} /> 
-
-          
->>>>>>> Stashed changes
           {/* 404 NOT FOUND */}
           <Route path="*" element={
               <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#0f172a', color: 'white', fontSize: '24px', flexDirection: 'column', gap: '20px'}}>
