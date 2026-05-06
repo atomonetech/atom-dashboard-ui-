@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+// import API_CONFIG from '../config/api';
 const BASE_URL = 'http://192.168.0.34:8000';
 
 const checkData = [
@@ -64,7 +64,6 @@ const checkData = [
 
 const UNITS = ['bar', 'kg/cm²', 'PSI', 'MPa'];
 
-// UPDATE: Ensure these values match the "plant" field in your Django Operator model
 const PLANT_MAP = {
     'Plant 1': 'plant_1',
     'Plant 2': 'plant_2',
@@ -122,9 +121,16 @@ const DailyPowerPressChecksheet = () => {
     const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
     const [plant, setPlant] = useState('');
+    
+    // --- Operator States ---
     const [operatorName, setOperatorName] = useState('');
     const [operators, setOperators] = useState([]);
     const [operatorsLoading, setOperatorsLoading] = useState(false);
+     
+    // --- NEW: Add Operator States ---
+    const [isAddingNewOperator, setIsAddingNewOperator] = useState(false);
+    const [newOperatorName, setNewOperatorName] = useState('');
+    const [isSavingOperator, setIsSavingOperator] = useState(false);
 
     const [machineNo, setMachineNo] = useState('');
     const [machineList, setMachineList] = useState([]);
@@ -133,7 +139,6 @@ const DailyPowerPressChecksheet = () => {
     const [shift, setShift] = useState('');
     const [checks, setChecks] = useState(buildChecks());
 
-    // UPDATED EFFECT: Handles dynamic fetching and resetting
     useEffect(() => {
         if (!plant) {
             setOperators([]);
@@ -145,16 +150,15 @@ const DailyPowerPressChecksheet = () => {
 
         const plantKey = PLANT_MAP[plant];
 
-        // 1. Reset dependent selections immediately when plant changes
         setOperatorName('');
         setMachineNo('');
+        setIsAddingNewOperator(false); // Reset add mode if plant changes
+        setNewOperatorName('');
 
-        // 2. Operators fetch filtered by plant
         setOperatorsLoading(true);
         fetch(`${BASE_URL}/api/operators/?plant=${plantKey}`)
             .then(r => r.json())
             .then(data => {
-                // Assuming backend response: { success: true, operators: [{id: 1, name: 'Amit'}, ...] }
                 if (data.success) {
                     setOperators(data.operators);
                 } else {
@@ -167,7 +171,6 @@ const DailyPowerPressChecksheet = () => {
             })
             .finally(() => setOperatorsLoading(false));
 
-        // 3. Machines fetch filtered by plant
         setMachinesLoading(true);
         fetch(`${BASE_URL}/api/machines/list/?plant=${plantKey}`)
             .then(r => r.json())
@@ -179,6 +182,47 @@ const DailyPowerPressChecksheet = () => {
             .finally(() => setMachinesLoading(false));
 
     }, [plant]);
+
+    // --- NEW: Handle Save New Operator ---
+    const handleSaveNewOperator = async () => {
+        const opName = newOperatorName.trim();
+        if (!opName) return;
+
+        setIsSavingOperator(true);
+
+        try {
+            const response = await fetch(`${BASE_URL}/api/operators/add/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: opName,
+                    plant: PLANT_MAP[plant] 
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                const newOp = { id: result.id || Date.now(), name: opName }; 
+                
+                // Dropdown list me naya operator add karo
+                setOperators(prev => [...prev, newOp]);
+                // Naya operator automatically select ho jaye
+                setOperatorName(opName);
+                
+                // State reset karo
+                setIsAddingNewOperator(false);
+                setNewOperatorName('');
+            } else {
+                alert('Failed to save operator: ' + (result.message || result.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error saving operator:', error);
+            alert('Network Error: Could not save operator to backend.');
+        } finally {
+            setIsSavingOperator(false);
+        }
+    };
 
     const formReady = operatorName.trim() !== '' && plant !== '' && machineNo.trim() !== '' && shift !== '';
 
@@ -192,15 +236,14 @@ const DailyPowerPressChecksheet = () => {
 
     const handleSubmit = async () => {
         if (!formReady) {
-             alert('⚠️ Please fill in all required details (Operator, Plant, Machine, Shift) before proceeding.');
+             alert(' Please fill in all required details (Operator, Plant, Machine, Shift) before proceeding.');
             return;
         }
         if (!allDone) {
-            alert('⚠️ Please complete all checkpoints before saving.');
+            alert(' Please complete all checkpoints before saving.');
             return;
         }
 
-        // Convert DD/MM/YYYY to YYYY-MM-DD for Django
         const dateParts = today.split('/');
         const backendDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
 
@@ -231,35 +274,31 @@ const DailyPowerPressChecksheet = () => {
         try {
             const response = await fetch(`${BASE_URL}/api/checksheets/daily-power-press/`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
             const data = await response.json();
 
             if (data.success || response.ok) {
-                // Reset after success logic
                 setPlant('');
                 setOperatorName('');
                 setMachineNo('');
                 setShift('');
                 setChecks(buildChecks());
-                alert('✅ Badhai ho! Daily Power Press Checksheet database me successfully save ho gayi!');
+                alert(' Badhai ho! Daily Power Press Checksheet database me successfully save ho gayi!');
             } else {
                 console.error("Backend Error:", data);
-                alert(`⚠️ Data save nahi ho paya! Error: ${data.error || 'Check console'}`);
+                alert(` Data save nahi ho paya! Error: ${data.error || 'Check console'}`);
             }
         } catch (error) {
             console.error('Network Error:', error);
-            alert('⚠️ Server se connect nahi ho paya! Apni backend IP aur connection check karo.');
+            alert(' Server se connect nahi ho paya! Apni backend IP aur connection check karo.');
         }
     };
 
     return (
         <div className="pp-wrapper">
-            {/* CSS & External Links remain same as your original */}
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -324,6 +363,22 @@ const DailyPowerPressChecksheet = () => {
                 }
                 .field-input:focus { border-color: #df8008; box-shadow: 0 0 0 3px rgba(223,128,8,0.15); background: #fff; }
                 .field-input:disabled { opacity: 0.5; cursor: not-allowed; background: #f1f5f9; }
+                
+                /* New Operator Buttons styling */
+                .op-action-btn {
+                    height: 46px; width: 46px; border-radius: 10px; border: 1px solid #cbd5e1;
+                    display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
+                    background: #f8fafc; flex-shrink: 0;
+                }
+                .op-action-btn.save { background: #d1fae5; border-color: #10b981; color: #065f46; font-size: 1.1rem; }
+                .op-action-btn.save:hover { background: #10b981; color: #fff; }
+                .op-action-btn.cancel { background: #fee2e2; border-color: #ef4444; color: #991b1b; font-size: 1.1rem;}
+                .op-action-btn.cancel:hover { background: #ef4444; color: #fff; }
+                .op-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+                
+                @keyframes spin { 100% { transform: rotate(360deg); } }
+                .animate-spin-icon { animation: spin 1s linear infinite; display: inline-block; }
+
                 .table-section { animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
                 @keyframes slideDown {
                     from { opacity: 0; transform: translateY(-18px); }
@@ -404,26 +459,70 @@ const DailyPowerPressChecksheet = () => {
                             </select>
                         </div>
 
+                        {/* UPDATED: Operator Name Logic Here */}
                         <div className="col-12 col-md-6 col-lg-3">
                             <label className="field-label">Operator Name <span className="required-star">*</span></label>
-                            <select
-                                className="field-input"
-                                value={operatorName}
-                                onChange={e => setOperatorName(e.target.value)}
-                                disabled={!plant || operatorsLoading}
-                            >
-                                <option value="">
-                                    {operatorsLoading
-                                        ? 'Loading Operators...'
-                                        : !plant
-                                            ? '-- Select Plant First --'
-                                            : '-- Select Operator --'}
-                                </option>
-                                {operators.map(op => (
-                                    // Use op.id as key and op.name as value (ensure backend returns these fields)
-                                    <option key={op.id} value={op.name}>{op.name}</option>
-                                ))}
-                            </select>
+                            {isAddingNewOperator ? (
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <input
+                                        type="text"
+                                        autoFocus
+                                        placeholder="Enter Name"
+                                        value={newOperatorName}
+                                        onChange={(e) => setNewOperatorName(e.target.value)}
+                                        disabled={isSavingOperator}
+                                        className="field-input"
+                                        style={{ paddingRight: '10px', paddingLeft: '10px' }}
+                                    />
+                                    <button 
+                                        type="button" 
+                                        onClick={handleSaveNewOperator} 
+                                        disabled={isSavingOperator || !newOperatorName.trim()}
+                                        className="op-action-btn save"
+                                        title="Save Operator"
+                                    >
+                                        {isSavingOperator ? <i className="bi bi-arrow-repeat animate-spin-icon"></i> : <i className="bi bi-check2"></i>}
+                                    </button>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setIsAddingNewOperator(false)} 
+                                        disabled={isSavingOperator}
+                                        className="op-action-btn cancel"
+                                        title="Cancel"
+                                    >
+                                        <i className="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                            ) : (
+                                <select
+                                    className="field-input"
+                                    value={operatorName}
+                                    onChange={e => {
+                                        if (e.target.value === 'ADD_NEW') {
+                                            setIsAddingNewOperator(true);
+                                        } else {
+                                            setOperatorName(e.target.value);
+                                        }
+                                    }}
+                                    disabled={!plant || operatorsLoading}
+                                >
+                                    <option value="">
+                                        {operatorsLoading
+                                            ? 'Loading Operators...'
+                                            : !plant
+                                                ? '-- Select Plant First --'
+                                                : '-- Select Operator --'}
+                                    </option>
+                                    {operators.map(op => (
+                                        <option key={op.id || op.name} value={op.name}>{op.name}</option>
+                                    ))}
+                                    
+                                    {/* Direct Option Without Condition */}
+                                    <option value="ADD_NEW" style={{ fontWeight: '800', color: '#df8008', backgroundColor: '#fff3e0' }}>
+                                        + Add New Operator
+                                    </option>
+                                </select>
+                            )}
                         </div>
 
                         <div className="col-12 col-md-6 col-lg-3">

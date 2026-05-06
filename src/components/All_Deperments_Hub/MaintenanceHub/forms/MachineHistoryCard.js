@@ -1,16 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+const BASE_URL = "http://192.168.0.34:8000"; 
+
+const PLANT_MAP = {
+    'Plant 1': 'plant_1',
+    'Plant 2': 'plant_2',
+};
 
 const MachineHistoryCard = () => {
     const navigate = useNavigate();
 
     // --- MACHINE DETAILS STATE ---
     const [machineDetails, setMachineDetails] = useState({
+        plant: '',
         machineName: '',
         machineNo: '',
         machineSpecs: '',
         location: ''
     });
+
+    // --- DYNAMIC MACHINE DROPDOWN STATE ---
+    const [machineList, setMachineList] = useState([]);
+    const [machinesLoading, setMachinesLoading] = useState(false);
 
     // --- HISTORY TABLE STATE ---
     const [historyData, setHistoryData] = useState([
@@ -21,13 +33,65 @@ const MachineHistoryCard = () => {
     ]);
 
     const [signatures, setSignatures] = useState({ preparedBy: '', approvedBy: '' });
-    
-    // NAYA STATE: Submit button ko disable karne aur loading dikhane ke liye
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // --- EFFECTS ---
+    // Fetch or generate machine list when Plant or Machine Name changes
+    useEffect(() => {
+        if (machineDetails.plant) {
+            if (machineDetails.machineName === "Press") {
+                // Backend API Call for Press
+                setMachinesLoading(true);
+                const plantKey = PLANT_MAP[machineDetails.plant];
+                
+                fetch(`${BASE_URL}/api/machines/list/?plant=${plantKey}&machine_name=Press`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success && data.machines) {
+                            setMachineList(data.machines);
+                        } else if (Array.isArray(data)) {
+                            setMachineList(data);
+                        } else {
+                            setMachineList([]);
+                        }
+                    })
+                    .catch(err => console.error('Error fetching machines:', err))
+                    .finally(() => setMachinesLoading(false));
+
+            } else if (machineDetails.machineName === "CNC") {
+                // Frontend Logic for CNC (12 Machines)
+                const cncMachines = Array.from({ length: 12 }, (_, i) => `CNC-${String(i + 1).padStart(2, '0')}`);
+                setMachineList(cncMachines);
+                setMachinesLoading(false);
+
+            } else if (machineDetails.machineName === "VMC") {
+                // Frontend Logic for VMC (4 Machines)
+                const vmcMachines = Array.from({ length: 4 }, (_, i) => `VMC-${String(i + 1).padStart(2, '0')}`);
+                setMachineList(vmcMachines);
+                setMachinesLoading(false);
+
+            } else {
+                setMachineList([]);
+            }
+        } else {
+            setMachineList([]);
+        }
+    }, [machineDetails.plant, machineDetails.machineName]);
+
 
     // --- HANDLERS ---
     const handleDetailChange = (e) => {
-        setMachineDetails({ ...machineDetails, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setMachineDetails(prev => {
+            const newData = { ...prev, [name]: value };
+            
+            // Clear Machine No. if Plant or Machine Name is changed
+            if (name === "plant" || name === "machineName") {
+                newData.machineNo = "";
+            }
+            
+            return newData;
+        });
     };
 
     const handleRowChange = (id, field, value) => {
@@ -45,22 +109,26 @@ const MachineHistoryCard = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (!machineDetails.machineName || !machineDetails.machineNo) {
-            alert("⚠️ Please fill in the Machine Name and Machine No.");
+        if (!machineDetails.plant || !machineDetails.machineName || !machineDetails.machineNo) {
+            alert(" Please fill in the Plant, Machine Name, and Machine No.");
             return;
         }
 
         setIsSubmitting(true);
         
+        // Add plant mapping to submission data if backend requires it formatted
         const submissionData = {
-            machineDetails,
+            machineDetails: {
+                ...machineDetails,
+                plant: PLANT_MAP[machineDetails.plant] || machineDetails.plant
+            },
             historyData,
             signatures
         };
         
         try {
             // BACKEND API CALL
-            const response = await fetch('http://192.168.0.34:8000/api/machine-history/save/', {
+            const response = await fetch(`${BASE_URL}/api/machine-history/save/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -70,11 +138,12 @@ const MachineHistoryCard = () => {
 
             const result = await response.json();
 
-            if (result.success) {
-                alert("✅ Success: Machine History Card successfully updated in database!");
+            if (result.success || response.ok) {
+                alert(" Success: Machine History Card successfully updated in database!");
                 
                 // Reset form after successful submission
                 setMachineDetails({
+                    plant: '',
                     machineName: '',
                     machineNo: '',
                     machineSpecs: '',
@@ -87,12 +156,13 @@ const MachineHistoryCard = () => {
                     { id: 4, date: '', problem: '', actionTaken: '', update4M: '', signature: '', remarks: '' }
                 ]);
                 setSignatures({ preparedBy: '', approvedBy: '' });
+                setMachineList([]);
             } else {
-                alert("❌ Error: " + (result.error || "Failed to save data"));
+                alert(" Error: " + (result.error || "Failed to save data"));
             }
         } catch (error) {
             console.error("Submission Error:", error);
-            alert("❌ Network Error: Could not connect to the server.");
+            alert(" Network Error: Could not connect to the server.");
         } finally {
             setIsSubmitting(false);
         }
@@ -149,33 +219,69 @@ const MachineHistoryCard = () => {
                         </div>
                     </div>
                     <div className="p-4 sm:p-5 md:p-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            
+                            {/* 1. Plant Field */}
+                            <div>
+                                <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase mb-1.5">
+                                    Plant <span className="text-red-500">*</span>
+                                </label>
+                                <select 
+                                    name="plant" 
+                                    value={machineDetails.plant} 
+                                    onChange={handleDetailChange} 
+                                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all"
+                                >
+                                    <option value="" className="text-slate-400">Select Plant</option>
+                                    <option value="Plant 1">Plant 1</option>
+                                    <option value="Plant 2">Plant 2</option>
+                                </select>
+                            </div>
+
+                            {/* 2. Machine Name Field */}
                             <div>
                                 <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase mb-1.5">
                                     Machine Name <span className="text-red-500">*</span>
                                 </label>
-                                <input 
-                                    type="text" 
-                                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all" 
+                                <select 
                                     name="machineName" 
                                     value={machineDetails.machineName} 
                                     onChange={handleDetailChange} 
-                                    placeholder="Enter machine name" 
-                                />
+                                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 focus:bg-white transition-all"
+                                >
+                                    <option value="" className="text-slate-400">Select Machine</option>
+                                    <option value="Press">POWER PRESS</option>
+                                    <option value="CNC">CNC</option>
+                                    <option value="VMC">VMC</option>
+                                </select>
                             </div>
+
+                            {/* 3. Machine No Field */}
                             <div>
                                 <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase mb-1.5">
                                     Machine No. <span className="text-red-500">*</span>
                                 </label>
-                                <input 
-                                    type="text" 
-                                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 text-sm font-semibold text-blue-600 outline-none focus:border-blue-500 focus:bg-white transition-all" 
+                                <select 
                                     name="machineNo" 
                                     value={machineDetails.machineNo} 
                                     onChange={handleDetailChange} 
-                                    placeholder="e.g. MC-001" 
-                                />
+                                    disabled={!machineDetails.plant || !machineDetails.machineName || machinesLoading}
+                                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 text-sm font-semibold text-blue-600 outline-none focus:border-blue-500 focus:bg-white transition-all disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
+                                >
+                                    <option value="">
+                                        {machinesLoading 
+                                            ? "Loading..." 
+                                            : (!machineDetails.plant || !machineDetails.machineName) 
+                                                ? "Select Plant & Machine" 
+                                                : "Select Machine No"}
+                                    </option>
+                                    {machineList.map((mc, index) => (
+                                        <option key={index} value={mc}>{mc}</option>
+                                    ))}
+                                </select>
                             </div>
+
+                            {/* 4. Machine Specs */}
                             <div>
                                 <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase mb-1.5">
                                     Machine Specs
@@ -189,6 +295,8 @@ const MachineHistoryCard = () => {
                                     placeholder="e.g. 250 Ton Capacity" 
                                 />
                             </div>
+
+                            {/* 5. Location */}
                             <div>
                                 <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase mb-1.5">
                                     Location

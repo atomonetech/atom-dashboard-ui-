@@ -153,7 +153,16 @@ export default function Plant2Live() {
     return () => clearInterval(hourCheckInterval);
   }, []);
 
-  // --- PEHLE WALE NEON COLORS ---
+  // --- LUNCH TIME CHECKER LOGIC ---
+  const checkLunchTime = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    const minute = now.getMinutes();
+    // 12:30 PM se lekar 12:59 PM tak
+    return hour === 12 && minute >= 30;
+  };
+
+  // --- ORIGINAL COLORS (No Purple, completely untouched) ---
   const getMachineColor = (machine) => {
     if (!machine.machine_on) return '#475569'; 
     if (machine.is_producing) return '#10b981'; 
@@ -204,11 +213,12 @@ export default function Plant2Live() {
   const offlineMachines = totalMachines - onMachines;
 
   const sortedMachines = [...machines].sort((a, b) => a.machine_no - b.machine_no);
+  const isCurrentlyLunch = checkLunchTime();
 
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'radial-gradient(circle at top, #1e293b 0%, #020617 100%)', // First Design Bg
+      background: 'radial-gradient(circle at top, #1e293b 0%, #020617 100%)', 
       padding: '20px',
       color: '#f8fafc',
       fontFamily: "'Inter', 'Segoe UI', sans-serif"
@@ -217,6 +227,10 @@ export default function Plant2Live() {
         @keyframes hardPulse {
           0%, 100% { opacity: 1; background-color: #9a3412; }
           50% { opacity: 0.9; background-color: #7c2d12; box-shadow: 0 0 20px rgba(249, 115, 22, 0.6); }
+        }
+        @keyframes lunchBannerPulse {
+          0%, 100% { background-color: rgba(59, 130, 246, 0.15); border-color: rgba(96, 165, 250, 0.4); }
+          50% { background-color: rgba(59, 130, 246, 0.3); border-color: rgba(96, 165, 250, 0.8); box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
         }
         .card-hover:hover {
           transform: translateY(-6px);
@@ -268,7 +282,7 @@ export default function Plant2Live() {
         </div>
       </div>
 
-      {/* MACHINES GRID - BIGGER CARDS WITH EXACT DATA MAPPING */}
+      {/* MACHINES GRID */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '24px' }}>
         {sortedMachines.map((machine) => {
           const liveIdle = liveIdleSeconds[machine.machine_no] || 0;
@@ -281,6 +295,7 @@ export default function Plant2Live() {
               className="card-hover"
               onClick={() => handleMachineClick(machine)}
               style={{
+                position: 'relative',
                 background: 'linear-gradient(145deg, #1e293b, #0f172a)',
                 border: `1px solid rgba(255,255,255,0.05)`,
                 borderTop: `4px solid ${statusColor}`,
@@ -292,7 +307,7 @@ export default function Plant2Live() {
               }}
             >
               {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div style={{ fontSize: '24px', fontWeight: '900', color: '#f8fafc' }}>
                   Machine {machine.machine_no}
                 </div>
@@ -303,6 +318,31 @@ export default function Plant2Live() {
                   {getMachineStatus(machine)}
                 </div>
               </div>
+
+              {/* LUNCH TIME BANNER (Sirf tab dikhega jab Lunch Time ho aur Machine Offline/Idle ho) */}
+              {isCurrentlyLunch && !machine.is_producing && (
+                <div style={{
+                  background: 'rgba(59, 130, 246, 0.15)',
+                  border: '1px solid rgba(96, 165, 250, 0.4)',
+                  color: '#93c5fd',
+                  padding: '10px',
+                  borderRadius: '12px',
+                  textAlign: 'center',
+                  fontWeight: '800',
+                  letterSpacing: '2px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '10px',
+                  textTransform: 'uppercase',
+                  animation: 'lunchBannerPulse 3s infinite',
+                  boxShadow: 'inset 0 0 10px rgba(59, 130, 246, 0.1)'
+                }}>
+                  <span style={{ fontSize: '20px' }}>🍽️</span> 
+                  <span>LUNCH TIME</span>
+                </div>
+              )}
 
               {/* Current Hour Production */}
               <div style={{ textAlign: 'center', padding: '24px 10px', background: 'rgba(2, 6, 23, 0.4)', borderRadius: '16px', marginBottom: '16px', border: '1px solid rgba(255,255,255,0.02)' }}>
@@ -327,8 +367,8 @@ export default function Plant2Live() {
                 </div>
               </div>
 
-              {/* LIVE IDLE Pulse */}
-              {isIdle && liveIdle > 0 && (
+              {/* LIVE IDLE Pulse - (Lunch ke time par pulse hide kar diya taaki distraction na ho) */}
+              {!isCurrentlyLunch && isIdle && liveIdle > 0 && (
                 <div style={{ padding: '16px', borderRadius: '12px', marginBottom: '16px', textAlign: 'center', animation: 'hardPulse 2s infinite', border: '1px solid rgba(249, 115, 22, 0.3)' }}>
                   <div style={{ fontSize: '11px', color: '#fed7aa', fontWeight: '700', marginBottom: '8px' }}>⚠️ LIVE IDLE</div>
                   <div style={{ fontSize: '32px', fontWeight: '900', color: '#fff', lineHeight: '1' }}>{formatLiveIdle(liveIdle)}</div>
@@ -361,7 +401,7 @@ export default function Plant2Live() {
         })}
       </div>
 
-      {/* MODAL POPUP WITH EXACT DATA MAPPING */}
+      {/* MODAL POPUP (Same as original) */}
       {selectedMachine && (
         <div 
           onClick={closeModal}
@@ -413,6 +453,29 @@ export default function Plant2Live() {
 
             <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
               
+              {/* Modal Lunch Banner Highlight */}
+              {isCurrentlyLunch && !selectedMachine.is_producing && (
+                <div style={{
+                  background: 'rgba(59, 130, 246, 0.15)',
+                  border: '1px solid rgba(96, 165, 250, 0.4)',
+                  color: '#93c5fd',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  textAlign: 'center',
+                  fontWeight: '800',
+                  letterSpacing: '2px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '10px',
+                  textTransform: 'uppercase',
+                  animation: 'lunchBannerPulse 3s infinite',
+                }}>
+                  <span style={{ fontSize: '24px' }}>🍽️</span> 
+                  <span style={{ fontSize: '18px' }}>LUNCH TIME BREAK</span>
+                </div>
+              )}
+
               {/* Machine Timeline */}
               <div style={{ backgroundColor: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <h3 style={{ margin: '0 0 16px 0', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}><span>⏱️</span> Machine Timeline</h3>
@@ -480,7 +543,7 @@ export default function Plant2Live() {
                 </div>
               </div>
 
-              {/* Tool Info (All exact elements from prompt) */}
+              {/* Tool Info */}
               <div style={{ backgroundColor: '#1e293b', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <h3 style={{ margin: '0 0 16px 0', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}><span>🔧</span> Tool Information</h3>
                 <div style={{ display: 'grid', gap: '10px' }}>
@@ -530,5 +593,3 @@ export default function Plant2Live() {
     </div>
   );
 }
-
-

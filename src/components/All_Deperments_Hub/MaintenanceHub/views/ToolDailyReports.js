@@ -184,7 +184,7 @@ const ToolDailyReports = () => {
                             </div>
                             <div>
                                 <p style={{fontWeight:700, fontSize:'0.9rem', margin:0, color:'#0f172a'}}>Fill Data</p>
-                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Form mein naya data bharein</p>
+                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Enter new data into the form</p>
                             </div>
                             <i className="bi bi-chevron-right ms-auto text-muted"></i>
                         </button>
@@ -195,7 +195,7 @@ const ToolDailyReports = () => {
                             </div>
                             <div>
                                 <p style={{fontWeight:700, fontSize:'0.9rem', margin:0, color:'#0f172a'}}>View Data</p>
-                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Database ke saved records dekhen</p>
+                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>View saved records from the database</p>
                             </div>
                             <i className="bi bi-chevron-right ms-auto text-muted"></i>
                         </button>
@@ -206,7 +206,7 @@ const ToolDailyReports = () => {
                             </div>
                             <div>
                                 <p style={{fontWeight:700, fontSize:'0.9rem', margin:0, color:'#0f172a'}}>Print Data</p>
-                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Saved records print karein</p>
+                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Print saved records</p>
                             </div>
                             <i className="bi bi-chevron-right ms-auto text-muted"></i>
                         </button>

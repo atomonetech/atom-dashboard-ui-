@@ -1,4 +1,8 @@
-// 🔥 1. Frequency Categories for Machine Hub
+// ==========================================
+// machineData.js - Fully Updated & Cleaned
+// ==========================================
+
+// 1. Frequency Categories for Machine Hub
 export const frequencyCards = [
     {
         id: "daily",
@@ -34,7 +38,7 @@ export const frequencyCards = [
     },
 ];
 
-// 🔥 2. Machine Daily Forms (Shown when Daily is clicked)
+// 2. Machine Daily Forms
 export const machineDailyReports = [
     {
         id: "mc_history",
@@ -69,9 +73,24 @@ export const machineDailyReports = [
         bgColor: "#fef2f2",
         isLive: true,
     },
+    // ✅ FIX: id aur fillRoute dono ko "Poka-Yoke" kar diya taaki router confuse na ho
+    { 
+        id: "Poka-Yoke", 
+        title: "Daily Poka Yokes Check", 
+        formNo: "AOT/F/QC/07A", 
+        frequency: "Daily",
+        responsibility: "Operator", 
+        icon: "bi-shield-check", 
+        color: "#10b981", 
+        bgColor: "#d1fae5", 
+        fillRoute: "Poka-Yoke", 
+        printKey: "PokaYoke-report", 
+        viewKey: "pokayoke-view", 
+        isLive: true 
+    },
 ];
 
-// 🔥 3. 19 Machines Data for Weekly Sub-Menu
+// 3. Machines Data for Weekly Sub-Menu
 const machinesWithColors = [
     { name: "VMM", color: "#3b82f6", bgColor: "#eff6ff" },
     { name: "Projection WELD", color: "#8b5cf6", bgColor: "#ede9fe" },
@@ -94,14 +113,105 @@ const machinesWithColors = [
     { name: "Servo Press", color: "#047857", bgColor: "#d1fae5" },
 ];
 
-export const weeklyMachineSubReports = machinesWithColors.map((m) => ({
-    id: `weekly_pm_${m.name.replace(/\s+/g, "_").toLowerCase()}`,
-    title: `${m.name} Weekly Maint.`,
-    formNo: "AOT-F-PM-01",
-    frequency: "Weekly",
-    responsibility: "Maintenance Team",
-    icon: "bi-gear-fill",
-    color: m.color,
-    bgColor: m.bgColor,
-    isLive: false
-}));
+export const weeklyMachineSubReports = machinesWithColors.map((m) => {
+    const idString = `weekly_pm_${m.name.replace(/\s+/g, "_").toLowerCase()}`;
+    const liveStatus = idString.includes('cnc') || idString.includes('vmc') || idString.includes('power_press');
+    
+    return {
+        id: idString,
+        title: `${m.name} Weekly Maint.`,
+        formNo: "AOT-F-PM-01",
+        frequency: "Weekly",
+        responsibility: "Maintenance Team",
+        icon: "bi-gear-fill",
+        color: m.color,
+        bgColor: m.bgColor,
+        isLive: liveStatus,
+    };
+});
+
+// 4. Machine Monthly Reports
+export const machineMonthlyReports = [
+    {
+        id: "mc_breakdown_summary",
+        title: "M/c Breakdown Summary Sheet",
+        formNo: "AOT-F-MM-05",
+        frequency: "Monthly",
+        responsibility: "Maintenance Manager",
+        icon: "bi-file-earmark-bar-graph",
+        color: "#8b5cf6",
+        bgColor: "#f5f3ff",
+        isLive: true,
+    },
+    {
+        id: "why_why_analysis",
+        title: "Why Why Analysis",
+        formNo: "AOT-F-MM-06",
+        frequency: "Monthly / Breakdown",
+        responsibility: "Maint Engineer / HOD",
+        icon: "bi-question-diamond",
+        color: "#f43f5e",
+        bgColor: "#fff1f2",
+        isLive: false,
+    },
+    {
+        id: "critical_spares",
+        title: "Critical Spares Part List",
+        formNo: "AOT-F-MM-07",
+        frequency: "Monthly Review",
+        responsibility: "Store / Maintenance",
+        icon: "bi-tools",
+        color: "#0ea5e9",
+        bgColor: "#f0f9ff",
+        isLive: true,
+    },
+];
+
+// 5. Machine Yearly Reports
+export const machineYearlyReports = [
+    { 
+        id: "master_list_mc", 
+        title: "Master List of Machine", 
+        formNo: "AOT-F-MM-08", 
+        frequency: "Yearly", 
+        responsibility: "Maint. Head", 
+        icon: "bi-list-check", 
+        color: "#6366f1", 
+        bgColor: "#eef2ff", 
+        isLive: false 
+    },
+    { 
+        id: "annual_preventive_plan", 
+        title: "Annual Preventive Maintenance Plan", 
+        formNo: "AOT-F-MM-09", 
+        frequency: "Annual", 
+        responsibility: "Maint. Engineer", 
+        icon: "bi-calendar3", 
+        color: "#10b981", 
+        bgColor: "#ecfdf5", 
+        isLive: false 
+    },
+    { 
+        id: "mc_overhauling_list", 
+        title: "List of Machine for Overhauling", 
+        formNo: "AOT-F-MM-10", 
+        frequency: "Yearly", 
+        responsibility: "HOD Maint.", 
+        icon: "bi-wrench-adjustable-circle", 
+        color: "#f59e0b", 
+        bgColor: "#fffbeb", 
+        isLive: false 
+    },
+    { 
+        id: "annual_overhauling_plan", 
+        title: "Annual Overhauling Plan", 
+        formNo: "AOT-F-MM-11", 
+        frequency: "Annual", 
+        responsibility: "Maint. Head", 
+        icon: "bi-clipboard-data", 
+        color: "#ef4444", 
+        bgColor: "#fef2f2", 
+        isLive: false 
+    },
+];
+

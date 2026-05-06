@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
 const FORM_CONFIG = {
     'incoming-material-view':  { label: 'Incoming Material Inspection',  color: '#3b82f6', bg: '#eff6ff', icon: 'bi-box-seam',           formNo: 'AOT/F/QA/01' },
-    'redbin-view':             { label: 'Red Bin Analysis - NC Reg.',     color: '#ef4444', bg: '#fef2f2', icon: 'bi-trash3',             formNo: 'AOT/F/QC/02' },
-    'scrap-note-view':         { label: 'Scrap Note',                     color: '#ef4444', bg: '#fef2f2', icon: 'bi-file-earmark-x',     formNo: 'AOT/F/QC/04' },
-    'redbin-attendance-view':  { label: 'Red Bin Attendance Sheet',       color: '#f59e0b', bg: '#fef3c7', icon: 'bi-person-x',           formNo: 'AOT/F/QC/05' },
-    'pokayoke-view':           { label: 'Daily Poka Yokes Check',         color: '#10b981', bg: '#d1fae5', icon: 'bi-shield-check',       formNo: 'AOT/F/QC/07A' },
-    'inspection-view':         { label: 'Set up & Patrol Insp. (FPIR)',   color: '#06b6d4', bg: '#cffafe', icon: 'bi-clipboard-check',    formNo: 'AOT/F/QA/15' },
-    'rework-view':             { label: 'Rework / Repair Report',         color: '#f59e0b', bg: '#fef3c7', icon: 'bi-tools',              formNo: 'AOT/F/QA/20' },
-    'sample-inspection-view':  { label: 'Sample Inspection Report',       color: '#3b82f6', bg: '#eff6ff', icon: 'bi-search',             formNo: 'AOT/F/QA/21' },
-    'deviation-view':          { label: 'Deviation Approval Form',        color: '#8b5cf6', bg: '#ede9fe', icon: 'bi-file-earmark-check', formNo: 'AOT/F/PROD/04' },
-    'grn-view':                { label: 'Goods Receipt Note (GRN)',       color: '#06b6d4', bg: '#cffafe', icon: 'bi-receipt',            formNo: 'Not Reqd.' },
-    'pdi-view':                { label: 'Pre Dispatch Insp. (PDIR)',      color: '#10b981', bg: '#d1fae5', icon: 'bi-truck',              formNo: 'AOT/F/QA/40' },
+    'redbin-view':             { label: 'Red Bin Analysis - NC Reg.',    color: '#ef4444', bg: '#fef2f2', icon: 'bi-trash3',             formNo: 'AOT/F/QC/02' },
+    'scrap-note-view':         { label: 'Scrap Note',                    color: '#ef4444', bg: '#fef2f2', icon: 'bi-file-earmark-x',     formNo: 'AOT/F/QC/04' },
+    'redbin-attendance-view':  { label: 'Red Bin Attendance Sheet',      color: '#f59e0b', bg: '#fef3c7', icon: 'bi-person-x',           formNo: 'AOT/F/QC/05' },
+    'pokayoke-view':           { label: 'Daily Poka Yokes Check',        color: '#10b981', bg: '#d1fae5', icon: 'bi-shield-check',       formNo: 'AOT/F/QC/07A' },
+    'inspection-view':         { label: 'Set up & Patrol Insp. (FPIR)',  color: '#06b6d4', bg: '#cffafe', icon: 'bi-clipboard-check',    formNo: 'AOT/F/QA/15' },
+    'rework-view':             { label: 'Rework / Repair Report',        color: '#f59e0b', bg: '#fef3c7', icon: 'bi-tools',              formNo: 'AOT/F/QA/20' },
+    'sample-inspection-view':  { label: 'Sample Inspection Report',      color: '#3b82f6', bg: '#eff6ff', icon: 'bi-search',             formNo: 'AOT/F/QA/21' },
+    'deviation-view':          { label: 'Deviation Approval Form',       color: '#8b5cf6', bg: '#ede9fe', icon: 'bi-file-earmark-check', formNo: 'AOT/F/PROD/04' },
+    'grn-view':                { label: 'Goods Receipt Note (GRN)',      color: '#06b6d4', bg: '#cffafe', icon: 'bi-receipt',            formNo: 'Not Reqd.' },
+    'pdi-view':                { label: 'Pre Dispatch Insp. (PDIR)',     color: '#10b981', bg: '#d1fae5', icon: 'bi-truck',              formNo: 'AOT/F/QA/40' },
 };
 
 const Qaview = () => {
-    const { formKey }               = useParams();
-    const navigate                  = useNavigate();
-    const [rows, setRows]           = useState([]);
+    const { formKey }       = useParams();
+    const navigate          = useNavigate();
+    const location          = useLocation();
+    const [rows, setRows]   = useState([]);
     const [loading, setLoading]     = useState(true);
     const [error, setError]         = useState(null);
 
@@ -60,6 +61,12 @@ const Qaview = () => {
         a.download = `${config.label}.csv`;
         a.click();
         URL.revokeObjectURL(url);
+    };
+
+    // Custom Back Button Logic
+    const handleCustomBack = () => {
+        const returnCategory = location.state?.fromCategory || 'daily';
+        navigate(`/qa-hub/${returnCategory}`);
     };
 
     return (
@@ -120,7 +127,7 @@ const Qaview = () => {
             {/* Navbar */}
             <nav className="vp-nav">
                 <div className="vp-nav-left">
-                    <button className="back-btn" onClick={() => navigate('/qa-hub')}>
+                    <button className="back-btn" onClick={handleCustomBack}>
                         <i className="bi bi-arrow-left"></i> Back
                     </button>
                     <div style={{width:'1px',height:'32px',background:'#e2e8f0'}}></div>
@@ -177,8 +184,8 @@ const Qaview = () => {
                                         <td className="sr-td">{i + 1}</td>
                                         {columns.map(col => (
                                             <td key={col} title={String(row[col] ?? '')}>
-                                                {row[col] === null || row[col] === undefined
-                                                    ? <span className="null-val">—</span>
+                                                {row[col] === null || row[col] === undefined || row[col] === ''
+                                                    ? <span className="null-val"></span>
                                                     : String(row[col])}
                                             </td>
                                         ))}
