@@ -60,8 +60,8 @@ const TipChangeMonitorForm = () => {
           .finally(() => setMachinesLoading(false));
 
       } else if (formData.machineName === "CNC") {
-        // CNC ke liye Frontend Hardcoded logic (14 Machines)
-        const cncMachines = Array.from({ length: 14 }, (_, i) => `CNC-${String(i + 1).padStart(2, '0')}`);
+        // CNC ke liye Frontend Hardcoded logic (12 Machines)
+        const cncMachines = Array.from({ length: 12 }, (_, i) => `CNC-${String(i + 1).padStart(2, '0')}`);
         setMachineList(cncMachines);
         setMachinesLoading(false);
 
@@ -246,7 +246,7 @@ const TipChangeMonitorForm = () => {
                 className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-[#916cf6] focus:border-[#916cf6] text-gray-700 text-sm transition-colors"
               >
                 <option value="" className="text-gray-400">Select Machine</option>
-                <option value="Press">Press</option>
+                <option value="Press">POWER PRESS</option>
                 <option value="CNC">CNC</option>
                 <option value="VMC">VMC</option>
               </select>

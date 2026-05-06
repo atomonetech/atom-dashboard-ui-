@@ -1,14 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+// 🔥 Updated Config: Ab humne har form ke saath uska category aur frequency (daily/weekly/monthly/yearly) add kar diya hai
 const MAINT_CONFIG = {
-    'mc_history':                { label: 'Machine History Card',        color: '#4f46e5', bg: '#e0e7ff', icon: 'bi-clock-history',      formNo: 'AOT/F/MNT/01', category: 'machine' },
-    'power_press_check':         { label: 'Power Press Checksheet',      color: '#06b6d4', bg: '#cffafe', icon: 'bi-speedometer2',        formNo: 'AOT/F/MNT/02', category: 'machine' },
-    'mc_breakdown':              { label: 'Machine Breakdown Slip',      color: '#ef4444', bg: '#fef2f2', icon: 'bi-exclamation-octagon', formNo: 'AOT/F/MNT/03', category: 'machine' },
-    'tool_history':              { label: 'Tool History Card',           color: '#8b5cf6', bg: '#ede9fe', icon: 'bi-journal-text',        formNo: 'AOT/F/TL/01',  category: 'tool'    },
-    'tool_pm_check':             { label: 'Tool PM Checklist',           color: '#10b981', bg: '#d1fae5', icon: 'bi-check2-square',       formNo: 'AOT/F/TL/02',  category: 'tool'    },
-    'tool_breakdown':            { label: 'Tool Breakdown Report',       color: '#f59e0b', bg: '#fef3c7', icon: 'bi-tools',               formNo: 'AOT/F/TL/03',  category: 'tool'    },
-    'weekly_pm_welding_fixture': { label: 'Welding Fixture Checklist',   color: '#3b82f6', bg: '#eff6ff', icon: 'bi-shield-check',        formNo: 'AOT/F/TL/04',  category: 'tool'    },
+    // MACHINE REPORTS
+    'mc_history':                { label: 'Machine History Card',        color: '#4f46e5', bg: '#e0e7ff', icon: 'bi-clock-history',      formNo: 'AOT/F/MNT/01', category: 'machine', freq: 'daily' },
+    'power_press_check':         { label: 'Power Press Checksheet',      color: '#06b6d4', bg: '#cffafe', icon: 'bi-speedometer2',       formNo: 'AOT/F/MNT/02', category: 'machine', freq: 'daily' },
+    'mc_breakdown':              { label: 'Machine Breakdown Slip',      color: '#ef4444', bg: '#fef2f2', icon: 'bi-exclamation-octagon', formNo: 'AOT/F/MNT/03', category: 'machine', freq: 'daily' },
+    // ✅ Poka Yoke yahan add kiya hai (category 'machine', freq 'daily' ke saath)
+    'pokayoke-view':             { label: 'Poka Yoke Monitoring',        color: '#10b981', bg: '#d1fae5', icon: 'bi-shield-check',       formNo: 'AOT/F/QC/07A', category: 'machine', freq: 'daily' },
+    'mc_breakdown_summary':      { label: 'MC Breakdown Summary',        color: '#f59e0b', bg: '#fef3c7', icon: 'bi-graph-up',           formNo: 'AOT/F/MNT/04', category: 'machine', freq: 'monthly' },
+    'why_why_analysis':          { label: 'Why-Why Analysis',            color: '#8b5cf6', bg: '#ede9fe', icon: 'bi-question-circle',    formNo: 'AOT/F/MNT/05', category: 'machine', freq: 'monthly' },
+    'critical_spares':           { label: 'Critical Spares Inventory',   color: '#10b981', bg: '#d1fae5', icon: 'bi-box-seam',           formNo: 'AOT/F/MNT/06', category: 'machine', freq: 'monthly' },
+
+    // TOOL REPORTS
+    'tool_history':              { label: 'Tool History Card',           color: '#8b5cf6', bg: '#ede9fe', icon: 'bi-journal-text',       formNo: 'AOT/F/TL/01',  category: 'tool',    freq: 'daily' },
+    'tool_pm_check':             { label: 'Tool PM Checklist',           color: '#10b981', bg: '#d1fae5', icon: 'bi-check2-square',      formNo: 'AOT/F/TL/02',  category: 'tool',    freq: 'daily' },
+    'tool_breakdown':            { label: 'Tool Breakdown Report',       color: '#f59e0b', bg: '#fef3c7', icon: 'bi-tools',              formNo: 'AOT/F/TL/03',  category: 'tool',    freq: 'daily' },
+    'tool_stroke':               { label: 'Tool Stroke Record',          color: '#06b6d4', bg: '#cffafe', icon: 'bi-lightning-charge',   formNo: 'AOT/F/TL/04',  category: 'tool',    freq: 'daily' },
+    'weekly_pm_welding_fixture': { label: 'Welding Fixture Checklist',   color: '#3b82f6', bg: '#eff6ff', icon: 'bi-shield-check',       formNo: 'AOT/F/TL/05',  category: 'tool',    freq: 'weekly' },
+    'tool_breakdown_summary':    { label: 'Tool Breakdown Summary',      color: '#ef4444', bg: '#fef2f2', icon: 'bi-bar-chart',          formNo: 'AOT/F/TL/06',  category: 'tool',    freq: 'monthly' },
+    'why_tool_analysis':         { label: 'Why-Why Tool Analysis',       color: '#8b5cf6', bg: '#ede9fe', icon: 'bi-search',             formNo: 'AOT/F/TL/07',  category: 'tool',    freq: 'monthly' },
+    'tool_critical_spares':      { label: 'Tool Critical Spares',        color: '#10b981', bg: '#d1fae5', icon: 'bi-archive',            formNo: 'AOT/F/TL/08',  category: 'tool',    freq: 'monthly' },
+    
+    // YEARLY REPORTS (Example patterns)
+    'master_list_mc':            { label: 'Machine Master List',         color: '#334155', bg: '#f1f5f9', icon: 'bi-list-ul',            formNo: 'AOT/F/MNT/YR', category: 'machine', freq: 'yearly' },
+    'master_list_tool':          { label: 'Tool Master List',            color: '#334155', bg: '#f1f5f9', icon: 'bi-list-stars',         formNo: 'AOT/F/TL/YR',  category: 'tool',    freq: 'yearly' },
 };
 
 const MaintenanceView = () => {
@@ -18,16 +35,20 @@ const MaintenanceView = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError]     = useState(null);
 
+    // Form metadata fetch karna
     const config = MAINT_CONFIG[formKey] || {
         label: formKey.replace(/_/g, ' '), color: '#4f46e5', bg: '#e0e7ff',
-        icon: 'bi-gear', formNo: 'N/A', category: 'machine'
+        icon: 'bi-gear', formNo: 'N/A', category: 'machine', freq: 'daily'
     };
 
-    // ✅ Yahi hai fix — category se back path decide hoga
-    const backPath = config.category === 'tool'
-        ? '/Maintenance/Tool/daily'
-        : '/Maintenance/Machine/daily';
+    // 🚀 DYNAMIC LOGIC: Category aur Frequency ko combine karke sahi back path banana
+    const getBackPath = () => {
+        const cat = config.category === 'tool' ? 'Tool' : 'Machine';
+        const freq = config.freq || 'daily'; // Default to daily if not found
+        return `/Maintenance/${cat}/${freq}`;
+    };
 
+    const backPath = getBackPath();
     const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
 
     useEffect(() => {
@@ -105,7 +126,7 @@ const MaintenanceView = () => {
 
             <nav className="vp-nav">
                 <div className="vp-nav-left">
-                    {/* ✅ backPath use ho raha hai yahan */}
+                    {/* ✅ navigate(backPath) use ho raha hai jo logic se calculate hua hai */}
                     <button className="back-btn" onClick={() => navigate(backPath)}>
                         <i className="bi bi-arrow-left"></i> Back
                     </button>

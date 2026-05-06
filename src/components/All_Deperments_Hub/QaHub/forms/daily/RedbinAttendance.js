@@ -1,20 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; 
 import { useNavigate } from "react-router-dom";
 import { ClipboardList } from "lucide-react";
 import { CiCalendarDate } from "react-icons/ci";
 import { IoMdArrowBack, IoIosArrowDown } from "react-icons/io";
+import axios from "axios"; 
 
 const today = new Date();
 const formattedDate = `${String(today.getDate()).padStart(2,'0')}-${String(today.getMonth()+1).padStart(2,'0')}-${today.getFullYear()}`;
 const currentMonth = today.toLocaleString('default', { month: 'long' });
 const currentYear  = today.getFullYear();
 
-const DESIGNATIONS = [
+// Backend API URL
+const API_SAVE = "http://192.168.0.34:8000/api/redbin-attendance/save/";
+
+// Default arrays (Agar localStorage me kuch nahi hoga to ye use honge)
+const DEFAULT_DESIGNATIONS = [
   "Quality Engineer","Production Engineer","Operator","Supervisor",
   "Store Incharge","CFT Member","Rework Operator","Quality Inspector",
 ];
 
-const NAMES = [
+const DEFAULT_NAMES = [
   "Rahul Sharma","Priya Patel","Amit Verma","Sunita Yadav",
   "Rajesh Kumar","Neha Singh","Vikram Joshi","Pooja Desai",
   "Manoj Tiwari","Kavita Mehta",
@@ -30,26 +35,95 @@ const SelectWrapper = ({ children, color = "#f59e0b" }) => (
 export default function RedbinAttendance() {
   const navigate = useNavigate();
 
+  // 👇 STATE FOR DYNAMIC LISTS (localStorage se data uthana)
+  const [namesList, setNamesList] = useState(() => {
+    const savedNames = localStorage.getItem('redbin_names');
+    return savedNames ? JSON.parse(savedNames) : DEFAULT_NAMES;
+  });
+
+  const [designationsList, setDesignationsList] = useState(() => {
+    const savedDesig = localStorage.getItem('redbin_designations');
+    return savedDesig ? JSON.parse(savedDesig) : DEFAULT_DESIGNATIONS;
+  });
+
   const [selectedName, setSelectedName] = useState("");
   const [selectedDesignation, setSelectedDesignation] = useState("");
   const [rows, setRows] = useState([]);
   const [saveMsg, setSaveMsg] = useState("");
 
-  const handleNameChange = (name) => {
-    setSelectedName(name);
-    if (name && selectedDesignation) {
-      setRows(p => [...p, { name, designation: selectedDesignation, attendance: {} }]);
+  // 👇 ERUDA INTEGRATION
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/eruda';
+    script.async = true;
+    script.onload = () => {
+      if (window.eruda) {
+        window.eruda.init();
+      }
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      if (window.eruda) window.eruda.destroy();
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  // 👇 LISTS UPDATE HONE PAR LOCALSTORAGE ME SAVE KARNA
+  useEffect(() => {
+    localStorage.setItem('redbin_names', JSON.stringify(namesList));
+  }, [namesList]);
+
+  useEffect(() => {
+    localStorage.setItem('redbin_designations', JSON.stringify(designationsList));
+  }, [designationsList]);
+
+  // Helper function: Name aur Designation dono select ho gaye ho to row add kar do
+  const checkAndAddRow = (name, desig) => {
+    if (name && desig) {
+      setRows(p => [...p, { name, designation: desig, attendance: {} }]);
       setSelectedName("");
       setSelectedDesignation("");
     }
   };
 
-  const handleDesignationChange = (designation) => {
-    setSelectedDesignation(designation);
-    if (selectedName && designation) {
-      setRows(p => [...p, { name: selectedName, designation, attendance: {} }]);
-      setSelectedName("");
-      setSelectedDesignation("");
+  const handleNameChange = (e) => {
+    const val = e.target.value;
+    if (val === "ADD_NEW") {
+      const newName = window.prompt("Enter new Name:");
+      if (newName && newName.trim() !== "") {
+        const trimmed = newName.trim();
+        if (!namesList.includes(trimmed)) {
+          setNamesList(prev => [...prev, trimmed]);
+        }
+        setSelectedName(trimmed);
+        checkAndAddRow(trimmed, selectedDesignation);
+      } else {
+        setSelectedName(""); // user ne cancel kar diya to reset
+      }
+    } else {
+      setSelectedName(val);
+      checkAndAddRow(val, selectedDesignation);
+    }
+  };
+
+  const handleDesignationChange = (e) => {
+    const val = e.target.value;
+    if (val === "ADD_NEW") {
+      const newDesig = window.prompt("Enter new Designation:");
+      if (newDesig && newDesig.trim() !== "") {
+        const trimmed = newDesig.trim();
+        if (!designationsList.includes(trimmed)) {
+          setDesignationsList(prev => [...prev, trimmed]);
+        }
+        setSelectedDesignation(trimmed);
+        checkAndAddRow(selectedName, trimmed);
+      } else {
+        setSelectedDesignation(""); // user ne cancel kar diya to reset
+      }
+    } else {
+      setSelectedDesignation(val);
+      checkAndAddRow(selectedName, val);
     }
   };
 
@@ -62,40 +136,39 @@ export default function RedbinAttendance() {
 
   const removeRow = (i) => setRows(p => p.filter((_, idx) => idx !== i));
 
-  const handleSave = () => {
-    const savedAt = new Date().toLocaleString();
+  const handleSave = async () => {
     const day = today.getDate();
+    const isoDate = today.toISOString().split("T")[0];
 
-    console.group("╔══════════════════════════════════════════════════");
-    console.log("║  📋 RED BIN ATTENDANCE SHEET — SAVED");
-    console.log("║  Form No: AOT/F/QC/05  |  Saved At:", savedAt);
-    console.log("║  Month:", currentMonth, currentYear);
-    console.groupEnd();
-
-    console.group("👥 ATTENDANCE DATA (" + rows.length + " employees)");
-    const tableData = rows.map((r, i) => ({
-      "SR."        : i + 1,
-      "Name"       : r.name        || "—",
-      "Designation": r.designation || "—",
-      [`${day} ${currentMonth.slice(0,3)} (Today)`]: r.attendance[day] || "—",
+    const payload = rows.map(r => ({
+      date: isoDate,
+      month: currentMonth,
+      year: currentYear,
+      employee_name: r.name,
+      designation: r.designation,
+      status: r.attendance[day] || ""
     }));
-    console.table(tableData);
-    console.groupEnd();
 
-    const presentCount = rows.filter(r => r.attendance[day] === "P").length;
-    const absentCount  = rows.filter(r => r.attendance[day] === "A").length;
-    const pendingCount = rows.filter(r => !r.attendance[day]).length;
-    console.group("📊 SUMMARY — " + day + " " + currentMonth);
-    console.log("  ✅ Present :", presentCount);
-    console.log("  ❌ Absent  :", absentCount);
-    console.log("  ⬜ Unmarked:", pendingCount);
-    console.groupEnd();
+    if (payload.length === 0) {
+      alert("No attendance data to save.");
+      return;
+    }
 
-    setSaveMsg("✓ Saved & Reset!");
-    setRows([]);
-    setSelectedName("");
-    setSelectedDesignation("");
-    setTimeout(() => setSaveMsg(""), 2500);
+    try {
+      const response = await axios.post(API_SAVE, payload);
+      
+      if (response.status === 201 || response.status === 200) {
+        alert("Attendance data has been saved successfully!"); 
+        setSaveMsg("✓ Saved to Database!");
+        setRows([]);
+        setSelectedName("");
+        setSelectedDesignation("");
+        setTimeout(() => setSaveMsg(""), 2500);
+      }
+    } catch (error) {
+      console.error("Error saving attendance to database:", error.response?.data || error.message);
+      alert("Error saving data. Please check backend connection.");
+    }
   };
 
   const handleReset = () => {
@@ -231,18 +304,20 @@ export default function RedbinAttendance() {
           <div>
             <label style={lbl}>Name :-</label>
             <SelectWrapper>
-              <select value={selectedName} onChange={e => handleNameChange(e.target.value)} style={sel(selectedName)}>
+              <select value={selectedName} onChange={handleNameChange} style={sel(selectedName)}>
                 <option value="">Select Name...</option>
-                {NAMES.map(n => <option key={n}>{n}</option>)}
+                {namesList.map(n => <option key={n} value={n}>{n}</option>)}
+                <option value="ADD_NEW" style={{ fontWeight: "bold", color: "#d97706" }}>+ Add New Name...</option>
               </select>
             </SelectWrapper>
           </div>
           <div>
             <label style={lbl}>Designation :-</label>
             <SelectWrapper>
-              <select value={selectedDesignation} onChange={e => handleDesignationChange(e.target.value)} style={sel(selectedDesignation)}>
+              <select value={selectedDesignation} onChange={handleDesignationChange} style={sel(selectedDesignation)}>
                 <option value="">Select Designation...</option>
-                {DESIGNATIONS.map(d => <option key={d}>{d}</option>)}
+                {designationsList.map(d => <option key={d} value={d}>{d}</option>)}
+                <option value="ADD_NEW" style={{ fontWeight: "bold", color: "#d97706" }}>+ Add New Designation...</option>
               </select>
             </SelectWrapper>
           </div>

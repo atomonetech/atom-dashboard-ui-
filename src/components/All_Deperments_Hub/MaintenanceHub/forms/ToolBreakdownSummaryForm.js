@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getApiUrl } from '../../../../config/api';
 
 const ToolBreakdownSummaryForm = () => {
   const currentDate = new Date().toLocaleDateString('en-US', {
@@ -7,9 +8,8 @@ const ToolBreakdownSummaryForm = () => {
     day: 'numeric',
   });
 
-  const [formData, setFormData] = useState({
-    serialNo: '',
-    date: '',
+  const initialState = {
+    date: new Date().toISOString().split('T')[0],
     toolName: '',
     processName: '',
     problem: '',
@@ -20,47 +20,49 @@ const ToolBreakdownSummaryForm = () => {
     updatedIn4M: 'N',
     sign: '',
     remarks: '',
-  });
+  };
 
-  const [submittedData, setSubmittedData] = useState([]);
+  const [formData, setFormData] = useState(initialState);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newEntry = {
-      id: Date.now(),
-      ...formData,
-      serialNo: submittedData.length + 1,
-    };
-    setSubmittedData([...submittedData, newEntry]);
-    console.log('Submitted Data:', newEntry);
-    handleReset();
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(getApiUrl('/api/tool-breakdown/save/'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        alert("Success! Tool breakdown summary has been saved.");
+        handleReset();
+      } else {
+        alert("Failed to save tool breakdown summary.");
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
+      alert("An error occurred while saving the data.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
-    setFormData({
-      serialNo: '',
-      date: '',
-      toolName: '',
-      processName: '',
-      problem: '',
-      actionTaken: '',
-      totalTimeTaken: '',
-      checkedBy: '',
-      historyCardStatus: '',
-      updatedIn4M: 'N',
-      sign: '',
-      remarks: '',
-    });
+    setFormData(initialState);
   };
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Header Navbar with Gradient - Responsive */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
         <div className="container mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-0">
@@ -74,18 +76,16 @@ const ToolBreakdownSummaryForm = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
-        {/* Back Button - Responsive */}
+      <div className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 max-w-6xl">
         <div className="mb-4 sm:mb-6">
           <button
             onClick={() => window.history.back()}
-            className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 sm:px-6 rounded-lg transition duration-200 flex items-center gap-2 shadow-md text-sm sm:text-base"
+            className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 sm:px-6 rounded-lg transition duration-200 flex items-center gap-2 shadow-md text-sm sm:text-base w-max"
           >
             ← Back
           </button>
         </div>
 
-        {/* Form Card */}
         <div className="bg-white rounded-xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
             <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800">
@@ -98,6 +98,7 @@ const ToolBreakdownSummaryForm = () => {
 
           <form onSubmit={handleSubmit} className="p-4 sm:p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              
               <div>
                 <label className="block text-slate-700 font-medium mb-1.5 sm:mb-2 text-sm sm:text-base">
                   Date <span className="text-red-500">*</span>
@@ -108,7 +109,7 @@ const ToolBreakdownSummaryForm = () => {
                   value={formData.date}
                   onChange={handleChange}
                   required
-                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base outline-none"
                 />
               </div>
 
@@ -123,7 +124,7 @@ const ToolBreakdownSummaryForm = () => {
                   onChange={handleChange}
                   required
                   placeholder="Enter tool name"
-                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base outline-none"
                 />
               </div>
 
@@ -138,7 +139,7 @@ const ToolBreakdownSummaryForm = () => {
                   onChange={handleChange}
                   required
                   placeholder="Enter process name"
-                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base outline-none"
                 />
               </div>
 
@@ -153,7 +154,7 @@ const ToolBreakdownSummaryForm = () => {
                   required
                   rows={2}
                   placeholder="Describe the problem..."
-                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base outline-none"
                 />
               </div>
 
@@ -168,7 +169,7 @@ const ToolBreakdownSummaryForm = () => {
                   required
                   rows={2}
                   placeholder="Describe action taken..."
-                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base outline-none"
                 />
               </div>
 
@@ -183,7 +184,7 @@ const ToolBreakdownSummaryForm = () => {
                   onChange={handleChange}
                   required
                   placeholder="e.g., 2hrs 30min"
-                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base outline-none"
                 />
               </div>
 
@@ -198,7 +199,7 @@ const ToolBreakdownSummaryForm = () => {
                   onChange={handleChange}
                   required
                   placeholder="Name of checker"
-                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base outline-none"
                 />
               </div>
 
@@ -210,7 +211,7 @@ const ToolBreakdownSummaryForm = () => {
                   name="historyCardStatus"
                   value={formData.historyCardStatus}
                   onChange={handleChange}
-                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base outline-none"
                 >
                   <option value="">Select status</option>
                   <option value="Up-to-date">Up-to-date</option>
@@ -259,7 +260,7 @@ const ToolBreakdownSummaryForm = () => {
                   value={formData.sign}
                   onChange={handleChange}
                   placeholder="Signature / Initials"
-                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base outline-none"
                 />
               </div>
 
@@ -273,18 +274,20 @@ const ToolBreakdownSummaryForm = () => {
                   onChange={handleChange}
                   rows={1}
                   placeholder="Any additional remarks..."
-                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-700 bg-white text-sm sm:text-base outline-none"
                 />
               </div>
             </div>
 
-            {/* Form Actions - Responsive */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200">
               <button
                 type="submit"
-                className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-4 sm:px-8 rounded-lg transition duration-200 shadow-md text-sm sm:text-base"
+                disabled={isSubmitting}
+                className={`text-white font-semibold py-2 px-4 sm:px-8 rounded-lg transition duration-200 shadow-md text-sm sm:text-base ${
+                  isSubmitting ? 'bg-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'
+                }`}
               >
-                Submit Entry
+                {isSubmitting ? 'Submitting...' : 'Submit Entry'}
               </button>
               <button
                 type="button"
@@ -296,113 +299,6 @@ const ToolBreakdownSummaryForm = () => {
             </div>
           </form>
         </div>
-
-        {/* Submitted Data Table - Horizontal Scroll on Mobile */}
-        {submittedData.length > 0 && (
-          <div className="mt-6 sm:mt-8 md:mt-10 bg-white rounded-xl shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-              <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800">
-                Breakdown Summary Records
-              </h2>
-              <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                Month/Year: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-              </p>
-            </div>
-            
-            {/* Mobile Card View for small screens */}
-            <div className="block md:hidden divide-y divide-gray-200">
-              {submittedData.map((entry) => (
-                <div key={entry.id} className="p-4 hover:bg-gray-50">
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="font-semibold text-gray-600">S.NO.:</div>
-                    <div className="text-slate-700">{entry.serialNo}</div>
-                    
-                    <div className="font-semibold text-gray-600">Date:</div>
-                    <div className="text-slate-700">{entry.date}</div>
-                    
-                    <div className="font-semibold text-gray-600">Tool Name:</div>
-                    <div className="text-slate-700 break-words">{entry.toolName}</div>
-                    
-                    <div className="font-semibold text-gray-600">Process Name:</div>
-                    <div className="text-slate-700 break-words">{entry.processName}</div>
-                    
-                    <div className="font-semibold text-gray-600">Problem:</div>
-                    <div className="text-slate-700 break-words">{entry.problem}</div>
-                    
-                    <div className="font-semibold text-gray-600">Action Taken:</div>
-                    <div className="text-slate-700 break-words">{entry.actionTaken}</div>
-                    
-                    <div className="font-semibold text-gray-600">Time Taken:</div>
-                    <div className="text-slate-700">{entry.totalTimeTaken}</div>
-                    
-                    <div className="font-semibold text-gray-600">Checked By:</div>
-                    <div className="text-slate-700">{entry.checkedBy}</div>
-                    
-                    <div className="font-semibold text-gray-600">History Card:</div>
-                    <div className="text-slate-700">{entry.historyCardStatus || '-'}</div>
-                    
-                    <div className="font-semibold text-gray-600">4M:</div>
-                    <div className="text-slate-700">{entry.updatedIn4M}</div>
-                    
-                    <div className="font-semibold text-gray-600">Sign:</div>
-                    <div className="text-slate-700">{entry.sign || '-'}</div>
-                    
-                    <div className="font-semibold text-gray-600">Remarks:</div>
-                    <div className="text-slate-700 break-words">{entry.remarks || '-'}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Desktop Table View */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S.NO.</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DATE</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TOOL NAME</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PROCESS NAME</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PROBLEM</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTION TAKEN</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TIME TAKEN</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CHECKED BY</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HISTORY CARD</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">4M</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SIGN</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">REMARKS</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {submittedData.map((entry) => (
-                    <tr key={entry.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-slate-700">{entry.serialNo}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{entry.date}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{entry.toolName}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{entry.processName}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 max-w-xs truncate">{entry.problem}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 max-w-xs truncate">{entry.actionTaken}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{entry.totalTimeTaken}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{entry.checkedBy}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{entry.historyCardStatus || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{entry.updatedIn4M}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{entry.sign || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 max-w-xs truncate">{entry.remarks || '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            
-            <div className="px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row justify-between text-xs sm:text-sm text-gray-600 gap-2">
-              <span>Prepared By: System User</span>
-              <span>Approved By: Manager</span>
-            </div>
-          </div>
-        )}
-
-        {/* Empty State - Responsive */}
-      
       </div>
     </div>
   );

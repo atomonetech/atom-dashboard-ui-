@@ -1,12 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { getApiUrl } from '../../../../../config/api';
 
 const PreventiveMaintChecklist = () => {
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Initial state matching Sr. No 1 to 11 from the Excel scan
+    // Date and Dropdown states
+    const [currentDate, setCurrentDate] = useState('');
+    const [partsList, setPartsList] = useState([]);
+
+    useEffect(() => {
+        // Format Date
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString('en-IN', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+        setCurrentDate(formattedDate);
+
+        // Fetching Parts from Backend API with Debugging
+        const fetchParts = async () => {
+            try {
+                // API call kar rahe hain
+                const url = getApiUrl('/api/master-dropdown/?filter=all_parts');
+                console.log("Fetching from URL:", url); // Check karo ki URL sahi ban raha hai ya nahi
+
+                const response = await fetch(url); 
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log("Backend Response Data:", data); // Check karo ki backend kya bhej raha hai
+                    setPartsList(data);
+                } else {
+                    console.error("Backend Error Status:", response.status, response.statusText);
+                }
+            } catch (error) {
+                console.error("Fetch Request Failed (CORS ya Server band ho sakta hai):", error);
+            }
+        };
+
+        fetchParts();
+    }, []);
+
+    // Initial state matching Sr. No 1 to 11
     const [checkPoints, setCheckPoints] = useState([
         { id: 1, task: "Painting", doneOn: "", status: "Ok", remarks: "" },
         { id: 2, task: "Name Plate", doneOn: "", status: "Ok", remarks: "" },
@@ -21,13 +61,48 @@ const PreventiveMaintChecklist = () => {
         { id: 11, task: "Cantilevers", doneOn: "", status: "Ok", remarks: "" },
     ]);
 
-    const handleSubmit = (e) => {
+    // Handle changes inside the checklist table
+    const handleCheckPointChange = (id, field, value) => {
+        setCheckPoints(prevCheckPoints => 
+            prevCheckPoints.map(item => 
+                item.id === id ? { ...item, [field]: value } : item
+            )
+        );
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        setTimeout(() => {
-            alert("Checklist Saved Successfully!");
+        
+        const formObj = Object.fromEntries(new FormData(e.target).entries());
+        const payload = {
+            ...formObj,
+            checkPoints: checkPoints // Sahi populated array backend ko bhejenge
+        };
+
+        try {
+            const response = await fetch(getApiUrl('/api/pm-checklist-mhe/save/'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                alert("Checklist Saved Successfully!");
+                // Form reset karne ke sath state bhi wapas default pe laani hogi
+                e.target.reset();
+                setCheckPoints(checkPoints.map(cp => ({ ...cp, doneOn: "", status: "Ok", remarks: "" })));
+            } else {
+                alert("Failed to save checklist data.");
+            }
+        } catch (error) {
+            console.error("Error saving data:", error);
+            alert("An error occurred while saving the data.");
+        } finally {
             setIsSubmitting(false);
-        }, 1500);
+        }
     };
 
     return (
@@ -47,11 +122,15 @@ const PreventiveMaintChecklist = () => {
                 </div>
 
                 {/* --- Header Section (Cyan Gradient) --- */}
-                <div className="w-full bg-gradient-to-r from-[#06b6d4] to-[#0891b2] rounded-t-3xl p-6 md:p-10 text-center shadow-lg">
-                    <h1 className="text-xl md:text-3xl font-black text-white tracking-tight uppercase italic">
+                <div className="w-full bg-gradient-to-r from-[#06b6d4] to-[#0891b2] rounded-t-3xl p-6 md:p-10 text-center shadow-lg relative overflow-hidden">
+                    <div className="absolute top-[-20%] left-[-10%] w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+                    <div className="absolute top-4 right-4 md:top-6 md:right-6 bg-white/20 backdrop-blur-sm border border-white/30 text-white text-[10px] md:text-xs font-bold px-4 py-2 rounded-full z-20 shadow-lg flex items-center gap-2">
+                        <i className="bi bi-calendar3"></i> {currentDate}
+                    </div>
+                    <h1 className="text-xl md:text-3xl font-black text-white tracking-tight uppercase italic relative z-10 mt-4 md:mt-0">
                         Preventive Maintenance <span className="text-cyan-100 text-lg md:text-3xl">Checklist</span>
                     </h1>
-                    <p className="text-cyan-50 text-[9px] md:text-xs font-bold mt-1 tracking-[0.2em] uppercase opacity-90">
+                    <p className="text-cyan-50 text-[9px] md:text-xs font-bold mt-1 tracking-[0.2em] uppercase opacity-90 relative z-10">
                         Material Handling Equipment | Doc No: AOT-F-PROD-09
                     </p>
                 </div>
@@ -62,9 +141,28 @@ const PreventiveMaintChecklist = () => {
                         
                         {/* 1. Equipment Identification Row */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 border-b border-slate-50 pb-6">
-                            <InputField label="Part Name / No." placeholder="Enter Part details..." />
-                            <InputField label="Trolley / Pallet / Bin / Tray No." placeholder="Enter No..." />
-                            <InputField label="P.M. Frequency" defaultValue="4 Months" />
+                            
+                            {/* DYNAMIC DROPDOWN FOR PART INFO (Name match with Django: partName) */}
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">Part Name / No.</label>
+                                <select 
+                                    name="partName" 
+                                    required
+                                    defaultValue=""
+                                    className="w-full p-3 bg-slate-50 border border-slate-200 focus:border-cyan-400 rounded-xl outline-none transition-all font-bold text-xs text-slate-700 shadow-sm focus:bg-white cursor-pointer appearance-none"
+                                >
+                                    <option value="" disabled>-- Select Part --</option>
+                                    {partsList.map((part, index) => (
+                                        <option key={index} value={`${part[1]} - ${part[0]}`}>
+                                            {part[1]} - {part[0]}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Names updated to match Django view variables */}
+                            <InputField label="Trolley / Pallet / Bin / Tray No." name="trolleyNo" placeholder="Enter No..." />
+                            <InputField label="P.M. Frequency" name="pmFrequency" defaultValue="4 Months" />
                         </div>
 
                         {/* 2. Responsive Checklist Table */}
@@ -95,17 +193,32 @@ const PreventiveMaintChecklist = () => {
                                                 <td className="p-3 bg-slate-50/50 border-r text-slate-400">{item.id}</td>
                                                 <td className="p-3 border-r text-left text-slate-700">{item.task}</td>
                                                 <td className="p-2 border-r">
-                                                    <input type="date" className="w-full bg-transparent border-none outline-none text-[10px] text-cyan-700" />
+                                                    <input 
+                                                        type="date" 
+                                                        value={item.doneOn}
+                                                        onChange={(e) => handleCheckPointChange(item.id, "doneOn", e.target.value)}
+                                                        className="w-full bg-transparent border-none outline-none text-[10px] text-cyan-700" 
+                                                    />
                                                 </td>
                                                 <td className="p-2 border-r">
-                                                    <select className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-[10px] font-black uppercase outline-none focus:border-cyan-400">
+                                                    <select 
+                                                        value={item.status}
+                                                        onChange={(e) => handleCheckPointChange(item.id, "status", e.target.value)}
+                                                        className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-[10px] font-black uppercase outline-none focus:border-cyan-400"
+                                                    >
                                                         <option value="Ok">Ok</option>
                                                         <option value="Not Ok">Not Ok (X)</option>
                                                         <option value="NA">NA</option>
                                                     </select>
                                                 </td>
                                                 <td className="p-2">
-                                                    <input type="text" placeholder="Add notes..." className="w-full bg-transparent border-none outline-none px-2 text-[10px] italic font-medium" />
+                                                    <input 
+                                                        type="text" 
+                                                        value={item.remarks}
+                                                        onChange={(e) => handleCheckPointChange(item.id, "remarks", e.target.value)}
+                                                        placeholder="Add notes..." 
+                                                        className="w-full bg-transparent border-none outline-none px-2 text-[10px] italic font-medium" 
+                                                    />
                                                 </td>
                                             </tr>
                                         ))}
@@ -117,12 +230,12 @@ const PreventiveMaintChecklist = () => {
                         {/* 3. Footer Inputs: Checked By & Verified By */}
                         <div className="p-5 md:p-8 bg-cyan-50/30 rounded-2xl border border-cyan-100 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <InputField label="Checked By" placeholder="Name of Inspector" />
-                                <InputField label="Verified By" placeholder="Name of Manager" />
+                                <InputField label="Checked By" name="checkedBy" placeholder="Name of Inspector" />
+                                <InputField label="Verified By" name="verifiedBy" placeholder="Name of Manager" />
                             </div>
                             <div className="flex flex-col gap-2">
                                 <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">General Remarks</label>
-                                <textarea rows="2" placeholder="Overall equipment condition..." className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none text-xs font-bold text-slate-700 focus:border-cyan-400" />
+                                <textarea name="generalRemarks" rows="2" placeholder="Overall equipment condition..." className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none text-xs font-bold text-slate-700 focus:border-cyan-400" />
                             </div>
                         </div>
 
@@ -145,11 +258,12 @@ const PreventiveMaintChecklist = () => {
     );
 };
 
-const InputField = ({ label, type = "text", placeholder, defaultValue }) => (
+const InputField = ({ label, type = "text", name, placeholder, defaultValue }) => (
     <div className="flex flex-col gap-1.5">
         <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">{label}</label>
         <input 
             type={type} 
+            name={name}
             placeholder={placeholder}
             defaultValue={defaultValue}
             className="w-full p-3 bg-slate-50 border border-slate-200 focus:border-cyan-400 rounded-xl outline-none transition-all font-bold text-xs text-slate-700 shadow-sm focus:bg-white"

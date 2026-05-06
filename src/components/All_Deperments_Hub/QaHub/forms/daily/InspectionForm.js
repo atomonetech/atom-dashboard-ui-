@@ -34,9 +34,10 @@ const InspectionForm = () => {
     const [selectedTool, setSelectedTool] = useState('');
     const [partNumber, setPartNumber] = useState('');
     const [modelName, setModelName] = useState('');
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const todayDate = new Date().toISOString().split('T')[0];
+    const [selectedDate] = useState(todayDate);
 
-    const API_URL = "http://127.0.0.1:8000/api";
+    const API_URL = "http://192.168.0.34:8000/api";
     const [specList, setSpecList] = useState([]); 
 
     const [dbLogs, setDbLogs] = useState([]); 
@@ -244,6 +245,37 @@ const InspectionForm = () => {
 
     // 🔥 STRICT SAVE DATA LOGIC 🔥
     const handleSaveData = async () => {
+        // 1. Validation for Meta Information (Plant, Operator, Machine)
+        if (!activeColumn?.plant || !activeColumn?.operator || !activeColumn?.machine) {
+            alert("⛔ Validation Error: Please select Plant Location, Operator ID, and Machine Node.");
+            return; // Stop execution
+        }
+
+        // 2. Validation for Table Readings
+        const format = activeColumn?.entryFormat || 'dual';
+        let allFilled = true;
+
+        for (let row of specList) {
+            const readObj = activeColumn.readings[row.sr] || { val1: '', val2: '' };
+            if (format === 'single') {
+                if (!readObj.val1 || String(readObj.val1).trim() === '') { 
+                    allFilled = false; 
+                    break; 
+                }
+            } else {
+                if (!readObj.val1 || String(readObj.val1).trim() === '' || 
+                    !readObj.val2 || String(readObj.val2).trim() === '') { 
+                    allFilled = false; 
+                    break; 
+                }
+            }
+        }
+
+        if (!allFilled) {
+            alert("⛔ Validation Error: All readings are compulsory. Please fill all the data fields before committing.");
+            return; // Stop execution
+        }
+
         const timeNow = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         
         let newLogs = logColumns.map(col => col.id === activeColId ? { ...col, isLocked: true, time: timeNow, timestamp: Date.now() } : col);
@@ -345,8 +377,8 @@ const InspectionForm = () => {
             <style>{`
                 /* ====== PREMIUM LIGHT THEME ====== */
                 :root {
-                    --bg-main: #f4f7f9;         
-                    --bg-card: #ffffff;         
+                    --bg-main: #f4f7f9;        
+                    --bg-card: #ffffff;        
                     --bg-input: #f8fafc;        
                     --text-main: #0f172a;       
                     --text-muted: #64748b;      
@@ -506,7 +538,7 @@ const InspectionForm = () => {
                 <div className="card-custom animate-pop" style={{animationDelay: '0.1s'}}>
                     <div className="card-header-custom">
                         <h6 className="card-title-custom"><i className="bi bi-sliders text-primary"></i> Process Context Filters</h6>
-                        <input type="date" className="form-control-light w-auto fw-bold" style={{padding: '0.4rem 0.8rem', color: 'var(--accent-primary)'}} value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
+                        <input type="date" className="form-control-light w-auto fw-bold" style={{padding: '0.4rem 0.8rem', color: 'var(--accent-primary)', cursor: 'not-allowed', backgroundColor: '#f1f5f9'}} value={selectedDate} readOnly />
                     </div>
                     <div className="card-body-custom">
                         <div className="row g-3">
@@ -619,7 +651,18 @@ const InspectionForm = () => {
                                     {activeColId && activeColumn && (
                                         <div className="meta-strip-light">
                                             <div className="row g-3 align-items-center">
-                                                <div className="col-md-3 col-responsive"><label>Plant Location</label><input type="text" className="form-control-light" placeholder="Plant Name" value={activeColumn.plant || ''} onChange={(e) => handleActiveColChange('plant', e.target.value)} /></div>
+                                                <div className="col-md-3 col-responsive">
+                                                    <label>Plant Location</label>
+                                                    <select 
+                                                        className="form-control-light" 
+                                                        value={activeColumn.plant || ''} 
+                                                        onChange={(e) => handleActiveColChange('plant', e.target.value)}
+                                                    >
+                                                        <option value="">Select Plant...</option>
+                                                        <option value="Plant 1">Plant 1</option>
+                                                        <option value="Plant 2">Plant 2</option>
+                                                    </select>
+                                                </div>
                                                 <div className="col-md-3 col-responsive"><label>Operator ID</label><input type="text" className="form-control-light" placeholder="Operator Name" value={activeColumn.operator || ''} onChange={(e) => handleActiveColChange('operator', e.target.value)} /></div>
                                                 <div className="col-md-3 col-responsive"><label>Machine Node</label><input type="text" className="form-control-light" placeholder="M-01" value={activeColumn.machine || ''} onChange={(e) => handleActiveColChange('machine', e.target.value)} /></div>
                                                 <div className="col-md-3 col-responsive"><label>Data Format</label>

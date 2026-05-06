@@ -4,7 +4,7 @@ import {
   AlertCircle, ArrowLeft
 } from 'lucide-react';
 
-const BASE_URL = 'http://192.168.0.34:8000';
+ const BASE_URL = 'http://192.168.0.34:8000';
 
 const MChangeTrackForm = () => {
   const today = new Date().toISOString().split('T')[0];
@@ -42,8 +42,7 @@ const MChangeTrackForm = () => {
     },
     dispatchDetail: {
       customer: '',
-      date: today,
-      invoiceNo: '',
+      date: today
     },
     remark: ''
   });
@@ -181,17 +180,16 @@ const MChangeTrackForm = () => {
       [dateKey]: currentDayData
     };
     
-    // 🔥 Backend validation ke hisaab se keys update kiye gaye hain
     const payload = {
       time: formData.time,
       machine_no: formData.mcNo,
       description: formData.changeDesc,
       nature_of_change: formData.natureOfChange,
       action_taken: formData.actionTaken,
-      part_info: formData.partNameNo,                 // ✅ FIX: part_name_no -> part_info
+      part_info: formData.partNameNo,
       operation_no: formData.operationNo,
       training_provided: formData.trainingProvided,
-      setup_approval: formData.setupApproval.status,  // ✅ FIX: setup_approval_status -> setup_approval
+      setup_approval: formData.setupApproval.status,
       
       // Retroactive Mapping
       retro_qty_checked: formData.retroactive.qtyChecked,
@@ -208,9 +206,8 @@ const MChangeTrackForm = () => {
       cont_scrap: formData.containmentSuspected.scrap,
 
       // Dispatch Mapping
-      customer: formData.dispatchDetail.customer,     // ✅ FIX: dispatch_customer -> customer
+      customer: formData.dispatchDetail.customer,
       dispatch_date: formData.dispatchDetail.date,
-      invoice_no: formData.dispatchDetail.invoiceNo,  // Changed dispatch_invoice_no -> invoice_no as well
       
       remark: formData.remark,
 
@@ -264,7 +261,7 @@ const MChangeTrackForm = () => {
       setupApproval: { status: '' },
       retroactive: { qtyChecked: '', entryQty: '', qtyOk: '', rw: '', scrap: '' },
       containmentSuspected: { qtyChecked: '', entryQty: '', qtyOk: '', rw: '', scrap: '' },
-      dispatchDetail: { customer: '', date: today, invoiceNo: '' },
+      dispatchDetail: { customer: '', date: today },
       remark: ''
     });
     
@@ -684,16 +681,6 @@ const MChangeTrackForm = () => {
                       value={formData.dispatchDetail.date}
                       onChange={(e) => handleNestedChange('dispatchDetail', 'date', e.target.value)}
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Invoice No</label>
-                    <input
-                      type="text"
-                      value={formData.dispatchDetail.invoiceNo}
-                      onChange={(e) => handleNestedChange('dispatchDetail', 'invoiceNo', e.target.value)}
-                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
-                      placeholder="Enter invoice number"
                     />
                   </div>
                 </div>

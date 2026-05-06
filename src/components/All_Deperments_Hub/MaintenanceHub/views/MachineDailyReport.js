@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { machineDailyReports } from '../data/machineData';
 
-const MachineDailyReport = () => {
+const MachineDailyReport = () => { 
     const navigate = useNavigate();
     const [showOptionsModal, setShowOptionsModal] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
@@ -12,7 +12,7 @@ const MachineDailyReport = () => {
         setShowOptionsModal(true);
     };
 
-    // 🔥 Unified Action Handler (Fill, View, Print)
+    // 🔥 Unified Action Handler (Fill, View, Print) - UPDATED WITH POKA YOKE
     const handleAction = (actionType) => {
         const basePath = "/Maintenance/Machine";
         const reportId = selectedCard.id;
@@ -22,6 +22,8 @@ const MachineDailyReport = () => {
                 case "mc_history": navigate(`${basePath}/history-card`); break;
                 case "power_press_check": navigate(`${basePath}/power-press-checksheet`); break;
                 case "mc_breakdown": navigate(`${basePath}/breakdown-form`); break;
+                // ✅ Poka Yoke ka Fill route add kiya
+                case "Poka-Yoke": navigate(`${basePath}/Poka-Yoke`); break; 
                 default: alert("🚧 Form logic coming soon!");
             }
         } else if (actionType === 'view') {
@@ -31,6 +33,8 @@ const MachineDailyReport = () => {
                 case "power_press_check": navigate(`${basePath}/power-press-checksheet/print`); break;
                 case "mc_history": navigate(`${basePath}/history-card/print`); break;
                 case "mc_breakdown": navigate(`${basePath}/breakdown-form/print`); break;
+                // ✅ Poka Yoke ka Print route add kiya
+                case "Poka-Yoke": navigate(`${basePath}/PokaYoke-report`); break; 
                 default: alert("🚧 Print page coming soon!");
             }
         }
@@ -119,7 +123,7 @@ const MachineDailyReport = () => {
                             <div className="report-card-ui" onClick={() => handleCardClick(report)}>
                                 <div className="card-header-line" style={{backgroundColor: report.color}}></div>
 
-                                {/* ✅ Live / Dev Badge */}
+                                {/*  Live / Dev Badge */}
                                 <div className={`status-badge ${report.isLive ? 'status-live' : 'status-dev'}`}>
                                     {report.isLive ? (
                                         <><i className="bi bi-broadcast pulse-icon"></i> Live</>
@@ -171,11 +175,10 @@ const MachineDailyReport = () => {
                             </div>
                             <div>
                                 <p style={{fontWeight:700, fontSize:'0.9rem', margin:0, color:'#0f172a'}}>Fill Data</p>
-                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Form mein naya data bharein</p>
+                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Enter new data into the form</p>
                             </div>
                             <i className="bi bi-chevron-right ms-auto text-muted"></i>
                         </button>
-<<<<<<< Updated upstream
 
                         <button className="modal-action-btn" onClick={() => handleAction('view')}>
                             <div className="modal-btn-icon" style={{background:'#f1f5f9', color:'#0f172a'}}>
@@ -183,16 +186,9 @@ const MachineDailyReport = () => {
                             </div>
                             <div>
                                 <p style={{fontWeight:700, fontSize:'0.9rem', margin:0, color:'#0f172a'}}>View Data</p>
-                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Database ke saved records dekhen</p>
+                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>View saved records from the database</p>
                             </div>
                             <i className="bi bi-chevron-right ms-auto text-muted"></i>
-=======
-                         <button className="fill-btn shadow-sm" onClick={() => navigateToForm(selectedCard.id)}>
-                            <i className="bi bi-pencil-square me-2"></i> View or Print
-                        </button>
-                        <button className="btn btn-light w-100 py-3 rounded-3 text-muted fw-bold" onClick={closeModal}>
-                            Cancel
->>>>>>> Stashed changes
                         </button>
 
                         <button className="modal-action-btn" onClick={() => handleAction('print')}>
@@ -201,7 +197,7 @@ const MachineDailyReport = () => {
                             </div>
                             <div>
                                 <p style={{fontWeight:700, fontSize:'0.9rem', margin:0, color:'#0f172a'}}>Print Data</p>
-                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Saved records print karein</p>
+                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Print saved records</p>
                             </div>
                             <i className="bi bi-chevron-right ms-auto text-muted"></i>
                         </button>

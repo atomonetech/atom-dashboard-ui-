@@ -1,12 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { getApiUrl } from '../../../../../config/api';
 
 const OperatorObservanceCheckSheet = () => {
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // Header date state
+    const [currentDate, setCurrentDate] = useState('');
 
-    // Default checklist from Excel scan
+    // Master Dropdown States
+    const [partsList, setPartsList] = useState([]);
+    const [operationsList, setOperationsList] = useState([]); 
+    const [selectedModel, setSelectedModel] = useState('');
+
+    useEffect(() => {
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString('en-IN', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+        setCurrentDate(formattedDate);
+
+        // Fetching All Parts on Component Mount
+        const fetchParts = async () => {
+            try {
+                const response = await fetch(getApiUrl('/api/master-dropdown/?filter=all_parts'));
+                if (response.ok) {
+                    const data = await response.json();
+                    setPartsList(data); 
+                }
+            } catch (error) {
+                console.error("Error fetching parts:", error);
+            }
+        };
+
+        fetchParts();
+    }, []);
+
+    // Handle Part Selection (Autofill Model AND Fetch Operations)
+    const handlePartChange = async (e) => {
+        const partName = e.target.value;
+        
+        try {
+            const response = await fetch(getApiUrl(`/api/master-dropdown/?filter=model_by_part&part=${encodeURIComponent(partName)}`));
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    setSelectedModel(data[0] || ''); 
+                } else {
+                    setSelectedModel(''); 
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching model:", error);
+            setSelectedModel('');
+        }
+
+        try {
+            const response = await fetch(getApiUrl(`/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(partName)}`));
+            if (response.ok) {
+                const data = await response.json();
+                setOperationsList(data || []); 
+            }
+        } catch (error) {
+            console.error("Error fetching operations:", error);
+            setOperationsList([]);
+        }
+    };
+
+    // Default checklist
     const initialPoints = [
         "Is Operator doing 1'S and 2'S",
         "Is Operator using Safety PPE's (safety shoes, gloves, mask, goggle, ear plug etc.)",
@@ -30,7 +96,6 @@ const OperatorObservanceCheckSheet = () => {
         initialPoints.map((text, i) => ({ id: i + 1, task: text, response: '', training: false, effect: '', remarks: '' }))
     );
 
-    // Function to add a new custom row
     const addRow = () => {
         const newRow = {
             id: formData.length + 1,
@@ -39,29 +104,59 @@ const OperatorObservanceCheckSheet = () => {
             training: false,
             effect: '',
             remarks: '',
-            isCustom: true // Track if it's user-added
+            isCustom: true
         };
         setFormData([...formData, newRow]);
     };
 
-    // Function to remove user-added row
     const removeRow = (id) => {
         if (formData.length > 1) {
             setFormData(formData.filter(row => row.id !== id));
         }
     };
 
-    const handleTaskChange = (id, value) => {
-        setFormData(formData.map(row => row.id === id ? { ...row, task: value } : row));
+    // Unified handler for all table inputs
+    const handleRowChange = (id, field, value) => {
+        setFormData(formData.map(row => row.id === id ? { ...row, [field]: value } : row));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        setTimeout(() => {
-            alert("Observance Data Saved Successfully!");
+        
+        const formElements = Object.fromEntries(new FormData(e.target).entries());
+        
+        const payload = {
+            ...formElements,
+            partOperation: `${formElements.partName} / ${formElements.operation}`,
+            formData: formData // CHANGED: Backend expects data.get('formData')
+        };
+
+        try {
+            const response = await fetch(getApiUrl('/api/operator-observance-checklist/save/'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                alert("Observance Data Saved Successfully!");
+                e.target.reset(); 
+                setSelectedModel(''); 
+                setOperationsList([]);
+                // Reset table state
+                setFormData(initialPoints.map((text, i) => ({ id: i + 1, task: text, response: '', training: false, effect: '', remarks: '' })));
+            } else {
+                alert("Failed to save observance data.");
+            }
+        } catch (error) {
+            console.error("Error saving data:", error);
+            alert("An error occurred while saving the data.");
+        } finally {
             setIsSubmitting(false);
-        }, 1200);
+        }
     };
 
     return (
@@ -76,29 +171,78 @@ const OperatorObservanceCheckSheet = () => {
                     </button>
                 </div>
 
-                {/* --- NYC Professional Header --- */}
-                <div className="w-full bg-gradient-to-r from-[#ff6924] to-[#e65100] rounded-t-[2rem] p-8 md:p-10 text-center shadow-lg border-b border-white/10">
-                    <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight uppercase italic">
+                {/* --- Header --- */}
+                <div className="w-full bg-gradient-to-r from-[#ff6924] to-[#e65100] rounded-t-[2rem] p-8 md:p-10 text-center shadow-lg border-b border-white/10 relative overflow-hidden">
+                    <div className="absolute top-[-20%] left-[-10%] w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+                    <div className="absolute top-4 right-4 md:top-6 md:right-6 bg-white/20 backdrop-blur-sm border border-white/30 text-white text-[10px] md:text-xs font-bold px-4 py-2 rounded-full z-20 shadow-lg flex items-center gap-2">
+                        <i className="bi bi-calendar3"></i> {currentDate}
+                    </div>
+                    <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight uppercase italic mt-4 md:mt-0 relative z-10">
                         Operator Observance <span className="text-orange-200">Check Sheet</span>
                     </h1>
-                    <p className="text-orange-100 text-[10px] md:text-xs font-bold mt-2 tracking-[0.3em] uppercase opacity-90">
+                    <p className="text-orange-100 text-[10px] md:text-xs font-bold mt-2 tracking-[0.3em] uppercase opacity-90 relative z-10">
                         AtomOne Quality Systems | Doc No: AOT-F-TR-07
                     </p>
                 </div>
-
+                
                 {/* --- Main Form Card --- */}
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-b-[2rem] shadow-2xl border-x border-b border-orange-50 overflow-hidden">
                     <form onSubmit={handleSubmit} className="p-4 md:p-10 space-y-10">
                         
-                        {/* 1. Header Details Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6 bg-orange-50/50 rounded-3xl border border-orange-100 shadow-inner">
-                            <InputField label="Operator Name" placeholder="Full name..." />
-                            <InputField label="Model" placeholder="M/C Model" />
-                            <InputField label="Part / Operation" placeholder="Details..." />
-                            <InputField label="Date" type="date" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-orange-50/50 rounded-3xl border border-orange-100 shadow-inner">
+                            
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">Part Name <span className="text-red-500">*</span></label>
+                                <select 
+                                    name="partName"
+                                    required
+                                    defaultValue=""
+                                    onChange={handlePartChange}
+                                    className="w-full p-3 bg-white border border-slate-200 focus:border-[#ff6924] rounded-xl outline-none transition-all font-bold text-xs text-slate-700 shadow-sm cursor-pointer appearance-none"
+                                >
+                                    <option value="" disabled>-- Select Part --</option>
+                                    {partsList.map((part, index) => (
+                                        <option key={index} value={part[0]}>
+                                            {part[0]} 
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">Operation <span className="text-red-500">*</span></label>
+                                <select 
+                                    name="operation"
+                                    required
+                                    defaultValue=""
+                                    className="w-full p-3 bg-white border border-slate-200 focus:border-[#ff6924] rounded-xl outline-none transition-all font-bold text-xs text-slate-700 shadow-sm cursor-pointer appearance-none"
+                                >
+                                    <option value="" disabled>-- Select Operation --</option>
+                                    {operationsList.map((op, index) => (
+                                        <option key={index} value={op}>
+                                            {op}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">Model</label>
+                                <input 
+                                    type="text"
+                                    name="model"
+                                    value={selectedModel}
+                                    onChange={(e) => setSelectedModel(e.target.value)}
+                                    placeholder="Autofill M/C Model..."
+                                    className="w-full p-3 bg-white border border-slate-200 focus:border-[#ff6924] rounded-xl outline-none transition-all font-bold text-xs text-slate-700 shadow-sm"
+                                />
+                            </div>
+
+                            <InputField label="Operator Name" placeholder="Full name..." name="operatorName" required />
+                            <InputField label="Date" type="date" name="recordDate" defaultValue={new Date().toISOString().split('T')[0]} />
                         </div>
 
-                        {/* 2. Responsive Table with Add Row */}
+                        {/* 2. Responsive Table */}
                         <div className="space-y-4">
                             <div className="flex justify-between items-center px-1">
                                 <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
@@ -133,24 +277,38 @@ const OperatorObservanceCheckSheet = () => {
                                                                 type="text" 
                                                                 placeholder="Enter custom check point..." 
                                                                 className="w-full p-2 bg-white border border-orange-200 rounded-lg text-xs font-bold text-[#ff6924] outline-none"
-                                                                onChange={(e) => handleTaskChange(row.id, e.target.value)}
+                                                                value={row.task}
+                                                                onChange={(e) => handleRowChange(row.id, 'task', e.target.value)}
                                                             />
                                                         ) : (
                                                             <span className="text-xs font-bold text-slate-700 block p-2">{row.task}</span>
                                                         )}
                                                     </td>
                                                     <td className="p-2 text-center">
-                                                        <select className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-black uppercase outline-none focus:border-[#ff6924] cursor-pointer">
+                                                        <select 
+                                                            value={row.response} 
+                                                            onChange={(e) => handleRowChange(row.id, 'response', e.target.value)} 
+                                                            className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-black uppercase outline-none focus:border-[#ff6924] cursor-pointer"
+                                                        >
                                                             <option value="">-</option>
                                                             <option value="yes">Yes</option>
                                                             <option value="no">No</option>
                                                         </select>
                                                     </td>
                                                     <td className="p-2 text-center">
-                                                        <input type="checkbox" className="w-4 h-4 accent-[#ff6924] cursor-pointer" />
+                                                        <input 
+                                                            type="checkbox" 
+                                                            checked={row.training} 
+                                                            onChange={(e) => handleRowChange(row.id, 'training', e.target.checked)} 
+                                                            className="w-4 h-4 accent-[#ff6924] cursor-pointer" 
+                                                        />
                                                     </td>
                                                     <td className="p-2 text-center">
-                                                        <select className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-black uppercase outline-none focus:border-[#ff6924] cursor-pointer">
+                                                        <select 
+                                                            value={row.effect} 
+                                                            onChange={(e) => handleRowChange(row.id, 'effect', e.target.value)} 
+                                                            className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-black uppercase outline-none focus:border-[#ff6924] cursor-pointer"
+                                                        >
                                                             <option value="">-</option>
                                                             <option value="100">High (100%)</option>
                                                             <option value="50">Medium (50%)</option>
@@ -158,7 +316,13 @@ const OperatorObservanceCheckSheet = () => {
                                                         </select>
                                                     </td>
                                                     <td className="p-2">
-                                                        <input type="text" placeholder="Notes..." className="w-full bg-transparent border-b border-slate-100 focus:border-[#ff6924] outline-none text-xs p-1 italic" />
+                                                        <input 
+                                                            type="text" 
+                                                            value={row.remarks} 
+                                                            onChange={(e) => handleRowChange(row.id, 'remarks', e.target.value)} 
+                                                            placeholder="Notes..." 
+                                                            className="w-full bg-transparent border-b border-slate-100 focus:border-[#ff6924] outline-none text-xs p-1 italic" 
+                                                        />
                                                     </td>
                                                     <td className="p-2 text-center">
                                                         {row.isCustom && (
@@ -175,9 +339,13 @@ const OperatorObservanceCheckSheet = () => {
                             </div>
                         </div>
 
-                       
+                        {/* 3. Authorization Section */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-orange-50/30 rounded-3xl border border-orange-100 shadow-sm mt-8">
+                            <InputField label="Prepared By" name="preparedBy" placeholder="Enter your name..." required />
+                            <InputField label="Approved By" name="approvedBy" placeholder="Enter manager/supervisor name..." />
+                        </div>
 
-                        {/* 4. Small Professional Button */}
+                        {/* 4. Submit Button */}
                         <div className="flex justify-center md:justify-end pt-2 pb-2">
                             <button 
                                 type="submit" 
@@ -194,10 +362,19 @@ const OperatorObservanceCheckSheet = () => {
     );
 };
 
-const InputField = ({ label, type = "text", placeholder, defaultValue }) => (
+const InputField = ({ label, type = "text", name, placeholder, defaultValue, required }) => (
     <div className="flex flex-col gap-1.5">
-        <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">{label}</label>
-        <input type={type} placeholder={placeholder} defaultValue={defaultValue} className="w-full p-3 bg-white border border-slate-200 focus:border-[#ff6924] rounded-xl outline-none transition-all font-bold text-xs text-slate-700 shadow-sm" />
+        <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">
+            {label} {required && <span className="text-red-500">*</span>}
+        </label>
+        <input 
+            type={type} 
+            name={name}
+            placeholder={placeholder} 
+            defaultValue={defaultValue} 
+            required={required}
+            className="w-full p-3 bg-white border border-slate-200 focus:border-[#ff6924] rounded-xl outline-none transition-all font-bold text-xs text-slate-700 shadow-sm" 
+        />
     </div>
 );
 

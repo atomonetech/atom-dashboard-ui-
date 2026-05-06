@@ -42,7 +42,10 @@ const sopDatabase = {
 const PokaYokeChecksheet = () => {
     const navigate = useNavigate();
 
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    // ✅ Fixed: Sirf aaj ki date, change nahi hogi
+    const todayDate = new Date().toISOString().split('T')[0];
+    const [selectedDate] = useState(todayDate);
+
     const [selectedPlant, setSelectedPlant] = useState('');
     const [selectedMachine, setSelectedMachine] = useState('');
     const [machineList, setMachineList] = useState([]);
@@ -57,7 +60,6 @@ const PokaYokeChecksheet = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showWarning, setShowWarning] = useState(false);
 
-    // Load Machine List when Plant changes
     useEffect(() => {
         if (selectedPlant === 'Plant 1') {
             const p1 = Array.from({ length: 57 }, (_, i) => `PP-${String(i + 1).padStart(2, '0')}`);
@@ -71,7 +73,6 @@ const PokaYokeChecksheet = () => {
         setSelectedMachine('');
     }, [selectedPlant]);
 
-    // Check if selected machine is already filled
     useEffect(() => {
         if (selectedMachine && selectedPlant) {
             const isFilled = existingDataList.some(data => data.machine_no === selectedMachine);
@@ -81,7 +82,6 @@ const PokaYokeChecksheet = () => {
         }
     }, [selectedMachine, existingDataList, selectedPlant]);
 
-    // Fetch today's saved data
     useEffect(() => {
         const fetchTodayData = async () => {
             if (!selectedPlant) {
@@ -90,20 +90,15 @@ const PokaYokeChecksheet = () => {
             }
 
             setIsLoadingData(true);
-            console.log(`Fetching data for ${selectedPlant} on ${selectedDate}`);
 
             try {
-                const url = `http://127.0.0.1:8000/api/get_today_pokayoke_data/?plant_name=${encodeURIComponent(selectedPlant)}&date=${selectedDate}`;
-                console.log("API URL:", url);
-
+                // ESC key ke neeche wala Backtick (`) use karna hai starting aur end mein
+                const url = `http://192.168.0.34:8000/api/get_today_pokayoke_data/?plant_name=${selectedPlant}&date=${selectedDate}`; 
                 const res = await fetch(url);
                 const result = await res.json();
 
-                console.log("API Response Received:", result);
-
                 if (result.success) {
                     setExistingDataList(result.data || []);
-                    console.log(`Loaded ${result.data?.length || 0} records`);
                 } else {
                     setExistingDataList([]);
                 }
@@ -161,7 +156,6 @@ const PokaYokeChecksheet = () => {
             return;
         }
 
-        // Check if this machine already has data for today
         const alreadyExistsForThisMachine = existingDataList.some(data => 
             data.machine_no === selectedMachine
         );
@@ -190,7 +184,7 @@ const PokaYokeChecksheet = () => {
         };
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/save-checksheet/', {
+            const response = await fetch('http://192.168.0.34:8000/api/save-checksheet/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -211,7 +205,6 @@ const PokaYokeChecksheet = () => {
                 }, ...prev]);
 
                 resetForm();
-                setSelectedMachine(''); // Clear selected machine after save
             } else {
                 alert("❌ Backend Error: Data save nahi hua.");
             }
@@ -223,16 +216,6 @@ const PokaYokeChecksheet = () => {
         }
     };
 
-    // View Details Handler
-    const handleViewDetails = (machineNo) => {
-        const data = existingDataList.find(d => d.machine_no === machineNo);
-        if (data) {
-            setSelectedExistingData(data);
-            setShowExistingDataModal(true);
-        }
-    };
-
-    // Simple Existing Data Modal
     const ExistingDataModal = () => {
         if (!selectedExistingData) return null;
         
@@ -282,10 +265,6 @@ const PokaYokeChecksheet = () => {
             </div>
         );
     };
-
-    // Calculate remaining machines
-    const remainingCount = machineList.length - existingDataList.length;
-    const allCompleted = selectedPlant && machineList.length > 0 && remainingCount === 0;
 
     return (
         <div className="min-h-screen bg-slate-50 font-['Inter',system-ui]">
@@ -372,28 +351,19 @@ const PokaYokeChecksheet = () => {
                         <i className="bi bi-sliders text-emerald-600 text-lg"></i>
                         <h2 className="font-bold text-gray-900 text-base sm:text-lg">Plant & Machine Selection</h2>
                     </div>
-                    
-                    {/* Completion Message when all machines are done */}
-                    {allCompleted && (
-                        <div className="mb-4 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                            <div className="flex items-center gap-3">
-                                <i className="bi bi-trophy-fill text-emerald-500 text-xl"></i>
-                                <div>
-                                    <h3 className="text-emerald-800 font-bold text-sm">🎉 All Machines Completed!</h3>
-                                    <p className="text-emerald-700 text-sm">
-                                        Great job! All {machineList.length} machines have been checked for today ({selectedDate}).
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                        {/* ✅ Date — Fixed, read-only, sirf aaj ki */}
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 block">Date (तारीख)</label>
-                            <input type="date" className="w-full bg-slate-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition text-slate-700"
-                                value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
+                            <input
+                                type="date"
+                                className="w-full bg-slate-100 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 cursor-not-allowed"
+                                value={selectedDate}
+                                readOnly
+                            />
                         </div>
+
                         <div>
                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 block">Select Plant (प्लांट चुनें)</label>
                             <select className="w-full bg-slate-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition text-slate-700"
@@ -404,55 +374,30 @@ const PokaYokeChecksheet = () => {
                             </select>
                         </div>
                         <div className="relative">
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 block">
-                                M/C No. (मशीन नंबर)
-                                {selectedPlant && machineList.length > 0 && (
-                                    <span className="ml-2 text-emerald-600 text-xs">
-                                        ({remainingCount} remaining)
-                                    </span>
-                                )}
-                            </label>
-                            <div className="flex gap-2">
-                                <select 
-                                    className="flex-1 bg-slate-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition disabled:opacity-50 text-slate-700"
-                                    value={selectedMachine} 
-                                    onChange={(e) => setSelectedMachine(e.target.value)} 
-                                    disabled={!selectedPlant || allCompleted}
-                                >
-                                    <option value="">
-                                        {allCompleted 
-                                            ? "✅ All machines completed for today!" 
-                                            : "Select Machine..."}
-                                    </option>
-                                    {machineList.map((mc, i) => {
-                                        const isFilled = existingDataList.some(data => data.machine_no === mc);
-                                        return (
-                                            <option 
-                                                key={i} 
-                                                value={mc}
-                                                style={{ 
-                                                    backgroundColor: isFilled ? '#f0fdf4' : 'white',
-                                                    color: isFilled ? '#166534' : 'inherit'
-                                                }}
-                                            >
-                                                {mc} {isFilled && '✓ (Completed)'}
-                                            </option>
-                                        );
-                                    })}
-                                </select>
-                                
-                                {/* View Button for filled machines */}
-                                {selectedMachine && existingDataList.some(data => data.machine_no === selectedMachine) && (
-                                    <button
-                                        onClick={() => handleViewDetails(selectedMachine)}
-                                        className="bg-sky-100 hover:bg-sky-200 text-sky-700 rounded-lg px-4 py-2 transition flex items-center gap-2"
-                                        title="View Details"
-                                    >
-                                        <i className="bi bi-eye-fill"></i>
-                                        <span className="text-sm font-semibold hidden sm:inline">View</span>
-                                    </button>
-                                )}
-                            </div>
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 block">M/C No. (मशीन नंबर)</label>
+                            <select 
+                                className="w-full bg-slate-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition disabled:opacity-50 text-slate-700"
+                                value={selectedMachine} 
+                                onChange={(e) => setSelectedMachine(e.target.value)} 
+                                disabled={!selectedPlant}
+                            >
+                                <option value="">Select Machine...</option>
+                                {machineList.map((mc, i) => {
+                                    const isFilled = existingDataList.some(data => data.machine_no === mc);
+                                    return (
+                                        <option 
+                                            key={i} 
+                                            value={mc}
+                                            style={{ 
+                                                backgroundColor: isFilled ? '#fef2f2' : 'white',
+                                                color: isFilled ? '#991b1b' : 'inherit'
+                                            }}
+                                        >
+                                            {mc} {isFilled ? '✓ (Data filled today)' : ''}
+                                        </option>
+                                    );
+                                })}
+                            </select>
                             {isLoadingData && <div className="absolute right-3 top-8"><i className="bi bi-arrow-repeat animate-spin text-emerald-500"></i></div>}
                         </div>
                     </div>
@@ -476,14 +421,70 @@ const PokaYokeChecksheet = () => {
                     </div>
                 )}
 
+                {/* History Table */}
+                {selectedPlant && (
+                    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm mb-6">
+                        <div className="p-4 sm:p-6 pb-0">
+                            <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-gray-100">
+                                <i className="bi bi-calendar-check text-emerald-600 text-lg"></i>
+                                <h2 className="font-bold text-gray-900 text-base sm:text-lg">
+                                    {selectedPlant} - Today's Saved Checksheets
+                                    <span className="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                                        {existingDataList.length} records
+                                    </span>
+                                </h2>
+                            </div>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-slate-50">
+                                    <tr>
+                                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Date</th>
+                                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Machine No.</th>
+                                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Checked By</th>
+                                        <th className="px-3 sm:px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Verified By</th>
+                                        <th className="px-3 sm:px-4 py-3 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {existingDataList.length > 0 ? (
+                                        existingDataList.map((data, index) => (
+                                            <tr key={data.id || index} className="hover:bg-slate-50 transition">
+                                                <td className="px-3 sm:px-4 py-3"><div className="font-medium text-gray-900 text-sm">{data.date}</div></td>
+                                                <td className="px-3 sm:px-4 py-3"><div className="text-sm text-gray-700 font-mono">{data.machine_no}</div></td>
+                                                <td className="px-3 sm:px-4 py-3 text-sm text-gray-700">{data.checked_by_maintenance}</td>
+                                                <td className="px-3 sm:px-4 py-3 text-sm text-gray-700">{data.verified_by_production}</td>
+                                                <td className="px-3 sm:px-4 py-3 text-center">
+                                                    <button 
+                                                        onClick={() => { setSelectedExistingData(data); setShowExistingDataModal(true); }}
+                                                        className="bg-sky-100 text-sky-700 hover:bg-sky-200 rounded-lg px-3 py-1.5 text-xs font-bold transition"
+                                                    >
+                                                        <i className="bi bi-eye-fill mr-1"></i> View
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="5" className="py-12 text-center text-gray-500">
+                                                {isLoadingData ? "Loading today's data..." : "No checksheet filled today for this plant."}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
                 {/* New Checksheet Entry */}
-                {selectedMachine && !showWarning && !allCompleted && (
+                {selectedMachine && !showWarning && (
                     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm mb-6">
                         <div className="p-4 sm:p-6 pb-0">
                             <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-gray-100">
                                 <i className="bi bi-ui-checks-grid text-emerald-600 text-lg"></i>
                                 <h2 className="font-bold text-gray-900 text-base sm:text-lg">
-                                    New Checksheet Entry - Machine {selectedMachine}
+                                    New Checksheet Entry
                                     <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
                                         {selectedDate}
                                     </span>
@@ -565,7 +566,7 @@ const PokaYokeChecksheet = () => {
                 )}
 
                 {/* Signatures & Submit */}
-                {selectedMachine && !showWarning && !allCompleted && (
+                {selectedMachine && !showWarning && (
                     <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-sm">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                             <div>

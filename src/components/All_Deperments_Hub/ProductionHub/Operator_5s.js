@@ -1,6 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const areaOptions = [
+    "Weld Shop",
+    "Back Yard",
+    "Press Shop",
+    "Parking Area",
+    "Office",
+    "Final Inspection",
+    "RM Area",
+    "Tool Room",
+    "Laser Cutting",
+    "FG Storage",
+    "Lab",
+    "Toilet",
+    "Store Room"
+];
+
 const fiveSData = [
     {
         s: "1'S'",
@@ -14,7 +30,7 @@ const fiveSData = [
     {
         s: "2'S'",
         points: [
-            { eng: "Arrange all items at your workplace systematically in their designated places so they can be easily found when needed.", hin: "अपने कार्य स्थल की सभी वस्तुओं को निर्धारित स्थान पर क्रम से लगा कर रखें ताकि आवश्यकता চৈতন্য समय आसानी से मिलजाएं।", guj: "તમારા કાર્યસ્થળની તમામ વસ્તુઓને નિર્ધારિત જગ્યાએ યોગ્ય ક્રમમાં ગોઠવો જેથી જરૂર પડે ત્યારે સરળતાથી મળી શકે." },
+            { eng: "Arrange all items at your workplace systematically in their designated places so they can be easily found when needed.", hin: "अपने कार्य स्थल की सभी वस्तुओं को निर्धारित स्थान पर क्रम से लगा कर रखें ताकि आवश्यकता के समय आसानी से मिल जाएं।", guj: "તમારા કાર્યસ્થળની તમામ વસ્તુઓને નિર્ધારિત જગ્યાએ યોગ્ય ક્રમમાં ગોઠવો જેથી જરૂર પડે ત્યારે સરળતાથી મળી શકે." },
             { eng: "Clean all necessary items kept at your workplace.", hin: "अपने कार्य स्थल पर रखी हुई सभी आवश्यक वस्तुओं की सफाई करें।", guj: "કાર્યસ્થળ પર રહેલી તમામ જરૂરી વસ્તુઓની સફાઈ કરો." },
             { eng: "If you do not know the designated place of any item, contact your supervisor and keep it in the place suggested by them.", hin: "किसी वस्तु का निर्धारित स्थान पता न हो तो अपने सुपर वाइज़र से संपर्क करें और उसे बताये गये स्थान पर रखें।", guj: "જો કોઈ વસ્તુની નિર્ધારિત જગ્યા ખબર ન હોય તો તમારા સુપરવાઈઝર સાથે સંપર્ક કરો અને જણાવેલી જગ્યાએ મૂકો." }
         ]
@@ -54,45 +70,45 @@ const Operator5S = () => {
     const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
     const [lang, setLang] = useState('eng');
+    const [area, setArea] = useState('');
     const [zoneLeader, setZoneLeader] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    // NAYA: Poka-Yoke lock status
     const [isAlreadyFilled, setIsAlreadyFilled] = useState(false);
-    
+
     const [checks, setChecks] = useState(
         fiveSData.flatMap((s, si) =>
             s.points.map((_, pi) => ({ sIdx: si, pIdx: pi, status: '' }))
         )
     );
 
-    // Component Load hone par check karega
     useEffect(() => {
+        if (!area) return;
+
         const checkTodayStatus = async () => {
             try {
                 const dbDate = new Date().toISOString().split('T')[0];
-                // APNE BACKEND URL SE REPLACE KAREIN
-                const response = await fetch(`http://192.168.0.34:8000/api/check-5s-status/?date=${dbDate}&area=P.Shop_Parking`);
-                
+                const response = await fetch(`http://192.168.0.34:8000/api/check-5s-status/?date=${dbDate}&area=${encodeURIComponent(area)}`);
+
                 if (response.ok) {
                     const data = await response.json();
                     if (data.isFilled) {
                         setIsAlreadyFilled(true);
+                    } else {
+                        setIsAlreadyFilled(false);
                     }
                 }
             } catch (error) {
                 console.error("Error checking today's status:", error);
-                // Note: Agar API ready nahi hai aur form lock test karna hai, toh upar useState(false) ko useState(true) kar ke dekhein.
             }
         };
 
         checkTodayStatus();
-    }, []);
+    }, [area]);
 
     const getCheck = (si, pi) => checks.find(c => c.sIdx === si && c.pIdx === pi);
 
     const setStatus = (si, pi, status) => {
-        if (isAlreadyFilled) return; // Locked
+        if (isAlreadyFilled) return;
         setChecks(prev => prev.map(c =>
             c.sIdx === si && c.pIdx === pi
                 ? { ...c, status: c.status === status ? '' : status }
@@ -104,6 +120,7 @@ const Operator5S = () => {
 
     const resetForm = () => {
         setZoneLeader('');
+        setIsAlreadyFilled(false);
         setChecks(
             fiveSData.flatMap((s, si) =>
                 s.points.map((_, pi) => ({ sIdx: si, pIdx: pi, status: '' }))
@@ -113,7 +130,11 @@ const Operator5S = () => {
 
     const handleSubmit = async () => {
         if (isAlreadyFilled) return;
-        
+
+        if (!area) {
+            alert('⚠️ Please select an Area.');
+            return;
+        }
         if (!zoneLeader) {
             alert('⚠️ Please fill Zone Leader.');
             return;
@@ -126,7 +147,7 @@ const Operator5S = () => {
         const dbDate = new Date().toISOString().split('T')[0];
 
         const submissionData = {
-            area: "P.Shop & Parking area",
+            area: area,
             zoneLeader: zoneLeader,
             date: dbDate,
             language: lang,
@@ -151,7 +172,7 @@ const Operator5S = () => {
         setIsSubmitting(true);
 
         try {
-            const response = await fetch('http://192.168.0.34:8000/api/save-5s-checksheet/', {
+            const response = await fetch('http://192.168.0.34:8000/api/5s-checksheet/save/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -163,7 +184,7 @@ const Operator5S = () => {
 
             if (data.success) {
                 alert('✅ 5S Checksheet saved successfully to the database!');
-                setIsAlreadyFilled(true); // Save hone ke turant baad form lock ho jayega
+                setIsAlreadyFilled(true);
             } else {
                 alert('❌ Failed to save: ' + (data.error || 'Unknown error'));
             }
@@ -212,13 +233,13 @@ const Operator5S = () => {
                                 <option value="hin">🇮🇳 हिंदी</option>
                                 <option value="guj">🇮🇳 ગુજરાતી</option>
                             </select>
-                            
+
                             <div className="hidden sm:flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg">
                                 <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">DOC: AOT-F-PROD-13A</span>
                                 <span className="text-slate-400 font-bold text-xs">|</span>
                                 <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Rev: 01</span>
                             </div>
-                            
+
                             <div className="flex sm:hidden items-center gap-1 bg-slate-100 px-2 py-1 rounded-lg">
                                 <span className="text-[8px] font-bold text-slate-600 uppercase">AOT-F-PROD-13A</span>
                                 <span className="text-slate-400 text-[8px]">|</span>
@@ -230,10 +251,10 @@ const Operator5S = () => {
             </div>
 
             <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
-                
-                {/* Error Banner - Shows only if already filled */}
+
+                {/* Error Banner */}
                 {isAlreadyFilled && (
-                    <div className="bg-red-50 border-l-4 border-red-600 p-4 mb-6 rounded-r-lg shadow-sm animate-fade-in">
+                    <div className="bg-red-50 border-l-4 border-red-600 p-4 mb-6 rounded-r-lg shadow-sm">
                         <div className="flex items-start gap-3">
                             <span className="text-red-500 text-lg">⚠️</span>
                             <div>
@@ -241,10 +262,10 @@ const Operator5S = () => {
                                     {lang === 'eng' ? 'Data Already Filled!' : lang === 'hin' ? 'डेटा पहले ही भरा जा चुका है!' : 'ડેટા પહેલેથી જ ભરાઈ ગયું છે!'}
                                 </h3>
                                 <p className="text-red-600 text-xs sm:text-sm font-medium mb-1">
-                                    {lang === 'eng' 
-                                        ? "This area's 5S checksheet has already been submitted for today." 
-                                        : lang === 'hin' 
-                                        ? "इस एरिया का 5S डेटा आज के लिए पहले ही भरा जा चुका है।" 
+                                    {lang === 'eng'
+                                        ? "This area's 5S checksheet has already been submitted for today."
+                                        : lang === 'hin'
+                                        ? "इस एरिया का 5S डेटा आज के लिए पहले ही भरा जा चुका है।"
                                         : "આ વિસ્તારનું 5S ડેટા આજ માટે પહેલેથી જ ભરાઈ ગયું છે."}
                                 </p>
                                 <p className="text-red-500 text-[10px] sm:text-xs">
@@ -266,20 +287,33 @@ const Operator5S = () => {
                         </h2>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {/* Area Dropdown */}
                         <div>
                             <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase mb-1">Area</label>
-                            <div className="bg-slate-50 border-2 border-slate-200 rounded-lg p-2.5 sm:p-3 text-sm font-semibold text-slate-700">
-                                P.Shop & Parking area
-                            </div>
+                            <select
+                                value={area}
+                                onChange={e => {
+                                    setArea(e.target.value);
+                                    resetForm();
+                                }}
+                                className="w-full border-2 rounded-lg p-2.5 sm:p-3 text-sm font-semibold outline-none transition-all bg-slate-50 border-slate-200 text-slate-700 focus:border-amber-500 focus:bg-white cursor-pointer"
+                            >
+                                <option value="">-- Select Area --</option>
+                                {areaOptions.map(opt => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                ))}
+                            </select>
                         </div>
+
+                        {/* Zone Leader */}
                         <div>
                             <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase mb-1">Zone Leader</label>
                             <input
                                 type="text"
                                 className={`w-full border-2 rounded-lg p-2.5 sm:p-3 text-sm font-semibold outline-none transition-all ${
-                                    isAlreadyFilled 
-                                    ? 'bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed select-none' // Locked State
-                                    : 'bg-slate-50 border-slate-200 text-slate-700 focus:border-amber-500 focus:bg-white' // Active State
+                                    isAlreadyFilled
+                                    ? 'bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed select-none'
+                                    : 'bg-slate-50 border-slate-200 text-slate-700 focus:border-amber-500 focus:bg-white'
                                 }`}
                                 placeholder={lang === 'eng' ? 'e.g. Mr. Simran' : lang === 'hin' ? 'जैसे श्री सिमरन' : 'દા.ત. શ્રી સિમરન'}
                                 value={zoneLeader}
@@ -288,6 +322,8 @@ const Operator5S = () => {
                                 readOnly={isAlreadyFilled}
                             />
                         </div>
+
+                        {/* Date */}
                         <div>
                             <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase mb-1">Date</label>
                             <div className={`border-2 rounded-lg p-2.5 sm:p-3 text-sm font-bold ${isAlreadyFilled ? 'bg-slate-100 border-slate-200 text-slate-500' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
@@ -339,9 +375,9 @@ const Operator5S = () => {
                                                                 <button
                                                                     className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full font-bold text-base sm:text-lg transition-all flex items-center justify-center border-2 ${
                                                                         isAlreadyFilled
-                                                                        ? 'border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed' // Locked State
-                                                                        : chk?.status === 'OK' 
-                                                                            ? 'border-green-500 bg-green-100 text-green-700 scale-110 shadow-md' 
+                                                                        ? 'border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed'
+                                                                        : chk?.status === 'OK'
+                                                                            ? 'border-green-500 bg-green-100 text-green-700 scale-110 shadow-md'
                                                                             : 'border-slate-300 bg-white text-slate-400 hover:border-green-400'
                                                                     }`}
                                                                     onClick={() => setStatus(si, pi, 'OK')}
@@ -352,9 +388,9 @@ const Operator5S = () => {
                                                                 <button
                                                                     className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full font-bold text-base sm:text-lg transition-all flex items-center justify-center border-2 ${
                                                                         isAlreadyFilled
-                                                                        ? 'border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed' // Locked State
-                                                                        : chk?.status === 'NG' 
-                                                                            ? 'border-red-500 bg-red-100 text-red-700 scale-110 shadow-md' 
+                                                                        ? 'border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed'
+                                                                        : chk?.status === 'NG'
+                                                                            ? 'border-red-500 bg-red-100 text-red-700 scale-110 shadow-md'
                                                                             : 'border-slate-300 bg-white text-slate-400 hover:border-red-400'
                                                                     }`}
                                                                     onClick={() => setStatus(si, pi, 'NG')}
@@ -390,11 +426,11 @@ const Operator5S = () => {
                                     : 'સહેજ કરતા પહેલા તમામ ચેક પ્વાઇન્ટ ચિહ્નિત કરો.'}
                             </span>
                         </div>
-                        
+
                         <button
                             className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide transition-all flex items-center gap-2 w-full sm:w-auto justify-center ${
-                                isAlreadyFilled || isSubmitting 
-                                ? 'bg-slate-300 text-slate-500 cursor-not-allowed border-transparent shadow-none' // Locked state styling
+                                isAlreadyFilled || isSubmitting
+                                ? 'bg-slate-300 text-slate-500 cursor-not-allowed border-transparent shadow-none'
                                 : 'bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg'
                             }`}
                             onClick={handleSubmit}

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 // API Base URL
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const API_BASE_URL = 'http://192.168.0.34:8000/api';
 
 // Helper function to convert minutes to hours
 const convertMinutesToHours = (minutes) => {
@@ -737,9 +737,11 @@ const ProductionHistory = () => {
         <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
           {[...Array(20)].map((_, i) => (
             <g key={i}>
-              <path
-                d={`M ${Math.random() * 100}% ${Math.random() * 100}% 
-                    L ${Math.random() * 100}% ${Math.random() * 100}%`}
+              <line
+                x1={`${Math.random() * 100}%`}
+                y1={`${Math.random() * 100}%`}
+                x2={`${Math.random() * 100}%`}
+                y2={`${Math.random() * 100}%`}
                 stroke="#10b981"
                 strokeWidth="0.5"
                 strokeDasharray="4 4"
@@ -756,7 +758,7 @@ const ProductionHistory = () => {
                   dur={`${3 + Math.random() * 2}s`}
                   repeatCount="indefinite"
                 />
-              </path>
+              </line>
             </g>
           ))}
         </svg>
@@ -1091,7 +1093,7 @@ const ProductionHistory = () => {
                 </div>
               </div>
             </div>
-   {/* sjs */}
+            
             {/* Chart Card */}
             <div className="backdrop-blur-2xl bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
               <div className="px-6 pt-5 pb-3 border-b border-white/10 bg-white/5">
@@ -1136,7 +1138,7 @@ const ProductionHistory = () => {
               )}
             </div>
 
-            MONTHLY SUMMARY CARDS - Always Visible
+            {/* MONTHLY SUMMARY CARDS - Always Visible */}
             {monthlySummary && !selectedMachine && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="backdrop-blur-2xl bg-white/5 border border-white/10 rounded-2xl p-5 hover:border-emerald-500/30 transition-all group">

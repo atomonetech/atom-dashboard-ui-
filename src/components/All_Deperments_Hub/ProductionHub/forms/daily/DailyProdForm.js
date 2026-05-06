@@ -1,69 +1,699 @@
-import React, { useState } from 'react'
+// import React, { useState, useEffect } from 'react'
+// import { 
+//   ArrowLeft, Save, RotateCcw, Calendar, User, Package, 
+//   Hash, Settings, Cpu, Target, MessageSquare, Loader2, 
+//   CheckCircle, Factory, Check, X, 
+//   Clock, Wrench, AlertTriangle, Layers
+// } from 'lucide-react'
+
+// const BASE_URL = 'http://192.168.0.34:8000';
+
+// const PLANT_MAP = {
+//   'Plant 1': 'plant_1',
+//   'Plant 2': 'plant_2',
+// };
+
+// const DailyProdForm = () => {
+//   // API states
+//   const [operatorNames, setOperatorNames] = useState([]);
+//   const [operatorsLoading, setOperatorsLoading] = useState(false);
+  
+//   const [machineList, setMachineList] = useState([]);
+//   const [machinesLoading, setMachinesLoading] = useState(false);
+  
+//   const [partsData, setPartsData] = useState([]); 
+//   const [operationNames, setOperationNames] = useState([]);
+
+//   // --- NAYE STATES OPERATOR ADD KARNE KE LIYE ---
+//   const [isAddingNewOperator, setIsAddingNewOperator] = useState(false);
+//   const [newOperatorName, setNewOperatorName] = useState('');
+//   const [isSavingOperator, setIsSavingOperator] = useState(false);
+
+//   // Form states
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [formData, setFormData] = useState({
+//     plant: '', 
+//     machineNo: '',
+//     operatorName: '',
+//     partName: '',
+//     partNo: '',
+//     operationName: '',
+//     plannedQuantity: '',
+//     achievedQuantity: '',
+//     qtyRemark: '',
+//     productionStartTime: '',
+//     productionEndTime: '',
+//     totalWorkingTime: '',
+//     toolSetupTime: '',
+//     machineBdTime: '',
+//     toolBdTime: '',
+//     rmCoilNo: ''
+//   })
+
+//   // 1. Fetch Parts
+//   useEffect(() => {
+//     fetch(`${BASE_URL}/api/master-dropdown/?filter=all_parts`)
+//       .then(res => res.json())
+//       .then(data => {
+//         if (Array.isArray(data)) {
+//           const formattedParts = data.map(item => ({
+//             part_name: item[0], 
+//             part_no: item[1]    
+//           }));
+//           setPartsData(formattedParts);
+//         } else {
+//           setPartsData([]);
+//         }
+//       })
+//       .catch(err => console.error('Error fetching parts:', err));
+//   }, []);
+
+//   // 2. Fetch Operators & Machines based on Plant
+//   useEffect(() => {
+//     const selectedPlant = formData.plant;
+    
+//     if (!selectedPlant) {
+//       setOperatorNames([]);
+//       setMachineList([]);
+//       return;
+//     }
+
+//     const plantKey = PLANT_MAP[selectedPlant];
+
+//     setOperatorsLoading(true);
+//     fetch(`${BASE_URL}/api/operators/?plant=${plantKey}`)
+//       .then(res => res.json())
+//       .then(data => {
+//         if (data.success) {
+//           setOperatorNames(data.operators);
+//         } else {
+//           setOperatorNames(Array.isArray(data) ? data : []);
+//         }
+//       })
+//       .catch(err => console.error('Error fetching operators:', err))
+//       .finally(() => setOperatorsLoading(false));
+
+//     setMachinesLoading(true);
+//     fetch(`${BASE_URL}/api/machines/list/?plant=${plantKey}`)
+//       .then(res => res.json())
+//       .then(data => {
+//         if (data.success) {
+//           setMachineList(data.machines);
+//         } else {
+//           setMachineList([]);
+//         }
+//       })
+//       .catch(err => console.error('Error fetching machines:', err))
+//       .finally(() => setMachinesLoading(false));
+
+//   }, [formData.plant]);
+
+//   // Handle Form Inputs
+//   const handleChange = (e) => {
+//     const { name, value } = e.target;
+    
+//     if (name === 'operatorName' && value === 'ADD_NEW') {
+//       setIsAddingNewOperator(true);
+//       return;
+//     }
+
+//     if (name === 'plant') {
+//       setFormData(prev => ({
+//         ...prev,
+//         plant: value,
+//         operatorName: '', 
+//         machineNo: ''
+//       }));
+//     }
+//     else if (name === 'partName') {
+//       const selectedPart = partsData.find(p => p.part_name === value);
+//       const autoPartNo = selectedPart ? selectedPart.part_no : '';
+
+//       setFormData(prev => ({
+//         ...prev,
+//         partName: value,
+//         partNo: autoPartNo, 
+//         operationName: ''   
+//       }));
+
+//       if (value) {
+//         fetch(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(value)}`)
+//           .then(res => res.json())
+//           .then(data => setOperationNames(data))
+//           .catch(err => console.error('Error fetching operations:', err));
+//       } else {
+//         setOperationNames([]);
+//       }
+//     } else {
+//       setFormData(prev => ({ ...prev, [name]: value }));
+//     }
+//   }
+
+//   // NAYA OPERATOR BACKEND ME SAVE KARNE KA FUNCTION
+//   const handleSaveNewOperator = async () => {
+//     const opName = newOperatorName.trim();
+//     if (!opName) return;
+
+//     setIsSavingOperator(true);
+
+//     try {
+//       const response = await fetch(`${BASE_URL}/api/operators/add/`, {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({
+//           name: opName,
+//           plant: PLANT_MAP[formData.plant]
+//         })
+//       });
+
+//       const result = await response.json();
+
+//       if (response.ok) { 
+//         const newOp = { name: opName }; 
+//         setOperatorNames(prev => [...prev, newOp]);
+//         setFormData(prev => ({ ...prev, operatorName: opName }));
+//         setIsAddingNewOperator(false);
+//         setNewOperatorName('');
+//       } else {
+//         alert('Failed to save operator: ' + (result.message || result.error || 'Unknown error'));
+//       }
+//     } catch (error) {
+//       console.error('Error saving operator:', error);
+//       alert('Network Error: Could not save operator to backend.');
+//     } finally {
+//       setIsSavingOperator(false);
+//     }
+//   };
+
+//   const handleReset = () => {
+//     setFormData({
+//       plant: '', machineNo: '', operatorName: '', partName: '',
+//       partNo: '', operationName: '', plannedQuantity: '',
+//       achievedQuantity: '', qtyRemark: '',
+//       productionStartTime: '', productionEndTime: '', totalWorkingTime: '',
+//       toolSetupTime: '', machineBdTime: '', toolBdTime: '', rmCoilNo: ''
+//     });
+//     setOperationNames([]); 
+//     setIsAddingNewOperator(false);
+//   }
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault()
+    
+//     const requiredFields = ['plant', 'machineNo', 'operatorName', 'partName', 'partNo', 'operationName', 'plannedQuantity']
+//     const missingFields = requiredFields.filter(field => !formData[field])
+    
+//     if (missingFields.length > 0) {
+//       alert('Please fill all required fields')
+//       return
+//     }
+
+//     // Payload me naye fields add kiye gaye hain with NULL handling for Time
+//     const payload = {
+//       plant: PLANT_MAP[formData.plant], 
+//       machine_no: formData.machineNo,
+//       operator_name: formData.operatorName,
+//       part_name: formData.partName,
+//       part_no: formData.partNo,
+//       operation_name: formData.operationName,
+//       planned_quantity: parseInt(formData.plannedQuantity), 
+//       achieved_quantity: formData.achievedQuantity ? parseInt(formData.achievedQuantity) : 0, 
+//       qty_remark: formData.qtyRemark,
+      
+//       // ✅ Null fix apply kar diya hai yahan
+//       production_start_time: formData.productionStartTime ? formData.productionStartTime : null,
+//       production_end_time: formData.productionEndTime ? formData.productionEndTime : null,
+//       total_working_time: formData.totalWorkingTime,
+//       tool_setup_time: formData.toolSetupTime ? parseInt(formData.toolSetupTime) : 0,
+//       machine_bd_time: formData.machineBdTime ? parseInt(formData.machineBdTime) : 0,
+//       tool_bd_time: formData.toolBdTime ? parseInt(formData.toolBdTime) : 0,
+//       rm_coil_no: formData.rmCoilNo
+//     };
+
+//     setIsLoading(true);
+
+//     try {
+//       const response = await fetch(`${BASE_URL}/api/save-daily-production/`, {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify(payload)
+//       });
+
+//       const result = await response.json();
+
+//       if (response.ok && result.success) {
+//         alert(result.message);
+//         handleReset();
+//       } else {
+//         alert('Error saving data: ' + (result.error || JSON.stringify(result.details)));
+//       }
+//     } catch (error) {
+//       console.error('Network Error:', error);
+//       alert('Failed to connect to the server. Make sure Django is running.');
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   }
+
+//   const handleBack = () => {
+//     window.location.href = '/production-hub';
+//   };
+
+//   return (
+//     <div className="min-h-screen bg-gray-100 py-6 px-4 flex justify-center">
+//       <div className="w-full max-w-7xl">
+//         <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+          
+//           {/* Header & Back Button */}
+//           <div className="px-4 sm:px-6 pt-4 sm:pt-6">
+//             <button
+//               type="button"
+//               onClick={handleBack}
+//               className="inline-flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+//             >
+//               <ArrowLeft size={18} /> Back to Production Page
+//             </button>
+//           </div>
+
+//           <div className="border-b border-slate-200 px-4 sm:px-6 pb-4 bg-slate-50">
+//             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+//               <div className="flex items-center gap-3">
+//                 <div className="p-2 bg-[#3b82f5]/10 rounded-lg flex-shrink-0">
+//                   <Package size={24} className="text-[#3b82f5]" />
+//                 </div>
+//                 <div>
+//                   <h1 className="text-lg sm:text-xl font-semibold text-blue-500">Daily Production Plan</h1>
+//                   <p className="text-xs text-slate-600">Manufacturing Execution System</p>
+//                 </div>
+//               </div>
+//               <div className="flex items-center gap-2">
+//                 <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-blue-500 rounded-lg shadow-sm">
+//                   <Calendar size={14} className="text-blue-700" />
+//                   <span className="text-sm font-medium text-slate-600 whitespace-nowrap">
+//                     {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+//                   </span>
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+
+//           {/* Form */}
+//           <form onSubmit={handleSubmit} className="p-4 sm:p-6">
+//             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              
+//               {/* Plant Dropdown */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <Factory size={14} className="inline mr-1 text-blue-500" /> Plant <span className="text-red-500">*</span>
+//                 </label>
+//                 <select name="plant" value={formData.plant} onChange={handleChange} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700">
+//                   <option value="">Select Plant</option>
+//                   {Object.keys(PLANT_MAP).map(p => <option key={p} value={p}>{p}</option>)}
+//                 </select>
+//               </div>
+
+//               {/* Machine No */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <Cpu size={14} className="inline mr-1 text-blue-500" /> Machine No <span className="text-red-500">*</span>
+//                 </label>
+//                 <select name="machineNo" value={formData.machineNo} onChange={handleChange} disabled={!formData.plant || machinesLoading} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 disabled:bg-slate-50 disabled:text-slate-400">
+//                   <option value="">{machinesLoading ? 'Loading...' : !formData.plant ? 'Select Plant First' : 'Select Machine'}</option>
+//                   {machineList.map(m => <option key={m} value={m}>Machine {m}</option>)}
+//                 </select>
+//               </div>
+
+//               {/* Operator Name */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <User size={14} className="inline mr-1 text-blue-500" /> Operator Name <span className="text-red-500">*</span>
+//                 </label>
+                
+//                 {isAddingNewOperator ? (
+//                   <div className="flex gap-2 h-[38px]">
+//                     <input
+//                       type="text" autoFocus placeholder="Enter Name" value={newOperatorName}
+//                       onChange={(e) => setNewOperatorName(e.target.value)} disabled={isSavingOperator}
+//                       className="w-full px-3 py-1 text-sm bg-white border border-[#3b82f5] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3b82f5] text-slate-700 disabled:bg-slate-100"
+//                     />
+//                     <button type="button" onClick={handleSaveNewOperator} disabled={isSavingOperator || !newOperatorName.trim()} className="px-2 py-1 bg-[#3b82f5] text-white rounded-lg hover:bg-blue-600 transition flex items-center justify-center disabled:opacity-50">
+//                       {isSavingOperator ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+//                     </button>
+//                     <button type="button" onClick={() => setIsAddingNewOperator(false)} disabled={isSavingOperator} className="px-2 py-1 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300 transition disabled:opacity-50">
+//                       <X size={16} />
+//                     </button>
+//                   </div>
+//                 ) : (
+//                   <select name="operatorName" value={formData.operatorName} onChange={handleChange} disabled={!formData.plant || operatorsLoading} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 disabled:bg-slate-50 disabled:text-slate-400">
+//                     <option value="">{operatorsLoading ? 'Loading...' : !formData.plant ? 'Select Plant First' : 'Select Operator'}</option>
+//                     {operatorNames.map((op, index) => <option key={op.id || index} value={op.name}>{op.name}</option>)}
+//                     {formData.plant && !operatorsLoading && (
+//                       <option value="ADD_NEW" className="font-semibold text-blue-600 bg-blue-50">+ Add New Operator</option>
+//                     )}
+//                   </select>
+//                 )}
+//               </div>
+
+//               {/* Part Name */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <Package size={14} className="inline mr-1 text-blue-500" /> Part Name <span className="text-red-500">*</span>
+//                 </label>
+//                 <select name="partName" value={formData.partName} onChange={handleChange} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700">
+//                   <option value="" className="text-slate-500">Select Part</option>
+//                   {partsData.map((part, index) => <option key={index} value={part.part_name}>{part.part_name}</option>)}
+//                 </select>
+//               </div>
+
+//               {/* Part No */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <Hash size={14} className="inline mr-1 text-blue-500" /> Part No <span className="text-red-500">*</span>
+//                 </label>
+//                 <input type="text" name="partNo" value={formData.partNo} readOnly placeholder="Auto-filled part number" className="w-full px-3 py-2 text-sm bg-slate-100 border border-slate-300 rounded-lg text-slate-500 cursor-not-allowed focus:outline-none" />
+//               </div>
+
+//               {/* Operation Name */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <Settings size={14} className="inline mr-1 text-blue-500" /> Operation Name <span className="text-red-500">*</span>
+//                 </label>
+//                 <select name="operationName" value={formData.operationName} onChange={handleChange} disabled={!formData.partName} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 disabled:bg-slate-50 disabled:text-slate-400">
+//                   <option value="" className="text-slate-500">Select Operation</option>
+//                   {operationNames.map((op, index) => <option key={index} value={op}>{op}</option>)}
+//                 </select>
+//               </div>
+
+//               {/* Planned Quantity */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <Target size={14} className="inline mr-1 text-blue-500" /> Planned Quantity <span className="text-red-500">*</span>
+//                 </label>
+//                 <input type="number" name="plannedQuantity" value={formData.plannedQuantity} onChange={handleChange} placeholder="Target quantity" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+//               </div>
+
+//               {/* Achieved Quantity */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <CheckCircle size={14} className="inline mr-1 text-green-500" /> Achieved Qty. (Optional)
+//                 </label>
+//                 <input type="number" name="achievedQuantity" value={formData.achievedQuantity} onChange={handleChange} placeholder="Actual quantity" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+//               </div>
+
+//               {/* Production Start Time */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <Clock size={14} className="inline mr-1 text-blue-500" /> Prod. Start Time
+//                 </label>
+//                 <input type="time" name="productionStartTime" value={formData.productionStartTime} onChange={handleChange} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700" />
+//               </div>
+
+//               {/* Production End Time */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <Clock size={14} className="inline mr-1 text-blue-500" /> Prod. End Time
+//                 </label>
+//                 <input type="time" name="productionEndTime" value={formData.productionEndTime} onChange={handleChange} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700" />
+//               </div>
+
+//               {/* Total Working Time */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <Clock size={14} className="inline mr-1 text-blue-500" /> Total Working Time
+//                 </label>
+//                 <input type="text" name="totalWorkingTime" value={formData.totalWorkingTime} onChange={handleChange} placeholder="e.g. 8 hrs or 480 mins" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+//               </div>
+
+//               {/* Tool Set-up Time */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <Wrench size={14} className="inline mr-1 text-orange-500" /> Tool Set-up Time
+//                 </label>
+//                 <input type="number" name="toolSetupTime" value={formData.toolSetupTime} onChange={handleChange} placeholder="In minutes" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+//               </div>
+
+//               {/* Machine B/D Time */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <AlertTriangle size={14} className="inline mr-1 text-red-500" /> Machine B/D Time
+//                 </label>
+//                 <input type="number" name="machineBdTime" value={formData.machineBdTime} onChange={handleChange} placeholder="In minutes" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+//               </div>
+
+//               {/* Tool B/D Time */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <AlertTriangle size={14} className="inline mr-1 text-red-500" /> Tool B/D Time
+//                 </label>
+//                 <input type="number" name="toolBdTime" value={formData.toolBdTime} onChange={handleChange} placeholder="In minutes" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+//               </div>
+
+//               {/* RM Coil No / Lot No */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <Layers size={14} className="inline mr-1 text-indigo-500" /> RM Coil / Lot No.
+//                 </label>
+//                 <input type="text" name="rmCoilNo" value={formData.rmCoilNo} onChange={handleChange} placeholder="Enter lot or coil number" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+//               </div>
+
+//               {/* Qty Remark */}
+//               <div className="flex flex-col">
+//                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+//                   <MessageSquare size={14} className="inline mr-1 text-blue-500" /> Qty. Remark
+//                 </label>
+//                 <input type="text" name="qtyRemark" value={formData.qtyRemark} onChange={handleChange} placeholder="Any remarks?" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+//               </div>
+
+//             </div>
+
+//             {/* Form Actions */}
+//             <div className="flex flex-col sm:flex-row items-center justify-end gap-3 mt-8 pt-4 border-t border-slate-200">
+//               <button type="button" onClick={handleReset} disabled={isLoading} className="w-full sm:w-auto px-4 py-2 text-sm border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 font-medium disabled:opacity-50">
+//                 <RotateCcw size={14} /> Reset
+//               </button>
+//               <button type="submit" disabled={isLoading} className="w-full sm:w-auto px-4 py-2 text-sm bg-[#3b82f5] text-white rounded-lg hover:bg-[#2563eb] transition-colors flex items-center justify-center gap-2 font-medium shadow-sm disabled:opacity-70 disabled:cursor-not-allowed">
+//                 {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+//                 {isLoading ? 'Saving...' : 'Save Production Plan'}
+//               </button>
+//             </div>
+
+//           </form>
+//         </div>
+//       </div>
+//     </div>
+//   )
+// }
+
+// export default DailyProdForm
+
+import React, { useState, useEffect } from 'react'
 import { 
   ArrowLeft, Save, RotateCcw, Calendar, User, Package, 
-  Hash, Settings, Cpu
+  Hash, Settings, Cpu, Target, MessageSquare, Loader2, 
+  CheckCircle, Factory, Check, X, 
+  Clock, Wrench, AlertTriangle, Layers, ListFilter
 } from 'lucide-react'
 
+const BASE_URL = 'http://192.168.0.34:8000';
+
+const PLANT_MAP = {
+  'Plant 1': 'plant_1',
+  'Plant 2': 'plant_2',
+};
+
 const DailyProdForm = () => {
-  // Mock data for dropdowns
-  const partNames = [
-    'Engine Piston A123 (Premium)',
-    'Crankshaft B456 (Forged)',
-    'Connecting Rod C789 (H-Beam)',
-    'Cylinder Head D012 (Aluminum)',
-    'Oil Pump E345 (High-Flow)',
-    'Water Pump F678 (Electric)',
-    'Timing Belt G901 (Racing)',
-    'Alternator H234 (High-Output)',
-    'Starter Motor I567 (Heavy-Duty)',
-    'Fuel Injector J890 (Performance)'
-  ]
+  // API states
+  const [operatorNames, setOperatorNames] = useState([]);
+  const [operatorsLoading, setOperatorsLoading] = useState(false);
+  
+  const [machineList, setMachineList] = useState([]);
+  const [machinesLoading, setMachinesLoading] = useState(false);
+  
+  const [partsData, setPartsData] = useState([]); 
+  const [operationNames, setOperationNames] = useState([]);
 
-  const operationNames = [
-    'CNC Precision Turning',
-    '5-Axis Milling Operation',
-    'Micro Drilling & Tapping',
-    'Surface Grinding - Finish',
-    'Heat Treatment - Annealing',
-    'Assembly Line 1 - Main',
-    'Quality Control - Final',
-    'Laser Welding Process',
-    'Polishing - Mirror Finish',
-    'Packaging - Export Grade'
-  ]
+  // --- NAYE STATES OPERATOR ADD KARNE KE LIYE ---
+  const [isAddingNewOperator, setIsAddingNewOperator] = useState(false);
+  const [newOperatorName, setNewOperatorName] = useState('');
+  const [isSavingOperator, setIsSavingOperator] = useState(false);
 
-  // Form state - Only 5 fields
+  // Form states
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
+    plant: '', 
+    shift: '', // Added Shift State
+    machineNo: '',
     operatorName: '',
     partName: '',
     partNo: '',
     operationName: '',
-    machineNo: ''
+    plannedQuantity: '',
+    achievedQuantity: '',
+    qtyRemark: '',
+    productionStartTime: '',
+    productionEndTime: '',
+    totalWorkingTime: '',
+    toolSetupTime: '',
+    machineBdTime: '',
+    toolBdTime: '',
+    rmCoilNo: ''
   })
 
-  // Handle input changes
+  // 1. Fetch Parts
+  useEffect(() => {
+    fetch(`${BASE_URL}/api/master-dropdown/?filter=all_parts`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const formattedParts = data.map(item => ({
+            part_name: item[0], 
+            part_no: item[1]    
+          }));
+          setPartsData(formattedParts);
+        } else {
+          setPartsData([]);
+        }
+      })
+      .catch(err => console.error('Error fetching parts:', err));
+  }, []);
+
+  // 2. Fetch Operators & Machines based on Plant
+  useEffect(() => {
+    const selectedPlant = formData.plant;
+    
+    if (!selectedPlant) {
+      setOperatorNames([]);
+      setMachineList([]);
+      return;
+    }
+
+    const plantKey = PLANT_MAP[selectedPlant];
+
+    setOperatorsLoading(true);
+    fetch(`${BASE_URL}/api/operators/?plant=${plantKey}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setOperatorNames(data.operators);
+        } else {
+          setOperatorNames(Array.isArray(data) ? data : []);
+        }
+      })
+      .catch(err => console.error('Error fetching operators:', err))
+      .finally(() => setOperatorsLoading(false));
+
+    setMachinesLoading(true);
+    fetch(`${BASE_URL}/api/machines/list/?plant=${plantKey}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setMachineList(data.machines);
+        } else {
+          setMachineList([]);
+        }
+      })
+      .catch(err => console.error('Error fetching machines:', err))
+      .finally(() => setMachinesLoading(false));
+
+  }, [formData.plant]);
+
+  // Handle Form Inputs
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    const { name, value } = e.target;
+    
+    if (name === 'operatorName' && value === 'ADD_NEW') {
+      setIsAddingNewOperator(true);
+      return;
+    }
+
+    if (name === 'plant') {
+      setFormData(prev => ({
+        ...prev,
+        plant: value,
+        operatorName: '', 
+        machineNo: ''
+      }));
+    }
+    else if (name === 'partName') {
+      const selectedPart = partsData.find(p => p.part_name === value);
+      const autoPartNo = selectedPart ? selectedPart.part_no : '';
+
+      setFormData(prev => ({
+        ...prev,
+        partName: value,
+        partNo: autoPartNo, 
+        operationName: ''   
+      }));
+
+      if (value) {
+        fetch(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(value)}`)
+          .then(res => res.json())
+          .then(data => setOperationNames(data))
+          .catch(err => console.error('Error fetching operations:', err));
+      } else {
+        setOperationNames([]);
+      }
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   }
+
+  // NAYA OPERATOR BACKEND ME SAVE KARNE KA FUNCTION
+  const handleSaveNewOperator = async () => {
+    const opName = newOperatorName.trim();
+    if (!opName) return;
+
+    setIsSavingOperator(true);
+
+    try {
+      const response = await fetch(`${BASE_URL}/api/operators/add/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: opName,
+          plant: PLANT_MAP[formData.plant]
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) { 
+        const newOp = { name: opName }; 
+        setOperatorNames(prev => [...prev, newOp]);
+        setFormData(prev => ({ ...prev, operatorName: opName }));
+        setIsAddingNewOperator(false);
+        setNewOperatorName('');
+      } else {
+        alert('Failed to save operator: ' + (result.message || result.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error saving operator:', error);
+      alert('Network Error: Could not save operator to backend.');
+    } finally {
+      setIsSavingOperator(false);
+    }
+  };
 
   const handleReset = () => {
     setFormData({
-      operatorName: '',
-      partName: '',
-      partNo: '',
-      operationName: '',
-      machineNo: ''
-    })
+      plant: '', shift: '', machineNo: '', operatorName: '', partName: '',
+      partNo: '', operationName: '', plannedQuantity: '',
+      achievedQuantity: '', qtyRemark: '',
+      productionStartTime: '', productionEndTime: '', totalWorkingTime: '',
+      toolSetupTime: '', machineBdTime: '', toolBdTime: '', rmCoilNo: ''
+    });
+    setOperationNames([]); 
+    setIsAddingNewOperator(false);
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     
-    const requiredFields = ['operatorName', 'partName', 'partNo', 'operationName']
+    const requiredFields = ['plant', 'shift', 'machineNo', 'operatorName', 'partName', 'partNo', 'operationName', 'plannedQuantity']
     const missingFields = requiredFields.filter(field => !formData[field])
     
     if (missingFields.length > 0) {
@@ -71,16 +701,52 @@ const DailyProdForm = () => {
       return
     }
 
-    const submissionData = {
-      ...formData,
-      submissionId: `PROD-${Date.now()}`,
-      submittedAt: new Date().toLocaleString(),
-      shift: new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Night'
-    }
+    // Payload
+    const payload = {
+      production_date: '2026-04-27', 
+      plant: PLANT_MAP[formData.plant], 
+      shift: formData.shift,
+      machine_no: formData.machineNo,
+      operator_name: formData.operatorName,
+      part_name: formData.partName,
+      part_no: formData.partNo,
+      operation_name: formData.operationName,
+      planned_quantity: parseInt(formData.plannedQuantity), 
+      achieved_quantity: formData.achievedQuantity ? parseInt(formData.achievedQuantity) : 0, 
+      qty_remark: formData.qtyRemark,
+      
+      production_start_time: formData.productionStartTime ? formData.productionStartTime : null,
+      production_end_time: formData.productionEndTime ? formData.productionEndTime : null,
+      total_working_time: formData.totalWorkingTime,
+      tool_setup_time: formData.toolSetupTime ? parseInt(formData.toolSetupTime) : 0,
+      machine_bd_time: formData.machineBdTime ? parseInt(formData.machineBdTime) : 0,
+      tool_bd_time: formData.tool_bd_time ? parseInt(formData.tool_bd_time) : 0,
+      rm_coil_no: formData.rmCoilNo
+    };
 
-    console.log('Production Data:', submissionData)
-    alert('Production plan saved successfully!')
-    handleReset()
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${BASE_URL}/api/save-daily-production/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        alert(result.message);
+        handleReset();
+      } else {
+        alert('Error saving data: ' + (result.error || JSON.stringify(result.details)));
+      }
+    } catch (error) {
+      console.error('Network Error:', error);
+      alert('Failed to connect to the server. Make sure Django is running.');
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const handleBack = () => {
@@ -90,21 +756,18 @@ const DailyProdForm = () => {
   return (
     <div className="min-h-screen bg-gray-100 py-6 px-4 flex justify-center">
       <div className="w-full max-w-7xl">
-        {/* Main Form Container */}
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-          {/* Back Icon Button - Above Main Heading */}
+          
           <div className="px-4 sm:px-6 pt-4 sm:pt-6">
             <button
               type="button"
               onClick={handleBack}
               className="inline-flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors font-medium"
             >
-              <ArrowLeft size={18} />
-              Back to Production Page
+              <ArrowLeft size={18} /> Back to Production Page
             </button>
           </div>
 
-          {/* Header - Responsive with date next to heading */}
           <div className="border-b border-slate-200 px-4 sm:px-6 pb-4 bg-slate-50">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -116,137 +779,191 @@ const DailyProdForm = () => {
                   <p className="text-xs text-slate-600">Manufacturing Execution System</p>
                 </div>
               </div>
-              
-              {/* Date Display - Now next to heading on desktop */}
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-blue-500 rounded-lg shadow-sm">
                   <Calendar size={14} className="text-blue-700" />
                   <span className="text-sm font-medium text-slate-600 whitespace-nowrap">
-                    {new Date().toLocaleDateString('en-GB', { 
-                      day: '2-digit', 
-                      month: 'short', 
-                      year: 'numeric' 
-                    })}
+                    27 Apr 2026
                   </span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="p-4 sm:p-6">
-            {/* All 5 fields in a single row - Responsive */}
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Operator Name */}
-              <div className="flex-1 min-w-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              
+              <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
-                  <User size={14} className="inline mr-1 text-blue-500" />
-                  Operator Name <span className="text-red-500">*</span>
+                  <Factory size={14} className="inline mr-1 text-blue-500" /> Plant <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="operatorName"
-                  value={formData.operatorName}
-                  onChange={handleChange}
-                  placeholder="Enter operator name"
-                  className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400"
-                />
+                <select name="plant" value={formData.plant} onChange={handleChange} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700">
+                  <option value="">Select Plant</option>
+                  {Object.keys(PLANT_MAP).map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
               </div>
 
-              {/* Part Name */}
-              <div className="flex-1 min-w-0">
+              {/* Added Shift Field */}
+              <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
-                  <Package size={14} className="inline mr-1 text-blue-500" />
-                  Part Name <span className="text-red-500">*</span>
+                  <ListFilter size={14} className="inline mr-1 text-blue-500" /> Shift <span className="text-red-500">*</span>
                 </label>
-                <select
-                  name="partName"
-                  value={formData.partName}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700"
-                >
+                <select name="shift" value={formData.shift} onChange={handleChange} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700">
+                  <option value="">Select Shift</option>
+                  <option value="A">Shift A</option>
+                  <option value="B">Shift B</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col">
+                <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+                  <Cpu size={14} className="inline mr-1 text-blue-500" /> Machine No <span className="text-red-500">*</span>
+                </label>
+                <select name="machineNo" value={formData.machineNo} onChange={handleChange} disabled={!formData.plant || machinesLoading} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 disabled:bg-slate-50 disabled:text-slate-400">
+                  <option value="">{machinesLoading ? 'Loading...' : !formData.plant ? 'Select Plant First' : 'Select Machine'}</option>
+                  {machineList.map(m => <option key={m} value={m}>Machine {m}</option>)}
+                </select>
+              </div>
+
+              <div className="flex flex-col">
+                <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+                  <User size={14} className="inline mr-1 text-blue-500" /> Operator Name <span className="text-red-500">*</span>
+                </label>
+                
+                {isAddingNewOperator ? (
+                  <div className="flex gap-2 h-[38px]">
+                    <input
+                      type="text" autoFocus placeholder="Enter Name" value={newOperatorName}
+                      onChange={(e) => setNewOperatorName(e.target.value)} disabled={isSavingOperator}
+                      className="w-full px-3 py-1 text-sm bg-white border border-[#3b82f5] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#3b82f5] text-slate-700 disabled:bg-slate-100"
+                    />
+                    <button type="button" onClick={handleSaveNewOperator} disabled={isSavingOperator || !newOperatorName.trim()} className="px-2 py-1 bg-[#3b82f5] text-white rounded-lg hover:bg-blue-600 transition flex items-center justify-center disabled:opacity-50">
+                      {isSavingOperator ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                    </button>
+                    <button type="button" onClick={() => setIsAddingNewOperator(false)} disabled={isSavingOperator} className="px-2 py-1 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300 transition disabled:opacity-50">
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <select name="operatorName" value={formData.operatorName} onChange={handleChange} disabled={!formData.plant || operatorsLoading} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 disabled:bg-slate-50 disabled:text-slate-400">
+                    <option value="">{operatorsLoading ? 'Loading...' : !formData.plant ? 'Select Plant First' : 'Select Operator'}</option>
+                    {operatorNames.map((op, index) => <option key={op.id || index} value={op.name}>{op.name}</option>)}
+                    {formData.plant && !operatorsLoading && (
+                      <option value="ADD_NEW" className="font-semibold text-blue-600 bg-blue-50">+ Add New Operator</option>
+                    )}
+                  </select>
+                )}
+              </div>
+
+              <div className="flex flex-col">
+                <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+                  <Package size={14} className="inline mr-1 text-blue-500" /> Part Name <span className="text-red-500">*</span>
+                </label>
+                <select name="partName" value={formData.partName} onChange={handleChange} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700">
                   <option value="" className="text-slate-500">Select Part</option>
-                  {partNames.map((part, index) => (
-                    <option key={index} value={part} className="text-slate-700">{part}</option>
-                  ))}
+                  {partsData.map((part, index) => <option key={index} value={part.part_name}>{part.part_name}</option>)}
                 </select>
               </div>
 
-              {/* Part No */}
-              <div className="flex-1 min-w-0">
+              <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
-                  <Hash size={14} className="inline mr-1 text-blue-500" />
-                  Part No <span className="text-red-500">*</span>
+                  <Hash size={14} className="inline mr-1 text-blue-500" /> Part No <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="partNo"
-                  value={formData.partNo}
-                  onChange={handleChange}
-                  placeholder="Enter part number"
-                  className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400"
-                />
+                <input type="text" name="partNo" value={formData.partNo} readOnly placeholder="Auto-filled part number" className="w-full px-3 py-2 text-sm bg-slate-100 border border-slate-300 rounded-lg text-slate-500 cursor-not-allowed focus:outline-none" />
               </div>
 
-              {/* Operation Name */}
-              <div className="flex-1 min-w-0">
+              <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
-                  <Settings size={14} className="inline mr-1 text-blue-500" />
-                  Operation Name <span className="text-red-500">*</span>
+                  <Settings size={14} className="inline mr-1 text-blue-500" /> Operation Name <span className="text-red-500">*</span>
                 </label>
-                <select
-                  name="operationName"
-                  value={formData.operationName}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700"
-                >
+                <select name="operationName" value={formData.operationName} onChange={handleChange} disabled={!formData.partName} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 disabled:bg-slate-50 disabled:text-slate-400">
                   <option value="" className="text-slate-500">Select Operation</option>
-                  {operationNames.map((op, index) => (
-                    <option key={index} value={op} className="text-slate-700">{op}</option>
-                  ))}
+                  {operationNames.map((op, index) => <option key={index} value={op}>{op}</option>)}
                 </select>
               </div>
 
-              {/* Machine No */}
-              <div className="flex-1 min-w-0">
+              <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
-                  <Cpu size={14} className="inline mr-1 text-blue-500" />
-                  Machine No
+                  <Target size={14} className="inline mr-1 text-blue-500" /> Planned Quantity <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="machineNo"
-                  value={formData.machineNo}
-                  onChange={handleChange}
-                  placeholder="Enter machine number"
-                  className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400"
-                />
+                <input type="number" name="plannedQuantity" value={formData.plannedQuantity} onChange={handleChange} placeholder="Target quantity" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
               </div>
+
+              <div className="flex flex-col">
+                <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+                  <CheckCircle size={14} className="inline mr-1 text-green-500" /> Achieved Qty. (Optional)
+                </label>
+                <input type="number" name="achievedQuantity" value={formData.achievedQuantity} onChange={handleChange} placeholder="Actual quantity" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+                  <Clock size={14} className="inline mr-1 text-blue-500" /> Prod. Start Time
+                </label>
+                <input type="time" name="productionStartTime" value={formData.productionStartTime} onChange={handleChange} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700" />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+                  <Clock size={14} className="inline mr-1 text-blue-500" /> Prod. End Time
+                </label>
+                <input type="time" name="productionEndTime" value={formData.productionEndTime} onChange={handleChange} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700" />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+                  <Clock size={14} className="inline mr-1 text-blue-500" /> Total Working Time
+                </label>
+                <input type="text" name="totalWorkingTime" value={formData.totalWorkingTime} onChange={handleChange} placeholder="e.g. 8 hrs or 480 mins" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+                  <Wrench size={14} className="inline mr-1 text-orange-500" /> Tool Set-up Time
+                </label>
+                <input type="number" name="toolSetupTime" value={formData.toolSetupTime} onChange={handleChange} placeholder="In minutes" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+                  <AlertTriangle size={14} className="inline mr-1 text-red-500" /> Machine B/D Time
+                </label>
+                <input type="number" name="machineBdTime" value={formData.machineBdTime} onChange={handleChange} placeholder="In minutes" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+                  <AlertTriangle size={14} className="inline mr-1 text-red-500" /> Tool B/D Time
+                </label>
+                <input type="number" name="toolBdTime" value={formData.toolBdTime} onChange={handleChange} placeholder="In minutes" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+                  <Layers size={14} className="inline mr-1 text-indigo-500" /> RM Coil / Lot No.
+                </label>
+                <input type="text" name="rmCoilNo" value={formData.rmCoilNo} onChange={handleChange} placeholder="Enter lot or coil number" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
+                  <MessageSquare size={14} className="inline mr-1 text-blue-500" /> Qty. Remark
+                </label>
+                <input type="text" name="qtyRemark" value={formData.qtyRemark} onChange={handleChange} placeholder="Any remarks?" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+              </div>
+
             </div>
 
-            {/* Form Actions */}
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-200">
-              <button
-                type="button"
-                onClick={handleReset}
-                className="w-full sm:w-auto px-4 py-2 text-sm border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 font-medium"
-              >
-                <RotateCcw size={14} />
-                Reset
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 mt-8 pt-4 border-t border-slate-200">
+              <button type="button" onClick={handleReset} disabled={isLoading} className="w-full sm:w-auto px-4 py-2 text-sm border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 font-medium disabled:opacity-50">
+                <RotateCcw size={14} /> Reset
               </button>
-              <button
-                type="submit"
-                className="w-full sm:w-auto px-4 py-2 text-sm bg-[#3b82f5] text-white rounded-lg hover:bg-[#2563eb] transition-colors flex items-center justify-center gap-2 font-medium shadow-sm"
-              >
-                <Save size={14} />
-                Save Production Plan
+              <button type="submit" disabled={isLoading} className="w-full sm:w-auto px-4 py-2 text-sm bg-[#3b82f5] text-white rounded-lg hover:bg-[#2563eb] transition-colors flex items-center justify-center gap-2 font-medium shadow-sm disabled:opacity-70 disabled:cursor-not-allowed">
+                {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                {isLoading ? 'Saving...' : 'Save Production Plan'}
               </button>
             </div>
 
-            {/* Required Fields Note */}
-            <p className="text-xs text-slate-400 mt-3 text-center sm:text-left">
-              <span className="text-red-500">*</span> Required fields
-            </p>
           </form>
         </div>
       </div>

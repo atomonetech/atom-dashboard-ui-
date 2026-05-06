@@ -170,10 +170,13 @@ const MaintenanceHub = () => {
                 .main-content { padding: 115px 20px 80px; max-width: 1300px; margin: 0 auto; text-align: center; }
                 .hub-title { font-weight: 900; color: #0f172a; font-size: 3rem; margin-bottom: 5px; }
                 .hub-subtitle { color: #64748b; font-size: 1.1rem; margin-bottom: 40px; }
+                
+                /* Tab center wrapper and pills */
                 .tab-center-wrapper { display: flex; justify-content: center; margin-bottom: 60px; }
                 .tab-pill-box { background: #e2e8f0; padding: 6px; border-radius: 50px; display: flex; gap: 5px; border: 1px solid #cbd5e1; }
                 .tab-item-btn { padding: 10px 25px; border-radius: 50px; border: none; font-weight: 700; font-size: 0.9rem; transition: 0.3s; color: #64748b; background: transparent; display: flex; align-items: center; gap: 8px; cursor: pointer; }
                 .tab-item-btn.active { background: white; color: #4f46e5; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+                
                 .report-card-ui { background: white; border-radius: 20px; padding: 35px 25px; text-align: left; border: 1px solid #eef2f6; transition: 0.3s; cursor: pointer; height: 100%; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
                 .report-card-ui:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
                 .card-header-line { position: absolute; top: 0; left: 0; right: 0; height: 5px; border-radius: 20px 20px 0 0; }
@@ -181,6 +184,19 @@ const MaintenanceHub = () => {
                 .card-main-title { font-weight: 800; color: #0f172a; font-size: 1.3rem; margin-bottom: 25px; }
                 .meta-pill-ui { display: flex; align-items: center; gap: 12px; background: #f8fafc; padding: 8px 14px; border-radius: 10px; border: 1px solid #f1f5f9; font-size: 0.8rem; color: #64748b; font-weight: 600; width: fit-content; margin-bottom: 8px; }
                 .back-navigation-ui { cursor: pointer; color: #4f46e5; font-weight: 700; margin-bottom: 25px; display: inline-flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+
+                /* MOBILE RESPONSIVE MEDIA QUERIES FOR MAINTENANCE HUB */
+                @media (max-width: 768px) {
+                    .hub-main-navbar { padding: 0 20px; }
+                    .main-content { padding-top: 100px; padding-left: 16px; padding-right: 16px; }
+                    
+                    .hub-title { font-size: 2rem; }
+                    .hub-subtitle { font-size: 0.95rem; margin-bottom: 25px; }
+                    
+                    .tab-center-wrapper { margin-bottom: 40px; }
+                    .tab-pill-box { width: 100%; display: flex; gap: 5px; border-radius: 12px; padding: 5px; }
+                    .tab-item-btn { flex: 1; justify-content: center; padding: 10px 5px; font-size: 0.85rem; border-radius: 8px; white-space: nowrap; }
+                }
             `}</style>
 
             <nav className="hub-main-navbar">
