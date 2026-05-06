@@ -5,13 +5,17 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { 
     frequencyCards, 
     machineDailyReports, 
-    weeklyMachineSubReports 
+    weeklyMachineSubReports,
+    machineMonthlyReports,
+    machineYearlyReports
 } from './data/machineData';
 
 import { 
     toolFrequencyCards, 
     toolReports, 
-    weeklyToolSubReports 
+    weeklyToolSubReports,
+    toolMonthlyReports,
+    toolYearlyReports
 } from './data/ToolMachineData';
 
 const MaintenanceHub = () => {
@@ -59,10 +63,14 @@ const MaintenanceHub = () => {
         if (!selectedFrequency) currentReports = frequencyCards;
         else if (selectedFrequency === 'daily') currentReports = machineDailyReports;
         else if (selectedFrequency === 'weekly') currentReports = weeklyMachineSubReports;
+        else if (selectedFrequency === 'monthly') currentReports = machineMonthlyReports;
+        else if (selectedFrequency === 'yearly') currentReports = machineYearlyReports;
     } else {
         if (!selectedFrequency) currentReports = toolFrequencyCards;
         else if (selectedFrequency === 'daily') currentReports = toolReports;
         else if (selectedFrequency === 'weekly') currentReports = weeklyToolSubReports;
+        else if (selectedFrequency === 'monthly') currentReports = toolMonthlyReports;
+        else if (selectedFrequency === 'yearly') currentReports = toolYearlyReports;
     }
 
     // 🔥 CARD CLICK LOGIC (Direct Linking Integrated)
@@ -73,6 +81,23 @@ const MaintenanceHub = () => {
         if (report.id === 'weekly' && activeTab === 'TOOL') {
             navigate("/Maintenance/Tool/welding-fixture-checklist");
             return;
+        }
+
+        if (report.id === 'monthly' && activeTab === 'MACHINE') {
+            navigate("/Maintenance/Machine/monthly");
+            return;
+        }
+         if (report.id === 'yearly' && activeTab === 'MACHINE') {
+            navigate("/Maintenance/Machine/yearly");
+            return;
+        }
+
+        if (report.id === 'monthly' && activeTab === 'TOOL') {
+            navigate("/Maintenance/Tool/Monthly")
+        }
+        
+        if (report.id === 'yearly' && activeTab === 'TOOL') {
+            navigate("/Maintenance/Tool/yearly")
         }
 
         if (frequencies.includes(report.id)) {
@@ -89,21 +114,43 @@ const MaintenanceHub = () => {
         navigate(basePath);
     };
 
+// ... inside MaintenanceHub component
+
     const navigateToForm = (reportId) => {
-        const basePath = activeTab === 'TOOL' ? '/Maintenance/Tool' : '/Maintenance/Machine';
+        // 🔥 FIX: Check specifically if it's a Tool or Machine path
+        const isTool = activeTab === 'TOOL';
+        const basePath = isTool ? '/Maintenance/Tool' : '/Maintenance/Machine';
         
         switch (reportId) {
+            // Machine specific
             case "mc_history": navigate(`${basePath}/history-card`); break;
             case "power_press_check": navigate(`${basePath}/power-press-checksheet`); break;
             case "mc_breakdown": navigate(`${basePath}/breakdown-form`); break;
+            
+            // Tool specific 
             case "tool_history": navigate(`${basePath}/history-form`); break;
             case "tool_pm_check": navigate(`${basePath}/pm-checklist`); break;
             case "tool_breakdown": navigate(`${basePath}/breakdown-form`); break;
             case "weekly_pm_welding_fixture": navigate(`${basePath}/welding-fixture-checklist`); break;
+
+          
+            case "tool_breakdown_summary": 
+                navigate(`${basePath}/breakdown-summary`); break;
+            
+            case "why_why_analysis": 
+            case "why_tool_analysis": 
+                navigate(`${basePath}/why-analysis`); break; // routes mein path 'why-analysis' rakha hai humne
+            
+            case "critical_spares": 
+            case "tool_critical_spares": 
+                navigate(`${basePath}/critical-spares`); break;
+
             default:
                 if (reportId.startsWith('weekly_pm_')) {
                     const slug = reportId.split('_').pop();
                     navigate(`${basePath}/preventive-${slug}`);
+                } else {
+                    alert("🚧 Route not found for: " + reportId);
                 }
         }
         closeModal();
@@ -207,7 +254,8 @@ const MaintenanceHub = () => {
                 <div className="modal-overlay-ui" onClick={closeModal} style={{position:'fixed', inset:0, background:'rgba(15,23,42,0.6)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:20000, backdropFilter:'blur(4px)'}}>
                     <div style={{background:'white', padding:'35px', borderRadius:'24px', textAlign:'center', width:'90%', maxWidth:'400px'}}>
                         <h4 className="fw-bolder mb-4">{selectedCard.title}</h4>
-                        <button className="btn btn-primary w-100 py-3 rounded-4 fw-bold mb-3 shadow-sm" style={{background: '#4f46e5', border: 'none'}} onClick={() => navigateToForm(selectedCard.id)}>Fill Entry</button>
+                        <button className="btn btn-primary w-100 py-3 rounded-4 fw-bold mb-3 shadow-sm" style={{ background: '#4f46e5', border: 'none' }} onClick={() => navigateToForm(selectedCard.id)}>Fill Entry</button>
+                      
                         <button className="btn btn-light w-100 py-3 rounded-4 fw-bold text-muted" onClick={closeModal}>Cancel</button>
                     </div>
                 </div>

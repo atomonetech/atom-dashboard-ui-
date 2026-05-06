@@ -5,58 +5,60 @@ class ApiService {
   static async get(endpoint, params = {}) {
     try {
       const url = new URL(`${API_BASE_URL}${endpoint}`);
-      
+
       // Only append params that have values
-      Object.keys(params).forEach(key => {
-        if (params[key] !== '' && params[key] !== null && params[key] !== undefined) {
+      Object.keys(params).forEach((key) => {
+        if (
+          params[key] !== "" &&
+          params[key] !== null &&
+          params[key] !== undefined
+        ) {
           url.searchParams.append(key, params[key]);
         }
       });
-      
-      console.log('🔍 API Call:', url.toString());
-      
+
+      console.log("🔍 API Call:", url.toString());
+
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      console.log('✅ API Success:', data);
+      console.log("✅ API Success:", data);
       return data;
-      
     } catch (error) {
       console.error(`❌ API Error ${endpoint}:`, error);
       throw error;
     }
   }
-  
+
   static async post(endpoint, body = {}) {
     try {
       const url = `${API_BASE_URL}${endpoint}`;
-      console.log('🔍 POST API Call:', url, body);
-      
+      console.log("🔍 POST API Call:", url, body);
+
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      console.log('✅ POST Success:', data);
+      console.log("✅ POST Success:", data);
       return data;
-      
     } catch (error) {
       console.error(`❌ POST Error ${endpoint}:`, error);
       throw error;
@@ -66,16 +68,22 @@ class ApiService {
 
 // 🔥 FIXED: Main Dashboard API - Matches your backend exactly
 export const getDashboardData = (params = {}) => {
-  const { date, plant = 'plant1_data', shift, hour, machine } = params;
-  
-  console.log('🔍 Dashboard API params:', { date, plant, shift, hour, machine });
-  
-  return ApiService.get('/api/dashboard/', {
+  const { date, plant = "plant1_data", shift, hour, machine } = params;
+
+  console.log("🔍 Dashboard API params:", {
+    date,
+    plant,
+    shift,
+    hour,
+    machine,
+  });
+
+  return ApiService.get("/api/dashboard/", {
     date,
     plant,
     ...(shift && { shift }),
     ...(hour && { hour }),
-    ...(machine && { machine })
+    ...(machine && { machine }),
   });
 };
 
@@ -89,7 +97,7 @@ export const getHourlyProductionData = (params = {}) => {
     date,
     plant,
     ...(shift && { shift }),
-    ...(machine && { machine })
+    ...(machine && { machine }),
   });
 };
 
@@ -106,7 +114,7 @@ export const getMachineProductionData = (params = {}) => {
     ...(hour && { hour }),
     ...(machine && { machine }),
     ...(start_hour && { start_hour }),
-    ...(end_hour && { end_hour })
+    ...(end_hour && { end_hour }),
   });
 };
 
@@ -119,86 +127,86 @@ export const getProductionLineStatusData = (params = {}) => {
   return ApiService.get('/api/production-line-status/', { 
     date,
     plant,
-    ...(shift && { shift })
+    ...(shift && { shift }),
   });
 };
 
 // 🔥 FIXED: Available dates - Correct endpoint
-export const getAvailableDates = (plant = 'plant1_data') => {
-  console.log('📅 Available Dates API for plant:', plant);
-  return ApiService.get('/api/available-dates/', { plant });
+export const getAvailableDates = (plant = "plant1_data") => {
+  console.log("📅 Available Dates API for plant:", plant);
+  return ApiService.get("/api/available-dates/", { plant });
 };
 
 // 🔥 NEW: Assignment and idle data for dashboard tables
 export const getAssignmentIdleData = (params = {}) => {
-  const { date, shift, plant = 'plant1_data' } = params;
-  
-  console.log('📊 Dashboard Tables API params:', { date, shift, plant });
-  
-  return ApiService.get('/api/dashboard-tables/', {
+  const { date, shift, plant = "plant1_data" } = params;
+
+  console.log("📊 Dashboard Tables API params:", { date, shift, plant });
+
+  return ApiService.get("/api/dashboard-tables/", {
     date,
     plant,
-    ...(shift && { shift })
+    ...(shift && { shift }),
   });
 };
 
 // 🔥 NEW: Auto-fill data for idle case forms
 export const getAutoFillData = (machineNo) => {
-  console.log('🔧 Auto-fill API for machine:', machineNo);
+  console.log("🔧 Auto-fill API for machine:", machineNo);
   return ApiService.get(`/api/machines/${machineNo}/auto-fill/`);
 };
 
 // 🔥 NEW: Create idle report
 export const createIdleReport = (reportData) => {
-  console.log('📝 Creating idle report:', reportData);
-  return ApiService.post('/api/idle-reports/', reportData);
+  console.log("📝 Creating idle report:", reportData);
+  return ApiService.post("/api/idle-reports/", reportData);
 };
 
 // 🔥 NEW: Create operator assignment
 export const createAssignment = (assignmentData) => {
-  console.log('👷 Creating assignment:', assignmentData);
-  return ApiService.post('/api/assignments/', assignmentData);
+  console.log("👷 Creating assignment:", assignmentData);
+  return ApiService.post("/api/assignments/", assignmentData);
 };
 
 // 🔥 ENHANCED: Live data endpoints
 export const getPlant1Live = () => {
-  console.log('🏭 Getting Plant 1 live data');
-  return ApiService.get('/api/plant1-live/');
+  console.log("🏭 Getting Plant 1 live data");
+  return ApiService.get("/api/plant1-live/");
 };
 
 export const getPlant2Live = () => {
-  console.log('🏭 Getting Plant 2 live data');
-  return ApiService.get('/api/plant2-live/');
+  console.log("🏭 Getting Plant 2 live data");
+  return ApiService.get("/api/plant2-live/");
 };
 
 export const getMachines = () => {
-  console.log('🔧 Getting all machines');
-  return ApiService.get('/api/machines/');
+  console.log("🔧 Getting all machines");
+  return ApiService.get("/api/machines/");
 };
 
 export const getMessages = () => {
-  console.log('💬 Getting messages');
-  return ApiService.get('/api/messages/');
+  console.log("💬 Getting messages");
+  return ApiService.get("/api/messages/");
 };
 
 // 🔥 LEGACY: Keep for backward compatibility
 export const saveOperatorAssignment = (assignmentData) => {
-  console.log('👷 Saving operator assignment (legacy):', assignmentData);
-  return ApiService.post('/api/assign-operator/', assignmentData);
+  console.log("👷 Saving operator assignment (legacy):", assignmentData);
+  return ApiService.post("/api/assign-operator/", assignmentData);
 };
 
 // 🔥 UTILITY: Test API connection
 export const testConnection = async () => {
   try {
-    console.log('🔍 Testing API connection...');
-    const response = await ApiService.get('/api/dashboard/', { 
-      date: new Date().toISOString().split('T')[0], 
-      plant: 'plant1_data' 
+    console.log("🔍 Testing API connection...");
+    const response = await ApiService.get("/api/dashboard/", {
+      date: new Date().toISOString().split("T")[0],
+      plant: "plant1_data",
     });
-    console.log('✅ API Connection successful');
+    console.log("✅ API Connection successful");
     return { success: true, data: response };
   } catch (error) {
-    console.error('❌ API Connection failed:', error);
+    console.error("❌ API Connection failed:", error);
     return { success: false, error: error.message };
   }
 };
@@ -206,13 +214,13 @@ export const testConnection = async () => {
 // 🔥 UTILITY: Get all plants data for comparison
 export const getAllPlantsData = async (params = {}) => {
   try {
-    console.log('🏭 Getting all plants data...');
-    
+    console.log("🏭 Getting all plants data...");
+
     const [plant1Data, plant2Data] = await Promise.all([
-      getDashboardData({ ...params, plant: 'plant1_data' }),
-      getDashboardData({ ...params, plant: 'plant2_data' })
+      getDashboardData({ ...params, plant: "plant1_data" }),
+      getDashboardData({ ...params, plant: "plant2_data" }),
     ]);
-    
+
     return {
       success: true,
       plant1: plant1Data,
@@ -223,11 +231,11 @@ export const getAllPlantsData = async (params = {}) => {
         plant1_machines: plant1Data.dashboard_data?.total_machines || 0,
         plant2_machines: plant2Data.dashboard_data?.total_machines || 0,
         plant1_running: plant1Data.dashboard_data?.running_machines || 0,
-        plant2_running: plant2Data.dashboard_data?.running_machines || 0
-      }
+        plant2_running: plant2Data.dashboard_data?.running_machines || 0,
+      },
     };
   } catch (error) {
-    console.error('❌ Error getting all plants data:', error);
+    console.error("❌ Error getting all plants data:", error);
     return { success: false, error: error.message };
   }
 };

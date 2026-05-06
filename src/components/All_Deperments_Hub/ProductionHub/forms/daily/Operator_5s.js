@@ -233,13 +233,11 @@ const Operator5S = () => {
                                 <option value="hin">🇮🇳 हिंदी</option>
                                 <option value="guj">🇮🇳 ગુજરાતી</option>
                             </select>
-
                             <div className="hidden sm:flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg">
                                 <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">DOC: AOT-F-PROD-13A</span>
                                 <span className="text-slate-400 font-bold text-xs">|</span>
                                 <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Rev: 01</span>
                             </div>
-
                             <div className="flex sm:hidden items-center gap-1 bg-slate-100 px-2 py-1 rounded-lg">
                                 <span className="text-[8px] font-bold text-slate-600 uppercase">AOT-F-PROD-13A</span>
                                 <span className="text-slate-400 text-[8px]">|</span>

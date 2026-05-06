@@ -1,7 +1,7 @@
 // ============================================================
 //  DailyProdprint.js
-//  Daily Production Plan / Report Sheet — Multi-Page Ready (A3 Landscape)
-//  Fully Tailwind CSS Version | Single Wide Table Structure
+//  Daily Production Plan Sheet — Multi-Page Ready (A3 Landscape)
+//  Fully Tailwind CSS Version | Split Table Structure
 // ============================================================
 
 import React from 'react';
@@ -9,35 +9,34 @@ import { useNavigate } from 'react-router-dom';
 
 const atomone = '/logo1.jpg'; // Ensure this path is correct for your project
 
-// Generate 27 empty rows (22 top rows, 1 tool change row, 4 bottom rows)
-const TOTAL_ROWS = 27;
+// Generate 30 empty rows (5 blocks of 6 rows per block)
+const TOTAL_ROWS = 30;
 const defaultRows = Array.from({ length: TOTAL_ROWS }).map((_, i) => ({
   id: i,
-  mc: '',
-  opName: '',
-  part: '',
-  op: '',
-  start: '',
-  end: '',
-  totalTime: '',
-  planned: '',
-  achieved: '',
-  toolSetup: '',
-  mcBd: '',
-  toolBd: '',
-  coil: '',
-  remark: ''
+  // Left Side
+  mcLeft: '',
+  partLeft: '',
+  opLeft: '',
+  planLeft: '',
+  achLeft: '',
+  remLeft: '',
+  // Right Side
+  mcRight: '',
+  partRight: '',
+  opRight: '',
+  planRight: '',
+  achRight: '',
+  remRight: '',
 }));
 
 const DailyProdprint = ({ items = defaultRows, onEditForm }) => {
   const navigate = useNavigate();
-  // Ensure we have enough rows to map over
-  const rowData = items.length >= TOTAL_ROWS ? items : [...items, ...defaultRows.slice(items.length)];
+  const rowData = items.length > 0 ? items : defaultRows;
 
   // ── Common Tailwind Classes for Cells ──
-  const TH = 'border border-black font-bold text-center align-middle bg-white text-black px-1 py-1.5 text-[10px] sm:text-[11px] leading-tight';
-  const TD = 'border border-black text-center align-middle bg-white px-1 py-1 text-black text-[11px]';
-  const InfoLabel = 'border border-black font-semibold bg-white text-black text-[11px] px-2 py-1 text-left whitespace-nowrap';
+  const TH = 'border border-black font-bold text-center align-middle bg-[#f5f5f5] text-black px-1 py-1.5 text-[11px]';
+  const TD = 'border border-black text-center align-middle bg-white px-1 py-0.5 text-black text-[11px]';
+  const InfoLabel = 'border border-black font-semibold bg-[#f5f5f5] text-black text-[11px] px-2 py-1 text-left whitespace-nowrap';
   const InfoValue = 'border border-black font-normal bg-white text-black text-[11px] px-2 py-1 text-left whitespace-nowrap';
 
   return (
@@ -84,20 +83,21 @@ const DailyProdprint = ({ items = defaultRows, onEditForm }) => {
         
         <table className="w-full border-collapse table-fixed border-2 border-black h-full">
           <colgroup>
-            <col className="w-[4%]" />  {/* M/C */}
-            <col className="w-[8%]" />  {/* Operator Name */}
-            <col className="w-[10%]" /> {/* Part */}
-            <col className="w-[10%]" /> {/* Op */}
-            <col className="w-[6%]" />  {/* Start Time */}
-            <col className="w-[6%]" />  {/* End Time */}
-            <col className="w-[6%]" />  {/* Total Working */}
+            {/* Left Half (50%) */}
+            <col className="w-[8%]" />  {/* M/C */}
+            <col className="w-[14%]" /> {/* Part */}
+            <col className="w-[14%]" /> {/* Op */}
             <col className="w-[5%]" />  {/* Planned */}
             <col className="w-[5%]" />  {/* Achieved */}
-            <col className="w-[6%]" />  {/* Tool Set-up */}
-            <col className="w-[6%]" />  {/* Machine B/D */}
-            <col className="w-[6%]" />  {/* Tool B/D */}
-            <col className="w-[12%]" /> {/* RM Coil */}
-            <col className="w-[10%]" /> {/* Remark */}
+            <col className="w-[4%]" />  {/* Remark */}
+            
+            {/* Right Half (50%) */}
+            <col className="w-[8%]" />  {/* M/C */}
+            <col className="w-[14%]" /> {/* Part */}
+            <col className="w-[14%]" /> {/* Op */}
+            <col className="w-[5%]" />  {/* Planned */}
+            <col className="w-[5%]" />  {/* Achieved */}
+            <col className="w-[4%]" />  {/* Remark */}
           </colgroup>
 
           {/* ════════════ THEAD ════════════ */}
@@ -105,106 +105,92 @@ const DailyProdprint = ({ items = defaultRows, onEditForm }) => {
             {/* ── HEADER ROW 1 ── */}
             <tr className="h-[30px]">
               <th colSpan={2} rowSpan={3} className="border border-black p-2 align-middle text-center bg-white">
-                <img src={atomone} alt="ATOM ONE" className="max-h-[50px] max-w-full block mx-auto object-contain" />
+                <img src={atomone} alt="ATOM ONE" className="max-h-[60px] max-w-full block mx-auto object-contain" />
               </th>
               
-              <th colSpan={10} rowSpan={3} className="border border-black text-center align-middle bg-white">
+              <th colSpan={7} rowSpan={3} className="border border-black text-center align-middle bg-white">
                 <h1 className="text-[28px] sm:text-[32px] font-bold tracking-[1px] m-0 text-black">
-                  DAILY PRODUCTION PLAN/ REPORT
+                  DAILY PRODUCTION PLAN
                 </h1>
               </th>
               
               <th colSpan={1} className={InfoLabel}>DOC NO.</th>
-              <th colSpan={1} className={InfoValue}>AOT/F/PROD/02</th>
+              <th colSpan={2} className={InfoValue}>AOT/F/PROD/03</th>
             </tr>
 
             {/* ── HEADER ROW 2 ── */}
             <tr className="h-[25px]">
               <th colSpan={1} className={InfoLabel}>REV. NO.</th>
-              <th colSpan={1} className={InfoValue}>00</th>
+              <th colSpan={2} className={InfoValue}>00</th>
             </tr>
 
             {/* ── HEADER ROW 3 ── */}
             <tr className="h-[25px]">
               <th colSpan={1} className={InfoLabel}>DATE</th>
-              <th colSpan={1} className={InfoValue}>14.10.2024</th>
+              <th colSpan={2} className={InfoValue}>14.10.2024</th>
             </tr>
 
             {/* ── COLUMN HEADERS ROW ── */}
-            <tr className="h-[40px]">
-              <th className={TH}>M/C. or Line<br/>No.</th>
-              <th className={TH}>Operator Name</th>
+            <tr className="h-[35px]">
+              <th className={TH}>M/C. or Line /<br/>Name or Number</th>
               <th className={TH}>Part Name / Number</th>
               <th className={TH}>Operation Name / Number</th>
-              <th className={TH}>Production<br/>Start Time</th>
-              <th className={TH}>Production<br/>End Time</th>
-              <th className={TH}>Total Working<br/>Time</th>
               <th className={TH}>Planned<br/>Quantity</th>
               <th className={TH}>Achieved<br/>Qty.</th>
-              <th className={TH}>Tool Set-up<br/>Time</th>
-              <th className={TH}>Machine<br/>B/D Time</th>
-              <th className={TH}>Tool B/D<br/>Time</th>
-              <th className={TH}>RM Coil No / Lot No.</th>
+              <th className={`border-r-[3px] border-r-black ${TH}`}>Remark</th>
+
+              <th className={TH}>M/C. or Line /<br/>Name or Number</th>
+              <th className={TH}>Part Name / Number</th>
+              <th className={TH}>Operation Name / Number</th>
+              <th className={TH}>Planned<br/>Quantity</th>
+              <th className={TH}>Achieved<br/>Qty.</th>
               <th className={TH}>Remark</th>
             </tr>
           </thead>
 
           {/* ════════════ TBODY ════════════ */}
           <tbody>
-            {/* Top 22 Rows */}
-            {rowData.slice(0, 22).map((row, i) => (
-              <tr key={`top-${i}`} className="break-inside-avoid h-[28px] print:h-[8mm]">
-                <td className={TD}>{row.mc}</td>
-                <td className={TD}>{row.opName}</td>
-                <td className={TD}>{row.part}</td>
-                <td className={TD}>{row.op}</td>
-                <td className={TD}>{row.start}</td>
-                <td className={TD}>{row.end}</td>
-                <td className={TD}>{row.totalTime}</td>
-                <td className={TD}>{row.planned}</td>
-                <td className={TD}>{row.achieved}</td>
-                <td className={TD}>{row.toolSetup}</td>
-                <td className={TD}>{row.mcBd}</td>
-                <td className={TD}>{row.toolBd}</td>
-                <td className={TD}>{row.coil}</td>
-                <td className={TD}>{row.remark}</td>
-              </tr>
-            ))}
+            {rowData.map((row, i) => {
+              const isFirstInBlock = i % 6 === 0;
 
-            {/* ── Special Row: Tool Change Details ── */}
-            <tr className="break-inside-avoid h-[28px] print:h-[8mm]">
-              <td colSpan={3} className={`${TD} text-left px-2 font-normal`}>Tool Change Details</td>
-              <td colSpan={11} className={`${TD} text-left px-2 font-normal text-blue-800`}>No. of Tool Changed Qty.</td>
-            </tr>
+              // Dynamically calculated height per row to ensure A3 is filled fully
+              return (
+                <tr key={i} className="break-inside-avoid h-[30px] print:h-[7.8mm]">
+                  {/* ====== LEFT HALF ====== */}
+                  {isFirstInBlock && (
+                    <td rowSpan={6} className="border border-black bg-white text-center align-top p-1 text-[11px] font-bold text-black">
+                      {row.mcLeft}
+                    </td>
+                  )}
+                  <td className={`${TD} text-left px-2 font-semibold`}>{row.partLeft}</td>
+                  <td className={`${TD} text-left px-2 font-semibold`}>{row.opLeft}</td>
+                  <td className={TD}>{row.planLeft}</td>
+                  <td className={TD}>{row.achLeft}</td>
+                  <td className={`border-r-[3px] border-r-black ${TD}`}>{row.remLeft}</td>
 
-            {/* Bottom 4 Rows */}
-            {rowData.slice(22, 26).map((row, i) => (
-              <tr key={`bottom-${i}`} className="break-inside-avoid h-[28px] print:h-[8mm]">
-                <td className={TD}>{row.mc}</td>
-                <td className={TD}>{row.opName}</td>
-                <td className={TD}>{row.part}</td>
-                <td className={TD}>{row.op}</td>
-                <td className={TD}>{row.start}</td>
-                <td className={TD}>{row.end}</td>
-                <td className={TD}>{row.totalTime}</td>
-                <td className={TD}>{row.planned}</td>
-                <td className={TD}>{row.achieved}</td>
-                <td className={TD}>{row.toolSetup}</td>
-                <td className={TD}>{row.mcBd}</td>
-                <td className={TD}>{row.toolBd}</td>
-                <td className={TD}>{row.coil}</td>
-                <td className={TD}>{row.remark}</td>
-              </tr>
-            ))}
+                  {/* ====== RIGHT HALF ====== */}
+                  {isFirstInBlock && (
+                    <td rowSpan={6} className="border border-black bg-white text-center align-top p-1 text-[11px] font-bold text-black">
+                      {row.mcRight}
+                    </td>
+                  )}
+                  <td className={`${TD} text-left px-2 font-semibold`}>{row.partRight}</td>
+                  <td className={`${TD} text-left px-2 font-semibold`}>{row.opRight}</td>
+                  <td className={TD}>{row.planRight}</td>
+                  <td className={TD}>{row.achRight}</td>
+                  <td className={TD}>{row.remRight}</td>
+                </tr>
+              );
+            })}
           </tbody>
 
           {/* ════════════ TFOOT ════════════ */}
           <tfoot className="table-footer-group">
             <tr className="h-[45px] print:h-[12mm]">
-              <td colSpan={7} className="border border-black bg-white px-3 py-2 text-[12px] text-left align-top font-normal text-black">
+              <td colSpan={6} className="border-t border-b border-black border-r-[3px] border-r-black bg-white px-3 py-2 text-[12px] text-left align-top font-bold text-black">
                 PREPARED BY:
               </td>
-              <td colSpan={7} className="border border-black bg-white px-3 py-2 text-[12px] text-left align-top font-normal text-black">
+              <td colSpan={6} className="border-t border-b border-black bg-white px-3 py-2 text-[12px] text-left align-top font-bold text-black">
                 APPROVED BY:
               </td>
             </tr>

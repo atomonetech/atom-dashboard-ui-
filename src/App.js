@@ -52,6 +52,7 @@ import MachineDailyReport from './components/All_Deperments_Hub/MaintenanceHub/v
 import MachineWeeklyReports from './components/All_Deperments_Hub/MaintenanceHub/views/MachineWeeklyReport';
 import ToolDailyReports from './components/All_Deperments_Hub/MaintenanceHub/views/ToolDailyReports';
 import ToolWeekly from './components/All_Deperments_Hub/MaintenanceHub/views/ToolWeekly'; 
+import MachineMonthlyReport from './components/All_Deperments_Hub/MaintenanceHub/views/MachineMonthlyReport';
 import MachineRoutes from './routes/MachineRoutes';
 import ToolRoutes from './routes/ToolRoutes';
 import DailyPowerPressChecksheetprint from './components/All_Deperments_Hub/MaintenanceHub/Report/DailyPowerPressChecksheetprint';
@@ -100,7 +101,7 @@ function App() {
   });
 
   // ==========================================
-  // PUSH NOTIFICATION LIFECYCLE
+  // PUSH NOTIFICATION LIFECYCLE hsi
   // ==========================================
   useEffect(() => {
     if ('serviceWorker' in navigator && 'PushManager' in window) {

@@ -129,7 +129,6 @@
 
 // export default QaRoutes;
 
-
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
@@ -205,6 +204,7 @@ const QaRoutes = () => {
 
             {/* 🔥 TABS & DASHBOARD ROUTING 🔥 */}
             <Route path=":category" element={<QaHub />} />
+            
 
             {/* --- DAILY SECTION --- */}
             <Route path="daily/Incoming-Material" element={<IncomingMaterialInsp />} />

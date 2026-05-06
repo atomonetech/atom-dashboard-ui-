@@ -240,7 +240,6 @@ const BinTrollingForm = () => {
 
         {/* Main Card */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden border-0">
-
           {/* Header */}
           <div className="bg-gradient-to-r from-white to-cyan-300 px-6 py-5">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">

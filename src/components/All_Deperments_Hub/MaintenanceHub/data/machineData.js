@@ -214,4 +214,3 @@ export const machineYearlyReports = [
         isLive: false 
     },
 ];
-

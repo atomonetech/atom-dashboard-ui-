@@ -208,18 +208,20 @@
 // export default QaHub;
 
 
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { dailyReports, monthlyReports, yearlyReports } from './data/qaData';
 
 const QaHub = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { category } = useParams(); 
     const currentCategory = category || 'daily'; 
 
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
 
+    // 1st Declaration (Corrected object mapping)
     const qaReports = {
         daily: dailyReports,
         monthly: monthlyReports,
@@ -228,6 +230,13 @@ const QaHub = () => {
 
     const currentReports = qaReports[currentCategory] || [];
 
+    // URL path auto-redirect handler
+    useEffect(() => {
+        if (location.pathname === '/qa-hub' || location.pathname === '/qa-hub/') {
+            navigate('/qa-hub/daily', { replace: true });
+        }
+    }, [location, navigate]);
+
     const handleCardClick = (report) => {
         setSelectedCard(report);
         setModalOpen(true);
@@ -235,7 +244,12 @@ const QaHub = () => {
 
     const handleFillData = () => {
         if (selectedCard?.fillRoute) {
-            navigate(`/qa-hub/${currentCategory}/${selectedCard.fillRoute}`, {
+            // 🔥 YAHAN FIX KIYA HAI: Ensure slash is always correct
+            const routePath = selectedCard.fillRoute.startsWith('/') 
+                ? selectedCard.fillRoute.substring(1) 
+                : selectedCard.fillRoute;
+
+            navigate(`/qa-hub/${currentCategory}/${routePath}`, {
                 state: { fromCategory: currentCategory }
             });
         } else {
@@ -246,7 +260,12 @@ const QaHub = () => {
 
     const handlePrintData = () => {
         if (selectedCard?.printKey) {
-            navigate(`/qa-hub/${currentCategory}/${selectedCard.printKey}`, {
+            // 🔥 YAHAN FIX KIYA HAI
+            const routePath = selectedCard.printKey.startsWith('/') 
+                ? selectedCard.printKey.substring(1) 
+                : selectedCard.printKey;
+
+            navigate(`/qa-hub/${currentCategory}/${routePath}`, {
                 state: { fromCategory: currentCategory }
             });
         } else {
@@ -257,7 +276,12 @@ const QaHub = () => {
 
     const handleViewData = () => {
         if (selectedCard?.viewKey) {
-            navigate(`/qa-hub/view/${selectedCard.viewKey}`, {
+            // 🔥 YAHAN FIX KIYA HAI
+            const routePath = selectedCard.viewKey.startsWith('/') 
+                ? selectedCard.viewKey.substring(1) 
+                : selectedCard.viewKey;
+
+            navigate(`/qa-hub/view/${routePath}`, {
                 state: { fromCategory: currentCategory }
             });
         } else {
@@ -267,11 +291,11 @@ const QaHub = () => {
     };
 
     return (
-        <div className="hub-wrapper">
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+        <div className="qa-hub-wrapper">
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+            
             <style>{`
-                .hub-wrapper { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: #f8fafc !important; z-index: 9999 !important; overflow-y: auto !important; font-family: 'Inter', sans-serif; }
+                .qa-hub-wrapper { min-height: 100vh; background-color: #f8fafc; font-family: 'Inter', sans-serif; }
                 
                 /* NAVBAR CSS */
                 .nav-bar { position: sticky; top: 0; background: #fff; min-height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 10000; gap: 15px; }
@@ -294,6 +318,7 @@ const QaHub = () => {
                 .spin-icon { animation: spinAnim 4s linear infinite; font-size: 0.8rem; }
                 @keyframes spinAnim { 100% { transform: rotate(360deg); } }
 
+                /* MODAL CSS */
                 .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.5); backdrop-filter: blur(3px); z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 16px; animation: fadeIn 0.15s ease; }
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
                 .modal-box { background: #fff; border-radius: 12px; padding: 2rem; width: 100%; max-width: 400px; box-shadow: 0 24px 60px rgba(0,0,0,0.2); animation: slideUp 0.2s ease; position: relative; }
@@ -311,15 +336,11 @@ const QaHub = () => {
                 .tab-btn { padding: 8px 20px; border: none; background: transparent; color: #64748b; font-weight: 700; font-size: 0.9rem; border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
                 .tab-btn.active { background: #fff; color: #0f172a; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
                 
-                /* MOBILE RESPONSIVE MEDIA QUERIES - UPDATED FOR EQUAL TABS */
                 @media (max-width: 768px) {
                     .nav-bar { flex-direction: column; align-items: flex-start; padding: 1rem; gap: 12px; }
                     .qa-title { font-size: 1.25rem; }
-                    
-                    /* Tabs poori width lenge aur buttons barabar stretch honge */
                     .tabs-container { width: 100%; display: flex; gap: 5px; }
                     .tab-btn { flex: 1; text-align: center; padding: 8px 5px; font-size: 0.85rem; } 
-                    
                     .main-container { padding: 20px 16px; }
                     .card-custom h5 { padding-right: 100px !important; }
                 }
@@ -342,7 +363,7 @@ const QaHub = () => {
             {/* Cards Grid */}
             <div className="main-container">
                 <div className="row g-4">
-                    {currentReports.length > 0 ? currentReports.map((r) => (
+                    {currentReports && currentReports.length > 0 ? currentReports.map((r) => (
                         <div className="col-md-6 col-lg-4" key={r.id}>
                             <div className="card-custom" onClick={() => handleCardClick(r)}>
                                 <div className={`status-badge ${r.isLive ? 'status-live' : 'status-dev'}`}>
@@ -423,7 +444,6 @@ const QaHub = () => {
                             </div>
                             <i className="bi bi-chevron-right ms-auto text-muted" style={{fontSize:'0.85rem'}}></i>
                         </button>
-
                     </div>
                 </div>
             )}

@@ -10,7 +10,8 @@ import PokaYokeChecksheetprint from '../components/All_Deperments_Hub/Maintenanc
 import MachinePreventMainForm from '../components/All_Deperments_Hub/MaintenanceHub/forms/MachinePreventMainForm';
 import CncPreventiveMaintenanceForm from '../components/All_Deperments_Hub/MaintenanceHub/forms/CNCPreventiveMaintenanceForm';
 
-import MachineBreakDownSummary from '../components/All_Deperments_Hub/MaintenanceHub/forms/MachineBreakDownSummary';
+// 👇 Yahan par file ka naam theek kiya gaya hai (Breakdown mein chota 'd')
+import MachineBreakdownSummary from '../components/All_Deperments_Hub/MaintenanceHub/forms/MachineBreakdownSummary';
 import MachineMonthlyReport from '../components/All_Deperments_Hub/MaintenanceHub/views/MachineMonthlyReport';
 import WhyAnalysisForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/WhyAnalysisForm";
 import CriticalSparesForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/CriticslSpareForm";
@@ -29,7 +30,9 @@ import ToolHistoryReport from '../components/All_Deperments_Hub/MaintenanceHub/R
 const MachineRoutes = () => {
     return (
         <Routes>
+
             {/* --- FORMS ROUTES --- */}
+
             <Route path="history-card" element={<MachineHistoryCard />} />
             <Route path="power-press-checksheet" element={<DailyPowerPressChecksheet />} />
             <Route path="breakdown-form" element={<MachineBreakDownForm />} />
@@ -42,10 +45,12 @@ const MachineRoutes = () => {
             <Route path="weekly-reports" element={<WeeklyReports />} />
             <Route path="preventive-vmc" element={<MachinePreventMainForm />} />
             <Route path="preventive-cnc" element={<CncPreventiveMaintenanceForm />} />
+            
+            {/* Dynamic route */}
             <Route path="preventive-:machineName" element={<MachinePreventMainForm />} />
 
             {/* --- REPORT / PRINT ROUTES --- */}
-            <Route path="breakdown-form/print" element={<MachineBreakdownSummaryPrint />} />
+            {/* <Route path="breakdown-form/print" element={<MachineBreakdownSummaryPrint />} /> */}
             <Route path="power-press-checksheet/print" element={<DailyPowerPressChecksheetPrint />} />
             <Route path="history-card/print" element={<MachineHistoryCardPrint />} />
             <Route path="tool-history/report" element={<ToolHistoryReport />} />
@@ -56,7 +61,7 @@ const MachineRoutes = () => {
 
             {/* --- MONTHLY ROUTES --- */}
             <Route path="monthly" element={<MachineMonthlyReport />} /> 
-            <Route path="breakdown-summary" element={<MachineBreakDownSummary />} />
+            <Route path="breakdown-summary" element={<MachineBreakdownSummary />} /> {/* Yahan variable update kiya gaya hai */}
             <Route path="why-why-analysis" element={<WhyAnalysisForm />} />
             <Route path="critical-spares" element={<CriticalSparesForm />} />
 
@@ -64,7 +69,7 @@ const MachineRoutes = () => {
             <Route path="yearly" element={<MachineYearlyReport />} />
             <Route path="master-list-mc" element={<MasterMachineList />} /> 
             <Route path="mc-overhauling-list" element={<MachineOverhaulingList />} />
-            <Route path="annual-overhauling-plan" element={<AnnualOverhaulingPlan />} />
+
         </Routes>
     );
 };
