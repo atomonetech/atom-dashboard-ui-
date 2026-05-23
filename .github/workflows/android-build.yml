@@ -1,6 +1,5 @@
 name: Build Android APK
 
-# Ye action tab chalega jab aap code push karenge ya manually chalayenge
 on:
   push:
     branches: [ "main", "master" ]
@@ -12,12 +11,12 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: '18' # Ya jo version aap use kar rahe hain
+        node-version: '18'
 
     - name: Install Dependencies
       run: npm install
@@ -25,8 +24,8 @@ jobs:
     - name: Build React Frontend
       run: npm run build
 
-    - name: Setup Java (Android ke liye zaroori)
-      uses: actions/setup-java@v3
+    - name: Setup Java
+      uses: actions/setup-java@v4
       with:
         distribution: 'zulu'
         java-version: '17'
@@ -41,7 +40,7 @@ jobs:
         ./gradlew assembleDebug
 
     - name: Upload APK File
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: AtomOne-App
         path: android/app/build/outputs/apk/debug/app-debug.apk
