@@ -20,7 +20,7 @@ const MachinePreventMainForm = () => {
     { id: 4, point: "Coolant tank/ filter cleaning", method: "Manual & visually", before: '', after: '', remarks: '' },
     { id: 5, point: "Cleaning of spindle belt", method: "Manual & visually", before: '', after: '', remarks: '' },
     { id: 6, point: "Lub oil level (ALU)", method: "Manual & visually", before: '', after: '', remarks: '' },
-    { id: 7, point: "Door sensor", method: "", before: '', after: '', remarks: '' },
+    { id: 7, point: "Door sensor", method: "Visual", before: '', after: '', remarks: '' },
     { id: 8, point: "Checking od runout / noise in spindle", method: "Manual & visually", before: '', after: '', remarks: '' },
     { id: 9, point: "Bed cleaning", method: "Manual & visually", before: '', after: '', remarks: '' },
     { id: 10, point: "Lubricator hose condition", method: "Visual", before: '', after: '', remarks: '' },
@@ -28,7 +28,7 @@ const MachinePreventMainForm = () => {
     { id: 12, point: "Spindle motor blower fan", method: "Manual & visually", before: '', after: '', remarks: '' },
     { id: 13, point: "Electrical control panel cleaning", method: "Visual", before: '', after: '', remarks: '' },
     { id: 14, point: "Machine level", method: "Leveler", before: '', after: '', remarks: '' },
-    { id: 15, point: "Check the preventive maintenance data", method: "Visual", before: '', after: '', remarks: '' }  // Changed to "Visual" with capital V
+    { id: 15, point: "Check the preventive maintenance data", method: "Visual", before: '', after: '', remarks: '' }
   ];
 
   // --- INITIAL STATES (For Resetting) ---
@@ -114,7 +114,7 @@ const MachinePreventMainForm = () => {
   };
 
   return (
-    <div className="container-fluid py-4" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+    <div className="container-fluid py-3 py-md-4" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -241,15 +241,6 @@ const MachinePreventMainForm = () => {
         }
         
         .animate-fade-in { animation: fadeInUp 0.4s ease-out; }
-
-        @keyframes fade-in-out {
-          0% { opacity: 0; transform: translateY(20px); }
-          15% { opacity: 1; transform: translateY(0); }
-          85% { opacity: 1; transform: translateY(0); }
-          100% { opacity: 0; transform: translateY(20px); }
-        }
-        
-        .animate-fade-in-out { animation: fade-in-out 3s ease forwards; }
         
         .badge-count {
           background: #e91e63;
@@ -275,30 +266,28 @@ const MachinePreventMainForm = () => {
           text-align: center;
           width: 100%;
         }
-        .method-visual {
-          background-color: #e3f2fd;
-          color: #1565c0;
-        }
-        .method-manual {
-          background-color: #e8f5e9;
-          color: #2e7d32;
-        }
-        .method-manual-visual {
-          background-color: #fff3e0;
-          color: #e65100;
-        }
-        .method-leveler {
-          background-color: #f3e5f5;
-          color: #6a1b9a;
-        }
-        .method-empty {
-          background-color: #ffebee;
-          color: #c62828;
+        .method-visual { background-color: #e3f2fd; color: #1565c0; }
+        .method-manual { background-color: #e8f5e9; color: #2e7d32; }
+        .method-manual-visual { background-color: #fff3e0; color: #e65100; }
+        .method-leveler { background-color: #f3e5f5; color: #6a1b9a; }
+        .method-empty { background-color: #ffebee; color: #c62828; }
+
+        /* MAGIC MOBILE VIEW CSS */
+        .mobile-label { display: none; }
+        @media (max-width: 767px) {
+          .table-responsive { border: none !important; background: transparent !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+          .clean-table thead { display: none; }
+          .clean-table, .clean-table tbody, .clean-table tr, .clean-table td { display: block; width: 100%; }
+          .clean-table tr { margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 12px; padding: 15px; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+          .clean-table td { border: none !important; border-bottom: 1px dashed #e2e8f0 !important; padding: 10px 0 !important; text-align: left !important; }
+          .clean-table td:last-child { border-bottom: none !important; }
+          .mobile-label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 5px; }
+          .method-badge { width: auto; min-width: 100px; display: inline-block; }
         }
       `}</style>
 
       {/* --- TOP BACK BUTTON --- */}
-      <div className="mx-auto mb-3 no-print animate-fade-in" style={{ maxWidth: '1200px' }}>
+      <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
         <button 
           className="btn btn-outline-custom rounded-pill"
           onClick={() => navigate('/Maintenance/Machine/weekly')}
@@ -311,8 +300,8 @@ const MachinePreventMainForm = () => {
       <div className="white-card mx-auto animate-fade-in" style={{ maxWidth: '1200px' }}>
         
         {/* HEADER */}
-        <div className="p-4" style={{ borderBottom: '1px solid #e9ecef', background: 'white', borderRadius: '20px 20px 0 0' }}>
-          <h3 className="fw-bold mb-1" style={{ color: '#e91e63', fontSize: '1.5rem' }}>
+        <div className="p-3 p-md-4" style={{ borderBottom: '1px solid #e9ecef', background: 'white', borderRadius: '20px 20px 0 0' }}>
+          <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#e91e63' }}>
             Machine Preventive Maintenance
           </h3>
           <p className="text-muted mb-0" style={{ fontSize: '0.85rem' }}>
@@ -320,7 +309,7 @@ const MachinePreventMainForm = () => {
           </p>
         </div>
 
-        <div className="card-body p-4">
+        <div className="card-body p-3 p-md-4">
           <form onSubmit={handleSubmit}>
             
             {/* --- SECTION 1: META DATA INPUTS --- */}
@@ -329,32 +318,27 @@ const MachinePreventMainForm = () => {
             </div>
             
             <div className="row g-3 mb-4">
-              <div className="col-md-4">
+              <div className="col-12 col-md-4">
                 <label className="form-label required-field">Machine Name</label>
                 <input type="text" className="form-control" name="machineName" value={metaData.machineName} onChange={handleMetaChange} required placeholder="e.g., CNC Milling Machine" />
               </div>
-              
-              <div className="col-md-2">
+              <div className="col-12 col-md-4">
                 <label className="form-label required-field">Machine No.</label>
                 <input type="text" className="form-control" name="machineNo" value={metaData.machineNo} onChange={handleMetaChange} required placeholder="Number" />
               </div>
-              
-              <div className="col-md-3">
+              <div className="col-12 col-md-4">
                 <label className="form-label required-field">Date</label>
                 <input type="date" className="form-control" name="date" value={metaData.date} onChange={handleMetaChange} required />
               </div>
-              
-              <div className="col-md-3">
+              <div className="col-12 col-md-4">
                 <label className="form-label required-field">Location</label>
                 <input type="text" className="form-control" name="location" value={metaData.location} onChange={handleMetaChange} required placeholder="Facility location" />
               </div>
-              
-              <div className="col-md-4">
+              <div className="col-12 col-md-4">
                 <label className="form-label">Specification</label>
                 <input type="text" className="form-control" name="specification" value={metaData.specification} onChange={handleMetaChange} placeholder="Machine specs (optional)" />
               </div>
-              
-              <div className="col-md-4">
+              <div className="col-12 col-md-4">
                 <label className="form-label required-field">Maintenance Personnel</label>
                 <input type="text" className="form-control" name="maintenancePersonnel" value={metaData.maintenancePersonnel} onChange={handleMetaChange} required placeholder="Technician name" />
               </div>
@@ -372,7 +356,7 @@ const MachinePreventMainForm = () => {
               <div>
                 <span className="fw-bold">Checklist Items</span>
                 <span className="badge-count">{tableData.length}</span>
-                <small className="text-muted ms-2">
+                <small className="text-muted ms-2 d-none d-md-inline-block">
                   {isChecklistOpen ? '▼ Click to collapse' : '▶ Click to expand'}
                 </small>
               </div>
@@ -396,19 +380,24 @@ const MachinePreventMainForm = () => {
                     <tbody>
                       {tableData.map((row, index) => (
                         <tr key={row.id}>
-                          <td className="text-center fw-bold text-muted">{index + 1}</td>
-                          <td className="fw-medium">{row.point}</td>
-                          
-                          {/* 🔥 CHECKING METHOD - ALL ROWS GET PROPER COLOR BADGE 🔥 */}
+                          <td className="text-md-center fw-bold text-muted">
+                            <span className="mobile-label">Sr. No.</span>
+                            {index + 1}
+                          </td>
+                          <td className="fw-medium">
+                            <span className="mobile-label">Check Point</span>
+                            {row.point}
+                          </td>
                           <td>
+                            <span className="mobile-label">Method</span>
                             <div className={getMethodBadgeClass(row.method)}>
                               {row.method || "Not Specified"}
                             </div>
                           </td>
-                          
                           <td>
+                            <span className="mobile-label required-field">Before Maint.</span>
                             <select 
-                              className="form-select border-0 bg-light shadow-sm" 
+                              className="form-select border-1 bg-light shadow-sm w-100" 
                               value={row.before} 
                               onChange={(e) => handleBeforeChange(row.id, e.target.value)} 
                               required
@@ -418,10 +407,10 @@ const MachinePreventMainForm = () => {
                               ))}
                             </select>
                           </td>
-
                           <td>
+                            <span className="mobile-label required-field">After Maint.</span>
                             <select 
-                              className="form-select border-0 bg-light shadow-sm" 
+                              className="form-select border-1 bg-light shadow-sm w-100" 
                               value={row.after} 
                               onChange={(e) => handleAfterChange(row.id, e.target.value)} 
                               required
@@ -431,11 +420,11 @@ const MachinePreventMainForm = () => {
                               ))}
                             </select>
                           </td>
-
                           <td>
+                            <span className="mobile-label">Remarks</span>
                             <input 
                               type="text" 
-                              className="form-control border-0 bg-light shadow-sm" 
+                              className="form-control border-1 bg-light shadow-sm w-100" 
                               placeholder="Add remarks..." 
                               value={row.remarks} 
                               onChange={(e) => handleRemarksChange(row.id, e.target.value)}
@@ -450,8 +439,8 @@ const MachinePreventMainForm = () => {
             )}
 
             {/* Legend Section */}
-            <div className="d-flex flex-wrap align-items-center gap-4 p-3 rounded-3 mb-4" style={{ backgroundColor: '#f8f9fa', border: '1px dashed #dee2e6' }}>
-              <span className="text-sm fw-bold" style={{ color: '#495057' }}>Legends:</span>
+            <div className="d-flex flex-wrap align-items-center gap-3 gap-md-4 p-3 rounded-3 mb-4" style={{ backgroundColor: '#f8f9fa', border: '1px dashed #dee2e6' }}>
+              <span className="text-sm fw-bold w-100 w-md-auto" style={{ color: '#495057' }}>Legends:</span>
               <div className="d-flex align-items-center gap-2">
                 <span className="w-4 h-4 rounded-circle" style={{ width: '14px', height: '14px', backgroundColor: '#10b981', borderRadius: '50%' }}></span>
                 <span className="text-sm fw-medium" style={{ color: '#495057' }}>Ok</span>
@@ -467,16 +456,16 @@ const MachinePreventMainForm = () => {
             </div>
 
             {/* --- ACTION BUTTONS --- */}
-            <div className="d-flex justify-content-end gap-3 mt-4 pt-3 no-print border-top">
+            <div className="d-flex flex-column flex-sm-row justify-content-end gap-3 mt-4 pt-3 no-print border-top">
               <button 
                 type="button" 
-                className="btn btn-light rounded-pill px-4 shadow-sm" 
+                className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto" 
                 onClick={handleReset}
                 style={{ fontWeight: '600', border: '1px solid #dee2e6' }}
               >
                 Reset Data
               </button>
-              <button type="submit" className="btn btn-primary-custom rounded-pill px-5 shadow-sm">
+              <button type="submit" className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto">
                 <i className="bi bi-floppy me-2"></i> Save Record
               </button>
             </div>
@@ -487,7 +476,7 @@ const MachinePreventMainForm = () => {
 
       {/* Success Toast */}
       {showSuccess && (
-        <div className="position-fixed bottom-0 end-0 m-4 bg-success text-white px-4 py-3 rounded-3 shadow-lg animate-fade-in-out z-3" style={{ minWidth: '250px' }}>
+        <div className="position-fixed bottom-0 end-0 m-3 m-md-4 bg-success text-white px-4 py-3 rounded-3 shadow-lg z-3" style={{ minWidth: '250px' }}>
           <div className="d-flex align-items-center gap-2">
             <i className="bi bi-check-circle-fill fs-5"></i>
             <span className="fw-medium">Maintenance record saved!</span>
