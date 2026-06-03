@@ -69,13 +69,40 @@ const DrillMachineMaintenanceForm = () => {
         .btn-save:hover { background: #5b21b6; box-shadow: 0 5px 15px rgba(109, 40, 217, 0.4); }
         .method-badge { background: #f3e8ff; color: #6d28d9; padding: 4px 12px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; }
         
+        /* --- STYLED BACK BUTTON --- */
+        .btn-outline-custom { 
+          background: white;
+          color: #6d28d9; 
+          border: 2px solid #6d28d9;
+          transition: all 0.2s ease;
+          font-weight: 600;
+          padding: 8px 20px;
+        }
+        
+        .btn-outline-custom:hover { 
+          background: #6d28d9;
+          color: white;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(109, 40, 217, 0.2);
+        }
+
+        .animate-fade-in { animation: fadeInUp 0.4s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
         .form-label { font-weight: 700; font-size: 0.75rem; color: #64748b; text-transform: uppercase; }
         .ss-table thead th { background-color: #f1f5f9; color: #1e293b; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; border: 1px solid #e2e8f0; padding: 12px; }
         .ss-table td { border: 1px solid #e2e8f0; padding: 10px; font-size: 0.9rem; }
       `}</style>
 
-      <div className="mx-auto mb-3 no-print" style={{ maxWidth: '1100px' }}>
-        <button className="btn btn-link text-decoration-none text-muted p-0" onClick={() => navigate(-1)}>← Back to Dashboard</button>
+      {/* --- TOP BACK BUTTON --- */}
+      <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1100px' }}>
+        <button 
+          className="btn btn-outline-custom rounded-pill"
+          onClick={() => navigate(-1)}
+          style={{ fontSize: '0.85rem' }}
+        >
+          ← Back to Dashboard
+        </button>
       </div>
 
       <div className="white-card mx-auto" style={{ maxWidth: '1100px' }}>
@@ -150,7 +177,7 @@ const DrillMachineMaintenanceForm = () => {
         </div>
       </div>
 
-      {showSuccess && <div className="position-fixed bottom-0 end-0 m-4 bg-dark text-white px-4 py-3 rounded-4 shadow-lg">✨ Drill record saved successfully!</div>}
+      {showSuccess && <div className="position-fixed bottom-0 end-0 m-4 bg-dark text-white px-4 py-3 rounded-4 shadow-lg animate-fade-in">✨ Drill record saved successfully!</div>}
     </div>
   );
 };

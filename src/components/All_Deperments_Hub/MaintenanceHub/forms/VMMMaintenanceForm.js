@@ -123,7 +123,7 @@ const VMMMaintenanceForm = () => {
         }
         
         .btn-primary-custom { 
-          background: #8b5cf6;
+          background: #3b82f6;
           color: white; 
           border: none;
           transition: all 0.2s ease;
@@ -132,10 +132,30 @@ const VMMMaintenanceForm = () => {
         }
         
         .btn-primary-custom:hover { 
-          background: #7c3aed;
+          background: #2563eb;
           transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
+
+        /* --- STYLED BACK BUTTON --- */
+        .btn-outline-custom { 
+          background: white;
+          color: #3b82f6; 
+          border: 2px solid #3b82f6;
+          transition: all 0.2s ease;
+          font-weight: 600;
+          padding: 8px 20px;
+        }
+        
+        .btn-outline-custom:hover { 
+          background: #3b82f6;
+          color: white;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .animate-fade-in { animation: fadeInUp 0.4s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
         .form-control, .form-select {
           border: 1px solid #cbd5e1;
@@ -147,8 +167,8 @@ const VMMMaintenanceForm = () => {
         }
         
         .form-control:focus, .form-select:focus {
-          border-color: #8b5cf6;
-          box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
           outline: none;
           background-color: #ffffff;
         }
@@ -182,15 +202,15 @@ const VMMMaintenanceForm = () => {
           font-size: 0.85rem;
         }
         .ss-table thead th {
-          background-color: #8b5cf6;
+          background-color: #3b82f6;
           font-weight: 700;
           color: #ffffff !important;
           text-align: center;
           border-bottom: 2px solid #1e293b;
         }
         .method-badge {
-          background-color: #e0e7ff;
-          color: #3730a3;
+          background-color: #eff6ff;
+          color: #1d4ed8;
           padding: 4px 10px;
           border-radius: 4px;
           font-size: 0.8rem;
@@ -253,13 +273,14 @@ const VMMMaintenanceForm = () => {
         @media (min-width: 768px) { .form-main-title { font-size: 1.75rem; } }
       `}</style>
 
-      <div className="mx-auto mb-3 no-print px-2" style={{ maxWidth: '1200px' }}>
+      {/* --- TOP BACK BUTTON UPDATED --- */}
+      <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
         <button 
-          className="btn btn-outline-secondary rounded-pill bg-white shadow-sm"
+          className="btn btn-outline-custom rounded-pill"
           onClick={() => navigate('/Maintenance/Machine/weekly')}
-          style={{ fontSize: '0.85rem', fontWeight: '600' }}
+          style={{ fontSize: '0.85rem' }}
         >
-          ← Back
+          ← Back to Weekly Hub
         </button>
       </div>
 
@@ -269,7 +290,7 @@ const VMMMaintenanceForm = () => {
             <h2 className="fw-bold mb-1 form-main-title" style={{ color: '#0f172a', letterSpacing: '0.5px' }}>
               VERTICAL MILLING MACHINE CHECK SHEET
             </h2>
-            <span className="badge bg-primary px-3 py-2 mt-1 mt-md-2 d-inline-block" style={{ backgroundColor: '#8b5cf6 !important' }}>Form: AOT-F-PM-01 | Weekly</span>
+            <span className="badge px-3 py-2 mt-1 mt-md-2 d-inline-block text-white" style={{ backgroundColor: '#3b82f6' }}>Form: AOT-F-PM-01 | Weekly</span>
           </div>
         </div>
 

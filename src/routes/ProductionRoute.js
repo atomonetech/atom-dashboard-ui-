@@ -106,12 +106,12 @@ import Operator5s from '../components/All_Deperments_Hub/ProductionHub/forms/dai
 import TipChangeMonitorForm from '../components/All_Deperments_Hub/ProductionHub/forms/daily/TipChangeMonitorForm';
 
 // --- DAILY VIEWS (PRINTS) ---
-import DailyProdprint from '../components/All_Deperments_Hub/ProductionHub/views/daily/DailyProdprint';
-import BinTrollingprint from '../components/All_Deperments_Hub/ProductionHub/views/daily/BinTrollingprint';
-import ForMChangeInsPrint from '../components/All_Deperments_Hub/ProductionHub/views/daily/ForMChangeInsPrint';
-import ForMChangeRecordPrint from '../components/All_Deperments_Hub/ProductionHub/views/daily/ForMChangeRecordPrint';
-import Operator5sprint from '../components/All_Deperments_Hub/ProductionHub/views/daily/Operator5sprint';
-import TipChangeMonitorprint from '../components/All_Deperments_Hub/ProductionHub/views/daily/TipChangeMonitorprint';
+import DailyProdprint from '../components/All_Deperments_Hub/ProductionHub/Views/daily/DailyProdprint';
+import BinTrollingprint from '../components/All_Deperments_Hub/ProductionHub/Views/daily/BinTrollingprint';
+import ForMChangeInsPrint from '../components/All_Deperments_Hub/ProductionHub/Views/daily/ForMChangeInsPrint';
+import ForMChangeRecordPrint from '../components/All_Deperments_Hub/ProductionHub/Views/daily/ForMChangeRecordPrint';
+import Operator5sprint from '../components/All_Deperments_Hub/ProductionHub/Views/daily/Operator5sprint';
+import TipChangeMonitorprint from '../components/All_Deperments_Hub/ProductionHub/Views/daily/TipChangeMonitorprint';
 
 //--- Monthly Form ---
 import MonthlyProdPlanForm from '../components/All_Deperments_Hub/ProductionHub/forms/monthly/MonthlyProdPlanForm';
