@@ -32,7 +32,7 @@ import BeltGrinderMaintenanceForm from "../components/All_Deperments_Hub/Mainten
 import BaseGrinderMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/BaseGrinderMaintenanceForm";
 
 // Reports & Views
-import MachineBreakdownSummary from "../components/All_Deperments_Hub/MaintenanceHub/forms/MachineBreakdownSummary";
+//import MachineBreakdownSummary from "../components/All_Deperments_Hub/MaintenanceHub/forms/MachineBreakdownSummary";
 import MachineMonthlyReport from "../components/All_Deperments_Hub/MaintenanceHub/views/MachineMonthlyReport";
 import WhyAnalysisForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/WhyAnalysisForm";
 import CriticalSparesForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/CriticslSpareForm";
@@ -59,7 +59,7 @@ const MachineRoutes = () => {
         element={<DailyPowerPressChecksheet />}
       />{" "}
       {/* This is Daily, so no weekly in path */}
-      <Route path="breakdown-form" element={<MachineBreakDownForm />} />
+      {/* <Route path="breakdown-form" element={<MachineBreakDownForm />} /> */}
       {/* FOOLPROOF POKA YOKE ROUTES */}
       <Route path="Poka-Yoke" element={<PokaYokeChecksheet />} />
       <Route path="poka_yoke_check" element={<PokaYokeChecksheet />} />
@@ -150,7 +150,7 @@ const MachineRoutes = () => {
       />
       {/* --- MONTHLY ROUTES --- */}
       <Route path="monthly" element={<MachineMonthlyReport />} />
-      <Route path="breakdown-summary" element={<MachineBreakdownSummary />} />
+      {/* <Route path="breakdown-summary" element={<MachineBreakdownSummary />} /> */}
       <Route path="why-why-analysis" element={<WhyAnalysisForm />} />
       <Route path="critical-spares" element={<CriticalSparesForm />} />
       {/* --- YEARLY ROUTES --- */}
