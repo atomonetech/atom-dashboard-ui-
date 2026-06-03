@@ -67,24 +67,47 @@ const TIGMaintenanceForm = () => {
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
         * { font-family: 'Plus Jakarta Sans', sans-serif; }
         
-        .purple-card { 
+        .theme-card { 
           background: white; 
           border-radius: 20px; 
-          box-shadow: 0 4px 20px rgba(139, 92, 246, 0.08); 
+          box-shadow: 0 4px 20px rgba(5, 182, 212, 0.08); 
         }
-        .btn-purple { 
-          background: #6366f1; 
+        
+        .btn-theme { 
+          background: #05B6D4; 
           color: white; 
           border: none; 
           font-weight: 600; 
           padding: 12px 30px; 
           transition: all 0.3s ease; 
         }
-        .btn-purple:hover { 
-          background: #4f46e5; 
+        
+        .btn-theme:hover { 
+          background: #049cb6; 
           transform: translateY(-2px); 
-          box-shadow: 0 8px 15px rgba(99, 102, 241, 0.3); 
+          box-shadow: 0 8px 15px rgba(5, 182, 212, 0.3); 
         }
+
+        /* --- STYLED BACK BUTTON --- */
+        .btn-outline-custom { 
+          background: white;
+          color: #05B6D4; 
+          border: 2px solid #05B6D4;
+          transition: all 0.2s ease;
+          font-weight: 600;
+          padding: 8px 20px;
+        }
+        
+        .btn-outline-custom:hover { 
+          background: #05B6D4;
+          color: white;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(5, 182, 212, 0.2);
+        }
+
+        .animate-fade-in { animation: fadeInUp 0.4s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
         .form-label { 
           font-weight: 600; 
           color: #475569; 
@@ -92,14 +115,16 @@ const TIGMaintenanceForm = () => {
           text-transform: uppercase; 
           letter-spacing: 0.5px; 
         }
+        
         .method-badge { 
-          background-color: #f5f3ff; 
-          color: #7c3aed; 
+          background-color: #e0f8fb; 
+          color: #038b9e; 
           padding: 4px 10px; 
           border-radius: 6px; 
           font-size: 0.75rem; 
           font-weight: 700; 
         }
+        
         select option[value="Ok"] { color: #10b981; font-weight: bold; }
         select option[value="Not Ok"] { color: #ef4444; font-weight: bold; }
 
@@ -107,7 +132,7 @@ const TIGMaintenanceForm = () => {
         .ss-table-container { border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
         .ss-table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
         .ss-table thead th { 
-          background-color: #6366f1; 
+          background-color: #05B6D4; 
           color: white; 
           padding: 15px; 
           font-size: 0.85rem; 
@@ -150,18 +175,26 @@ const TIGMaintenanceForm = () => {
         }
       `}</style>
 
-      {/* Header Button */}
-      <div className="purple-card mx-auto mb-4 p-3 p-md-4 d-flex justify-content-between align-items-center" style={{ maxWidth: '1200px' }}>
-        <div>
-          <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#1e293b' }}>TIG WELDING MAINTENANCE</h3>
-          <span className="badge rounded-pill" style={{ backgroundColor: '#f5f3ff', color: '#7c3aed', padding: '8px 15px' }}>Form: AOT-F-PM-01 | Weekly</span>
-        </div>
-        <button onClick={() => navigate(-1)} className="btn btn-outline-secondary rounded-circle p-2 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-          <i className="bi bi-arrow-left"></i>
+      {/* --- TOP BACK BUTTON --- */}
+      <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
+        <button 
+          className="btn btn-outline-custom rounded-pill"
+          onClick={() => navigate('/Maintenance/Machine/weekly')}
+          style={{ fontSize: '0.85rem' }}
+        >
+          ← Back to Weekly Hub
         </button>
       </div>
 
-      <div className="purple-card mx-auto p-3 p-md-4" style={{ maxWidth: '1200px' }}>
+      {/* Header Panel */}
+      <div className="theme-card mx-auto mb-4 p-3 p-md-4 d-flex justify-content-between align-items-center" style={{ maxWidth: '1200px', borderTop: '6px solid #05B6D4' }}>
+        <div>
+          <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#1e293b' }}>TIG WELDING MAINTENANCE</h3>
+          <span className="badge rounded-pill" style={{ backgroundColor: '#e0f8fb', color: '#038b9e', padding: '8px 15px' }}>Form: AOT-F-PM-01 | Weekly</span>
+        </div>
+      </div>
+
+      <div className="theme-card mx-auto p-3 p-md-4" style={{ maxWidth: '1200px' }}>
         <form onSubmit={handleSubmit}>
           {/* General Information */}
           <div className="row g-3 mb-4">
@@ -189,7 +222,7 @@ const TIGMaintenanceForm = () => {
 
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h5 className="fw-bold mb-0">Check Points</h5>
-            <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => setIsChecklistOpen(!isChecklistOpen)}>
+            <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setIsChecklistOpen(!isChecklistOpen)}>
               {isChecklistOpen ? 'Hide' : 'Show'}
             </button>
           </div>
@@ -267,7 +300,7 @@ const TIGMaintenanceForm = () => {
           </div>
 
           <div className="d-flex flex-column flex-sm-row justify-content-end mt-4 pt-3">
-            <button type="submit" className="btn btn-purple rounded-pill px-5 w-100 w-sm-auto">
+            <button type="submit" className="btn btn-theme rounded-pill px-5 w-100 w-sm-auto">
               Submit Record
             </button>
           </div>

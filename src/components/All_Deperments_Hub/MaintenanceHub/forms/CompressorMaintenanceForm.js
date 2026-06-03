@@ -67,6 +67,7 @@ const CompressorMaintenanceForm = () => {
           border-radius: 20px; 
           box-shadow: 0 4px 20px rgba(20, 184, 166, 0.08); 
         }
+        
         .btn-teal { 
           background: #0d9488; 
           color: white; 
@@ -75,11 +76,33 @@ const CompressorMaintenanceForm = () => {
           padding: 12px 30px; 
           transition: all 0.3s ease; 
         }
+        
         .btn-teal:hover { 
           background: #0f766e; 
           transform: translateY(-2px); 
           box-shadow: 0 8px 15px rgba(13, 148, 136, 0.3); 
         }
+
+        /* --- STYLED BACK BUTTON --- */
+        .btn-outline-custom { 
+          background: white;
+          color: #0d9488; 
+          border: 2px solid #0d9488;
+          transition: all 0.2s ease;
+          font-weight: 600;
+          padding: 8px 20px;
+        }
+        
+        .btn-outline-custom:hover { 
+          background: #0d9488;
+          color: white;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);
+        }
+
+        .animate-fade-in { animation: fadeInUp 0.4s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
         .form-label { 
           font-weight: 600; 
           color: #475569; 
@@ -87,6 +110,7 @@ const CompressorMaintenanceForm = () => {
           text-transform: uppercase; 
           letter-spacing: 0.5px; 
         }
+        
         .method-badge { 
           background-color: #ccfbf1; 
           color: #0f766e; 
@@ -95,6 +119,7 @@ const CompressorMaintenanceForm = () => {
           font-size: 0.75rem; 
           font-weight: 700; 
         }
+        
         select option[value="Ok"] { color: #10b981; font-weight: bold; }
         select option[value="Not Ok"] { color: #ef4444; font-weight: bold; }
 
@@ -145,15 +170,23 @@ const CompressorMaintenanceForm = () => {
         }
       `}</style>
 
-      {/* Header Button */}
+      {/* --- TOP BACK BUTTON --- */}
+      <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
+        <button 
+          className="btn btn-outline-custom rounded-pill"
+          onClick={() => navigate('/Maintenance/Machine/weekly')}
+          style={{ fontSize: '0.85rem' }}
+        >
+          ← Back to Weekly Hub
+        </button>
+      </div>
+
+      {/* Header Panel */}
       <div className="teal-card mx-auto mb-4 p-3 p-md-4 d-flex justify-content-between align-items-center" style={{ maxWidth: '1200px', borderTop: '6px solid #14b8a6' }}>
         <div>
           <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#115e59' }}>COMPRESSOR MAINTENANCE</h3>
           <span className="badge rounded-pill" style={{ backgroundColor: '#ccfbf1', color: '#0f766e', padding: '8px 15px' }}>Form: AOT-F-PM-01 | Weekly</span>
         </div>
-        <button onClick={() => navigate(-1)} className="btn btn-outline-secondary rounded-circle p-2 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-          <i className="bi bi-arrow-left"></i>
-        </button>
       </div>
 
       <div className="teal-card mx-auto p-3 p-md-4" style={{ maxWidth: '1200px' }}>

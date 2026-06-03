@@ -68,6 +68,7 @@ const SpotWeldingMaintenanceForm = () => {
           border-radius: 20px; 
           box-shadow: 0 4px 20px rgba(139, 92, 246, 0.08); 
         }
+        
         .btn-theme { 
           background: #6366f1; 
           color: white; 
@@ -76,11 +77,33 @@ const SpotWeldingMaintenanceForm = () => {
           padding: 12px 30px; 
           transition: all 0.3s ease; 
         }
+        
         .btn-theme:hover { 
           background: #4f46e5; 
           transform: translateY(-2px); 
           box-shadow: 0 8px 15px rgba(99, 102, 241, 0.3); 
         }
+
+        /* --- STYLED BACK BUTTON --- */
+        .btn-outline-custom { 
+          background: white;
+          color: #6366f1; 
+          border: 2px solid #6366f1;
+          transition: all 0.2s ease;
+          font-weight: 600;
+          padding: 8px 20px;
+        }
+        
+        .btn-outline-custom:hover { 
+          background: #6366f1;
+          color: white;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+
+        .animate-fade-in { animation: fadeInUp 0.4s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
         .form-label { 
           font-weight: 600; 
           color: #475569; 
@@ -88,6 +111,7 @@ const SpotWeldingMaintenanceForm = () => {
           text-transform: uppercase; 
           letter-spacing: 0.5px; 
         }
+        
         .method-badge { 
           background-color: #e0e7ff; 
           color: #4f46e5; 
@@ -96,6 +120,7 @@ const SpotWeldingMaintenanceForm = () => {
           font-size: 0.75rem; 
           font-weight: 700; 
         }
+        
         select option[value="Ok"] { color: #10b981; font-weight: bold; }
         select option[value="Not Ok"] { color: #ef4444; font-weight: bold; }
 
@@ -146,15 +171,23 @@ const SpotWeldingMaintenanceForm = () => {
         }
       `}</style>
 
-      {/* Header Button */}
+      {/* --- TOP BACK BUTTON ADDED HERE --- */}
+      <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
+        <button 
+          className="btn btn-outline-custom rounded-pill"
+          onClick={() => navigate('/Maintenance/Machine/weekly')}
+          style={{ fontSize: '0.85rem' }}
+        >
+          ← Back to Weekly Hub
+        </button>
+      </div>
+
+      {/* Header Panel */}
       <div className="theme-card mx-auto mb-4 p-3 p-md-4 d-flex justify-content-between align-items-center" style={{ maxWidth: '1200px', borderTop: '6px solid #6366f1' }}>
         <div>
           <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#1e293b' }}>SPOT WELDING MAINTENANCE</h3>
           <span className="badge rounded-pill" style={{ backgroundColor: '#e0e7ff', color: '#4f46e5', padding: '8px 15px' }}>Form: AOT-F-PM-01 | Weekly</span>
         </div>
-        <button onClick={() => navigate(-1)} className="btn btn-outline-secondary rounded-circle p-2 d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-          <i className="bi bi-arrow-left"></i>
-        </button>
       </div>
 
       <div className="theme-card mx-auto p-3 p-md-4" style={{ maxWidth: '1200px' }}>
