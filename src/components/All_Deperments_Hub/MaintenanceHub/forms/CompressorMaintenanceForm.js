@@ -129,20 +129,8 @@ const CompressorMaintenanceForm = () => {
           body { background-color: #fff !important; }
         }
         
-<<<<<<< Updated upstream
         .btn-teal { 
           background: #0d9488; 
-=======
-        .white-card {
-          background: white;
-          border-radius: 20px;
-          border: 1px solid #e9ecef;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        }
-        
-        .btn-primary-custom { 
-          background: #10b981;
->>>>>>> Stashed changes
           color: white; 
           border: none;
           transition: all 0.2s ease;
@@ -150,7 +138,6 @@ const CompressorMaintenanceForm = () => {
           padding: 10px 28px;
         }
         
-<<<<<<< Updated upstream
         .btn-teal:hover { 
           background: #0f766e; 
           transform: translateY(-2px); 
@@ -194,114 +181,6 @@ const CompressorMaintenanceForm = () => {
           font-weight: 700; 
         }
         
-=======
-        .btn-primary-custom:hover { 
-          background: #059669;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-        }
-        
-        .btn-outline-custom { 
-          background: white;
-          color: #10b981; 
-          border: 2px solid #10b981;
-          transition: all 0.2s ease;
-          font-weight: 600;
-          padding: 8px 20px;
-        }
-        
-        .btn-outline-custom:hover { 
-          background: #10b981;
-          color: white;
-          transform: translateY(-1px);
-        }
-        
-        .form-control, .form-select {
-          border: 1px solid #dee2e6;
-          border-radius: 8px;
-          padding: 8px 12px;
-          transition: all 0.2s ease;
-          font-size: 0.9rem;
-          background-color: #ffffff;
-        }
-        
-        .form-control:focus, .form-select:focus {
-          border-color: #10b981;
-          box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-          outline: none;
-        }
-        
-        .form-label {
-          font-weight: 600;
-          margin-bottom: 6px;
-          color: #495057;
-          font-size: 0.85rem;
-        }
-
-        .required-field::after { content: " *"; color: #10b981; }
-        
-        .collapse-header {
-          cursor: pointer;
-          transition: all 0.2s ease;
-          border: 1px solid #dee2e6;
-          border-radius: 12px;
-          background: white;
-          padding: 12px 20px !important;
-        }
-        
-        .collapse-header:hover {
-          border-color: #10b981;
-          background: #ecfdf5;
-        }
-        
-        .clean-table { border-radius: 12px; overflow: hidden; }
-        
-        .clean-table thead th {
-          background: #f8f9fa;
-          font-weight: 600;
-          font-size: 0.85rem;
-          color: #495057;
-          border-bottom: 2px solid #10b981;
-          padding: 12px;
-        }
-        
-        .clean-table tbody td {
-          padding: 12px;
-          vertical-align: middle;
-          border-bottom: 1px solid #f0f0f0;
-          color: #1f2937;
-          font-size: 0.85rem;
-        }
-        
-        .clean-table tbody tr:hover { background: #ecfdf5; }
-        
-        .section-header {
-          margin-bottom: 20px;
-          padding-bottom: 10px;
-          border-bottom: 2px solid #f0f0f0;
-        }
-        
-        .section-header h5 {
-          font-size: 1.1rem;
-          font-weight: 700;
-          color: #10b981;
-          margin: 0;
-        }
-        
-        .animate-fade-in { animation: fadeInUp 0.4s ease-out; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .badge-count {
-          background: #10b981;
-          color: white;
-          padding: 2px 8px;
-          border-radius: 12px;
-          font-size: 0.7rem;
-          margin-left: 8px;
-        }
-
-        /* Status Colors */
->>>>>>> Stashed changes
         select option[value="Ok"] { color: #10b981; font-weight: bold; }
         select option[value="Not Ok"] { color: #ef4444; font-weight: bold; }
         select option[value="Ng"] { color: #f59e0b; font-weight: bold; }
@@ -334,7 +213,6 @@ const CompressorMaintenanceForm = () => {
       `}</style>
 
       {/* --- TOP BACK BUTTON --- */}
-<<<<<<< Updated upstream
       <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
         <button 
           className="btn btn-outline-custom rounded-pill"
@@ -351,19 +229,6 @@ const CompressorMaintenanceForm = () => {
           <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#115e59' }}>COMPRESSOR MAINTENANCE</h3>
           <span className="badge rounded-pill" style={{ backgroundColor: '#ccfbf1', color: '#0f766e', padding: '8px 15px' }}>Form: AOT-F-PM-01 | Weekly</span>
         </div>
-=======
-      <div
-        className="mx-auto mb-3 no-print animate-fade-in px-2"
-        style={{ maxWidth: "1200px" }}
-      >
-        <button
-          className="btn btn-outline-custom rounded-pill"
-          onClick={() => navigate("/Maintenance/Machine/weekly")}
-          style={{ fontSize: "0.85rem" }}
-        >
-          ← Back to Weekly Reports
-        </button>
->>>>>>> Stashed changes
       </div>
 
       <div
