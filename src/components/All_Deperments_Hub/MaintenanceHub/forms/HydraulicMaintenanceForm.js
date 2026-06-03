@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-const CompressorMaintenanceForm = () => {
+const HydraulicMaintenanceForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -13,27 +13,75 @@ const CompressorMaintenanceForm = () => {
   const statusOptions = ["", "Ok", "Not Ok", "Ng", "N/A"];
 
   // --- FIXED HYDRAULIC CHECKLIST DATA WITH PRE-DEFINED CHECKING METHODS ---
- const initialChecklist = [
-
-    { id: 1, point: "Clean the machine by cloth", parameter: "Dust free", method: "Visual", before: '', after: '', remarks: '' },
-
-    { id: 2, point: "Check the oil level", parameter: "Should be proper", method: "By spanner", before: '', after: '', remarks: '' },
-
-    { id: 3, point: "Check the air filter", parameter: "Should be proper condition", method: "By spanner", before: '', after: '', remarks: '' },
-
-    { id: 4, point: "Check the air receiver", parameter: "Should be cleaned", method: "Visual", before: '', after: '', remarks: '' },
-
-    { id: 5, point: "Check any abnormal sound", parameter: "No abnormal sound", method: "Visual", before: '', after: '', remarks: '' },
-
-    { id: 6, point: "Check nut & bolt", parameter: "Should be tight", method: "By Spanner/ allen key", before: '', after: '', remarks: '' },
-
-    { id: 7, point: "Check loose wiring", parameter: "Should be tight", method: "By plier/ spanner", before: '', after: '', remarks: '' }
-
+  const initialChecklist = [
+    {
+      id: 1,
+      point: "Clean the machine by cloth",
+      parameter: "Dust Free",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 2,
+      point: "Check the DOL starter proper working",
+      parameter: "Proper Working",
+      method: "Manual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 3,
+      point: "Check oil leakage",
+      parameter: "No Leakage",
+      method: "By Spanner",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 4,
+      point: "Check hydraulic hose pipe condition",
+      parameter: "No Damage / Leakage",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 5,
+      point: "Check solenoid valve working condition",
+      parameter: "Proper Working",
+      method: "Manual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 6,
+      point: "Check the oil tank condition",
+      parameter: "No Contamination, It Should Be Clean",
+      method: "By Diesel Waste Cotton",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 7,
+      point: "Check the connection of solenoid valve coil",
+      parameter: "Should Be Proper Tight",
+      method: "Manual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
   ];
 
   // --- INITIAL STATES (For Resetting) ---
   const initialMetaData = {
-    machineName: location.state?.machineName || "Compressor",
+    machineName: location.state?.machineName || "Hydraulic Machine",
     date: new Date().toISOString().split("T")[0],
     machineNo: "",
     location: "",
@@ -129,10 +177,6 @@ const CompressorMaintenanceForm = () => {
           body { background-color: #fff !important; }
         }
         
-<<<<<<< Updated upstream
-        .btn-teal { 
-          background: #0d9488; 
-=======
         .white-card {
           background: white;
           border-radius: 20px;
@@ -142,7 +186,6 @@ const CompressorMaintenanceForm = () => {
         
         .btn-primary-custom { 
           background: #10b981;
->>>>>>> Stashed changes
           color: white; 
           border: none;
           transition: all 0.2s ease;
@@ -150,51 +193,6 @@ const CompressorMaintenanceForm = () => {
           padding: 10px 28px;
         }
         
-<<<<<<< Updated upstream
-        .btn-teal:hover { 
-          background: #0f766e; 
-          transform: translateY(-2px); 
-          box-shadow: 0 8px 15px rgba(13, 148, 136, 0.3); 
-        }
-
-        /* --- STYLED BACK BUTTON --- */
-        .btn-outline-custom { 
-          background: white;
-          color: #0d9488; 
-          border: 2px solid #0d9488;
-          transition: all 0.2s ease;
-          font-weight: 600;
-          padding: 8px 20px;
-        }
-        
-        .btn-outline-custom:hover { 
-          background: #0d9488;
-          color: white;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);
-        }
-
-        .animate-fade-in { animation: fadeInUp 0.4s ease-out; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        .form-label { 
-          font-weight: 600; 
-          color: #475569; 
-          font-size: 0.8rem; 
-          text-transform: uppercase; 
-          letter-spacing: 0.5px; 
-        }
-        
-        .method-badge { 
-          background-color: #ccfbf1; 
-          color: #0f766e; 
-          padding: 4px 10px; 
-          border-radius: 6px; 
-          font-size: 0.75rem; 
-          font-weight: 700; 
-        }
-        
-=======
         .btn-primary-custom:hover { 
           background: #059669;
           transform: translateY(-1px);
@@ -301,7 +299,6 @@ const CompressorMaintenanceForm = () => {
         }
 
         /* Status Colors */
->>>>>>> Stashed changes
         select option[value="Ok"] { color: #10b981; font-weight: bold; }
         select option[value="Not Ok"] { color: #ef4444; font-weight: bold; }
         select option[value="Ng"] { color: #f59e0b; font-weight: bold; }
@@ -334,24 +331,6 @@ const CompressorMaintenanceForm = () => {
       `}</style>
 
       {/* --- TOP BACK BUTTON --- */}
-<<<<<<< Updated upstream
-      <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
-        <button 
-          className="btn btn-outline-custom rounded-pill"
-          onClick={() => navigate('/Maintenance/Machine/weekly')}
-          style={{ fontSize: '0.85rem' }}
-        >
-          ← Back to Weekly Hub
-        </button>
-      </div>
-
-      {/* Header Panel */}
-      <div className="teal-card mx-auto mb-4 p-3 p-md-4 d-flex justify-content-between align-items-center" style={{ maxWidth: '1200px', borderTop: '6px solid #14b8a6' }}>
-        <div>
-          <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#115e59' }}>COMPRESSOR MAINTENANCE</h3>
-          <span className="badge rounded-pill" style={{ backgroundColor: '#ccfbf1', color: '#0f766e', padding: '8px 15px' }}>Form: AOT-F-PM-01 | Weekly</span>
-        </div>
-=======
       <div
         className="mx-auto mb-3 no-print animate-fade-in px-2"
         style={{ maxWidth: "1200px" }}
@@ -363,7 +342,6 @@ const CompressorMaintenanceForm = () => {
         >
           ← Back to Weekly Reports
         </button>
->>>>>>> Stashed changes
       </div>
 
       <div
@@ -383,7 +361,7 @@ const CompressorMaintenanceForm = () => {
             className="fw-bold mb-1 fs-5 fs-md-3"
             style={{ color: "#10b981" }}
           >
-            Compressor Preventive Maintenance
+            Hydraulic Preventive Maintenance
           </h3>
           <p className="text-muted mb-0" style={{ fontSize: "0.85rem" }}>
             Complete maintenance checklist and tracking system
@@ -743,4 +721,4 @@ const CompressorMaintenanceForm = () => {
   );
 };
 
-export default CompressorMaintenanceForm;
+export default HydraulicMaintenanceForm;

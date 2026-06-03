@@ -115,8 +115,8 @@ const machinesWithColors = [
 
 export const weeklyMachineSubReports = machinesWithColors.map((m) => {
     const idString = `weekly_pm_${m.name.replace(/\s+/g, "_").toLowerCase()}`;
-    const liveStatus = idString.includes('cnc') || idString.includes('vmc') || idString.includes('power_press');
-    
+    const liveStatus = idString.includes('cnc') || idString.includes('vmc') || idString.includes('power_press')||idString.includes('dip_molding') || idString.includes('servo_press')||idString.includes('hydraulic_mig')||idString.includes('pipe_cutter')||idString.includes('compressor')||idString.includes('spot_welding')||idString.includes('tig')||idString.includes('projection_weld')||idString.includes('vmm')||idString.includes('lathe')||idString.includes('drill_machine')||idString.includes('surface_grinder')||idString.includes('belt_grinder')||idString.includes('base_grinder')||idString.includes('tapping_machine')||idString.includes('compressor')||idString.includes('spot_welding')||idString.includes('tig')||idString.includes('projection_weld')||idString.includes('vmm')||idString.includes('lathe')||idString.includes('drill_machine')||idString.includes('surface_grinder')||idString.includes('belt_grinder')||idString.includes('base_grinder')||idString.includes('vibra'); // Only CNC, VMC, Power Press, Dip Molding and Servo Press are live
+    // const liveStatus = idString.includes('cnc') || idString.includes('vmc') || idString.includes('power_press')||idString.includes('dip_molding')|| idString.includes('servo_press')||idString.includes('hydraulic_mig');
     return {
         id: idString,
         title: `${m.name} Weekly Maint.`,
