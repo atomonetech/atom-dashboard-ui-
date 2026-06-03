@@ -174,17 +174,24 @@ const BinTrollingForm = () => {
     e.preventDefault();
     if (isAlreadyFilled) return;
 
+    const [day, monthNumber, year] = currentDate.split('.');
+    const backendDate = `${year}-${monthNumber}-${day}`;
+
     const completeData = {
+      date: backendDate,
+      week: currentWeek,
+      month: currentMonth,
       checkpoints: checkpointData,
+      cleaning_details: cleaningData,
+      maintenance_details: maintenanceData,
       cleaningDetails: cleaningData,
       maintenanceDetails: maintenanceData,
       currentWeek,
-      currentDate,
-      month: currentMonth
+      currentDate
     };
 
     try {
-      const response = await fetch('http://192.168.0.34:8000/api/save-bin-trolley/', {
+      const response = await fetch('http://192.168.0.34:8000/api/bin-trolley/save/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(completeData),

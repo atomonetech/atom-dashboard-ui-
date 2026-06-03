@@ -1,34 +1,60 @@
-import { useState, useEffect } from "react"; 
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClipboardList } from "lucide-react";
 import { CiCalendarDate } from "react-icons/ci";
 import { IoMdArrowBack, IoIosArrowDown } from "react-icons/io";
-import axios from "axios"; 
+import axios from "axios";
+
 
 const today = new Date();
-const formattedDate = `${String(today.getDate()).padStart(2,'0')}-${String(today.getMonth()+1).padStart(2,'0')}-${today.getFullYear()}`;
-const currentMonth = today.toLocaleString('default', { month: 'long' });
-const currentYear  = today.getFullYear();
+const formattedDate = `${String(today.getDate()).padStart(2, "0")}-${String(
+  today.getMonth() + 1,
+).padStart(2, "0")}-${today.getFullYear()}`;
+const currentMonth = today.toLocaleString("default", { month: "long" });
+const currentYear = today.getFullYear();
 
 // Backend API URL
 const API_SAVE = "http://192.168.0.34:8000/api/redbin-attendance/save/";
 
 // Default arrays (Agar localStorage me kuch nahi hoga to ye use honge)
 const DEFAULT_DESIGNATIONS = [
-  "Quality Engineer","Production Engineer","Operator","Supervisor",
-  "Store Incharge","CFT Member","Rework Operator","Quality Inspector",
+  "Quality Engineer",
+  "Production Engineer",
+  "Operator",
+  "Supervisor",
+  "Store Incharge",
+  "CFT Member",
+  "Rework Operator",
+  "Quality Inspector",
 ];
 
 const DEFAULT_NAMES = [
-  "Rahul Sharma","Priya Patel","Amit Verma","Sunita Yadav",
-  "Rajesh Kumar","Neha Singh","Vikram Joshi","Pooja Desai",
-  "Manoj Tiwari","Kavita Mehta",
+  "Rahul Sharma",
+  "Priya Patel",
+  "Amit Verma",
+  "Sunita Yadav",
+  "Rajesh Kumar",
+  "Neha Singh",
+  "Vikram Joshi",
+  "Pooja Desai",
+  "Manoj Tiwari",
+  "Kavita Mehta",
 ];
 
 const SelectWrapper = ({ children, color = "#f59e0b" }) => (
   <div style={{ position: "relative", width: "100%" }}>
     {children}
-    <IoIosArrowDown style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: color, fontSize: 16, pointerEvents: "none" }} />
+    <IoIosArrowDown
+      style={{
+        position: "absolute",
+        right: 10,
+        top: "50%",
+        transform: "translateY(-50%)",
+        color: color,
+        fontSize: 16,
+        pointerEvents: "none",
+      }}
+    />
   </div>
 );
 
@@ -37,12 +63,12 @@ export default function RedbinAttendance() {
 
   // 👇 STATE FOR DYNAMIC LISTS (localStorage se data uthana)
   const [namesList, setNamesList] = useState(() => {
-    const savedNames = localStorage.getItem('redbin_names');
+    const savedNames = localStorage.getItem("redbin_names");
     return savedNames ? JSON.parse(savedNames) : DEFAULT_NAMES;
   });
 
   const [designationsList, setDesignationsList] = useState(() => {
-    const savedDesig = localStorage.getItem('redbin_designations');
+    const savedDesig = localStorage.getItem("redbin_designations");
     return savedDesig ? JSON.parse(savedDesig) : DEFAULT_DESIGNATIONS;
   });
 
@@ -53,8 +79,8 @@ export default function RedbinAttendance() {
 
   // 👇 ERUDA INTEGRATION
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/eruda';
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/eruda";
     script.async = true;
     script.onload = () => {
       if (window.eruda) {
@@ -71,17 +97,20 @@ export default function RedbinAttendance() {
 
   // 👇 LISTS UPDATE HONE PAR LOCALSTORAGE ME SAVE KARNA
   useEffect(() => {
-    localStorage.setItem('redbin_names', JSON.stringify(namesList));
+    localStorage.setItem("redbin_names", JSON.stringify(namesList));
   }, [namesList]);
 
   useEffect(() => {
-    localStorage.setItem('redbin_designations', JSON.stringify(designationsList));
+    localStorage.setItem(
+      "redbin_designations",
+      JSON.stringify(designationsList),
+    );
   }, [designationsList]);
 
   // Helper function: Name aur Designation dono select ho gaye ho to row add kar do
   const checkAndAddRow = (name, desig) => {
     if (name && desig) {
-      setRows(p => [...p, { name, designation: desig, attendance: {} }]);
+      setRows((p) => [...p, { name, designation: desig, attendance: {} }]);
       setSelectedName("");
       setSelectedDesignation("");
     }
@@ -94,7 +123,7 @@ export default function RedbinAttendance() {
       if (newName && newName.trim() !== "") {
         const trimmed = newName.trim();
         if (!namesList.includes(trimmed)) {
-          setNamesList(prev => [...prev, trimmed]);
+          setNamesList((prev) => [...prev, trimmed]);
         }
         setSelectedName(trimmed);
         checkAndAddRow(trimmed, selectedDesignation);
@@ -114,7 +143,7 @@ export default function RedbinAttendance() {
       if (newDesig && newDesig.trim() !== "") {
         const trimmed = newDesig.trim();
         if (!designationsList.includes(trimmed)) {
-          setDesignationsList(prev => [...prev, trimmed]);
+          setDesignationsList((prev) => [...prev, trimmed]);
         }
         setSelectedDesignation(trimmed);
         checkAndAddRow(selectedName, trimmed);
@@ -128,25 +157,27 @@ export default function RedbinAttendance() {
   };
 
   const updateAttendance = (i, day, val) => {
-    setRows(p => p.map((r, idx) => {
-      if (idx !== i) return r;
-      return { ...r, attendance: { ...r.attendance, [day]: val } };
-    }));
+    setRows((p) =>
+      p.map((r, idx) => {
+        if (idx !== i) return r;
+        return { ...r, attendance: { ...r.attendance, [day]: val } };
+      }),
+    );
   };
 
-  const removeRow = (i) => setRows(p => p.filter((_, idx) => idx !== i));
+  const removeRow = (i) => setRows((p) => p.filter((_, idx) => idx !== i));
 
   const handleSave = async () => {
     const day = today.getDate();
     const isoDate = today.toISOString().split("T")[0];
 
-    const payload = rows.map(r => ({
+    const payload = rows.map((r) => ({
       date: isoDate,
       month: currentMonth,
       year: currentYear,
       employee_name: r.name,
       designation: r.designation,
-      status: r.attendance[day] || ""
+      status: r.attendance[day] || "",
     }));
 
     if (payload.length === 0) {
@@ -156,9 +187,9 @@ export default function RedbinAttendance() {
 
     try {
       const response = await axios.post(API_SAVE, payload);
-      
+
       if (response.status === 201 || response.status === 200) {
-        alert("Attendance data has been saved successfully!"); 
+        alert("Attendance data has been saved successfully!");
         setSaveMsg("✓ Saved to Database!");
         setRows([]);
         setSelectedName("");
@@ -166,7 +197,10 @@ export default function RedbinAttendance() {
         setTimeout(() => setSaveMsg(""), 2500);
       }
     } catch (error) {
-      console.error("Error saving attendance to database:", error.response?.data || error.message);
+      console.error(
+        "Error saving attendance to database:",
+        error.response?.data || error.message,
+      );
       alert("Error saving data. Please check backend connection.");
     }
   };
@@ -181,40 +215,64 @@ export default function RedbinAttendance() {
   };
 
   const lbl = {
-    fontSize: 11, fontWeight: 700, letterSpacing: "0.07em",
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.07em",
     color: "#000000",
-    textTransform: "uppercase", marginBottom: 6, display: "block",
-    fontFamily: "'DM Sans',sans-serif"
+    textTransform: "uppercase",
+    marginBottom: 6,
+    display: "block",
+    fontFamily: "'DM Sans',sans-serif",
   };
 
   const sel = (v) => ({
     width: "100%",
     padding: "11px 32px 11px 14px",
     border: `1.5px solid ${v ? "#f59e0b" : "#fde68a"}`,
-    borderRadius: 10, fontSize: 14, fontWeight: v ? 600 : 400,
+    borderRadius: 10,
+    fontSize: 14,
+    fontWeight: v ? 600 : 400,
     background: v ? "#fffbeb" : "#f8fafc",
     color: "#000000",
-    outline: "none", cursor: "pointer",
+    outline: "none",
+    cursor: "pointer",
     fontFamily: "'DM Sans',sans-serif",
     boxSizing: "border-box",
     transition: "border-color 0.2s",
     WebkitAppearance: "none",
-    appearance: "none"
+    appearance: "none",
   });
 
   const attSel = (val) => ({
-    width: 50, padding: "5px 4px",
-    border: `1.5px solid ${val === "P" ? "#f59e0b" : val === "A" ? "#fca5a5" : "#fde68a"}`,
-    borderRadius: 6, fontSize: 12, fontWeight: 700,
+    width: 50,
+    padding: "5px 4px",
+    border: `1.5px solid ${
+      val === "P" ? "#f59e0b" : val === "A" ? "#fca5a5" : "#fde68a"
+    }`,
+    borderRadius: 6,
+    fontSize: 12,
+    fontWeight: 700,
     background: val === "P" ? "#fffbeb" : val === "A" ? "#fee2e2" : "#fff",
     color: "#000000",
-    outline: "none", cursor: "pointer",
+    outline: "none",
+    cursor: "pointer",
     fontFamily: "'DM Sans',sans-serif",
-    WebkitAppearance: "none", appearance: "none"
+    WebkitAppearance: "none",
+    appearance: "none",
   });
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "'DM Sans',sans-serif", padding: "16px 10px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f8fafc",
+        fontFamily: "'DM Sans',sans-serif",
+        padding: "16px 10px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
 
@@ -278,22 +336,64 @@ export default function RedbinAttendance() {
       `}</style>
 
       {/* ── FILTER CARD ── */}
-      <div className="redbin-card" style={{ width: "100%", maxWidth: 1100, background: "#fff", borderRadius: 18, boxShadow: "0 4px 24px rgba(245,158,11,0.10)", border: "1.5px solid #fde68a", overflow: "hidden", marginBottom: 20 }}>
-
+      <div
+        className="redbin-card"
+        style={{
+          width: "100%",
+          maxWidth: 1100,
+          background: "#fff",
+          borderRadius: 18,
+          boxShadow: "0 4px 24px rgba(245,158,11,0.10)",
+          border: "1.5px solid #fde68a",
+          overflow: "hidden",
+          marginBottom: 20,
+        }}
+      >
         {/* Topbar */}
         <div className="redbin-topbar">
           <div className="redbin-topbar-left">
-            <div style={{ width: 38, height: 38, borderRadius: 10, background: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }} onClick={() => navigate(-1)}>
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                background: "#fef3c7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                flexShrink: 0,
+              }}
+              onClick={() => navigate(-1)}
+            >
               <IoMdArrowBack size={22} color="#f59e0b" />
             </div>
             <div>
               <span className="redbin-title">Red Bin Attendance Sheet</span>
-              <span className="redbin-subtitle">Form No: AOT/F/QC/05 &nbsp;·&nbsp; Resp: Quality Engineer</span>
+              <span className="redbin-subtitle">
+                Form No: AOT/F/QC/05 &nbsp;·&nbsp; Resp: Quality Engineer
+              </span>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "wrap",
+            }}
+          >
             <div className="redbin-date-badge">
-              <span style={{ fontWeight: 800, fontSize: 14, color: "#000000", letterSpacing: "0.5px" }}>{formattedDate}</span>
+              <span
+                style={{
+                  fontWeight: 800,
+                  fontSize: 14,
+                  color: "#000000",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                {formattedDate}
+              </span>
               <CiCalendarDate size={20} color="#92400e" />
             </div>
           </div>
@@ -304,26 +404,65 @@ export default function RedbinAttendance() {
           <div>
             <label style={lbl}>Name :-</label>
             <SelectWrapper>
-              <select value={selectedName} onChange={handleNameChange} style={sel(selectedName)}>
+              <select
+                value={selectedName}
+                onChange={handleNameChange}
+                style={sel(selectedName)}
+              >
                 <option value="">Select Name...</option>
-                {namesList.map(n => <option key={n} value={n}>{n}</option>)}
-                <option value="ADD_NEW" style={{ fontWeight: "bold", color: "#d97706" }}>+ Add New Name...</option>
+                {namesList.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+                <option
+                  value="ADD_NEW"
+                  style={{ fontWeight: "bold", color: "#d97706" }}
+                >
+                  + Add New Name...
+                </option>
               </select>
             </SelectWrapper>
           </div>
           <div>
             <label style={lbl}>Designation :-</label>
             <SelectWrapper>
-              <select value={selectedDesignation} onChange={handleDesignationChange} style={sel(selectedDesignation)}>
+              <select
+                value={selectedDesignation}
+                onChange={handleDesignationChange}
+                style={sel(selectedDesignation)}
+              >
                 <option value="">Select Designation...</option>
-                {designationsList.map(d => <option key={d} value={d}>{d}</option>)}
-                <option value="ADD_NEW" style={{ fontWeight: "bold", color: "#d97706" }}>+ Add New Designation...</option>
+                {designationsList.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+                <option
+                  value="ADD_NEW"
+                  style={{ fontWeight: "bold", color: "#d97706" }}
+                >
+                  + Add New Designation...
+                </option>
               </select>
             </SelectWrapper>
           </div>
           <div>
             <label style={lbl}>Month :-</label>
-            <div style={{ width: "100%", padding: "11px 14px", border: "1.5px solid #f59e0b", borderRadius: 10, fontSize: 14, fontWeight: 700, background: "#f8fafc", color: "#000000", fontFamily: "'DM Sans',sans-serif", boxSizing: "border-box" }}>
+            <div
+              style={{
+                width: "100%",
+                padding: "11px 14px",
+                border: "1.5px solid #f59e0b",
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 700,
+                background: "#f8fafc",
+                color: "#000000",
+                fontFamily: "'DM Sans',sans-serif",
+                boxSizing: "border-box",
+              }}
+            >
               {currentMonth} {currentYear}
             </div>
           </div>
@@ -331,32 +470,122 @@ export default function RedbinAttendance() {
 
         {rows.length === 0 && (
           <div style={{ padding: "0 14px 14px" }}>
-            <span style={{ fontSize: 12, color: "#000000", fontWeight: 600 }}>⚡ Select Name & Designation — row will be added automatically</span>
+            <span style={{ fontSize: 12, color: "#000000", fontWeight: 600 }}>
+              ⚡ Select Name & Designation — row will be added automatically
+            </span>
           </div>
         )}
       </div>
 
       {/* ── ATTENDANCE TABLE ── */}
       {rows.length > 0 && (
-        <div style={{ width: "100%", maxWidth: 1100, background: "#fff", borderRadius: 18, boxShadow: "0 6px 32px rgba(245,158,11,0.12)", border: "1.5px solid #fcd34d", overflow: "hidden" }}>
-          <div className="redbin-table-section" style={{ padding: "20px 24px" }}>
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 1100,
+            background: "#fff",
+            borderRadius: 18,
+            boxShadow: "0 6px 32px rgba(245,158,11,0.12)",
+            border: "1.5px solid #fcd34d",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            className="redbin-table-section"
+            style={{ padding: "20px 24px" }}
+          >
             <div style={{ marginBottom: 14 }}>
-              <span className="redbin-sheet-title" style={{ fontWeight: 800, fontSize: 14, color: "#000000", display: "flex", alignItems: "center", gap: 6 }}>
+              <span
+                className="redbin-sheet-title"
+                style={{
+                  fontWeight: 800,
+                  fontSize: 14,
+                  color: "#000000",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
                 <ClipboardList size={16} color="#78350f" />
                 Attendance Sheet — {currentMonth} {currentYear}
               </span>
             </div>
             <div className="redbin-table-wrap">
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: 11,
+                }}
+              >
                 <thead>
                   <tr style={{ background: "#92400e" }}>
-                    <th style={{ padding: "10px 8px", color: "#fff", fontWeight: 700, fontSize: 11, textAlign: "center", borderRight: "1px solid rgba(255,255,255,0.2)", minWidth: 36 }}>SR.</th>
-                    <th style={{ padding: "10px 8px", color: "#fff", fontWeight: 700, fontSize: 11, textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", minWidth: 130 }}>NAME</th>
-                    <th style={{ padding: "10px 8px", color: "#fff", fontWeight: 700, fontSize: 11, textAlign: "left", borderRight: "1px solid rgba(255,255,255,0.2)", minWidth: 120 }}>DESIGNATION</th>
-                    <th style={{ padding: "8px 10px", color: "#fff", fontWeight: 700, fontSize: 11, textAlign: "center", borderRight: "1px solid rgba(255,255,255,0.15)", minWidth: 50, background: "#b45309" }}>
-                      {today.getDate()} {currentMonth.slice(0,3)}
+                    <th
+                      style={{
+                        padding: "10px 8px",
+                        color: "#fff",
+                        fontWeight: 700,
+                        fontSize: 11,
+                        textAlign: "center",
+                        borderRight: "1px solid rgba(255,255,255,0.2)",
+                        minWidth: 36,
+                      }}
+                    >
+                      SR.
                     </th>
-                    <th style={{ padding: "10px 4px", color: "#fff", fontWeight: 700, fontSize: 10, textAlign: "center", background: "#7f1d1d", minWidth: 28 }}>–</th>
+                    <th
+                      style={{
+                        padding: "10px 8px",
+                        color: "#fff",
+                        fontWeight: 700,
+                        fontSize: 11,
+                        textAlign: "left",
+                        borderRight: "1px solid rgba(255,255,255,0.2)",
+                        minWidth: 130,
+                      }}
+                    >
+                      NAME
+                    </th>
+                    <th
+                      style={{
+                        padding: "10px 8px",
+                        color: "#fff",
+                        fontWeight: 700,
+                        fontSize: 11,
+                        textAlign: "left",
+                        borderRight: "1px solid rgba(255,255,255,0.2)",
+                        minWidth: 120,
+                      }}
+                    >
+                      DESIGNATION
+                    </th>
+                    <th
+                      style={{
+                        padding: "8px 10px",
+                        color: "#fff",
+                        fontWeight: 700,
+                        fontSize: 11,
+                        textAlign: "center",
+                        borderRight: "1px solid rgba(255,255,255,0.15)",
+                        minWidth: 50,
+                        background: "#b45309",
+                      }}
+                    >
+                      {today.getDate()} {currentMonth.slice(0, 3)}
+                    </th>
+                    <th
+                      style={{
+                        padding: "10px 4px",
+                        color: "#fff",
+                        fontWeight: 700,
+                        fontSize: 10,
+                        textAlign: "center",
+                        background: "#7f1d1d",
+                        minWidth: 28,
+                      }}
+                    >
+                      –
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -364,21 +593,106 @@ export default function RedbinAttendance() {
                     const day = today.getDate();
                     const val = row.attendance[day] || "";
                     return (
-                      <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#fffbeb" }}>
-                        <td style={{ padding: "8px 4px", borderBottom: "1px solid #fef3c7", borderRight: "1px solid #fef3c7", textAlign: "center", fontWeight: 800, color: "#000000", fontSize: 12 }}>{i+1}</td>
-                        <td style={{ padding: "8px 10px", borderBottom: "1px solid #fef3c7", borderRight: "1px solid #fef3c7", fontWeight: 700, color: "#000000", fontSize: 12, whiteSpace: "nowrap" }}>{row.name}</td>
-                        <td style={{ padding: "8px 10px", borderBottom: "1px solid #fef3c7", borderRight: "1px solid #fef3c7", fontWeight: 600, color: "#000000", fontSize: 11, whiteSpace: "nowrap" }}>{row.designation}</td>
-                        <td style={{ padding: "4px 8px", borderBottom: "1px solid #fef3c7", borderRight: "1px solid #fef3c7", textAlign: "center" }}>
-                          <SelectWrapper color={val === "P" ? "#92400e" : val === "A" ? "#991b1b" : "#9ca3af"}>
-                            <select value={val} onChange={e => updateAttendance(i, day, e.target.value)} style={attSel(val)}>
+                      <tr
+                        key={i}
+                        style={{ background: i % 2 === 0 ? "#fff" : "#fffbeb" }}
+                      >
+                        <td
+                          style={{
+                            padding: "8px 4px",
+                            borderBottom: "1px solid #fef3c7",
+                            borderRight: "1px solid #fef3c7",
+                            textAlign: "center",
+                            fontWeight: 800,
+                            color: "#000000",
+                            fontSize: 12,
+                          }}
+                        >
+                          {i + 1}
+                        </td>
+                        <td
+                          style={{
+                            padding: "8px 10px",
+                            borderBottom: "1px solid #fef3c7",
+                            borderRight: "1px solid #fef3c7",
+                            fontWeight: 700,
+                            color: "#000000",
+                            fontSize: 12,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {row.name}
+                        </td>
+                        <td
+                          style={{
+                            padding: "8px 10px",
+                            borderBottom: "1px solid #fef3c7",
+                            borderRight: "1px solid #fef3c7",
+                            fontWeight: 600,
+                            color: "#000000",
+                            fontSize: 11,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {row.designation}
+                        </td>
+                        <td
+                          style={{
+                            padding: "4px 8px",
+                            borderBottom: "1px solid #fef3c7",
+                            borderRight: "1px solid #fef3c7",
+                            textAlign: "center",
+                          }}
+                        >
+                          <SelectWrapper
+                            color={
+                              val === "P"
+                                ? "#92400e"
+                                : val === "A"
+                                ? "#991b1b"
+                                : "#9ca3af"
+                            }
+                          >
+                            <select
+                              value={val}
+                              onChange={(e) =>
+                                updateAttendance(i, day, e.target.value)
+                              }
+                              style={attSel(val)}
+                            >
                               <option value="">—</option>
                               <option value="P">P</option>
                               <option value="A">A</option>
                             </select>
                           </SelectWrapper>
                         </td>
-                        <td style={{ padding: "4px", borderBottom: "1px solid #fef3c7", textAlign: "center" }}>
-                          <button onClick={() => removeRow(i)} style={{ width: 24, height: 24, borderRadius: 6, border: "1px solid #fecaca", background: "#fff", color: "#dc2626", cursor: "pointer", fontWeight: 700, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}>✕</button>
+                        <td
+                          style={{
+                            padding: "4px",
+                            borderBottom: "1px solid #fef3c7",
+                            textAlign: "center",
+                          }}
+                        >
+                          <button
+                            onClick={() => removeRow(i)}
+                            style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: 6,
+                              border: "1px solid #fecaca",
+                              background: "#fff",
+                              color: "#dc2626",
+                              cursor: "pointer",
+                              fontWeight: 700,
+                              fontSize: 11,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              margin: "0 auto",
+                            }}
+                          >
+                            ✕
+                          </button>
                         </td>
                       </tr>
                     );
@@ -388,14 +702,65 @@ export default function RedbinAttendance() {
             </div>
 
             {/* Bottom Save & Reset */}
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
-              {saveMsg && <span className="rb-save-toast" style={{ fontSize: 12, fontWeight: 700, color: "#92400e", background: "#fef3c7", border: "1px solid #fcd34d", borderRadius: 8, padding: "5px 12px", whiteSpace: "nowrap" }}>{saveMsg}</span>}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 10,
+                flexWrap: "wrap",
+                alignItems: "center",
+                marginTop: 8,
+              }}
+            >
+              {saveMsg && (
+                <span
+                  className="rb-save-toast"
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "#92400e",
+                    background: "#fef3c7",
+                    border: "1px solid #fcd34d",
+                    borderRadius: 8,
+                    padding: "5px 12px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {saveMsg}
+                </span>
+              )}
               <button className="rb-reset-btn" onClick={handleReset}>
-                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582M20 20v-5h-.581M5.635 15A8 8 0 1118.364 9"/></svg>
+                <svg
+                  width="13"
+                  height="13"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 4v5h.582M20 20v-5h-.581M5.635 15A8 8 0 1118.364 9"
+                  />
+                </svg>
                 Reset
               </button>
               <button className="rb-save-btn" onClick={handleSave}>
-                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17 3H7a2 2 0 00-2 2v16l7-3 7 3V5a2 2 0 00-2-2z"/></svg>
+                <svg
+                  width="13"
+                  height="13"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M17 3H7a2 2 0 00-2 2v16l7-3 7 3V5a2 2 0 00-2-2z"
+                  />
+                </svg>
                 Save
               </button>
             </div>

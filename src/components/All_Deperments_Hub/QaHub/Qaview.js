@@ -2,17 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
 const FORM_CONFIG = {
-    'incoming-material-view':  { label: 'Incoming Material Inspection',  color: '#3b82f6', bg: '#eff6ff', icon: 'bi-box-seam',           formNo: 'AOT/F/QA/01' },
-    'redbin-view':             { label: 'Red Bin Analysis - NC Reg.',    color: '#ef4444', bg: '#fef2f2', icon: 'bi-trash3',             formNo: 'AOT/F/QC/02' },
-    'scrap-note-view':         { label: 'Scrap Note',                    color: '#ef4444', bg: '#fef2f2', icon: 'bi-file-earmark-x',     formNo: 'AOT/F/QC/04' },
-    'redbin-attendance-view':  { label: 'Red Bin Attendance Sheet',      color: '#f59e0b', bg: '#fef3c7', icon: 'bi-person-x',           formNo: 'AOT/F/QC/05' },
-    'pokayoke-view':           { label: 'Daily Poka Yokes Check',        color: '#10b981', bg: '#d1fae5', icon: 'bi-shield-check',       formNo: 'AOT/F/QC/07A' },
-    'inspection-view':         { label: 'Set up & Patrol Insp. (FPIR)',  color: '#06b6d4', bg: '#cffafe', icon: 'bi-clipboard-check',    formNo: 'AOT/F/QA/15' },
-    'rework-view':             { label: 'Rework / Repair Report',        color: '#f59e0b', bg: '#fef3c7', icon: 'bi-tools',              formNo: 'AOT/F/QA/20' },
-    'sample-inspection-view':  { label: 'Sample Inspection Report',      color: '#3b82f6', bg: '#eff6ff', icon: 'bi-search',             formNo: 'AOT/F/QA/21' },
-    'deviation-view':          { label: 'Deviation Approval Form',       color: '#8b5cf6', bg: '#ede9fe', icon: 'bi-file-earmark-check', formNo: 'AOT/F/PROD/04' },
-    'grn-view':                { label: 'Goods Receipt Note (GRN)',      color: '#06b6d4', bg: '#cffafe', icon: 'bi-receipt',            formNo: 'Not Reqd.' },
-    'pdi-view':                { label: 'Pre Dispatch Insp. (PDIR)',     color: '#10b981', bg: '#d1fae5', icon: 'bi-truck',              formNo: 'AOT/F/QA/40' },
+    'incoming-material-view':  { label: 'Incoming Material Inspection',  color: '#3b82f6', bg: '#eff6ff', icon: 'bi-box-seam',            formNo: 'AOT/F/QA/01' },
+    'redbin-view':             { label: 'Red Bin Analysis - NC Reg.',    color: '#ef4444', bg: '#fef2f2', icon: 'bi-trash3',              formNo: 'AOT/F/QC/02' },
+    'scrap-note-view':         { label: 'Scrap Note',                    color: '#ef4444', bg: '#fef2f2', icon: 'bi-file-earmark-x',      formNo: 'AOT/F/QC/04' },
+    'redbin-attendance-view':  { label: 'Red Bin Attendance Sheet',      color: '#f59e0b', bg: '#fef3c7', icon: 'bi-person-x',            formNo: 'AOT/F/QC/05' },
+    'pokayoke-view':           { label: 'Daily Poka Yokes Check',        color: '#10b981', bg: '#d1fae5', icon: 'bi-shield-check',        formNo: 'AOT/F/QC/07A' },
+    'inspection-view':         { label: 'Set up & Patrol Insp. (FPIR)',  color: '#06b6d4', bg: '#cffafe', icon: 'bi-clipboard-check',     formNo: 'AOT/F/QA/15' },
+    'rework-view':             { label: 'Rework / Repair Report',        color: '#f59e0b', bg: '#fef3c7', icon: 'bi-tools',               formNo: 'AOT/F/QA/20' },
+    'sample-inspection-view':  { label: 'Sample Inspection Report',      color: '#3b82f6', bg: '#eff6ff', icon: 'bi-search',              formNo: 'AOT/F/QA/21' },
+    'deviation-view':          { label: 'Deviation Approval Form',       color: '#8b5cf6', bg: '#ede9fe', icon: 'bi-file-earmark-check',  formNo: 'AOT/F/PROD/04' },
+    'grn-view':                { label: 'Goods Receipt Note (GRN)',      color: '#06b6d4', bg: '#cffafe', icon: 'bi-receipt',             formNo: 'Not Reqd.' },
+    'pdi-view':                { label: 'Pre Dispatch Insp. (PDIR)',     color: '#10b981', bg: '#d1fae5', icon: 'bi-truck',               formNo: 'AOT/F/QA/40' },
 };
 
 const Qaview = () => {
@@ -23,16 +23,68 @@ const Qaview = () => {
     const [loading, setLoading]     = useState(true);
     const [error, setError]         = useState(null);
 
+    // 👇 1. FILTER STATES ADD KIYE
+    const [dateFilter, setDateFilter] = useState("today"); // Default Aaj Ka Data
+    const [specificDate, setSpecificDate] = useState("");
+
     const config = FORM_CONFIG[formKey] || {
         label: formKey, color: '#3b82f6', bg: '#eff6ff', icon: 'bi-file-earmark', formNo: ''
     };
 
     const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
 
+    // 👇 2. FETCH LOGIC MEIN PARAMS ADD KIYE
     useEffect(() => {
+        // Indian Time Format
+        const currentDate = new Date();
+        const formatDate = (date) => {
+            const offset = date.getTimezoneOffset() * 60000;
+            return new Date(date - offset).toISOString().split("T")[0];
+        };
+
+        let start_date = "";
+        let end_date = formatDate(currentDate);
+
+        if (dateFilter === "all") {
+            start_date = "all";
+            end_date = "all";
+        } else if (dateFilter === "today") {
+            start_date = formatDate(currentDate);
+        } else if (dateFilter === "yesterday") {
+            const pastDate = new Date();
+            pastDate.setDate(currentDate.getDate() - 1);
+            start_date = formatDate(pastDate);
+            end_date = start_date; // End bhi wahi
+        } else if (dateFilter === "last_2_days") {
+            const pastDate = new Date();
+            pastDate.setDate(currentDate.getDate() - 2);
+            start_date = formatDate(pastDate);
+        } else if (dateFilter === "last_15_days") {
+            const pastDate = new Date();
+            pastDate.setDate(currentDate.getDate() - 15);
+            start_date = formatDate(pastDate);
+        } else if (dateFilter === "last_1_month") {
+            const pastDate = new Date();
+            pastDate.setMonth(currentDate.getMonth() - 1);
+            start_date = formatDate(pastDate);
+        } else if (dateFilter === "specific_date") {
+            if (!specificDate) {
+                // Agar date select nahi ki toh fetch mat karo
+                setRows([]);
+                setLoading(false);
+                return;
+            }
+            start_date = specificDate;
+            end_date = specificDate;
+        }
+
         setLoading(true);
         setError(null);
-        fetch(`http://192.168.0.34:8000/api/qa-data/${formKey}/`)
+
+        // API Call with Query Parameters
+        const queryString = new URLSearchParams({ start_date, end_date }).toString();
+        
+        fetch(`http://192.168.0.34:8000/api/qa-data/${formKey}/?${queryString}`)
             .then(res => {
                 if (!res.ok) throw new Error('Server error');
                 return res.json();
@@ -45,7 +97,9 @@ const Qaview = () => {
                 setError('Failed to load data. Please check the backend connection.');
                 setLoading(false);
             });
-    }, [formKey]);
+            
+    // useEffect is dependent on dateFilter and specificDate too!
+    }, [formKey, dateFilter, specificDate]); 
 
     // CSV Export
     const handleExport = () => {
@@ -86,7 +140,14 @@ const Qaview = () => {
                 .vp-icon-box { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
                 .vp-form-name { font-weight: 800; font-size: 1rem; color: #0f172a; }
                 .vp-form-no { font-size: 0.73rem; color: #94a3b8; font-weight: 600; }
+                
                 .vp-nav-right { display: flex; align-items: center; gap: 10px; }
+                
+                /* 👇 3. NAYI CSS FILTER KE LIYE */
+                .filter-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; display: flex; align-items: center; padding: 4px 8px; gap: 6px; }
+                .filter-select { background: transparent; border: none; font-size: 0.8rem; font-weight: 700; color: #334155; outline: none; cursor: pointer; }
+                .filter-date-input { border: 1px solid #cbd5e1; border-radius: 6px; padding: 2px 6px; font-size: 0.75rem; font-weight: 700; color: #ef4444; outline: none; }
+                
                 .export-btn { background: #10b981; color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 6px; }
                 .export-btn:hover { background: #059669; }
                 .rec-badge { background: #f1f5f9; border-radius: 20px; padding: 6px 14px; font-size: 0.78rem; font-weight: 700; color: #475569; }
@@ -141,7 +202,36 @@ const Qaview = () => {
                         </div>
                     </div>
                 </div>
+                
                 <div className="vp-nav-right">
+                    {/* 👇 4. NAYA FILTER DROPDOWN UI */}
+                    <div className="filter-box">
+                        <i className="bi bi-calendar3 text-secondary"></i>
+                        <select 
+                            className="filter-select" 
+                            value={dateFilter} 
+                            onChange={(e) => setDateFilter(e.target.value)}
+                        >
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="last_2_days">Last 2 Days</option>
+                            <option value="last_15_days">Last 15 Days</option>
+                            <option value="last_1_month">Last 1 Month</option>
+                            <option value="specific_date">Specific Date</option>
+                            <option value="all">All Data</option>
+                        </select>
+                        
+                        {/* Specific Date Select karne ka option */}
+                        {dateFilter === "specific_date" && (
+                            <input 
+                                type="date" 
+                                className="filter-date-input"
+                                value={specificDate}
+                                onChange={(e) => setSpecificDate(e.target.value)}
+                            />
+                        )}
+                    </div>
+
                     <span className="rec-badge"><i className="bi bi-database me-1"></i>{rows.length} Records</span>
                     <button className="export-btn" onClick={handleExport}>
                         <i className="bi bi-file-earmark-excel"></i> Export CSV
@@ -164,7 +254,7 @@ const Qaview = () => {
                     <div className="excel-wrap">
                         <div className="empty-box">
                             <i className="bi bi-inbox"></i>
-                            <p>No records found</p>
+                            <p>No records found for the selected date range</p>
                         </div>
                     </div>
                 ) : (

@@ -90,6 +90,7 @@ const RedBinForm = () => {
   };
 
   return (
+    
     <div className="min-h-screen bg-slate-50 py-2 px-3 sm:py-3 sm:px-4 md:py-4 font-sans mt-2">
       <div className="w-full max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow-xl overflow-hidden border-t-4" style={{ borderColor: "#f04343" }}>

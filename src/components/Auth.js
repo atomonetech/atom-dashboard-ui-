@@ -18,7 +18,6 @@ export default function Auth({ onLogin }) {
     e.preventDefault();
     setIsLoading(true);
 
-    // Helper function taaki baar-baar same code na likhna pade
     const loginAsDemoAdmin = () => {
       localStorage.setItem('access_token', 'demo_admin_token');
       localStorage.setItem('user_role', 'Admin');
@@ -27,39 +26,33 @@ export default function Auth({ onLogin }) {
         console.log('🔐 Calling onLogin - Setting auth TRUE (Demo Mode)');
         onLogin();
       }
-      navigate('/dashboard'); // Admin ko direct dashboard ka full access
+      navigate('/dashboard'); 
     };
 
     try {
-      // 🚀 VERCEL / EXTERNAL NETWORK CHECK
-      // Agar site HTTPS (Vercel) par hai, toh HTTP local backend block ho jayega.
-      // Isliye bina wait kiye seedha Admin login karwa do.
       if (window.location.protocol === 'https:' && username === 'Admin' && password === 'admin') {
         console.log('Running on Vercel/HTTPS. Bypassing local backend...');
         loginAsDemoAdmin();
         setIsLoading(false);
-        return; // Code yahin se wapas chala jayega
+        return; 
       }
 
-      // 🔥 3 SECOND TIMEOUT LOGIC (Local network par delay se bachne ke liye)
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-      // 1. Asli Backend API (Local testing ke liye)
       const response = await fetch('http://192.168.0.34:8000/api/login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ username, password }),
-        signal: controller.signal // Timeout attach kiya
+        signal: controller.signal 
       });
 
-      clearTimeout(timeoutId); // Request successful hone par timeout hata do
+      clearTimeout(timeoutId); 
       const data = await response.json();
 
       if (response.ok) {
-        // Token aur Role save karo
         localStorage.setItem('access_token', data.access);
         localStorage.setItem('refresh_token', data.refresh);
         localStorage.setItem('user_role', data.role);
@@ -70,7 +63,9 @@ export default function Auth({ onLogin }) {
           onLogin();
         }
 
-        // 🔥 Role ke hisaab se Redirect
+        // 🔥 YAHAN MAINEY CHANGE KIYA HAI 🔥
+        // Sirf QA, Production, aur Maintenance apne hub mein jayenge.
+        // Plant_1, Plant_2, Supervisor, Manager sab direct Dashboard jayenge.
         if (data.role === 'QA_Hub') {
           navigate('/qa-hub');
         } else if (data.role === 'Production_Hub') {
@@ -78,21 +73,19 @@ export default function Auth({ onLogin }) {
         } else if (data.role === 'Maintenance_Hub') {
           navigate('/maintenance-hub');
         } else {
-          navigate('/dashboard'); // Default
+          // Plant users ko bhi pehle dashboard hi dikhana hai
+          navigate('/dashboard'); 
         }
         
       } else {
         alert('Authentication Failed: Please verify your credentials and try again.');
       }
     } catch (error) {
-      // 🚀 2. VERCEL DEMO BYPASS (Jab backend timeout ho ya unreachable ho)
       console.log('Backend unreachable or timed out. Triggering Vercel Demo Mode...');
 
-      // Agar username 'Admin' aur password 'admin' hai -> FULL ACCESS
       if (username === 'Admin' && password === 'admin') {
         loginAsDemoAdmin();
       } 
-      // Koi bhi aur random login kare -> BLOCK KARO AUR 404 PE BHEJO
       else {
         localStorage.setItem('access_token', 'demo_blocked_token');
         localStorage.setItem('user_role', 'Blocked');
@@ -106,7 +99,6 @@ export default function Auth({ onLogin }) {
     }
   };
 
-  // Feature items with icons
   const features = [
     {
       icon: Factory,
@@ -142,7 +134,6 @@ export default function Auth({ onLogin }) {
     }
   ];
 
-  // Auto cycle through features
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % features.length);

@@ -290,7 +290,6 @@
 // }
 
 // export default App;
-
 import './index.css';              
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -426,15 +425,30 @@ function App() {
     localStorage.removeItem('username');
   };
 
-  const ProtectedRoute = ({ children, allowedRole, adminOnly }) => {
+  // 🔥 UPDATED PROTECTED ROUTE LOGIC 🔥
+  const ProtectedRoute = ({ children, allowedRole, allowedRoles, adminOnly }) => {
     if (!isAuthenticated) return <Navigate to="/login" replace />;
     const userRole = localStorage.getItem('user_role');
+    
+    // Admin ko full access hai
     if (userRole === 'Admin') return children;
-    if (allowedRole && userRole !== allowedRole) return <AccessDeniedScreen />;
+
+    // Agar route sirf Admin/Manager/Supervisor ke liye hai, toh baaki sab block (Plant_1, Plant_2, QA, etc)
     if (adminOnly) {
-      const isWorker = userRole === 'QA_Hub' || userRole === 'Production_Hub' || userRole === 'Maintenance_Hub';
-      if (isWorker) return <AccessDeniedScreen />;
+      if (userRole !== 'Manager' && userRole !== 'Supervisor') {
+        return <AccessDeniedScreen />;
+      }
     }
+
+    // Naya logic: Multiple roles ke liye (Jaise sirf Plant_1_User ko allow karna)
+    if (allowedRoles && allowedRoles.length > 0) {
+      if (!allowedRoles.includes(userRole)) return <AccessDeniedScreen />;
+    } 
+    // Purana logic: Single role ke liye (QA, Production etc)
+    else if (allowedRole && userRole !== allowedRole) {
+      return <AccessDeniedScreen />;
+    }
+
     return children;
   };
 
@@ -445,13 +459,26 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Auth onLogin={handleLogin} />} />
           <Route path="/signup" element={<SignUpPage onLogin={handleLogin} />} />
+          
+          {/* Dashboards - Accessible to all logged-in users initially */}
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Notifications onLogout={handleLogout} /></ProtectedRoute>} />
           <Route path="/support" element={<ProtectedRoute><Support onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path="/machine-assignments" element={<ProtectedRoute><MachineAssignments onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path='/Production-history' element={<ProtectedRoute><ProductionHistory/></ProtectedRoute>}/>
+          
+          {/* Admin Only Routes */}
+          <Route path="/machine-assignments" element={<ProtectedRoute adminOnly={true}><MachineAssignments onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path='/Production-history' element={<ProtectedRoute adminOnly={true}><ProductionHistory/></ProtectedRoute>}/>
+          <Route path="/machines-status" element={<ProtectedRoute adminOnly={true}><MachinesStatus onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/assignment" element={<ProtectedRoute adminOnly={true}><AssignMachine onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/idle-case" element={<ProtectedRoute adminOnly={true}><IdleCase onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/idle-reports-list" element={<ProtectedRoute adminOnly={true}><IdleReportsList onLogout={handleLogout} /></ProtectedRoute>} />
 
+          {/* 🔥 SPECIFIC PLANT ROUTES (Maha Important Fix) 🔥 */}
+          <Route path="/plant1-live" element={<ProtectedRoute allowedRoles={['Plant_1_User']}><Plant1Live onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/plant2-live" element={<ProtectedRoute allowedRoles={['Plant_2_User']}><Plant2Live onLogout={handleLogout} /></ProtectedRoute>} />
+
+          {/* Department Hubs */}
           <Route path="/qa-hub/*" element={<ProtectedRoute allowedRole="QA_Hub"><QaRoutes /></ProtectedRoute>} />
           <Route path="/production-hub/*" element={<ProtectedRoute allowedRole="Production_Hub"><ProductionRoutes /></ProtectedRoute>} />
 
@@ -459,39 +486,31 @@ function App() {
           <Route path="/Maintenance/Machine" element={<ProtectedRoute allowedRole="Maintenance_Hub"><MaintenanceHub /></ProtectedRoute>} />
           <Route path="/Maintenance/Tool" element={<ProtectedRoute allowedRole="Maintenance_Hub"><MaintenanceHub /></ProtectedRoute>} />
 
-          {/* Views & Reports */}
-          <Route path="/maintenance-view/:formKey" element={<ProtectedRoute><MaintenanceView /></ProtectedRoute>} />
-          <Route path="/Maintenance/Machine/daily" element={<ProtectedRoute><MachineDailyReport/></ProtectedRoute>}/>
-          <Route path="/Maintenance/Machine/weekly" element={<ProtectedRoute><MachineWeeklyReports /></ProtectedRoute>} />
-          <Route path="/Maintenance/Tool/daily" element={<ProtectedRoute><ToolDailyReports /></ProtectedRoute>} />
-          <Route path="/Maintenance/Tool/weekly" element={<ProtectedRoute><ToolWeekly /></ProtectedRoute>} />
-          <Route path='/Machine-Card-Report' element={<ProtectedRoute><MachineHistoryCardprint/></ProtectedRoute>}/>
-          <Route path='/Machine-Breakdown-Report' element={<ProtectedRoute><MachineBreakdownSummaryPrint/></ProtectedRoute>}/>
-          <Route path="/Daily-PowerPress-Report" element={<ProtectedRoute><DailyPowerPressChecksheetprint /></ProtectedRoute>} />
+          {/* Maintenance Views & Reports */}
+          <Route path="/maintenance-view/:formKey" element={<ProtectedRoute allowedRole="Maintenance_Hub"><MaintenanceView /></ProtectedRoute>} />
+          <Route path="/Maintenance/Machine/daily" element={<ProtectedRoute allowedRole="Maintenance_Hub"><MachineDailyReport/></ProtectedRoute>}/>
+          <Route path="/Maintenance/Machine/weekly" element={<ProtectedRoute allowedRole="Maintenance_Hub"><MachineWeeklyReports /></ProtectedRoute>} />
+          <Route path="/Maintenance/Tool/daily" element={<ProtectedRoute allowedRole="Maintenance_Hub"><ToolDailyReports /></ProtectedRoute>} />
+          <Route path="/Maintenance/Tool/weekly" element={<ProtectedRoute allowedRole="Maintenance_Hub"><ToolWeekly /></ProtectedRoute>} />
+          <Route path='/Machine-Card-Report' element={<ProtectedRoute allowedRole="Maintenance_Hub"><MachineHistoryCardprint/></ProtectedRoute>}/>
+          <Route path='/Machine-Breakdown-Report' element={<ProtectedRoute allowedRole="Maintenance_Hub"><MachineBreakdownSummaryPrint/></ProtectedRoute>}/>
+          <Route path="/Daily-PowerPress-Report" element={<ProtectedRoute allowedRole="Maintenance_Hub"><DailyPowerPressChecksheetprint /></ProtectedRoute>} />
           
-          {/* Machine and Tool Routes - All Sub-paths handled here */}
-          <Route path="/Maintenance/Machine/*" element={<ProtectedRoute><MachineRoutes /></ProtectedRoute>} />
-          <Route path="/Maintenance/Tool/*" element={<ProtectedRoute><ToolRoutes /></ProtectedRoute>} />
+          <Route path="/Maintenance/Machine/*" element={<ProtectedRoute allowedRole="Maintenance_Hub"><MachineRoutes /></ProtectedRoute>} />
+          <Route path="/Maintenance/Tool/*" element={<ProtectedRoute allowedRole="Maintenance_Hub"><ToolRoutes /></ProtectedRoute>} />
           
-          <Route path="/machines-status" element={<ProtectedRoute adminOnly={true}><MachinesStatus onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path="/plant1-live" element={<ProtectedRoute adminOnly={true}><Plant1Live onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path="/plant2-live" element={<ProtectedRoute adminOnly={true}><Plant2Live onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path="/assignment" element={<ProtectedRoute adminOnly={true}><AssignMachine onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path="/idle-case" element={<ProtectedRoute adminOnly={true}><IdleCase onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path="/idle-reports-list" element={<ProtectedRoute adminOnly={true}><IdleReportsList onLogout={handleLogout} /></ProtectedRoute>} />
-          
-          <Route path="/qms" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} />
-          <Route path="/ReportsDashboard" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} /> 
-          <Route path="/qms-dashboard" element={<ProtectedRoute><QMSDashboard onLogout={handleLogout} /></ProtectedRoute>} />
-          <Route path="/qms/report/:reportId" element={<ProtectedRoute><ReportDetail /></ProtectedRoute>} />
-          <Route path="/qms/report/:reportId/edit" element={<ProtectedRoute><ReportEditor /></ProtectedRoute>} />
-          <Route path="/qms/patrol-inspection" element={<ProtectedRoute><PatrolInspection /></ProtectedRoute>} />
-          <Route path="/qms/raw-material-form" element={<ProtectedRoute><RawMaterialForm /></ProtectedRoute>} />
-          <Route path="/qms/pdi-report-form" element={<ProtectedRoute><PdiReportForm /></ProtectedRoute>} />
+          <Route path="/qms" element={<ProtectedRoute allowedRole="QA_Hub"><ReportsDashboard /></ProtectedRoute>} />
+          <Route path="/ReportsDashboard" element={<ProtectedRoute allowedRole="QA_Hub"><ReportsDashboard /></ProtectedRoute>} /> 
+          <Route path="/qms-dashboard" element={<ProtectedRoute allowedRole="QA_Hub"><QMSDashboard onLogout={handleLogout} /></ProtectedRoute>} />
+          <Route path="/qms/report/:reportId" element={<ProtectedRoute allowedRole="QA_Hub"><ReportDetail /></ProtectedRoute>} />
+          <Route path="/qms/report/:reportId/edit" element={<ProtectedRoute allowedRole="QA_Hub"><ReportEditor /></ProtectedRoute>} />
+          <Route path="/qms/patrol-inspection" element={<ProtectedRoute allowedRole="QA_Hub"><PatrolInspection /></ProtectedRoute>} />
+          <Route path="/qms/raw-material-form" element={<ProtectedRoute allowedRole="QA_Hub"><RawMaterialForm /></ProtectedRoute>} />
+          <Route path="/qms/pdi-report-form" element={<ProtectedRoute allowedRole="QA_Hub"><PdiReportForm /></ProtectedRoute>} />
  
-          <Route path="/hiring-departments" element={<ProtectedRoute><HrSafetyHub /></ProtectedRoute>} />
-          <Route path="/Induction-Training" element={<ProtectedRoute><InductionTrainingForm /></ProtectedRoute>} />
-          <Route path="/Training-History" element={<ProtectedRoute><TrainingHistoryCard /></ProtectedRoute>} />   
+          <Route path="/hiring-departments" element={<ProtectedRoute adminOnly={true}><HrSafetyHub /></ProtectedRoute>} />
+          <Route path="/Induction-Training" element={<ProtectedRoute adminOnly={true}><InductionTrainingForm /></ProtectedRoute>} />
+          <Route path="/Training-History" element={<ProtectedRoute adminOnly={true}><TrainingHistoryCard /></ProtectedRoute>} />   
           
           <Route path="*" element={
               <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#0f172a', color: 'white', fontSize: '24px', flexDirection: 'column', gap: '20px'}}>
