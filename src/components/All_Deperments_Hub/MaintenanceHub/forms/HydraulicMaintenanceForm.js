@@ -87,12 +87,15 @@ const HydraulicMaintenanceForm = () => {
     location: "",
     specification: "",
     maintenancePersonnel: "",
+    preparedBy: "",
+    checkedBy: "",
   };
 
   // --- COMPONENT STATE ---
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // --- HANDLERS ---
   const handleMetaChange = (e) =>
@@ -118,42 +121,104 @@ const HydraulicMaintenanceForm = () => {
     );
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const formatBackendError = (result) => {
+  if (!result) return 'Unable to save record.';
+  if (typeof result === 'string') return result;
+  if (result.message) return result.message;
+  if (result.error) return result.error;
+  if (result.errors) {
+    if (typeof result.errors === 'string') return result.errors;
+    return Object.entries(result.errors)
+      .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+      .join('\n');
+  }
+  return JSON.stringify(result);
+};
 
-    if (
-      !metaData.machineName ||
-      !metaData.machineNo ||
-      !metaData.location ||
-      !metaData.maintenancePersonnel
-    ) {
-      alert("Please fill all required fields in General Information.");
-      return;
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  // 1. Debugging line: Look at your browser console to see the exact keys inside metaData
+  console.log("Current Form MetaData State:", metaData);
+
+  // 2. Defensive Client-side validation
+  // This safely checks both camelCase and snake_case variations just in case your input fields use either.
+  const machineNo = metaData.machineNo || metaData.machine_no;
+  const location = metaData.location;
+  const maintenancePersonnel = metaData.maintenancePersonnel || metaData.maintenance_personnel;
+  const preparedBy = metaData.preparedBy || metaData.prepared_by;
+  const checkedBy = metaData.checkedBy || metaData.checked_by;
+
+  if (!machineNo || !location || !maintenancePersonnel || !preparedBy || !checkedBy) {
+    alert("Please fill all required fields in General Information and Signatures.");
+    return;
+  }
+
+  // Check if any checklist row is incomplete
+  const incompleteRow = tableData.findIndex(row => !row.before || !row.after);
+  if (incompleteRow !== -1) {
+    alert(`Please complete Before/After status for row ${incompleteRow + 1}`);
+    return;
+  }
+
+  // 3. Structuring the payload matching the Hydraulic machine JSON model
+  const payload = {
+    machine_name: metaData.machineName || metaData.machine_name || "HYDRAULIC MACHINE",
+    machine_no: machineNo,
+    date: metaData.date,
+    location: location,
+    specification: metaData.specification,
+    maintenance_personnel: maintenancePersonnel,
+    prepared_by: preparedBy,
+    checked_by: checkedBy, 
+    checkpoints: tableData.map((row, index) => ({
+      sr_no: index + 1,
+      check_point: row.point,
+      checking_parameter: row.parameter,
+      checking_method: row.method,
+      before_maintenance: row.before,
+      after_maintenance: row.after,
+      remarks: row.remarks || "", 
+    })),
+  };
+
+  try {
+    setIsSaving(true);
+
+    // 4. Requesting data save to the explicit Hydraulic API path
+    const response = await fetch('http://127.0.0.1:8000/api/hydraulic-pm/save/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json().catch(() => ({}));
+
+    // 5. Catching network failures or backend error payloads
+    if (!response.ok || result.success === false) {
+      console.error("Hydraulic machine PM save failed:", result);
+      throw new Error(formatBackendError(result) || `Request failed with status ${response.status}`);
     }
 
-    for (let i = 0; i < tableData.length; i++) {
-      if (!tableData[i].before || !tableData[i].after) {
-        alert(`Please complete Before/After status for row ${i + 1}`);
-        return;
-      }
-    }
-
-    const finalFormData = {
-      id: Date.now(),
-      metaData,
-      checklist: tableData,
-    };
-
-    console.log("Form Submitted:", finalFormData);
+    // 6. Triggering successful UI reset animation flows
     setShowSuccess(true);
 
     setTimeout(() => {
       setMetaData(initialMetaData);
       setTableData(initialChecklist);
       setShowSuccess(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 1500);
-  };
+  } catch (error) {
+    console.error("Failed to save hydraulic maintenance record:", error);
+    alert(`Failed to save hydraulic maintenance record: ${error.message}`);
+  } finally {
+    setIsSaving(false);
+  }
+};
 
   const handleReset = () => {
     if (window.confirm("Are you sure you want to reset all fields?")) {
@@ -652,7 +717,15 @@ const HydraulicMaintenanceForm = () => {
               {/* Prepared By */}
               <div className="fw-bold " style={{ color: "#495057" }}>
                 Prepared By
-                <input type="text" className="form-control mt-1" placeholder="Name" />
+                <input
+                  type="text"
+                  name="preparedBy"
+                  className="form-control mt-1"
+                  placeholder="Name"
+                  value={metaData.preparedBy}
+                  onChange={handleMetaChange}
+                  required
+                />
               </div>
 
               {/* Legends */}
@@ -680,7 +753,15 @@ const HydraulicMaintenanceForm = () => {
               {/* Checked By */}
               <div className="fw-bold" style={{ color: "#495057" }}>
                 Checked By
-                 <input type="text" className="form-control mt-1" placeholder="Name" />
+                 <input
+                  type="text"
+                  name="checkedBy"
+                  className="form-control mt-1"
+                  placeholder="Name"
+                  value={metaData.checkedBy}
+                  onChange={handleMetaChange}
+                  required
+                />
               </div>
             </div>
 
@@ -690,6 +771,7 @@ const HydraulicMaintenanceForm = () => {
                 type="button"
                 className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto"
                 onClick={handleReset}
+                disabled={isSaving}
                 style={{ fontWeight: "600", border: "1px solid #dee2e6" }}
               >
                 Reset Data
@@ -697,8 +779,9 @@ const HydraulicMaintenanceForm = () => {
               <button
                 type="submit"
                 className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
+                disabled={isSaving}
               >
-                <i className="bi bi-floppy me-2"></i> Save Record
+                <i className="bi bi-floppy me-2"></i> {isSaving ? "Saving..." : "Save Record"}
               </button>
             </div>
           </form>

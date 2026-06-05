@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { getApiUrl } from '../../../../config/api';
 
 const LatheMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const LatheMaintenanceForm = () => {
   ];
 
   const initialMetaData = {
-    machineName: 'LATHE MACHINE', 
+    machineName: '', // Editable
     date: new Date().toISOString().split('T')[0],
     machineNo: '',
     location: '',
@@ -39,7 +40,7 @@ const LatheMaintenanceForm = () => {
 
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist); 
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- HANDLERS ---
   const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
@@ -48,7 +49,7 @@ const LatheMaintenanceForm = () => {
     setTableData(tableData.map(row => row.id === id ? { ...row, [field]: value } : row));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validation
@@ -57,16 +58,44 @@ const LatheMaintenanceForm = () => {
       return;
     }
 
-    const finalFormData = { id: Date.now(), metaData, checklist: tableData };
-    console.log("Lathe Form Submitted:", finalFormData);
-    setShowSuccess(true);
-    
-    setTimeout(() => {
-      setMetaData(initialMetaData);
-      setTableData(initialChecklist); 
-      setShowSuccess(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1500);
+    setIsSubmitting(true);
+
+    const payload = {
+      machineName: metaData.machineName,
+      date: metaData.date,
+      machineNo: metaData.machineNo,
+      location: metaData.location,
+      specification: metaData.specification,
+      maintenancePersonnel: metaData.maintenancePersonnel,
+      preparedBy: metaData.preparedBy,
+      checkedBy: metaData.checkedBy,
+      tableData: tableData
+    };
+
+    try {
+      const response = await fetch(getApiUrl('/api/lathe-machine-maintenance/save/'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        alert("✨ Lathe record saved successfully!");
+        setMetaData(initialMetaData);
+        setTableData(initialChecklist); 
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        const errorData = await response.json();
+        alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
+      alert("An error occurred while saving the data.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -84,7 +113,7 @@ const LatheMaintenanceForm = () => {
         }
 
         .header-accent {
-          background: #8b5cf6; /* Purple from image_485d7f.png */
+          background: #8b5cf6; /* Purple */
           color: white;
           padding: 20px;
           border-radius: 20px 20px 0 0;
@@ -122,9 +151,14 @@ const LatheMaintenanceForm = () => {
           transition: 0.3s;
         }
 
-        .btn-save:hover {
+        .btn-save:hover:not(:disabled) {
           background: #7c3aed;
           box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-save:disabled {
+          background: #9ca3af;
+          cursor: not-allowed;
         }
 
         .method-badge {
@@ -135,10 +169,31 @@ const LatheMaintenanceForm = () => {
           font-weight: 600;
           font-size: 0.8rem;
         }
+
+        /* --- STYLED BACK BUTTON --- */
+        .btn-outline-custom { 
+          background: white;
+          color: #8b5cf6; 
+          border: 2px solid #8b5cf6;
+          transition: all 0.2s ease;
+          font-weight: 600;
+          padding: 8px 20px;
+        }
+        
+        .btn-outline-custom:hover { 
+          background: #8b5cf6;
+          color: white;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+        }
       `}</style>
 
       <div className="mx-auto mb-3 no-print" style={{ maxWidth: '1100px' }}>
-        <button className="btn btn-link text-decoration-none text-muted p-0" onClick={() => navigate(-1)}>
+        <button 
+          className="btn btn-outline-custom rounded-pill"
+          onClick={() => navigate(-1)}
+          style={{ fontSize: '0.85rem' }}
+        >
           ← Back to Dashboard
         </button>
       </div>
@@ -162,7 +217,7 @@ const LatheMaintenanceForm = () => {
             <div className="row g-3 mb-4">
               <div className="col-md-4">
                 <label className="form-label">Machine Name</label>
-                <input type="text" className="form-control bg-light fw-bold" value={metaData.machineName} readOnly />
+                <input type="text" className="form-control" name="machineName" value={metaData.machineName} onChange={handleMetaChange} placeholder="Enter Machine Name" required />
               </div>
               <div className="col-md-4">
                 <label className="form-label">Date</label>
@@ -249,20 +304,13 @@ const LatheMaintenanceForm = () => {
 
             {/* Action Buttons */}
             <div className="text-end mt-4">
-              <button type="submit" className="btn btn-primary btn-save text-white shadow-sm">
-                Save Lathe Record
+              <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-save text-white shadow-sm">
+                {isSubmitting ? 'Submitting...' : 'Save Lathe Record'}
               </button>
             </div>
           </form>
         </div>
       </div>
-
-      {/* Success Notification */}
-      {showSuccess && (
-        <div className="position-fixed bottom-0 end-0 m-4 bg-dark text-white px-4 py-3 rounded-4 shadow-lg animate__animated animate__fadeInUp">
-          ✨ Lathe record saved successfully!
-        </div>
-      )}
     </div>
   );
 };

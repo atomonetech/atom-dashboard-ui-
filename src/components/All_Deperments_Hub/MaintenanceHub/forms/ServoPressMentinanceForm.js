@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { getApiUrl } from '../../../../config/api'; // <--- API Import added
 
 const ServoPressMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -129,12 +130,15 @@ const ServoPressMaintenanceForm = () => {
     location: "",
     specification: "",
     maintenancePersonnel: "",
+    preparedBy: "", // <--- Added for state binding
+    checkedBy: "",  // <--- Added for state binding
   };
 
   // --- COMPONENT STATE ---
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // <--- Added for loading state
 
   // --- HANDLERS ---
   const handleMetaChange = (e) =>
@@ -160,16 +164,18 @@ const ServoPressMaintenanceForm = () => {
     );
   };
 
-  const handleSubmit = (e) => {
+  // <--- UPDATED: API Integration & Payload Fix Added --->
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (
       !metaData.machineName ||
       !metaData.machineNo ||
       !metaData.location ||
-      !metaData.maintenancePersonnel
+      !metaData.maintenancePersonnel ||
+      !metaData.preparedBy
     ) {
-      alert("Please fill all required fields in General Information.");
+      alert("Please fill all required fields including Prepared By.");
       return;
     }
 
@@ -180,21 +186,42 @@ const ServoPressMaintenanceForm = () => {
       }
     }
 
-    const finalFormData = {
-      id: Date.now(),
-      metaData,
-      checklist: tableData,
+    setIsSubmitting(true);
+
+    // FIXED PAYLOAD: Spread metaData to put date at the root level for backend
+    const payload = {
+      ...metaData,
+      tableData: tableData,
     };
 
-    console.log("Form Submitted:", finalFormData);
-    setShowSuccess(true);
+    try {
+      // Assuming your backend endpoint follows this pattern
+      const response = await fetch(getApiUrl('/api/servo-press-maintenance/save/'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
 
-    setTimeout(() => {
-      setMetaData(initialMetaData);
-      setTableData(initialChecklist);
-      setShowSuccess(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 1500);
+      if (response.ok) {
+        setShowSuccess(true);
+        setTimeout(() => {
+          setMetaData(initialMetaData);
+          setTableData(initialChecklist);
+          setShowSuccess(false);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }, 1500);
+      } else {
+        const errorData = await response.json();
+        alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
+      alert("An error occurred while saving the data.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
@@ -235,10 +262,17 @@ const ServoPressMaintenanceForm = () => {
           padding: 10px 28px;
         }
         
-        .btn-primary-custom:hover { 
+        .btn-primary-custom:hover:not(:disabled) { 
           background: #059669;
           transform: translateY(-1px);
           box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-primary-custom:disabled {
+          background: #94a3b8;
+          cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
         }
         
         .btn-outline-custom { 
@@ -619,71 +653,6 @@ const ServoPressMaintenanceForm = () => {
             )}
 
             {/* Legend Section */}
-            {/* <div
-              className="d-flex flex-wrap align-items-center gap-3 gap-md-4 p-3 rounded-3 mb-4"
-              style={{
-                backgroundColor: "#f8f9fa",
-                border: "1px dashed #dee2e6",
-              }}
-            >
-              <span
-                className="text-sm fw-bold w-100 w-md-auto"
-                style={{ color: "#495057" }}
-              >
-                Legends:
-              </span>
-              <div className="d-flex align-items-center gap-2">
-                <span
-                  className="w-4 h-4 rounded-circle"
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    backgroundColor: "#10b981",
-                    borderRadius: "50%",
-                  }}
-                ></span>
-                <span
-                  className="text-sm fw-medium"
-                  style={{ color: "#495057" }}
-                >
-                  Ok
-                </span>
-              </div>
-              <div className="d-flex align-items-center gap-2">
-                <span
-                  className="w-4 h-4 rounded-circle"
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    backgroundColor: "#ef4444",
-                    borderRadius: "50%",
-                  }}
-                ></span>
-                <span
-                  className="text-sm fw-medium"
-                  style={{ color: "#495057" }}
-                >
-                  Not Ok
-                </span>
-              </div>
-              <div className="d-flex align-items-center gap-2">
-                <span
-                  className="w-4 h-4 rounded-circle"
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    backgroundColor: "#f59e0b",
-                    borderRadius: "50%",
-                  }}
-                ></span>
-                <span
-                  className="text-sm fw-medium"
-                  style={{ color: "#495057" }}
-                >
-                  Ng (No Good)
-                </span>
-              </div>
-            </div> */}
             <div
               className="d-flex flex-wrap align-items-center justify-content-between p-3 rounded-3 mb-4"
               style={{
@@ -691,10 +660,18 @@ const ServoPressMaintenanceForm = () => {
                 border: "1px dashed #dee2e6",
               }}
             >
-              {/* Prepared By */}
+              {/* Prepared By - LINKED TO STATE */}
               <div className="fw-bold " style={{ color: "#495057" }}>
                 Prepared By
-                <input type="text" className="form-control mt-1" placeholder="Name" />
+                <input 
+                  type="text" 
+                  className="form-control mt-1" 
+                  placeholder="Name" 
+                  name="preparedBy"
+                  value={metaData.preparedBy}
+                  onChange={handleMetaChange}
+                  required
+                />
               </div>
 
               {/* Legends */}
@@ -719,10 +696,17 @@ const ServoPressMaintenanceForm = () => {
                 </div>
               </div>
 
-              {/* Checked By */}
+              {/* Checked By - LINKED TO STATE */}
               <div className="fw-bold" style={{ color: "#495057" }}>
                 Checked By
-                 <input type="text" className="form-control mt-1" placeholder="Name" />
+                 <input 
+                   type="text" 
+                   className="form-control mt-1" 
+                   placeholder="Name" 
+                   name="checkedBy"
+                   value={metaData.checkedBy}
+                   onChange={handleMetaChange}
+                 />
               </div>
             </div>
 
@@ -738,9 +722,10 @@ const ServoPressMaintenanceForm = () => {
               </button>
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
               >
-                <i className="bi bi-floppy me-2"></i> Save Record
+                <i className="bi bi-floppy me-2"></i> {isSubmitting ? "Saving..." : "Save Record"}
               </button>
             </div>
           </form>

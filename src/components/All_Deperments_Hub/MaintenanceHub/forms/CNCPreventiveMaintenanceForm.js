@@ -44,6 +44,7 @@ const CncPreventiveMaintenanceForm = () => {
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist); 
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- HANDLERS ---
   const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
@@ -60,7 +61,22 @@ const CncPreventiveMaintenanceForm = () => {
     setTableData(tableData.map(row => row.id === id ? { ...row, remarks: value } : row));
   };
 
-  const handleSubmit = (e) => {
+  const formatBackendError = (result) => {
+    if (!result) return 'Unable to save record.';
+    if (typeof result === 'string') return result;
+    if (result.message) return result.message;
+    if (result.detail) return result.detail;
+    if (result.error) return typeof result.error === 'string' ? result.error : JSON.stringify(result.error);
+    if (result.errors) {
+      if (typeof result.errors === 'string') return result.errors;
+      return Object.entries(result.errors)
+        .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : JSON.stringify(messages)}`)
+        .join('\n');
+    }
+    return JSON.stringify(result);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!metaData.machineName || !metaData.machineNo || !metaData.location || !metaData.maintenancePersonnel) {
@@ -75,21 +91,58 @@ const CncPreventiveMaintenanceForm = () => {
       }
     }
     
-    const finalFormData = {
-      id: Date.now(),
-      metaData,
-      checklist: tableData
+    setIsSubmitting(true);
+
+    const checklistPayload = tableData.map((row, index) => ({
+      sr_no: index + 1,
+      check_point: row.point,
+      checking_method: row.method,
+      before_maintenance: row.before,
+      after_maintenance: row.after,
+      remarks: row.remarks || ''
+    }));
+
+    const payload = {
+      machine_name: metaData.machineName,
+      machine_no: metaData.machineNo,
+      date: metaData.date,
+      location: metaData.location,
+      specification: metaData.specification,
+      maintenance_personnel: metaData.maintenancePersonnel,
+      checklist: checklistPayload
     };
     
-    console.log("Form Submitted:", finalFormData);
-    setShowSuccess(true);
-    
-    setTimeout(() => {
-      setMetaData(initialMetaData);
-      setTableData(initialChecklist); 
-      setShowSuccess(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1500);
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/cnc-maintenance/save/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || result.success === false) {
+        console.error("CNC maintenance save failed:", result);
+        throw new Error(formatBackendError(result) || `Request failed with status ${response.status}`);
+      }
+
+      setShowSuccess(true);
+      
+      setTimeout(() => {
+        setMetaData(initialMetaData);
+        setTableData(initialChecklist); 
+        setShowSuccess(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 1500);
+    } catch (error) {
+      console.error("Failed to save CNC maintenance record:", error);
+      alert(`Failed to save CNC maintenance record: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
@@ -441,12 +494,13 @@ const CncPreventiveMaintenanceForm = () => {
                 type="button" 
                 className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto" 
                 onClick={handleReset}
+                disabled={isSubmitting}
                 style={{ fontWeight: '600', border: '1px solid #dee2e6' }}
               >
                 Reset Data
               </button>
-              <button type="submit" className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto">
-                <i className="bi bi-floppy me-2"></i> Save Record
+              <button type="submit" className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto" disabled={isSubmitting}>
+                <i className="bi bi-floppy me-2"></i> {isSubmitting ? 'Saving...' : 'Save Record'}
               </button>
             </div>
 

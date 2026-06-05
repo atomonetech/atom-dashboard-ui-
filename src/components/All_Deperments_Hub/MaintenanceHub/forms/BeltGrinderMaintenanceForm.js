@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { getApiUrl } from '../../../../config/api'; // Adjust path if necessary
 
 const BeltGrinderMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -32,27 +33,50 @@ const BeltGrinderMaintenanceForm = () => {
 
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist); 
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
   const handleTableChange = (id, field, value) => {
     setTableData(tableData.map(row => row.id === id ? { ...row, [field]: value } : row));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!metaData.machineNo || !metaData.location || !metaData.preparedBy) {
       alert("Please fill required fields.");
       return;
     }
-    console.log("Belt Grinder Form Submitted:", { id: Date.now(), metaData, checklist: tableData });
-    setShowSuccess(true);
-    setTimeout(() => {
-      setMetaData(initialMetaData);
-      setTableData(initialChecklist); 
-      setShowSuccess(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1500);
+
+    setIsSubmitting(true);
+
+    const payload = {
+      ...metaData,
+      tableData: tableData
+    };
+
+    try {
+      // Make sure this endpoint exists in your backend router
+      const response = await fetch(getApiUrl('/api/belt-grinder-maintenance/save/'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        alert("Success! Belt Grinder record saved successfully!");
+        setMetaData(initialMetaData);
+        setTableData(initialChecklist); 
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        const errorData = await response.json();
+        alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
+      alert("An error occurred while saving the data.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -61,13 +85,11 @@ const BeltGrinderMaintenanceForm = () => {
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
         .white-card { background: white; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04); }
-        
-        /* Belt Grinder Theme Color: Blue */
         .header-accent { background: #3b82f6; color: white; padding: 20px; border-radius: 20px 20px 0 0; }
         .btn-save { background: #3b82f6; border: none; padding: 12px 40px; border-radius: 50px; font-weight: 600; transition: 0.3s; }
-        .btn-save:hover { background: #2563eb; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4); }
+        .btn-save:hover:not(:disabled) { background: #2563eb; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4); }
+        .btn-save:disabled { background: #94a3b8; cursor: not-allowed; }
         .method-badge { background: #eff6ff; color: #2563eb; padding: 4px 12px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; }
-        
         .form-label { font-weight: 700; font-size: 0.75rem; color: #64748b; text-transform: uppercase; }
         .ss-table thead th { background-color: #f1f5f9; color: #1e293b; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; border: 1px solid #e2e8f0; padding: 12px; }
         .ss-table td { border: 1px solid #e2e8f0; padding: 10px; font-size: 0.9rem; }
@@ -143,13 +165,13 @@ const BeltGrinderMaintenanceForm = () => {
             </div>
 
             <div className="text-end mt-4">
-              <button type="submit" className="btn btn-primary btn-save text-white shadow-sm">Save Record</button>
+              <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-save text-white shadow-sm">
+                {isSubmitting ? 'Saving...' : 'Save Record'}
+              </button>
             </div>
           </form>
         </div>
       </div>
-
-      {showSuccess && <div className="position-fixed bottom-0 end-0 m-4 bg-dark text-white px-4 py-3 rounded-4 shadow-lg">✨ Belt Grinder record saved successfully!</div>}
     </div>
   );
 };

@@ -1,3 +1,4 @@
+import { getApiUrl } from '../../../../config/api';
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -41,7 +42,7 @@ const VMMMaintenanceForm = () => {
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist); 
   const [showSuccess, setShowSuccess] = useState(false);
-
+  const [isSaving, setIsSaving] = useState(false);
   // --- HANDLERS ---
   const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
   
@@ -57,38 +58,82 @@ const VMMMaintenanceForm = () => {
     setTableData(tableData.map(row => row.id === id ? { ...row, remarks: value } : row));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Basic validation
-    if (!metaData.machineNo || !metaData.location || !metaData.maintenancePersonnel || !metaData.preparedBy) {
-      alert("Please fill all required fields in General Information and Signatures.");
+  const formatBackendError = (result) => {
+  if (!result) return 'Unable to save record.';
+  if (typeof result === 'string') return result;
+  if (result.message) return result.message;
+  if (result.error) return result.error;
+  if (result.errors) {
+    if (typeof result.errors === 'string') return result.errors;
+    return Object.entries(result.errors)
+      .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+      .join('\n');
+  }
+  return JSON.stringify(result);
+};
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!metaData.machineNo || !metaData.location || !metaData.maintenancePersonnel || !metaData.preparedBy) {
+    alert("Please fill all required fields in General Information and Signatures.");
+    return;
+  }
+
+  for (let i = 0; i < tableData.length; i++) {
+    if (!tableData[i].before || !tableData[i].after) {
+      alert(`Please complete Before/After status for row ${i + 1}`);
       return;
     }
+  }
 
-    for (let i = 0; i < tableData.length; i++) {
-      if (!tableData[i].before || !tableData[i].after) {
-        alert(`Please complete Before/After status for row ${i + 1}`);
-        return;
-      }
-    }
-    
-    const finalFormData = {
-      id: Date.now(),
-      metaData,
-      checklist: tableData
-    };
-    
-    console.log("Form Submitted:", finalFormData);
-    setShowSuccess(true);
-    
-    setTimeout(() => {
-      setMetaData(initialMetaData);
-      setTableData(initialChecklist); 
-      setShowSuccess(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1500);
+  const payload = {
+    machine_name: metaData.machineName,
+    machine_no: metaData.machineNo,
+    date: metaData.date,
+    location: metaData.location,
+    specification: metaData.specification,
+    maintenance_personnel: metaData.maintenancePersonnel,
+    prepared_by: metaData.preparedBy,
+    checked_by: metaData.checkedBy,
+    checkpoints: tableData.map((row, index) => ({
+      sr_no: index + 1,
+      check_point: row.point,
+      checking_parameter: row.parameter,
+      method: row.method,
+      before_maintenance: row.before,
+      after_maintenance: row.after,
+      remarks: row.remarks || "",
+    })),
   };
+
+  try {
+  setIsSaving(true);
+
+  const response = await fetch('http://127.0.0.1:8000/api/vertical-milling-checksheet/save/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || !data.success) {
+    console.error('Save failed:', data);
+    alert(data.error || 'Failed to save record');
+    return;
+  }
+
+  alert('Record saved successfully');
+} catch (error) {
+  console.error('API error:', error);
+  alert('Server connection failed');
+} finally {
+  setIsSaving(false);
+} 
+};
 
   const handleReset = () => {
     if (window.confirm('Are you sure you want to reset all fields?')) {
@@ -430,9 +475,9 @@ const VMMMaintenanceForm = () => {
               <button type="button" className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto" onClick={handleReset} style={{ fontWeight: '600', border: '1px solid #cbd5e1' }}>
                 Reset Data
               </button>
-              <button type="submit" className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto">
-                Save Record
-              </button>
+              <button type="submit" className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto" disabled={isSaving}>
+  {isSaving ? 'Saving...' : 'Save Record'}
+</button>
             </div>
 
           </form>

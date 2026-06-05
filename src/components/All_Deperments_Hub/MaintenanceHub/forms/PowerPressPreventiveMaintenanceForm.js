@@ -8,6 +8,7 @@ const PowerPressPreventiveMaintenanceForm = () => {
 
   // --- COLLAPSIBLE STATE FOR CHECKLIST ---
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Added submitting state
 
   // --- FIXED CHECKLIST DATA ---
   const initialChecklist = [
@@ -59,7 +60,19 @@ const PowerPressPreventiveMaintenanceForm = () => {
     setTableData(tableData.map(row => row.id === id ? { ...row, remarks: value } : row));
   };
 
-  const handleSubmit = (e) => {
+  const getErrorMessage = async (response) => {
+    const contentType = response.headers.get('content-type') || '';
+
+    if (contentType.includes('application/json')) {
+      const errorData = await response.json();
+      return errorData.error || errorData.message || errorData.detail || JSON.stringify(errorData);
+    }
+
+    const errorText = await response.text();
+    return errorText || `Request failed with status ${response.status}`;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault(); 
     
     if (!metaData.machineName || !metaData.machineNo || !metaData.location) {
@@ -74,22 +87,58 @@ const PowerPressPreventiveMaintenanceForm = () => {
       }
     }
     
-    const formData = {
-      id: Date.now(),
-      metaData: { ...metaData },
-      checklist: tableData,
-      submittedAt: new Date().toISOString()
+    setIsSubmitting(true);
+
+    const checklistPayload = tableData.map((row, index) => ({
+      sr_no: index + 1,
+      check_point: row.point,
+      checking_method: row.method,
+      checking_parameter: row.parameter,
+      before_maintenance: row.before,
+      after_maintenance: row.after,
+      remarks: row.remarks || '',
+      spare_used_remarks: row.remarks || ''
+    }));
+
+    const payload = {
+      machine_name: metaData.machineName,
+      date: metaData.date,
+      machine_no: metaData.machineNo,
+      location: metaData.location,
+      specification: metaData.specification,
+      checkpoints: checklistPayload,
+      checklist: checklistPayload
     };
     
-    console.log("Form Submitted:", formData);
-    setShowSuccess(true);
-    
-    setTimeout(() => {
-      setMetaData(initialMetaData);
-      setTableData(initialChecklist);
-      setShowSuccess(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1500);
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/power-press-pm/save/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        setShowSuccess(true);
+        
+        setTimeout(() => {
+          setMetaData(initialMetaData);
+          setTableData(initialChecklist);
+          setShowSuccess(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 1500);
+      } else {
+        const errorMessage = await getErrorMessage(response);
+        alert("Failed to save data. Error: " + errorMessage);
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
+      alert("An error occurred while saving the data.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
@@ -127,10 +176,15 @@ const PowerPressPreventiveMaintenanceForm = () => {
           padding: 10px 28px;
         }
         
-        .btn-primary-custom:hover { 
+        .btn-primary-custom:hover:not(:disabled) { 
           background: #b45309;
           transform: translateY(-1px);
           box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+        }
+
+        .btn-primary-custom:disabled {
+          background: #d1d5db;
+          cursor: not-allowed;
         }
         
         .btn-outline-custom { 
@@ -427,12 +481,13 @@ const PowerPressPreventiveMaintenanceForm = () => {
                 type="button" 
                 className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto" 
                 onClick={handleReset}
+                disabled={isSubmitting}
                 style={{ fontWeight: '600', border: '1px solid #e5e7eb', color: '#374151' }}
               >
                 Reset Data
               </button>
-              <button type="submit" className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto">
-                <i className="bi bi-floppy me-2"></i> Save Record
+              <button type="submit" className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto" disabled={isSubmitting}>
+                <i className="bi bi-floppy me-2"></i> {isSubmitting ? 'Saving...' : 'Save Record'}
               </button>
             </div>
             

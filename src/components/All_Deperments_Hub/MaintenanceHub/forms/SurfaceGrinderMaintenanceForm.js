@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { getApiUrl } from '../../../../config/api';
 
 const SurfaceGrinderMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const SurfaceGrinderMaintenanceForm = () => {
   ];
 
   const initialMetaData = {
-    machineName: 'SURFACE GRINDER', 
+    machineName: '', // Editable
     date: new Date().toISOString().split('T')[0],
     machineNo: '',
     location: '',
@@ -35,27 +36,58 @@ const SurfaceGrinderMaintenanceForm = () => {
 
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist); 
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
   const handleTableChange = (id, field, value) => {
     setTableData(tableData.map(row => row.id === id ? { ...row, [field]: value } : row));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!metaData.machineNo || !metaData.location || !metaData.preparedBy) {
       alert("Please fill required fields.");
       return;
     }
-    console.log("Surface Grinder Form Submitted:", { id: Date.now(), metaData, checklist: tableData });
-    setShowSuccess(true);
-    setTimeout(() => {
-      setMetaData(initialMetaData);
-      setTableData(initialChecklist); 
-      setShowSuccess(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1500);
+
+    setIsSubmitting(true);
+
+    const payload = {
+      machineName: metaData.machineName,
+      date: metaData.date,
+      machineNo: metaData.machineNo,
+      location: metaData.location,
+      specification: metaData.specification,
+      maintenancePersonnel: metaData.maintenancePersonnel,
+      preparedBy: metaData.preparedBy,
+      checkedBy: metaData.checkedBy,
+      tableData: tableData
+    };
+
+    try {
+      const response = await fetch(getApiUrl('/api/surface-grinder-maintenance/save/'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        alert("✨ Grinder record saved successfully!");
+        setMetaData(initialMetaData);
+        setTableData(initialChecklist); 
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        const errorData = await response.json();
+        alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
+      alert("An error occurred while saving the data.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -68,7 +100,8 @@ const SurfaceGrinderMaintenanceForm = () => {
         /* Surface Grinder Theme Color: Magenta/Pink */
         .header-accent { background: #d946ef; color: white; padding: 20px; border-radius: 20px 20px 0 0; }
         .btn-save { background: #d946ef; border: none; padding: 12px 40px; border-radius: 50px; font-weight: 600; transition: 0.3s; }
-        .btn-save:hover { background: #c026d3; box-shadow: 0 5px 15px rgba(217, 70, 239, 0.4); }
+        .btn-save:hover:not(:disabled) { background: #c026d3; box-shadow: 0 5px 15px rgba(217, 70, 239, 0.4); }
+        .btn-save:disabled { background: #9ca3af; cursor: not-allowed; }
         .method-badge { background: #fdf4ff; color: #d946ef; padding: 4px 12px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; }
         
         /* --- STYLED BACK BUTTON --- */
@@ -111,7 +144,7 @@ const SurfaceGrinderMaintenanceForm = () => {
         <div className="header-accent d-flex justify-content-between align-items-center">
           <div>
             <h4 className="fw-bold mb-0">MACHINE PREVENTIVE MAINTENANCE CHECK SHEET</h4>
-            <small className="opacity-75">{metaData.machineName} | {metaData.docNo}</small>
+            <small className="opacity-75">SURFACE GRINDER | {metaData.docNo}</small>
           </div>
           <div className="text-end d-none d-md-block">
             <div className="badge bg-white text-dark">Rev: {metaData.revisionNo}</div>
@@ -121,7 +154,10 @@ const SurfaceGrinderMaintenanceForm = () => {
         <div className="card-body p-4">
           <form onSubmit={handleSubmit}>
             <div className="row g-3 mb-4">
-              <div className="col-md-4"><label className="form-label">Machine Name</label><input type="text" className="form-control bg-light fw-bold" value={metaData.machineName} readOnly /></div>
+              <div className="col-md-4">
+                <label className="form-label">Machine Name</label>
+                <input type="text" className="form-control" name="machineName" value={metaData.machineName} onChange={handleMetaChange} placeholder="Enter Machine Name" required />
+              </div>
               <div className="col-md-4"><label className="form-label">Date</label><input type="date" className="form-control" name="date" value={metaData.date} onChange={handleMetaChange} /></div>
               <div className="col-md-4"><label className="form-label">Machine No.</label><input type="text" className="form-control" name="machineNo" value={metaData.machineNo} onChange={handleMetaChange} required /></div>
               <div className="col-md-4"><label className="form-label">Location</label><input type="text" className="form-control" name="location" value={metaData.location} onChange={handleMetaChange} required /></div>
@@ -173,13 +209,13 @@ const SurfaceGrinderMaintenanceForm = () => {
             </div>
 
             <div className="text-end mt-4">
-              <button type="submit" className="btn btn-primary btn-save text-white shadow-sm">Save Grinder Record</button>
+              <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-save text-white shadow-sm">
+                {isSubmitting ? 'Submitting...' : 'Save Grinder Record'}
+              </button>
             </div>
           </form>
         </div>
       </div>
-
-      {showSuccess && <div className="position-fixed bottom-0 end-0 m-4 bg-dark text-white px-4 py-3 rounded-4 shadow-lg animate-fade-in">✨ Grinder record saved successfully!</div>}
     </div>
   );
 };

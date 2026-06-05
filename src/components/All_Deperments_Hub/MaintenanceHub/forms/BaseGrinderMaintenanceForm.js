@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { getApiUrl } from '../../../../config/api'; // <--- Added API config import
 
 const BaseGrinderMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -13,20 +14,13 @@ const BaseGrinderMaintenanceForm = () => {
   const statusOptions = ["", "Ok", "Not Ok", "Ng", "N/A"];
 
   // --- FIXED HYDRAULIC CHECKLIST DATA WITH PRE-DEFINED CHECKING METHODS ---
- const initialChecklist = [
-
+  const initialChecklist = [
     { id: 1, point: "Main Motor", parameter: "Main motor is working ?", method: "Visual", before: '', after: '', remarks: '' },
-
     { id: 2, point: "Starter & Wiring", parameter: "Starter is ok?", method: "Visual", before: '', after: '', remarks: '' },
-
     { id: 3, point: "V-belt", parameter: "V-belt is in good & working condition ?", method: "Visual", before: '', after: '', remarks: '' },
-
     { id: 4, point: "Pulley Alignment", parameter: "Pulley alignment is ok ?", method: "Visual", before: '', after: '', remarks: '' },
-
     { id: 5, point: "Bolt Check", parameter: "Bolt should not loose", method: "Visual", before: '', after: '', remarks: '' },
-
     { id: 6, point: "Check the preventive maintenance date", parameter: "Updated", method: "Visual", before: '', after: '', remarks: '' }
-
   ];
 
   // --- INITIAL STATES (For Resetting) ---
@@ -37,12 +31,15 @@ const BaseGrinderMaintenanceForm = () => {
     location: "",
     specification: "",
     maintenancePersonnel: "",
+    preparedBy: "", // <--- Added for form binding
+    checkedBy: "",  // <--- Added for form binding
   };
 
   // --- COMPONENT STATE ---
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // <--- Added for loading state
 
   // --- HANDLERS ---
   const handleMetaChange = (e) =>
@@ -68,16 +65,18 @@ const BaseGrinderMaintenanceForm = () => {
     );
   };
 
-  const handleSubmit = (e) => {
+  // <--- UPDATED: Async function with API fetch same as TIG Form --->
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (
       !metaData.machineName ||
       !metaData.machineNo ||
       !metaData.location ||
-      !metaData.maintenancePersonnel
+      !metaData.maintenancePersonnel ||
+      !metaData.preparedBy // Added check for Prepared By
     ) {
-      alert("Please fill all required fields in General Information.");
+      alert("Please fill all required fields in General Information and Prepared By.");
       return;
     }
 
@@ -88,21 +87,42 @@ const BaseGrinderMaintenanceForm = () => {
       }
     }
 
-    const finalFormData = {
-      id: Date.now(),
-      metaData,
-      checklist: tableData,
+    setIsSubmitting(true);
+
+    const payload = {
+      ...metaData,
+      tableData: tableData,
     };
 
-    console.log("Form Submitted:", finalFormData);
-    setShowSuccess(true);
+    try {
+      const response = await fetch(getApiUrl('/api/base-grinder-maintenance/save/'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
 
-    setTimeout(() => {
-      setMetaData(initialMetaData);
-      setTableData(initialChecklist);
-      setShowSuccess(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 1500);
+      if (response.ok) {
+        console.log("Form Submitted Successfully:", payload);
+        setShowSuccess(true);
+
+        setTimeout(() => {
+          setMetaData(initialMetaData);
+          setTableData(initialChecklist);
+          setShowSuccess(false);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }, 1500);
+      } else {
+        const errorData = await response.json();
+        alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
+      alert("An error occurred while saving the data.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
@@ -143,10 +163,17 @@ const BaseGrinderMaintenanceForm = () => {
           padding: 10px 28px;
         }
         
-        .btn-primary-custom:hover { 
+        .btn-primary-custom:hover:not(:disabled) { 
           background: #059669;
           transform: translateY(-1px);
           box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-primary-custom:disabled {
+          background: #94a3b8;
+          cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
         }
         
         .btn-outline-custom { 
@@ -527,71 +554,6 @@ const BaseGrinderMaintenanceForm = () => {
             )}
 
             {/* Legend Section */}
-            {/* <div
-              className="d-flex flex-wrap align-items-center gap-3 gap-md-4 p-3 rounded-3 mb-4"
-              style={{
-                backgroundColor: "#f8f9fa",
-                border: "1px dashed #dee2e6",
-              }}
-            >
-              <span
-                className="text-sm fw-bold w-100 w-md-auto"
-                style={{ color: "#495057" }}
-              >
-                Legends:
-              </span>
-              <div className="d-flex align-items-center gap-2">
-                <span
-                  className="w-4 h-4 rounded-circle"
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    backgroundColor: "#10b981",
-                    borderRadius: "50%",
-                  }}
-                ></span>
-                <span
-                  className="text-sm fw-medium"
-                  style={{ color: "#495057" }}
-                >
-                  Ok
-                </span>
-              </div>
-              <div className="d-flex align-items-center gap-2">
-                <span
-                  className="w-4 h-4 rounded-circle"
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    backgroundColor: "#ef4444",
-                    borderRadius: "50%",
-                  }}
-                ></span>
-                <span
-                  className="text-sm fw-medium"
-                  style={{ color: "#495057" }}
-                >
-                  Not Ok
-                </span>
-              </div>
-              <div className="d-flex align-items-center gap-2">
-                <span
-                  className="w-4 h-4 rounded-circle"
-                  style={{
-                    width: "14px",
-                    height: "14px",
-                    backgroundColor: "#f59e0b",
-                    borderRadius: "50%",
-                  }}
-                ></span>
-                <span
-                  className="text-sm fw-medium"
-                  style={{ color: "#495057" }}
-                >
-                  Ng (No Good)
-                </span>
-              </div>
-            </div> */}
             <div
               className="d-flex flex-wrap align-items-center justify-content-between p-3 rounded-3 mb-4"
               style={{
@@ -599,10 +561,18 @@ const BaseGrinderMaintenanceForm = () => {
                 border: "1px dashed #dee2e6",
               }}
             >
-              {/* Prepared By */}
+              {/* Prepared By - LINKED TO STATE */}
               <div className="fw-bold " style={{ color: "#495057" }}>
                 Prepared By
-                <input type="text" className="form-control mt-1" placeholder="Name" />
+                <input 
+                  type="text" 
+                  className="form-control mt-1" 
+                  placeholder="Name" 
+                  name="preparedBy"
+                  value={metaData.preparedBy}
+                  onChange={handleMetaChange}
+                  required
+                />
               </div>
 
               {/* Legends */}
@@ -627,10 +597,17 @@ const BaseGrinderMaintenanceForm = () => {
                 </div>
               </div>
 
-              {/* Checked By */}
+              {/* Checked By - LINKED TO STATE */}
               <div className="fw-bold" style={{ color: "#495057" }}>
                 Checked By
-                 <input type="text" className="form-control mt-1" placeholder="Name" />
+                 <input 
+                   type="text" 
+                   className="form-control mt-1" 
+                   placeholder="Name" 
+                   name="checkedBy"
+                   value={metaData.checkedBy}
+                   onChange={handleMetaChange}
+                 />
               </div>
             </div>
 
@@ -646,9 +623,10 @@ const BaseGrinderMaintenanceForm = () => {
               </button>
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
               >
-                <i className="bi bi-floppy me-2"></i> Save Record
+                <i className="bi bi-floppy me-2"></i> {isSubmitting ? "Saving..." : "Save Record"}
               </button>
             </div>
           </form>

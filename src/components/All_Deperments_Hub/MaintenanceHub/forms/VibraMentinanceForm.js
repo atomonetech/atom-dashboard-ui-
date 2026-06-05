@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { getApiUrl } from '../../../../config/api'; // <--- API Import added
 
 const VibraMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -87,12 +88,15 @@ const VibraMaintenanceForm = () => {
     location: "",
     specification: "",
     maintenancePersonnel: "",
+    preparedBy: "", // <--- Added
+    checkedBy: "",  // <--- Added
   };
 
   // --- COMPONENT STATE ---
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // <--- Added
 
   // --- HANDLERS ---
   const handleMetaChange = (e) =>
@@ -118,16 +122,18 @@ const VibraMaintenanceForm = () => {
     );
   };
 
-  const handleSubmit = (e) => {
+  // <--- UPDATED: API Integration Added --->
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (
       !metaData.machineName ||
       !metaData.machineNo ||
       !metaData.location ||
-      !metaData.maintenancePersonnel
+      !metaData.maintenancePersonnel ||
+      !metaData.preparedBy
     ) {
-      alert("Please fill all required fields in General Information.");
+      alert("Please fill all required fields including Prepared By.");
       return;
     }
 
@@ -138,21 +144,40 @@ const VibraMaintenanceForm = () => {
       }
     }
 
-    const finalFormData = {
-      id: Date.now(),
-      metaData,
-      checklist: tableData,
+    setIsSubmitting(true);
+
+    const payload = {
+      ...metaData,
+      tableData: tableData,
     };
 
-    console.log("Form Submitted:", finalFormData);
-    setShowSuccess(true);
+    try {
+      const response = await fetch(getApiUrl('/api/vibra-maintenance/save/'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
 
-    setTimeout(() => {
-      setMetaData(initialMetaData);
-      setTableData(initialChecklist);
-      setShowSuccess(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 1500);
+      if (response.ok) {
+        setShowSuccess(true);
+        setTimeout(() => {
+          setMetaData(initialMetaData);
+          setTableData(initialChecklist);
+          setShowSuccess(false);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }, 1500);
+      } else {
+        const errorData = await response.json();
+        alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
+      alert("An error occurred while saving the data.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
@@ -193,10 +218,17 @@ const VibraMaintenanceForm = () => {
           padding: 10px 28px;
         }
         
-        .btn-primary-custom:hover { 
+        .btn-primary-custom:hover:not(:disabled) { 
           background: #059669;
           transform: translateY(-1px);
           box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-primary-custom:disabled {
+          background: #94a3b8;
+          cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
         }
         
         .btn-outline-custom { 
@@ -649,10 +681,18 @@ const VibraMaintenanceForm = () => {
                 border: "1px dashed #dee2e6",
               }}
             >
-              {/* Prepared By */}
+              {/* Prepared By - LINKED TO STATE */}
               <div className="fw-bold " style={{ color: "#495057" }}>
                 Prepared By
-                <input type="text" className="form-control mt-1" placeholder="Name" />
+                <input 
+                  type="text" 
+                  className="form-control mt-1" 
+                  placeholder="Name" 
+                  name="preparedBy"
+                  value={metaData.preparedBy}
+                  onChange={handleMetaChange}
+                  required
+                />
               </div>
 
               {/* Legends */}
@@ -677,10 +717,17 @@ const VibraMaintenanceForm = () => {
                 </div>
               </div>
 
-              {/* Checked By */}
+              {/* Checked By - LINKED TO STATE */}
               <div className="fw-bold" style={{ color: "#495057" }}>
                 Checked By
-                 <input type="text" className="form-control mt-1" placeholder="Name" />
+                 <input 
+                   type="text" 
+                   className="form-control mt-1" 
+                   placeholder="Name" 
+                   name="checkedBy"
+                   value={metaData.checkedBy}
+                   onChange={handleMetaChange}
+                 />
               </div>
             </div>
 
@@ -696,9 +743,10 @@ const VibraMaintenanceForm = () => {
               </button>
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
               >
-                <i className="bi bi-floppy me-2"></i> Save Record
+                <i className="bi bi-floppy me-2"></i> {isSubmitting ? "Saving..." : "Save Record"}
               </button>
             </div>
           </form>
