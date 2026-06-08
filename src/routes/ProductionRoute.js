@@ -104,7 +104,8 @@ import ForMChangeInsForm from '../components/All_Deperments_Hub/ProductionHub/fo
 import MChangeTrackForm from '../components/All_Deperments_Hub/ProductionHub/forms/daily/M_ChangeTrackForm';
 import Operator5s from '../components/All_Deperments_Hub/ProductionHub/forms/daily/Operator_5s';
 import TipChangeMonitorForm from '../components/All_Deperments_Hub/ProductionHub/forms/daily/TipChangeMonitorForm';
-
+import FourMChangeDisplay from '../components/All_Deperments_Hub/ProductionHub/forms/daily/FourMChangeDisplay';
+import FourMSummarySheet from '../components/All_Deperments_Hub/ProductionHub/forms/daily/FourMSummarySheet';
 // --- DAILY VIEWS (PRINTS) ---
 import DailyProdprint from '../components/All_Deperments_Hub/ProductionHub/Views/daily/DailyProdprint';
 import BinTrollingprint from '../components/All_Deperments_Hub/ProductionHub/Views/daily/BinTrollingprint';
@@ -155,7 +156,8 @@ const ProductionRoutes = () => {
 
       <Route path="daily/4M-Tracking-Form" element={<MChangeTrackForm />} />
       <Route path="daily/4M-Change-Tracking-Report" element={<ForMChangeRecordPrint />} />
-      
+      <Route path="daily/4M-Change-Display-Board" element={<FourMChangeDisplay />} />
+      <Route path="daily/4M-Summary-Sheet" element={<FourMSummarySheet />} />
       {/* --- MONTHLY ROUTES --- */}
       <Route path="monthly/Monthly-Prod-Plan-Form" element={<MonthlyProdPlanForm />} />
       <Route path="monthly/Process-Validation-Form" element={<ProcessValidationForm />} />

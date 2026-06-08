@@ -76,6 +76,11 @@ const MachineWeeklyReports = () => {
                 .maintenance-page-wrapper { min-height: 100vh; background-color: #f4f7fa; font-family: 'Plus Jakarta Sans', sans-serif; }
                 
                 .hub-simple-navbar { position: fixed; top: 0; width: 100%; height: 70px; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); display: flex; align-items: center; padding: 0 40px; border-bottom: 1px solid rgba(231, 234, 243, 0.7); z-index: 10000; }
+                
+                /* ✅ Nav and Back Button Styles */
+                .nav-left-group { display: flex; align-items: center; gap: 15px; }
+                .nav-back-btn { background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; transition: all 0.2s ease; color: #64748b; font-size: 1.2rem; }
+                .nav-back-btn:hover { background: #f1f5f9; color: #0f172a; transform: translateX(-2px); }
                 .nav-text-brand { font-weight: 800; color: #1e293b; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.3s; }
                 .nav-text-brand:hover { color: #4f46e5; }
                 
@@ -139,9 +144,16 @@ const MachineWeeklyReports = () => {
             `}</style>
 
             <nav className="hub-simple-navbar">
-                <div className="nav-text-brand" onClick={() => navigate('/Maintenance/Machine')}>
-                    <i className="bi bi-shield-check-fill text-primary"></i> 
-                    <span>Maintenance Master</span>
+                <div className="nav-left-group">
+                    {/* ✅ New Back Button Added Here */}
+                    <button className="nav-back-btn" onClick={() => navigate('/Maintenance/Machine')} title="Go Back">
+                        <i className="bi bi-arrow-left"></i>
+                    </button>
+                    
+                    <div className="nav-text-brand" onClick={() => navigate('/Maintenance/Machine')}>
+                        <i className="bi bi-shield-check-fill text-primary"></i> 
+                        <span>Maintenance Master</span>
+                    </div>
                 </div>
             </nav>
 

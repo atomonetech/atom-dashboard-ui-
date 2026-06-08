@@ -20,7 +20,7 @@ import TIGMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/
 import SpotWeldingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/SpotWeldingMaintenanceForm";
 import CompressorMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/CompressorMaintenanceForm";
 import DipMoldingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/DipMoldingMentinanceForm";
-import PipeCuttingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/PipeCuttingMentinanceForm";
+import PipeCuttingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/PipeCuttingMaintenanceForm";
 import VibraMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/VibraMentinanceForm";
 import TappingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/TappingMentinanceForm";
 
@@ -51,9 +51,11 @@ import { Pi } from "lucide-react";
 
 const MachineRoutes = () => {
   return (
+    
     <Routes>
       {/* --- FORMS ROUTES --- */}
       <Route path="history-card" element={<MachineHistoryCard />} />
+      <Route path="breakdown-form" element={<MachineBreakDownForm />} />
       <Route
         path="power-press-checksheet"
         element={<DailyPowerPressChecksheet />}
@@ -112,7 +114,7 @@ const MachineRoutes = () => {
       
 
       <Route
-        path="weekly/preventive-cutter"
+        path="weekly/preventive-cutting"
         element={< PipeCuttingMaintenanceForm />}
       />
       <Route
@@ -153,6 +155,7 @@ const MachineRoutes = () => {
       {/* <Route path="breakdown-summary" element={<MachineBreakdownSummary />} /> */}
       <Route path="why-why-analysis" element={<WhyAnalysisForm />} />
       <Route path="critical-spares" element={<CriticalSparesForm />} />
+      
       {/* --- YEARLY ROUTES --- */}
       <Route path="yearly" element={<MachineYearlyReport />} />
       <Route path="master-list-mc" element={<MasterMachineList />} />

@@ -25,7 +25,7 @@ const MAINT_CONFIG = {
     'vibra':                     { label: 'Vibra Maintenance',           color: '#a855f7', bg: '#f3e8ff', icon: 'bi-activity',           formNo: 'AOT/F/MNT/19', category: 'machine', freq: 'weekly' },
     'dip_molding':               { label: 'Dip Molding Maintenance',     color: '#f97316', bg: '#ffedd5', icon: 'bi-droplet-half',       formNo: 'AOT/F/MNT/20', category: 'machine', freq: 'monthly' },
     'servo_press':               { label: 'Servo Press Maintenance',     color: '#ef4444', bg: '#fef2f2', icon: 'bi-cpu',                formNo: 'AOT/F/MNT/21', category: 'machine', freq: 'daily' },
-
+    'vmc':                       { label: 'VMC Maintenance',             color: '#ec4899', bg: '#fce7f3', icon: 'bi-pc-display',         formNo: 'AOT/F/MNT/22', category: 'machine', freq: 'weekly' },
     // TOOL REPORTS
     'tool_history':              { label: 'Tool History Card',           color: '#8b5cf6', bg: '#ede9fe', icon: 'bi-journal-text',       formNo: 'AOT/F/TL/01',  category: 'tool',    freq: 'daily' },
     'tool_pm_check':             { label: 'Tool PM Checklist',           color: '#10b981', bg: '#d1fae5', icon: 'bi-check2-square',      formNo: 'AOT/F/TL/02',  category: 'tool',    freq: 'daily' },

@@ -113,7 +113,7 @@ const CncPreventiveMaintenanceForm = () => {
     };
     
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/cnc-maintenance/save/', {
+      const response = await fetch('http://192.168.0.34:8000/api/cnc-maintenance/save/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

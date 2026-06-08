@@ -10,7 +10,6 @@ const formattedDate = `${String(today.getDate()).padStart(2, '0')}-${String(toda
 
 const GRADES = ["SUH409L", "SS304", "SS316", "SS202", "MS", "EN8", "EN24", "HCHCr", "SAILMA350", "IS2062"];
 
-// Naya empty row jisme isReadOnly false hai (kyunki ye manual add kiya gaya hai)
 const emptyRow = () => ({ id: nextId(), parameter: "", specification: "", inspMethod: "", observations: Array(5).fill(""), remark: "", isReadOnly: false });
 
 const LBL = { fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", color: "#334155", textTransform: "uppercase", marginBottom: 6, display: "block", fontFamily: "'DM Sans',sans-serif" };
@@ -22,7 +21,6 @@ const SelectWrapper = ({ children, color = "#64748b", disabled = false }) => (
   </div>
 );
 
-// Form styling enhancements for professional look
 function fldStyle(v, disabled = false) {
   return {
     width: "100%", padding: "10px 12px", border: `1.5px solid ${v && !disabled ? "#3b82f6" : "#cbd5e1"}`,
@@ -68,7 +66,6 @@ const TD = ({ children, style = {} }) => (
 const API_URL = "http://192.168.0.34:8000/api";
 
 export default function IncomingMaterialInsp() {
-  // Supplier name is now a standard state that can be fully edited
   const [supplier, setSupplier] = useState("ATOMONE TECHNOLOGIES PVT.LTD"); 
   const [customer, setCustomer] = useState("");
   const [selectedPartId, setSelectedPartId] = useState(""); 
@@ -182,7 +179,6 @@ export default function IncomingMaterialInsp() {
           if (item.parameter_name && item.parameter_name.toUpperCase() === "GRADE") {
             foundGrade = item.specification || ""; 
           } else {
-            // isReadOnly flag TRUE set kar diya taki DB values fix rahein
             newRows.push({
               id: nextId(),
               parameter: item.parameter_name || "",
@@ -213,23 +209,8 @@ export default function IncomingMaterialInsp() {
   const handleSave = () => {
     const selectedPartName = partsList.find(p => p.id === parseInt(selectedPartId))?.part_name || "";
     const finalData = { 
-        supplier, // Editable supplier is captured here perfectly
-        customer, 
-        partName: selectedPartName, 
-        partNo, 
-        date, 
-        grade, 
-        mtc, 
-        gaNga, 
-        coilNo, 
-        invoiceNo, 
-        qty, 
-        preparedBy, 
-        checkedBy, 
-        approvedBy, 
-        rows 
+        supplier, customer, partName: selectedPartName, partNo, date, grade, mtc, gaNga, coilNo, invoiceNo, qty, preparedBy, checkedBy, approvedBy, rows 
     };
-    
     console.log("Saved Data:", finalData);
     setSaveMsg("✓ Form Data Saved!");
     setTimeout(() => setSaveMsg(""), 2500);
@@ -299,7 +280,6 @@ export default function IncomingMaterialInsp() {
           <div style={grid4}>
             <div>
               <label style={LBL}>Supplier Name</label>
-              {/* NOW FULLY EDITABLE INPUT */}
               <input value={supplier} onChange={e => setSupplier(e.target.value)} placeholder="Enter Supplier Name" style={fldStyle(supplier)} />
             </div>
             <div>
@@ -383,6 +363,7 @@ export default function IncomingMaterialInsp() {
         )}
       </div>
 
+      {/* TABLE SECTION */}
       {headerFilled && (
         <div style={{ width: "100%", maxWidth: 1140, background: "#ffffff", borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.04)", border: "1px solid #e2e8f0", overflow: "hidden", marginBottom: 40 }}>
           <div style={{ padding: isMobile ? "16px" : "24px" }}>
@@ -398,73 +379,72 @@ export default function IncomingMaterialInsp() {
               </div>
             </div>
 
-            {!isMobile && (
-              <div style={{ overflowX: "auto", borderRadius: 8, border: "1px solid #cbd5e1", marginBottom: 20 }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1000 }}>
-                  <thead>
-                    <tr>
-                      <TH w={40} rowSpan={2}>SR</TH>
-                      <TH w={160} rowSpan={2}>PARAMETER</TH>
-                      <TH w={180} rowSpan={2}>SPECIFICATION</TH>
-                      <TH w={150} rowSpan={2} bg="#2563eb">INSPECTION<br />METHOD</TH>
-                      <th colSpan={5} style={{ padding: "8px", fontWeight: 700, fontSize: 11, color: "#ffffff", textTransform: "uppercase", letterSpacing: "0.5px", textAlign: "center", background: "#1d4ed8", border: "1px solid rgba(255,255,255,0.1)" }}>OBSERVATION</th>
-                      <TH w={100} rowSpan={2}>REMARK</TH>
-                      <TH w={40} rowSpan={2} bg="#ef4444">DEL</TH>
-                    </tr>
-                    <tr>
-                      {[1, 2, 3, 4, 5].map(n => (
-                        <th key={n} style={{ padding: "6px", fontWeight: 700, fontSize: 12, color: "#f8fafc", textAlign: "center", background: "#2563eb", border: "1px solid rgba(255,255,255,0.15)", width: 60 }}>{n}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row, i) => (
-                      <tr key={row.id} style={{ background: i % 2 === 0 ? "#ffffff" : "#f8fafc", transition: "background 0.2s" }} onMouseOver={e=>e.currentTarget.style.background="#f1f5f9"} onMouseOut={e=>e.currentTarget.style.background=i % 2 === 0 ? "#ffffff" : "#f8fafc"}>
-                        <TD><span style={{ fontWeight: 700, color: "#475569" }}>{i + 1}</span></TD>
-                        <TD>
-                          <SelectWrapper color={row.parameter ? "#1e293b" : "#94a3b8"} disabled={row.isReadOnly}>
-                            <select value={row.parameter} onChange={e => updateRow(i, "parameter", e.target.value)} disabled={row.isReadOnly} style={selStyle(row.parameter, row.isReadOnly)}>
-                              <option value="">Select...</option>
-                              {row.parameter && !paramsList.includes(row.parameter) && <option value={row.parameter}>{row.parameter}</option>}
-                              {paramsList.map((p, idx) => <option key={idx} value={p}>{p}</option>)}
-                            </select>
-                          </SelectWrapper>
-                        </TD>
-                        <TD>
-                          <SelectWrapper color={row.specification ? "#1e293b" : "#94a3b8"} disabled={row.isReadOnly}>
-                            <select value={row.specification} onChange={e => updateRow(i, "specification", e.target.value)} disabled={row.isReadOnly} style={selStyle(row.specification, row.isReadOnly)}>
-                              <option value="">Select...</option>
-                              {row.specification && !specsList.includes(row.specification) && <option value={row.specification}>{row.specification}</option>}
-                              {specsList.map((s, idx) => <option key={idx} value={s}>{s}</option>)}
-                            </select>
-                          </SelectWrapper>
-                        </TD>
-                        <TD>
-                          <SelectWrapper color={row.inspMethod ? "#1e293b" : "#94a3b8"} disabled={row.isReadOnly}>
-                            <select value={row.inspMethod} onChange={e => updateRow(i, "inspMethod", e.target.value)} disabled={row.isReadOnly} style={selStyle(row.inspMethod, row.isReadOnly)}>
-                              <option value="">Select...</option>
-                              {row.inspMethod && !methodsList.includes(row.inspMethod) && <option value={row.inspMethod}>{row.inspMethod}</option>}
-                              {methodsList.map((m, idx) => <option key={idx} value={m}>{m}</option>)}
-                            </select>
-                          </SelectWrapper>
-                        </TD>
-                        {row.observations.map((v, j) => (
-                          <TD key={j}><input value={v} onChange={e => updateObs(i, j, e.target.value)} style={obsStyle(v)} /></TD>
-                        ))}
-                        <TD>
-                          <SelectWrapper color={row.remark === "OK" ? "#059669" : row.remark === "NOT OK" ? "#dc2626" : "#94a3b8"}>
-                            <select value={row.remark} onChange={e => updateRow(i, "remark", e.target.value)} style={rkStyle(row.remark)}>
-                              <option value="">—</option><option value="OK">OK</option><option value="NOT OK">NOT OK</option>
-                            </select>
-                          </SelectWrapper>
-                        </TD>
-                        <TD>{rows.length > 1 && <button onClick={() => removeRow(i)} style={{ width: 26, height: 26, borderRadius: 4, border: "1px solid #fecaca", background: "#fef2f2", color: "#ef4444", cursor: "pointer", fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto", transition: "all 0.2s" }} onMouseOver={e=>{e.currentTarget.style.background="#ef4444"; e.currentTarget.style.color="#fff"}} onMouseOut={e=>{e.currentTarget.style.background="#fef2f2"; e.currentTarget.style.color="#ef4444"}}>×</button>}</TD>
-                      </tr>
+            {/* 🔥 YAHAN MAINE DISPLAY BLOCK AUR WIDTH 100% ADD KIYA HAI 🔥 */}
+            <div style={{ display: "block", width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", borderRadius: 8, border: "1px solid #cbd5e1", marginBottom: 20 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
+                <thead>
+                  <tr>
+                    <TH w={40} rowSpan={2}>SR</TH>
+                    <TH w={160} rowSpan={2}>PARAMETER</TH>
+                    <TH w={180} rowSpan={2}>SPECIFICATION</TH>
+                    <TH w={150} rowSpan={2} bg="#2563eb">INSPECTION<br />METHOD</TH>
+                    <th colSpan={5} style={{ padding: "8px", fontWeight: 700, fontSize: 11, color: "#ffffff", textTransform: "uppercase", letterSpacing: "0.5px", textAlign: "center", background: "#1d4ed8", border: "1px solid rgba(255,255,255,0.1)" }}>OBSERVATION</th>
+                    <TH w={100} rowSpan={2}>REMARK</TH>
+                    <TH w={40} rowSpan={2} bg="#ef4444">DEL</TH>
+                  </tr>
+                  <tr>
+                    {[1, 2, 3, 4, 5].map(n => (
+                      <th key={n} style={{ padding: "6px", fontWeight: 700, fontSize: 12, color: "#f8fafc", textAlign: "center", background: "#2563eb", border: "1px solid rgba(255,255,255,0.15)", width: 60 }}>{n}</th>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, i) => (
+                    <tr key={row.id} style={{ background: i % 2 === 0 ? "#ffffff" : "#f8fafc", transition: "background 0.2s" }} onMouseOver={e=>e.currentTarget.style.background="#f1f5f9"} onMouseOut={e=>e.currentTarget.style.background=i % 2 === 0 ? "#ffffff" : "#f8fafc"}>
+                      <TD><span style={{ fontWeight: 700, color: "#475569" }}>{i + 1}</span></TD>
+                      <TD>
+                        <SelectWrapper color={row.parameter ? "#1e293b" : "#94a3b8"} disabled={row.isReadOnly}>
+                          <select value={row.parameter} onChange={e => updateRow(i, "parameter", e.target.value)} disabled={row.isReadOnly} style={selStyle(row.parameter, row.isReadOnly)}>
+                            <option value="">Select...</option>
+                            {row.parameter && !paramsList.includes(row.parameter) && <option value={row.parameter}>{row.parameter}</option>}
+                            {paramsList.map((p, idx) => <option key={idx} value={p}>{p}</option>)}
+                          </select>
+                        </SelectWrapper>
+                      </TD>
+                      <TD>
+                        <SelectWrapper color={row.specification ? "#1e293b" : "#94a3b8"} disabled={row.isReadOnly}>
+                          <select value={row.specification} onChange={e => updateRow(i, "specification", e.target.value)} disabled={row.isReadOnly} style={selStyle(row.specification, row.isReadOnly)}>
+                            <option value="">Select...</option>
+                            {row.specification && !specsList.includes(row.specification) && <option value={row.specification}>{row.specification}</option>}
+                            {specsList.map((s, idx) => <option key={idx} value={s}>{s}</option>)}
+                          </select>
+                        </SelectWrapper>
+                      </TD>
+                      <TD>
+                        <SelectWrapper color={row.inspMethod ? "#1e293b" : "#94a3b8"} disabled={row.isReadOnly}>
+                          <select value={row.inspMethod} onChange={e => updateRow(i, "inspMethod", e.target.value)} disabled={row.isReadOnly} style={selStyle(row.inspMethod, row.isReadOnly)}>
+                            <option value="">Select...</option>
+                            {row.inspMethod && !methodsList.includes(row.inspMethod) && <option value={row.inspMethod}>{row.inspMethod}</option>}
+                            {methodsList.map((m, idx) => <option key={idx} value={m}>{m}</option>)}
+                          </select>
+                        </SelectWrapper>
+                      </TD>
+                      {row.observations.map((v, j) => (
+                        <TD key={j}><input value={v} onChange={e => updateObs(i, j, e.target.value)} style={obsStyle(v)} /></TD>
+                      ))}
+                      <TD>
+                        <SelectWrapper color={row.remark === "OK" ? "#059669" : row.remark === "NOT OK" ? "#dc2626" : "#94a3b8"}>
+                          <select value={row.remark} onChange={e => updateRow(i, "remark", e.target.value)} style={rkStyle(row.remark)}>
+                            <option value="">—</option><option value="OK">OK</option><option value="NOT OK">NOT OK</option>
+                          </select>
+                        </SelectWrapper>
+                      </TD>
+                      <TD>{rows.length > 1 && <button onClick={() => removeRow(i)} style={{ width: 26, height: 26, borderRadius: 4, border: "1px solid #fecaca", background: "#fef2f2", color: "#ef4444", cursor: "pointer", fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto", transition: "all 0.2s" }} onMouseOver={e=>{e.currentTarget.style.background="#ef4444"; e.currentTarget.style.color="#fff"}} onMouseOut={e=>{e.currentTarget.style.background="#fef2f2"; e.currentTarget.style.color="#ef4444"}}>×</button>}</TD>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             <button onClick={addRow} style={{ width: "100%", padding: "12px", borderRadius: 8, border: "1.5px dashed #94a3b8", background: "#f8fafc", color: "#2563eb", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", marginBottom: 24, transition: "all 0.2s" }} onMouseOver={e=>{e.currentTarget.style.background="#eff6ff"; e.currentTarget.style.borderColor="#60a5fa"}} onMouseOut={e=>{e.currentTarget.style.background="#f8fafc"; e.currentTarget.style.borderColor="#94a3b8"}}>
               ＋ Add Manual Parameter Row
