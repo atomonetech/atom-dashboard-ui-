@@ -20,7 +20,11 @@ import TIGMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/
 import SpotWeldingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/SpotWeldingMaintenanceForm";
 import CompressorMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/CompressorMaintenanceForm";
 import DipMoldingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/DipMoldingMentinanceForm";
+<<<<<<< HEAD
 import PipeCuttingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/PipeCuttingMentinanceForm";
+=======
+import PipeCuttingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/PipeCuttingMaintenanceForm";
+>>>>>>> b7e9c6154a0653bd876ba5fe52bfd9987defebc0
 import VibraMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/VibraMentinanceForm";
 import TappingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/TappingMentinanceForm";
 
@@ -32,7 +36,11 @@ import BeltGrinderMaintenanceForm from "../components/All_Deperments_Hub/Mainten
 import BaseGrinderMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/BaseGrinderMaintenanceForm";
 
 // Reports & Views
+<<<<<<< HEAD
 import MachineBreakdownSummary from "../components/All_Deperments_Hub/MaintenanceHub/views/MachineBreakdownSummary";
+=======
+// import MachinebreakdownSummary from "../components/All_Deperments_Hub/MaintenanceHub/forms/MachinebreakdownSummary";
+>>>>>>> b7e9c6154a0653bd876ba5fe52bfd9987defebc0
 import MachineMonthlyReport from "../components/All_Deperments_Hub/MaintenanceHub/views/MachineMonthlyReport";
 import WhyAnalysisForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/WhyAnalysisForm";
 import CriticalSparesForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/CriticslSpareForm";
@@ -51,15 +59,17 @@ import { Pi } from "lucide-react";
 
 const MachineRoutes = () => {
   return (
+    
     <Routes>
       {/* --- FORMS ROUTES --- */}
       <Route path="history-card" element={<MachineHistoryCard />} />
+      <Route path="breakdown-form" element={<MachineBreakDownForm />} />
       <Route
         path="power-press-checksheet"
         element={<DailyPowerPressChecksheet />}
       />{" "}
       {/* This is Daily, so no weekly in path */}
-      <Route path="breakdown-form" element={<MachineBreakDownForm />} />
+      {/* <Route path="breakdown-form" element={<MachinebreakdownSummary />} /> */}
       {/* FOOLPROOF POKA YOKE ROUTES */}
       <Route path="Poka-Yoke" element={<PokaYokeChecksheet />} />
       <Route path="poka_yoke_check" element={<PokaYokeChecksheet />} />
@@ -112,7 +122,7 @@ const MachineRoutes = () => {
       
 
       <Route
-        path="weekly/preventive-cutter"
+        path="weekly/preventive-cutting"
         element={< PipeCuttingMaintenanceForm />}
       />
       <Route
@@ -150,9 +160,10 @@ const MachineRoutes = () => {
       />
       {/* --- MONTHLY ROUTES --- */}
       <Route path="monthly" element={<MachineMonthlyReport />} />
-      <Route path="breakdown-summary" element={<MachineBreakdownSummary />} />
+      {/* <Route path="breakdown-summary" element={<MachineBreakdownSummary />} /> */}
       <Route path="why-why-analysis" element={<WhyAnalysisForm />} />
       <Route path="critical-spares" element={<CriticalSparesForm />} />
+      
       {/* --- YEARLY ROUTES --- */}
       <Route path="yearly" element={<MachineYearlyReport />} />
       <Route path="master-list-mc" element={<MasterMachineList />} />

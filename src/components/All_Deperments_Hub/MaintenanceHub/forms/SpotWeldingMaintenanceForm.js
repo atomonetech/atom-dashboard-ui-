@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { getApiUrl } from '../../../../config/api'; 
 
 const SpotWeldingMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ const SpotWeldingMaintenanceForm = () => {
   ];
 
   const initialMetaData = {
-    machineName: 'SPOT WELDING M/C',
+    machineName: '', // Editable Machine Name
     date: new Date().toISOString().split('T')[0],
     machineNo: '',
     location: '',
@@ -32,7 +33,7 @@ const SpotWeldingMaintenanceForm = () => {
 
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
   
@@ -48,13 +49,46 @@ const SpotWeldingMaintenanceForm = () => {
     setTableData(tableData.map(row => row.id === id ? { ...row, remarks: value } : row));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setShowSuccess(true);
-    setTimeout(() => { 
-      setShowSuccess(false); 
-      window.scrollTo({ top: 0, behavior: 'smooth' }); 
-    }, 2000);
+    setIsSubmitting(true);
+
+    const payload = {
+      machineName: metaData.machineName,
+      date: metaData.date,
+      machineNo: metaData.machineNo,
+      location: metaData.location,
+      specification: metaData.specification,
+      maintenancePersonnel: metaData.maintenancePersonnel,
+      preparedBy: metaData.preparedBy,
+      checkedBy: metaData.checkedBy,
+      tableData: tableData
+    };
+
+    try {
+      const response = await fetch(getApiUrl('/api/spot-welding-maintenance/save/'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        alert("Success! Spot Welding Maintenance record has been saved.");
+        setMetaData(initialMetaData);
+        setTableData(initialChecklist);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        const errorData = await response.json();
+        alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
+      alert("An error occurred while saving the data.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -78,10 +112,15 @@ const SpotWeldingMaintenanceForm = () => {
           transition: all 0.3s ease; 
         }
         
-        .btn-theme:hover { 
+        .btn-theme:hover:not(:disabled) { 
           background: #4f46e5; 
           transform: translateY(-2px); 
           box-shadow: 0 8px 15px rgba(99, 102, 241, 0.3); 
+        }
+
+        .btn-theme:disabled {
+          background: #9ca3af;
+          cursor: not-allowed;
         }
 
         /* --- STYLED BACK BUTTON --- */
@@ -171,7 +210,7 @@ const SpotWeldingMaintenanceForm = () => {
         }
       `}</style>
 
-      {/* --- TOP BACK BUTTON ADDED HERE --- */}
+      {/* --- TOP BACK BUTTON --- */}
       <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
         <button 
           className="btn btn-outline-custom rounded-pill"
@@ -196,7 +235,15 @@ const SpotWeldingMaintenanceForm = () => {
           <div className="row g-3 mb-4">
             <div className="col-12 col-md-4">
               <label className="form-label">Machine Name</label>
-              <input type="text" className="form-control bg-light" value={metaData.machineName} readOnly />
+              <input 
+                type="text" 
+                className="form-control" 
+                name="machineName"
+                value={metaData.machineName} 
+                onChange={handleMetaChange} 
+                placeholder="Enter Machine Name"
+                required 
+              />
             </div>
             <div className="col-12 col-md-4">
               <label className="form-label">Date</label>
@@ -296,18 +343,16 @@ const SpotWeldingMaintenanceForm = () => {
           </div>
 
           <div className="d-flex flex-column flex-sm-row justify-content-end mt-4">
-            <button type="submit" className="btn btn-theme rounded-pill px-5 w-100 w-sm-auto">
-              Save Record
+            <button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="btn btn-theme rounded-pill px-5 w-100 w-sm-auto"
+            >
+              {isSubmitting ? 'Submitting...' : 'Save Record'}
             </button>
           </div>
         </form>
       </div>
-
-      {showSuccess && (
-        <div className="position-fixed bottom-0 end-0 m-4 p-3 bg-success text-white rounded-3 shadow-lg">
-          ✔ Record saved successfully!
-        </div>
-      )}
     </div>
   );
 };

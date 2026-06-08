@@ -514,7 +514,6 @@ const DailyProdForm = () => {
   const [partsData, setPartsData] = useState([]); 
   const [operationNames, setOperationNames] = useState([]);
 
-  // --- NAYE STATES OPERATOR ADD KARNE KE LIYE ---
   const [isAddingNewOperator, setIsAddingNewOperator] = useState(false);
   const [newOperatorName, setNewOperatorName] = useState('');
   const [isSavingOperator, setIsSavingOperator] = useState(false);
@@ -523,7 +522,7 @@ const DailyProdForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     plant: '', 
-    shift: '', // Added Shift State
+    shift: '',
     machineNo: '',
     operatorName: '',
     partName: '',
@@ -599,6 +598,32 @@ const DailyProdForm = () => {
 
   }, [formData.plant]);
 
+  // Helper: Calculate total working time from start and end
+  const calculateWorkingTime = (start, end) => {
+    if (!start || !end) return '';
+
+    const [startH, startM] = start.split(':').map(Number);
+    const [endH, endM] = end.split(':').map(Number);
+
+    let startMinutes = startH * 60 + startM;
+    let endMinutes = endH * 60 + endM;
+
+    // Overnight shift: if end <= start, add 24 hrs to end
+    if (endMinutes <= startMinutes) {
+      endMinutes += 24 * 60;
+    }
+
+    const diffMinutes = endMinutes - startMinutes;
+    const hours = Math.floor(diffMinutes / 60);
+    const mins = diffMinutes % 60;
+
+    if (mins === 0) {
+      return `${hours} hrs`;
+    } else {
+      return `${hours} hrs ${mins} mins`;
+    }
+  };
+
   // Handle Form Inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -635,12 +660,26 @@ const DailyProdForm = () => {
       } else {
         setOperationNames([]);
       }
-    } else {
+    }
+    // ✅ AUTO CALCULATE TOTAL WORKING TIME
+    else if (name === 'productionStartTime' || name === 'productionEndTime') {
+      const start = name === 'productionStartTime' ? value : formData.productionStartTime;
+      const end = name === 'productionEndTime' ? value : formData.productionEndTime;
+
+      const totalWorkingTime = calculateWorkingTime(start, end);
+
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        totalWorkingTime
+      }));
+    }
+    else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
   }
 
-  // NAYA OPERATOR BACKEND ME SAVE KARNE KA FUNCTION
+  // Save new operator to backend
   const handleSaveNewOperator = async () => {
     const opName = newOperatorName.trim();
     if (!opName) return;
@@ -701,7 +740,6 @@ const DailyProdForm = () => {
       return
     }
 
-    // Payload
     const payload = {
       production_date: '2026-04-27', 
       plant: PLANT_MAP[formData.plant], 
@@ -714,13 +752,12 @@ const DailyProdForm = () => {
       planned_quantity: parseInt(formData.plannedQuantity), 
       achieved_quantity: formData.achievedQuantity ? parseInt(formData.achievedQuantity) : 0, 
       qty_remark: formData.qtyRemark,
-      
       production_start_time: formData.productionStartTime ? formData.productionStartTime : null,
       production_end_time: formData.productionEndTime ? formData.productionEndTime : null,
       total_working_time: formData.totalWorkingTime,
       tool_setup_time: formData.toolSetupTime ? parseInt(formData.toolSetupTime) : 0,
       machine_bd_time: formData.machineBdTime ? parseInt(formData.machineBdTime) : 0,
-      tool_bd_time: formData.tool_bd_time ? parseInt(formData.tool_bd_time) : 0,
+      tool_bd_time: formData.toolBdTime ? parseInt(formData.toolBdTime) : 0,
       rm_coil_no: formData.rmCoilNo
     };
 
@@ -793,6 +830,7 @@ const DailyProdForm = () => {
           <form onSubmit={handleSubmit} className="p-4 sm:p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
               
+              {/* Plant */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Factory size={14} className="inline mr-1 text-blue-500" /> Plant <span className="text-red-500">*</span>
@@ -803,7 +841,7 @@ const DailyProdForm = () => {
                 </select>
               </div>
 
-              {/* Added Shift Field */}
+              {/* Shift */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <ListFilter size={14} className="inline mr-1 text-blue-500" /> Shift <span className="text-red-500">*</span>
@@ -815,6 +853,7 @@ const DailyProdForm = () => {
                 </select>
               </div>
 
+              {/* Machine No */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Cpu size={14} className="inline mr-1 text-blue-500" /> Machine No <span className="text-red-500">*</span>
@@ -825,6 +864,7 @@ const DailyProdForm = () => {
                 </select>
               </div>
 
+              {/* Operator Name */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <User size={14} className="inline mr-1 text-blue-500" /> Operator Name <span className="text-red-500">*</span>
@@ -855,6 +895,7 @@ const DailyProdForm = () => {
                 )}
               </div>
 
+              {/* Part Name */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Package size={14} className="inline mr-1 text-blue-500" /> Part Name <span className="text-red-500">*</span>
@@ -865,6 +906,7 @@ const DailyProdForm = () => {
                 </select>
               </div>
 
+              {/* Part No */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Hash size={14} className="inline mr-1 text-blue-500" /> Part No <span className="text-red-500">*</span>
@@ -872,6 +914,7 @@ const DailyProdForm = () => {
                 <input type="text" name="partNo" value={formData.partNo} readOnly placeholder="Auto-filled part number" className="w-full px-3 py-2 text-sm bg-slate-100 border border-slate-300 rounded-lg text-slate-500 cursor-not-allowed focus:outline-none" />
               </div>
 
+              {/* Operation Name */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Settings size={14} className="inline mr-1 text-blue-500" /> Operation Name <span className="text-red-500">*</span>
@@ -882,6 +925,7 @@ const DailyProdForm = () => {
                 </select>
               </div>
 
+              {/* Planned Quantity */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Target size={14} className="inline mr-1 text-blue-500" /> Planned Quantity <span className="text-red-500">*</span>
@@ -889,6 +933,7 @@ const DailyProdForm = () => {
                 <input type="number" name="plannedQuantity" value={formData.plannedQuantity} onChange={handleChange} placeholder="Target quantity" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
               </div>
 
+              {/* Achieved Quantity */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <CheckCircle size={14} className="inline mr-1 text-green-500" /> Achieved Qty. (Optional)
@@ -896,6 +941,7 @@ const DailyProdForm = () => {
                 <input type="number" name="achievedQuantity" value={formData.achievedQuantity} onChange={handleChange} placeholder="Actual quantity" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
               </div>
 
+              {/* Production Start Time */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Clock size={14} className="inline mr-1 text-blue-500" /> Prod. Start Time
@@ -903,6 +949,7 @@ const DailyProdForm = () => {
                 <input type="time" name="productionStartTime" value={formData.productionStartTime} onChange={handleChange} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700" />
               </div>
 
+              {/* Production End Time */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Clock size={14} className="inline mr-1 text-blue-500" /> Prod. End Time
@@ -910,13 +957,29 @@ const DailyProdForm = () => {
                 <input type="time" name="productionEndTime" value={formData.productionEndTime} onChange={handleChange} className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700" />
               </div>
 
+              {/* Total Working Time - Auto calculated, read-only with visual indicator */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Clock size={14} className="inline mr-1 text-blue-500" /> Total Working Time
+                  {formData.totalWorkingTime && (
+                    <span className="ml-1 text-green-500 text-xs normal-case font-normal">(auto)</span>
+                  )}
                 </label>
-                <input type="text" name="totalWorkingTime" value={formData.totalWorkingTime} onChange={handleChange} placeholder="e.g. 8 hrs or 480 mins" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
+                <input
+                  type="text"
+                  name="totalWorkingTime"
+                  value={formData.totalWorkingTime}
+                  onChange={handleChange}
+                  placeholder="e.g. 8 hrs or 480 mins"
+                  className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400 transition-colors ${
+                    formData.totalWorkingTime
+                      ? 'bg-green-50 border-green-300 text-green-700 font-medium'
+                      : 'bg-white border-slate-300'
+                  }`}
+                />
               </div>
 
+              {/* Tool Setup Time */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Wrench size={14} className="inline mr-1 text-orange-500" /> Tool Set-up Time
@@ -924,6 +987,7 @@ const DailyProdForm = () => {
                 <input type="number" name="toolSetupTime" value={formData.toolSetupTime} onChange={handleChange} placeholder="In minutes" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
               </div>
 
+              {/* Machine B/D Time */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <AlertTriangle size={14} className="inline mr-1 text-red-500" /> Machine B/D Time
@@ -931,6 +995,7 @@ const DailyProdForm = () => {
                 <input type="number" name="machineBdTime" value={formData.machineBdTime} onChange={handleChange} placeholder="In minutes" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
               </div>
 
+              {/* Tool B/D Time */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <AlertTriangle size={14} className="inline mr-1 text-red-500" /> Tool B/D Time
@@ -938,6 +1003,7 @@ const DailyProdForm = () => {
                 <input type="number" name="toolBdTime" value={formData.toolBdTime} onChange={handleChange} placeholder="In minutes" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
               </div>
 
+              {/* RM Coil / Lot No */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Layers size={14} className="inline mr-1 text-indigo-500" /> RM Coil / Lot No.
@@ -945,6 +1011,7 @@ const DailyProdForm = () => {
                 <input type="text" name="rmCoilNo" value={formData.rmCoilNo} onChange={handleChange} placeholder="Enter lot or coil number" className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-[#3b82f5] focus:ring-1 focus:ring-[#3b82f5] text-slate-700 placeholder-slate-400" />
               </div>
 
+              {/* Qty Remark */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <MessageSquare size={14} className="inline mr-1 text-blue-500" /> Qty. Remark

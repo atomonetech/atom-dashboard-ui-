@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-// Dhyan dein: Apna API config path apne folder structure ke hisaab se adjust kar lena
-import { getApiUrl } from "../../../../config/api";
+import { getApiUrl } from '../../../../config/api'; // <--- API Import added
 
-const CompressorMaintenanceForm = () => {
+const DipMoldingMaintenanceForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -16,31 +15,112 @@ const CompressorMaintenanceForm = () => {
 
   // --- FIXED HYDRAULIC CHECKLIST DATA WITH PRE-DEFINED CHECKING METHODS ---
   const initialChecklist = [
-    { id: 1, point: "Clean the machine by cloth", parameter: "Dust free", method: "Visual", before: '', after: '', remarks: '' },
-    { id: 2, point: "Check the oil level", parameter: "Should be proper", method: "By spanner", before: '', after: '', remarks: '' },
-    { id: 3, point: "Check the air filter", parameter: "Should be proper condition", method: "By spanner", before: '', after: '', remarks: '' },
-    { id: 4, point: "Check the air receiver", parameter: "Should be cleaned", method: "Visual", before: '', after: '', remarks: '' },
-    { id: 5, point: "Check any abnormal sound", parameter: "No abnormal sound", method: "Visual", before: '', after: '', remarks: '' },
-    { id: 6, point: "Check nut & bolt", parameter: "Should be tight", method: "By Spanner/ allen key", before: '', after: '', remarks: '' },
-    { id: 7, point: "Check loose wiring", parameter: "Should be tight", method: "By plier/ spanner", before: '', after: '', remarks: '' }
-  ];
+  {
+    id: 1,
+    point: "Pushbutton",
+    parameter: "Check all push buttons ",
+    method: "Manually",
+    before: "",
+    after: "",
+    remarks: ""
+  },
+  {
+    id: 2,
+    point: "Proximity Sensor",
+    parameter: "Check Working condition",
+    method: "Manually",
+    before: "",
+    after: "",
+    remarks: ""
+  },
+
+  {
+    id: 3,
+    point: "Limit Switch",
+    parameter: "Check all Limit Switchs for proper operation",
+    method: "Manually",
+    before: "",
+    after: "",
+    remarks: ""
+  },
+  {
+    id: 4,
+    point: "Servo Motor",
+    parameter: "Check Working condition",
+    method: "Visually",
+    before: "",
+    after: "",
+    remarks: ""
+  },
+  {
+    id: 5,
+    point: "Counter Balance cylinder",
+    parameter: "Air Leakages",
+    method: "visually",
+    before: "",
+    after: "",
+    remarks: ""
+  },
+
+  {
+    id: 6,
+    point: "Timer Display",
+    parameter: "Timer Working Condition",
+    method: "visually",
+    before: "",
+    after: "",
+    remarks: ""
+  },
+  {
+    id: 7,
+    point: "Control Pannel Box",
+    parameter: "Loose wiring",
+    method: "visually",
+    before: "",
+    after: "",
+    remarks: ""
+  },
+
+  {
+    id: 8,
+    point: "Roller Bearing",
+    parameter: "Bearing Jamming condition",
+    method: "Manually",
+    before: "",
+    after: "",
+    remarks: ""
+  },
+
+  {
+    id: 9,
+    point: "Check the preventive maintenance date",
+    parameter: "Updated in history card",
+    method: "visually",
+    before: "",
+    after: "",
+    remarks: ""
+  },
+
+  
+];
 
   // --- INITIAL STATES (For Resetting) ---
   const initialMetaData = {
-    machineName: location.state?.machineName || "", // Editable Machine Name
+    machineName: location.state?.machineName || "Dip Molding Machine",
     date: new Date().toISOString().split("T")[0],
-    machineNo: "",
+    machineNo: "SP-001",
     location: "",
     specification: "",
     maintenancePersonnel: "",
-    preparedBy: "", // Added to save signatures
-    checkedBy: ""   // Added to save signatures
+    preparedBy: "", // <--- Added for state binding
+    checkedBy: "",  // <--- Added for state binding
   };
 
   // --- COMPONENT STATE ---
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // <--- Added for loading state
 
   // --- HANDLERS ---
   const handleMetaChange = (e) =>
@@ -66,6 +146,7 @@ const CompressorMaintenanceForm = () => {
     );
   };
 
+  // <--- UPDATED: API Integration & Payload Fix Added --->
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -73,9 +154,10 @@ const CompressorMaintenanceForm = () => {
       !metaData.machineName ||
       !metaData.machineNo ||
       !metaData.location ||
-      !metaData.maintenancePersonnel
+      !metaData.maintenancePersonnel ||
+      !metaData.preparedBy
     ) {
-      alert("Please fill all required fields in General Information.");
+      alert("Please fill all required fields including Prepared By.");
       return;
     }
 
@@ -88,20 +170,15 @@ const CompressorMaintenanceForm = () => {
 
     setIsSubmitting(true);
 
+    // FIXED PAYLOAD: Spread metaData to put date at the root level for backend
     const payload = {
-      machineName: metaData.machineName,
-      date: metaData.date,
-      machineNo: metaData.machineNo,
-      location: metaData.location,
-      specification: metaData.specification,
-      maintenancePersonnel: metaData.maintenancePersonnel,
-      preparedBy: metaData.preparedBy,
-      checkedBy: metaData.checkedBy,
-      tableData: tableData
+      ...metaData,
+      tableData: tableData,
     };
 
     try {
-      const response = await fetch(getApiUrl('/api/compressor-maintenance/save/'), {
+      // Assuming your backend endpoint follows this pattern
+      const response = await fetch(getApiUrl('/api/dip-molding-maintenance/save/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -110,10 +187,13 @@ const CompressorMaintenanceForm = () => {
       });
 
       if (response.ok) {
-        alert("Success! Compressor Maintenance record has been saved.");
-        setMetaData(initialMetaData);
-        setTableData(initialChecklist);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        setShowSuccess(true);
+        setTimeout(() => {
+          setMetaData(initialMetaData);
+          setTableData(initialChecklist);
+          setShowSuccess(false);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }, 1500);
       } else {
         const errorData = await response.json();
         alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
@@ -148,8 +228,15 @@ const CompressorMaintenanceForm = () => {
           body { background-color: #fff !important; }
         }
         
+        .white-card {
+          background: white;
+          border-radius: 20px;
+          border: 1px solid #e9ecef;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        
         .btn-primary-custom { 
-          background: #0d9488; 
+          background: #10b981;
           color: white; 
           border: none;
           transition: all 0.2s ease;
@@ -158,47 +245,123 @@ const CompressorMaintenanceForm = () => {
         }
         
         .btn-primary-custom:hover:not(:disabled) { 
-          background: #0f766e; 
-          transform: translateY(-2px); 
-          box-shadow: 0 8px 15px rgba(13, 148, 136, 0.3); 
+          background: #059669;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
         }
 
         .btn-primary-custom:disabled {
-          background: #9ca3af;
+          background: #94a3b8;
           cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
         }
-
+        
         .btn-outline-custom { 
           background: white;
-          color: #0d9488; 
-          border: 2px solid #0d9488;
+          color: #10b981; 
+          border: 2px solid #10b981;
           transition: all 0.2s ease;
           font-weight: 600;
           padding: 8px 20px;
         }
         
         .btn-outline-custom:hover { 
-          background: #0d9488;
+          background: #10b981;
           color: white;
           transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(13, 148, 136, 0.2);
-        }
-
-        .animate-fade-in { animation: fadeInUp 0.4s ease-out; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        .form-label { 
-          font-weight: 600; 
-          color: #475569; 
-          font-size: 0.8rem; 
-          text-transform: uppercase; 
-          letter-spacing: 0.5px; 
         }
         
+        .form-control, .form-select {
+          border: 1px solid #dee2e6;
+          border-radius: 8px;
+          padding: 8px 12px;
+          transition: all 0.2s ease;
+          font-size: 0.9rem;
+          background-color: #ffffff;
+        }
+        
+        .form-control:focus, .form-select:focus {
+          border-color: #10b981;
+          box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+          outline: none;
+        }
+        
+        .form-label {
+          font-weight: 600;
+          margin-bottom: 6px;
+          color: #495057;
+          font-size: 0.85rem;
+        }
+
+        .required-field::after { content: " *"; color: #10b981; }
+        
+        .collapse-header {
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border: 1px solid #dee2e6;
+          border-radius: 12px;
+          background: white;
+          padding: 12px 20px !important;
+        }
+        
+        .collapse-header:hover {
+          border-color: #10b981;
+          background: #ecfdf5;
+        }
+        
+        .clean-table { border-radius: 12px; overflow: hidden; }
+        
+        .clean-table thead th {
+          background: #f8f9fa;
+          font-weight: 600;
+          font-size: 0.85rem;
+          color: #495057;
+          border-bottom: 2px solid #10b981;
+          padding: 12px;
+        }
+        
+        .clean-table tbody td {
+          padding: 12px;
+          vertical-align: middle;
+          border-bottom: 1px solid #f0f0f0;
+          color: #1f2937;
+          font-size: 0.85rem;
+        }
+        
+        .clean-table tbody tr:hover { background: #ecfdf5; }
+        
+        .section-header {
+          margin-bottom: 20px;
+          padding-bottom: 10px;
+          border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .section-header h5 {
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: #10b981;
+          margin: 0;
+        }
+        
+        .animate-fade-in { animation: fadeInUp 0.4s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .badge-count {
+          background: #10b981;
+          color: white;
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 0.7rem;
+          margin-left: 8px;
+        }
+
+        /* Status Colors */
         select option[value="Ok"] { color: #10b981; font-weight: bold; }
         select option[value="Not Ok"] { color: #ef4444; font-weight: bold; }
         select option[value="Ng"] { color: #f59e0b; font-weight: bold; }
 
+        /* Method badge styling */
         .method-badge {
           background-color: #eef2ff;
           color: #1e40af;
@@ -211,6 +374,7 @@ const CompressorMaintenanceForm = () => {
           width: 100%;
         }
 
+        /* MAGIC MOBILE VIEW CSS */
         .mobile-label { display: none; }
         @media (max-width: 767px) {
           .table-responsive { border: none !important; background: transparent !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
@@ -225,28 +389,24 @@ const CompressorMaintenanceForm = () => {
       `}</style>
 
       {/* --- TOP BACK BUTTON --- */}
-      <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
-        <button 
+      <div
+        className="mx-auto mb-3 no-print animate-fade-in px-2"
+        style={{ maxWidth: "1200px" }}
+      >
+        <button
           className="btn btn-outline-custom rounded-pill"
-          onClick={() => navigate('/Maintenance/Machine/weekly')}
-          style={{ fontSize: '0.85rem' }}
+          onClick={() => navigate("/Maintenance/Machine/weekly")}
+          style={{ fontSize: "0.85rem" }}
         >
-          ← Back to Weekly Hub
+          ← Back to Weekly Reports
         </button>
-      </div>
-
-      {/* Header Panel */}
-      <div className="teal-card mx-auto mb-4 p-3 p-md-4 d-flex justify-content-between align-items-center" style={{ maxWidth: '1200px', borderTop: '6px solid #14b8a6', background: 'white', borderRadius: '20px', boxShadow: '0 4px 20px rgba(13, 148, 136, 0.08)' }}>
-        <div>
-          <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#115e59' }}>COMPRESSOR MAINTENANCE</h3>
-          <span className="badge rounded-pill" style={{ backgroundColor: '#ccfbf1', color: '#0f766e', padding: '8px 15px' }}>Form: AOT-F-PM-01 | Weekly</span>
-        </div>
       </div>
 
       <div
         className="white-card mx-auto animate-fade-in"
-        style={{ maxWidth: "1200px", background: 'white', borderRadius: '20px', boxShadow: '0 4px 20px rgba(13, 148, 136, 0.08)' }}
+        style={{ maxWidth: "1200px" }}
       >
+        {/* HEADER */}
         <div
           className="p-3 p-md-4"
           style={{
@@ -259,7 +419,7 @@ const CompressorMaintenanceForm = () => {
             className="fw-bold mb-1 fs-5 fs-md-3"
             style={{ color: "#10b981" }}
           >
-            Compressor Preventive Maintenance
+            Dip Molding Preventive Maintenance
           </h3>
           <p className="text-muted mb-0" style={{ fontSize: "0.85rem" }}>
             Complete maintenance checklist and tracking system
@@ -268,6 +428,7 @@ const CompressorMaintenanceForm = () => {
 
         <div className="card-body p-3 p-md-4">
           <form onSubmit={handleSubmit}>
+            {/* --- SECTION 1: META DATA INPUTS --- */}
             <div className="section-header">
               <h5>General Information</h5>
             </div>
@@ -284,7 +445,7 @@ const CompressorMaintenanceForm = () => {
                   value={metaData.machineName}
                   onChange={handleMetaChange}
                   required
-                  placeholder="Enter Machine Name"
+                  placeholder="e.g., CNC Milling Machine"
                 />
               </div>
               <div className="col-12 col-md-2">
@@ -349,6 +510,7 @@ const CompressorMaintenanceForm = () => {
               </div>
             </div>
 
+            {/* --- SECTION 2: CHECKLIST TABLE --- */}
             <div className="section-header mt-4">
               <h5>Maintenance Checklist</h5>
             </div>
@@ -356,13 +518,14 @@ const CompressorMaintenanceForm = () => {
             <div
               className="collapse-header d-flex justify-content-between align-items-center mb-3 text-slate-700"
               onClick={() => setIsChecklistOpen(!isChecklistOpen)}
-              style={{ cursor: 'pointer' }}
             >
               <div>
-                <span className="fw-bold">Checklist Items </span>
-                <span className="badge-count bg-secondary text-white px-2 py-1 rounded-circle">{tableData.length}</span>
+                <span className="fw-bold">Checklist Items</span>
+                <span className="badge-count">{tableData.length}</span>
                 <small className="text-muted ms-2 d-none d-md-inline-block">
-                  {isChecklistOpen ? "▼ Click to collapse" : "▶ Click to expand"}
+                  {isChecklistOpen
+                    ? "▼ Click to collapse"
+                    : "▶ Click to expand"}
                 </small>
               </div>
               <span style={{ color: "#10b981", fontWeight: "bold" }}>
@@ -376,7 +539,9 @@ const CompressorMaintenanceForm = () => {
                   <table className="table clean-table align-middle mb-0">
                     <thead>
                       <tr>
-                        <th style={{ width: "4%" }} className="text-center">#</th>
+                        <th style={{ width: "4%" }} className="text-center">
+                          #
+                        </th>
                         <th style={{ width: "35%" }}>Check Point</th>
                         <th style={{ width: "20%" }}>Checking Parameter</th>
                         <th style={{ width: "15%" }}>Checking Method</th>
@@ -397,47 +562,68 @@ const CompressorMaintenanceForm = () => {
                             {row.point}
                           </td>
                           <td>
-                            <span className="mobile-label">Checking Parameter</span>
+                            <span className="mobile-label">
+                              Checking Parameter
+                            </span>
                             {row.parameter}
                           </td>
                           <td>
                             <span className="mobile-label">Method</span>
                             <div className="method-badge">{row.method}</div>
                           </td>
+
                           <td>
-                            <span className="mobile-label required-field">Before Maint.</span>
+                            <span className="mobile-label required-field">
+                              Before Maint.
+                            </span>
                             <select
                               className="form-select border-1 bg-light shadow-sm w-100"
                               value={row.before}
-                              onChange={(e) => handleBeforeChange(row.id, e.target.value)}
+                              onChange={(e) =>
+                                handleBeforeChange(row.id, e.target.value)
+                              }
                               required
                             >
                               {statusOptions.map((opt, i) => (
-                                <option key={i} value={opt}>{opt || "Select..."}</option>
+                                <option key={i} value={opt}>
+                                  {opt || "Select..."}
+                                </option>
                               ))}
                             </select>
                           </td>
+
                           <td>
-                            <span className="mobile-label required-field">After Maint.</span>
+                            <span className="mobile-label required-field">
+                              After Maint.
+                            </span>
                             <select
                               className="form-select border-1 bg-light shadow-sm w-100"
                               value={row.after}
-                              onChange={(e) => handleAfterChange(row.id, e.target.value)}
+                              onChange={(e) =>
+                                handleAfterChange(row.id, e.target.value)
+                              }
                               required
                             >
                               {statusOptions.map((opt, i) => (
-                                <option key={i} value={opt}>{opt || "Select..."}</option>
+                                <option key={i} value={opt}>
+                                  {opt || "Select..."}
+                                </option>
                               ))}
                             </select>
                           </td>
+
                           <td>
-                            <span className="mobile-label">Remarks / Spares</span>
+                            <span className="mobile-label">
+                              Remarks / Spares
+                            </span>
                             <input
                               type="text"
                               className="form-control border-1 bg-light shadow-sm w-100"
                               placeholder="Add remarks..."
                               value={row.remarks}
-                              onChange={(e) => handleRemarksChange(row.id, e.target.value)}
+                              onChange={(e) =>
+                                handleRemarksChange(row.id, e.target.value)
+                              }
                             />
                           </td>
                         </tr>
@@ -448,49 +634,61 @@ const CompressorMaintenanceForm = () => {
               </div>
             )}
 
+            {/* Legend Section */}
             <div
               className="d-flex flex-wrap align-items-center justify-content-between p-3 rounded-3 mb-4"
-              style={{ backgroundColor: "#f8f9fa", border: "1px dashed #dee2e6" }}
+              style={{
+                backgroundColor: "#f8f9fa",
+                border: "1px dashed #dee2e6",
+              }}
             >
-              <div className="fw-bold" style={{ color: "#495057" }}>
+              {/* Prepared By - LINKED TO STATE */}
+              <div className="fw-bold " style={{ color: "#495057" }}>
                 Prepared By
                 <input 
                   type="text" 
                   className="form-control mt-1" 
+                  placeholder="Name" 
                   name="preparedBy"
                   value={metaData.preparedBy}
                   onChange={handleMetaChange}
-                  placeholder="Name" 
                   required
                 />
               </div>
 
+              {/* Legends */}
               <div className="d-flex align-items-center gap-4">
-                <span className="fw-bold" style={{ color: "#495057" }}>Legends:</span>
+                <span className="fw-bold" style={{ color: "#495057" }}>
+                  Legends:
+                </span>
+
                 <div className="d-flex align-items-center gap-2">
                   <input type="checkbox" checked readOnly />
                   <span style={{ color: "#495057" }}>Good</span>
                 </div>
+
                 <div className="d-flex align-items-center gap-2">
                   <input type="checkbox" checked readOnly />
                   <span style={{ color: "#495057" }}>Not Good</span>
                 </div>
+
                 <div className="d-flex align-items-center gap-2">
                   <input type="checkbox" checked readOnly />
                   <span style={{ color: "#495057" }}>Not Applicable</span>
                 </div>
               </div>
 
+              {/* Checked By - LINKED TO STATE */}
               <div className="fw-bold" style={{ color: "#495057" }}>
                 Checked By
                  <input 
-                  type="text" 
-                  className="form-control mt-1" 
-                  name="checkedBy"
-                  value={metaData.checkedBy}
-                  onChange={handleMetaChange}
-                  placeholder="Name" 
-                />
+                   type="text" 
+                   className="form-control mt-1" 
+                   placeholder="Name" 
+                   name="checkedBy"
+                   value={metaData.checkedBy}
+                   onChange={handleMetaChange}
+                 />
               </div>
             </div>
 
@@ -509,14 +707,27 @@ const CompressorMaintenanceForm = () => {
                 disabled={isSubmitting}
                 className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
               >
-                <i className="bi bi-floppy me-2"></i> {isSubmitting ? 'Submitting...' : 'Save Record'}
+                <i className="bi bi-floppy me-2"></i> {isSubmitting ? "Saving..." : "Save Record"}
               </button>
             </div>
           </form>
         </div>
       </div>
+
+      {/* Success Toast */}
+      {showSuccess && (
+        <div
+          className="position-fixed bottom-0 end-0 m-3 m-md-4 bg-success text-white px-4 py-3 rounded-3 shadow-lg z-3"
+          style={{ minWidth: "250px" }}
+        >
+          <div className="d-flex align-items-center gap-2">
+            <i className="bi bi-check-circle-fill fs-5"></i>
+            <span className="fw-medium">Maintenance record saved!</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default CompressorMaintenanceForm;
+export default DipMoldingMaintenanceForm;

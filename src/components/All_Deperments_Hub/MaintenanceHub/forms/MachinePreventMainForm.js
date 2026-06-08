@@ -6,13 +6,12 @@ const MachinePreventMainForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // --- COLLAPSIBLE STATE FOR CHECKLIST ---
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  // --- DROPDOWN OPTIONS FOR STATUS ---
   const statusOptions = ['', 'Ok', 'Not Ok', 'Ng', 'N/A'];
 
-  // --- FIXED CHECKLIST DATA WITH PRE-DEFINED CHECKING METHODS FROM IMAGE ---
   const initialChecklist = [
     { id: 1, point: "Air pressure (4-7 bar)", method: "Visual", before: '', after: '', remarks: '' },
     { id: 2, point: "Cleaning of air filter in AC unit", method: "Manual", before: '', after: '', remarks: '' },
@@ -31,7 +30,6 @@ const MachinePreventMainForm = () => {
     { id: 15, point: "Check the preventive maintenance data", method: "Visual", before: '', after: '', remarks: '' }
   ];
 
-  // --- INITIAL STATES (For Resetting) ---
   const initialMetaData = {
     machineName: location.state?.machineName || '', 
     date: new Date().toISOString().split('T')[0],
@@ -41,12 +39,9 @@ const MachinePreventMainForm = () => {
     maintenancePersonnel: ''
   };
 
-  // --- COMPONENT STATE ---
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist); 
-  const [showSuccess, setShowSuccess] = useState(false);
 
-  // --- HANDLERS ---
   const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
   
   const handleBeforeChange = (id, value) => {
@@ -61,10 +56,24 @@ const MachinePreventMainForm = () => {
     setTableData(tableData.map(row => row.id === id ? { ...row, remarks: value } : row));
   };
 
-  const handleSubmit = (e) => {
+  const formatBackendError = (result) => {
+    if (!result) return 'Unable to save record.';
+    if (typeof result === 'string') return result;
+    if (result.message) return result.message;
+    if (result.detail) return result.detail;
+    if (result.error) return typeof result.error === 'string' ? result.error : JSON.stringify(result.error);
+    if (result.errors) {
+      if (typeof result.errors === 'string') return result.errors;
+      return Object.entries(result.errors)
+        .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : JSON.stringify(messages)}`)
+        .join('\n');
+    }
+    return JSON.stringify(result);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Basic validation
     if (!metaData.machineName || !metaData.machineNo || !metaData.location || !metaData.maintenancePersonnel) {
       alert("Please fill all required fields in General Information.");
       return;
@@ -77,21 +86,61 @@ const MachinePreventMainForm = () => {
       }
     }
     
-    const finalFormData = {
-      id: Date.now(),
-      metaData,
-      checklist: tableData
+    setIsSubmitting(true);
+
+    // ✅ FIXED PAYLOAD: Keys exactly match Django Model (snake_case)
+    const checklistPayload = tableData.map((row, index) => ({
+      sr_no: index + 1,
+      check_point: row.point,
+      checking_parameter: row.parameter || row.point,
+      checking_method: row.method,
+      before_maintenance: row.before,
+      after_maintenance: row.after,
+      remarks: row.remarks || '',
+      spare_used_remarks: row.remarks || '',
+    }));
+
+    const payload = {
+      machine_name: metaData.machineName,
+      machine_no: metaData.machineNo,
+      date: metaData.date,
+      location: metaData.location,
+      specification: metaData.specification,
+      maintenance_personnel: metaData.maintenancePersonnel,
+      checkpoints: checklistPayload,
+      checklist: checklistPayload
     };
     
-    console.log("Form Submitted:", finalFormData);
-    setShowSuccess(true);
-    
-    setTimeout(() => {
-      setMetaData(initialMetaData);
-      setTableData(initialChecklist); 
-      setShowSuccess(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1500);
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/machine-preventive-maintenance/save/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (response.ok && result.success !== false) {
+        setShowSuccess(true);
+        setTimeout(() => {
+          setMetaData(initialMetaData);
+          setTableData(initialChecklist); 
+          setShowSuccess(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 1500);
+      } else {
+        console.error("Machine preventive maintenance save failed:", result);
+        alert("Failed to save data. Error: " + formatBackendError(result));
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
+      alert("An error occurred while saving the data.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
@@ -101,10 +150,8 @@ const MachinePreventMainForm = () => {
     }
   };
 
-  // Get method badge class (case-insensitive)
   const getMethodBadgeClass = (method) => {
     if (!method) return 'method-badge method-empty';
-    
     const methodLower = method.toLowerCase();
     if (methodLower === 'visual') return 'method-badge method-visual';
     if (methodLower === 'manual') return 'method-badge method-manual';
@@ -115,164 +162,34 @@ const MachinePreventMainForm = () => {
 
   return (
     <div className="container-fluid py-3 py-md-4" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-      
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
         * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-        
-        @media print {
-          .no-print { display: none !important; }
-          body { background-color: #fff !important; }
-        }
-        
-        .white-card {
-          background: white;
-          border-radius: 20px;
-          border: 1px solid #e9ecef;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        }
-        
-        .btn-primary-custom { 
-          background: #e91e63;
-          color: white; 
-          border: none;
-          transition: all 0.2s ease;
-          font-weight: 600;
-          padding: 10px 28px;
-        }
-        
-        .btn-primary-custom:hover { 
-          background: #c2185b;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(233, 30, 99, 0.2);
-        }
-        
-        .btn-outline-custom { 
-          background: white;
-          color: #e91e63; 
-          border: 2px solid #e91e63;
-          transition: all 0.2s ease;
-          font-weight: 600;
-          padding: 8px 20px;
-        }
-        
-        .btn-outline-custom:hover { 
-          background: #e91e63;
-          color: white;
-          transform: translateY(-1px);
-        }
-        
-        .form-control, .form-select {
-          border: 1px solid #dee2e6;
-          border-radius: 8px;
-          padding: 8px 12px;
-          transition: all 0.2s ease;
-          font-size: 0.9rem;
-          background-color: #ffffff;
-        }
-        
-        .form-control:focus, .form-select:focus {
-          border-color: #e91e63;
-          box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
-          outline: none;
-        }
-        
-        .form-label {
-          font-weight: 600;
-          margin-bottom: 6px;
-          color: #495057;
-          font-size: 0.85rem;
-        }
-
+        @media print { .no-print { display: none !important; } body { background-color: #fff !important; } }
+        .white-card { background: white; border-radius: 20px; border: 1px solid #e9ecef; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); }
+        .btn-primary-custom { background: #e91e63; color: white; border: none; transition: all 0.2s ease; font-weight: 600; padding: 10px 28px; }
+        .btn-primary-custom:hover:not(:disabled) { background: #c2185b; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(233, 30, 99, 0.2); }
+        .btn-primary-custom:disabled { background: #f48fb1; cursor: not-allowed; }
+        .btn-outline-custom { background: white; color: #e91e63; border: 2px solid #e91e63; transition: all 0.2s ease; font-weight: 600; padding: 8px 20px; }
+        .btn-outline-custom:hover:not(:disabled) { background: #e91e63; color: white; transform: translateY(-1px); }
+        .form-control, .form-select { border: 1px solid #dee2e6; border-radius: 8px; padding: 8px 12px; transition: all 0.2s ease; font-size: 0.9rem; background-color: #ffffff; }
+        .form-control:focus, .form-select:focus { border-color: #e91e63; box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1); outline: none; }
+        .form-label { font-weight: 600; margin-bottom: 6px; color: #495057; font-size: 0.85rem; }
         .required-field::after { content: " *"; color: #e91e63; }
-        
-        .collapse-header {
-          cursor: pointer;
-          transition: all 0.2s ease;
-          border: 1px solid #dee2e6;
-          border-radius: 12px;
-          background: white;
-          padding: 12px 20px !important;
-        }
-        
-        .collapse-header:hover {
-          border-color: #e91e63;
-          background: #fff5f8;
-        }
-        
+        .collapse-header { cursor: pointer; transition: all 0.2s ease; border: 1px solid #dee2e6; border-radius: 12px; background: white; padding: 12px 20px !important; }
+        .collapse-header:hover { border-color: #e91e63; background: #fff5f8; }
         .clean-table { border-radius: 12px; overflow: hidden; }
-        
-        .clean-table thead th {
-          background: #f8f9fa;
-          font-weight: 600;
-          font-size: 0.85rem;
-          color: #495057;
-          border-bottom: 2px solid #e91e63;
-          padding: 12px;
-        }
-        
-        .clean-table tbody td {
-          padding: 12px;
-          vertical-align: middle;
-          border-bottom: 1px solid #f0f0f0;
-          color: #1f2937;
-          font-size: 0.85rem;
-        }
-        
+        .clean-table thead th { background: #f8f9fa; font-weight: 600; font-size: 0.85rem; color: #495057; border-bottom: 2px solid #e91e63; padding: 12px; }
+        .clean-table tbody td { padding: 12px; vertical-align: middle; border-bottom: 1px solid #f0f0f0; color: #1f2937; font-size: 0.85rem; }
         .clean-table tbody tr:hover { background: #fff5f8; }
-        
-        .section-header {
-          margin-bottom: 20px;
-          padding-bottom: 10px;
-          border-bottom: 2px solid #f0f0f0;
-        }
-        
-        .section-header h5 {
-          font-size: 1.1rem;
-          font-weight: 700;
-          color: #e91e63;
-          margin: 0;
-        }
-        
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
+        .section-header { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #f0f0f0; }
+        .section-header h5 { font-size: 1.1rem; font-weight: 700; color: #e91e63; margin: 0; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeInUp 0.4s ease-out; }
-        
-        .badge-count {
-          background: #e91e63;
-          color: white;
-          padding: 2px 8px;
-          border-radius: 12px;
-          font-size: 0.7rem;
-          margin-left: 8px;
-        }
-
-        /* Status Colors */
-        select option[value="Ok"] { color: #10b981; font-weight: bold; }
-        select option[value="Not Ok"] { color: #ef4444; font-weight: bold; }
-        select option[value="Ng"] { color: #f59e0b; font-weight: bold; }
-
-        /* Method Badge Styles */
-        .method-badge {
-          display: inline-block;
-          padding: 6px 12px;
-          border-radius: 20px;
-          font-size: 0.75rem;
-          font-weight: 600;
-          text-align: center;
-          width: 100%;
-        }
-        .method-visual { background-color: #e3f2fd; color: #1565c0; }
-        .method-manual { background-color: #e8f5e9; color: #2e7d32; }
-        .method-manual-visual { background-color: #fff3e0; color: #e65100; }
-        .method-leveler { background-color: #f3e5f5; color: #6a1b9a; }
-        .method-empty { background-color: #ffebee; color: #c62828; }
-
-        /* MAGIC MOBILE VIEW CSS */
+        .badge-count { background: #e91e63; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; margin-left: 8px; }
+        select option[value="Ok"] { color: #10b981; font-weight: bold; } select option[value="Not Ok"] { color: #ef4444; font-weight: bold; } select option[value="Ng"] { color: #f59e0b; font-weight: bold; }
+        .method-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-align: center; width: 100%; }
+        .method-visual { background-color: #e3f2fd; color: #1565c0; } .method-manual { background-color: #e8f5e9; color: #2e7d32; } .method-manual-visual { background-color: #fff3e0; color: #e65100; } .method-leveler { background-color: #f3e5f5; color: #6a1b9a; } .method-empty { background-color: #ffebee; color: #c62828; }
         .mobile-label { display: none; }
         @media (max-width: 767px) {
           .table-responsive { border: none !important; background: transparent !important; margin: 0 !important; padding: 0 !important; overflow: visible !important; }
@@ -286,36 +203,21 @@ const MachinePreventMainForm = () => {
         }
       `}</style>
 
-      {/* --- TOP BACK BUTTON --- */}
       <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
-        <button 
-          className="btn btn-outline-custom rounded-pill"
-          onClick={() => navigate('/Maintenance/Machine/weekly')}
-          style={{ fontSize: '0.85rem' }}
-        >
+        <button className="btn btn-outline-custom rounded-pill" onClick={() => navigate('/Maintenance/Machine/weekly')} style={{ fontSize: '0.85rem' }}>
           ← Back to Weekly Reports
         </button>
       </div>
 
       <div className="white-card mx-auto animate-fade-in" style={{ maxWidth: '1200px' }}>
-        
-        {/* HEADER */}
         <div className="p-3 p-md-4" style={{ borderBottom: '1px solid #e9ecef', background: 'white', borderRadius: '20px 20px 0 0' }}>
-          <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#e91e63' }}>
-            Machine Preventive Maintenance
-          </h3>
-          <p className="text-muted mb-0" style={{ fontSize: '0.85rem' }}>
-            Complete maintenance checklist and tracking system
-          </p>
+          <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#e91e63' }}>Machine Preventive Maintenance</h3>
+          <p className="text-muted mb-0" style={{ fontSize: '0.85rem' }}>Complete maintenance checklist and tracking system</p>
         </div>
 
         <div className="card-body p-3 p-md-4">
           <form onSubmit={handleSubmit}>
-            
-            {/* --- SECTION 1: META DATA INPUTS --- */}
-            <div className="section-header">
-              <h5>General Information</h5>
-            </div>
+            <div className="section-header"><h5>General Information</h5></div>
             
             <div className="row g-3 mb-4">
               <div className="col-12 col-md-4">
@@ -344,21 +246,12 @@ const MachinePreventMainForm = () => {
               </div>
             </div>
 
-            {/* --- SECTION 2: STATIC CHECKLIST TABLE --- */}
-            <div className="section-header mt-4">
-              <h5>Maintenance Checklist</h5>
-            </div>
+            <div className="section-header mt-4"><h5>Maintenance Checklist</h5></div>
 
-            <div 
-              className="collapse-header d-flex justify-content-between align-items-center mb-3 text-slate-700"
-              onClick={() => setIsChecklistOpen(!isChecklistOpen)}
-            >
+            <div className="collapse-header d-flex justify-content-between align-items-center mb-3 text-slate-700" onClick={() => setIsChecklistOpen(!isChecklistOpen)}>
               <div>
                 <span className="fw-bold">Checklist Items</span>
                 <span className="badge-count">{tableData.length}</span>
-                <small className="text-muted ms-2 d-none d-md-inline-block">
-                  {isChecklistOpen ? '▼ Click to collapse' : '▶ Click to expand'}
-                </small>
               </div>
               <span style={{ color: '#e91e63', fontWeight: 'bold' }}>{isChecklistOpen ? '−' : '+'}</span>
             </div>
@@ -380,55 +273,24 @@ const MachinePreventMainForm = () => {
                     <tbody>
                       {tableData.map((row, index) => (
                         <tr key={row.id}>
-                          <td className="text-md-center fw-bold text-muted">
-                            <span className="mobile-label">Sr. No.</span>
-                            {index + 1}
-                          </td>
-                          <td className="fw-medium">
-                            <span className="mobile-label">Check Point</span>
-                            {row.point}
-                          </td>
-                          <td>
-                            <span className="mobile-label">Method</span>
-                            <div className={getMethodBadgeClass(row.method)}>
-                              {row.method || "Not Specified"}
-                            </div>
-                          </td>
+                          <td className="text-md-center fw-bold text-muted"><span className="mobile-label">Sr. No.</span>{index + 1}</td>
+                          <td className="fw-medium"><span className="mobile-label">Check Point</span>{row.point}</td>
+                          <td><span className="mobile-label">Method</span><div className={getMethodBadgeClass(row.method)}>{row.method || "Not Specified"}</div></td>
                           <td>
                             <span className="mobile-label required-field">Before Maint.</span>
-                            <select 
-                              className="form-select border-1 bg-light shadow-sm w-100" 
-                              value={row.before} 
-                              onChange={(e) => handleBeforeChange(row.id, e.target.value)} 
-                              required
-                            >
-                              {statusOptions.map((opt, i) => (
-                                <option key={i} value={opt}>{opt || 'Select...'}</option>
-                              ))}
+                            <select className="form-select border-1 bg-light shadow-sm w-100" value={row.before} onChange={(e) => handleBeforeChange(row.id, e.target.value)} required>
+                              {statusOptions.map((opt, i) => <option key={i} value={opt}>{opt || 'Select...'}</option>)}
                             </select>
                           </td>
                           <td>
                             <span className="mobile-label required-field">After Maint.</span>
-                            <select 
-                              className="form-select border-1 bg-light shadow-sm w-100" 
-                              value={row.after} 
-                              onChange={(e) => handleAfterChange(row.id, e.target.value)} 
-                              required
-                            >
-                              {statusOptions.map((opt, i) => (
-                                <option key={i} value={opt}>{opt || 'Select...'}</option>
-                              ))}
+                            <select className="form-select border-1 bg-light shadow-sm w-100" value={row.after} onChange={(e) => handleAfterChange(row.id, e.target.value)} required>
+                              {statusOptions.map((opt, i) => <option key={i} value={opt}>{opt || 'Select...'}</option>)}
                             </select>
                           </td>
                           <td>
                             <span className="mobile-label">Remarks</span>
-                            <input 
-                              type="text" 
-                              className="form-control border-1 bg-light shadow-sm w-100" 
-                              placeholder="Add remarks..." 
-                              value={row.remarks} 
-                              onChange={(e) => handleRemarksChange(row.id, e.target.value)}
-                            />
+                            <input type="text" className="form-control border-1 bg-light shadow-sm w-100" placeholder="Add remarks..." value={row.remarks} onChange={(e) => handleRemarksChange(row.id, e.target.value)} />
                           </td>
                         </tr>
                       ))}
@@ -438,43 +300,23 @@ const MachinePreventMainForm = () => {
               </div>
             )}
 
-            {/* Legend Section */}
             <div className="d-flex flex-wrap align-items-center gap-3 gap-md-4 p-3 rounded-3 mb-4" style={{ backgroundColor: '#f8f9fa', border: '1px dashed #dee2e6' }}>
               <span className="text-sm fw-bold w-100 w-md-auto" style={{ color: '#495057' }}>Legends:</span>
-              <div className="d-flex align-items-center gap-2">
-                <span className="w-4 h-4 rounded-circle" style={{ width: '14px', height: '14px', backgroundColor: '#10b981', borderRadius: '50%' }}></span>
-                <span className="text-sm fw-medium" style={{ color: '#495057' }}>Ok</span>
-              </div>
-              <div className="d-flex align-items-center gap-2">
-                <span className="w-4 h-4 rounded-circle" style={{ width: '14px', height: '14px', backgroundColor: '#ef4444', borderRadius: '50%' }}></span>
-                <span className="text-sm fw-medium" style={{ color: '#495057' }}>Not Ok</span>
-              </div>
-              <div className="d-flex align-items-center gap-2">
-                <span className="w-4 h-4 rounded-circle" style={{ width: '14px', height: '14px', backgroundColor: '#f59e0b', borderRadius: '50%' }}></span>
-                <span className="text-sm fw-medium" style={{ color: '#495057' }}>Ng (No Good)</span>
-              </div>
+              <div className="d-flex align-items-center gap-2"><span className="w-4 h-4 rounded-circle" style={{ width: '14px', height: '14px', backgroundColor: '#10b981', borderRadius: '50%' }}></span><span className="text-sm fw-medium" style={{ color: '#495057' }}>Ok</span></div>
+              <div className="d-flex align-items-center gap-2"><span className="w-4 h-4 rounded-circle" style={{ width: '14px', height: '14px', backgroundColor: '#ef4444', borderRadius: '50%' }}></span><span className="text-sm fw-medium" style={{ color: '#495057' }}>Not Ok</span></div>
+              <div className="d-flex align-items-center gap-2"><span className="w-4 h-4 rounded-circle" style={{ width: '14px', height: '14px', backgroundColor: '#f59e0b', borderRadius: '50%' }}></span><span className="text-sm fw-medium" style={{ color: '#495057' }}>Ng (No Good)</span></div>
             </div>
 
-            {/* --- ACTION BUTTONS --- */}
             <div className="d-flex flex-column flex-sm-row justify-content-end gap-3 mt-4 pt-3 no-print border-top">
-              <button 
-                type="button" 
-                className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto" 
-                onClick={handleReset}
-                style={{ fontWeight: '600', border: '1px solid #dee2e6' }}
-              >
-                Reset Data
-              </button>
-              <button type="submit" className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto">
-                <i className="bi bi-floppy me-2"></i> Save Record
+              <button type="button" className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto" onClick={handleReset} disabled={isSubmitting} style={{ fontWeight: '600', border: '1px solid #dee2e6' }}>Reset Data</button>
+              <button type="submit" className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto" disabled={isSubmitting}>
+                <i className="bi bi-floppy me-2"></i> {isSubmitting ? 'Saving...' : 'Save Record'}
               </button>
             </div>
-
           </form>
         </div>
       </div>
 
-      {/* Success Toast */}
       {showSuccess && (
         <div className="position-fixed bottom-0 end-0 m-3 m-md-4 bg-success text-white px-4 py-3 rounded-3 shadow-lg z-3" style={{ minWidth: '250px' }}>
           <div className="d-flex align-items-center gap-2">

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import axios from "axios";
 
@@ -102,7 +103,7 @@ const RMQualityPlanForm = () => {
     <div className="min-h-screen bg-slate-50 py-6 px-4 font-sans">
       <div className="w-full max-w-5xl mx-auto">
         <div className="bg-white rounded-xl shadow-lg overflow-hidden border-t-4 border-emerald-400">
-          
+         
           {/* Header Section (Under Development removed from here) */}
           <div className="bg-gradient-to-r from-white to-emerald-50 px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-3">
@@ -125,10 +126,10 @@ const RMQualityPlanForm = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="p-5 md:p-6 space-y-8">
-            
+           
             {/* STEP 1: DEFINE PROPERTIES */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              
+             
               {/* Chemical Properties */}
               <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <div className="flex justify-between items-center mb-3">
@@ -210,14 +211,14 @@ const RMQualityPlanForm = () => {
               <h3 className="text-sm font-black text-emerald-800 uppercase mb-4 text-center tracking-widest">
                 4. Enter Properties Values (Data Entry)
               </h3>
-              
+             
               {formData.materials.map((mat, matIndex) => (
                 <div key={`entry-${matIndex}`} className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-slate-200">
                   <h4 className="font-bold text-slate-700 mb-3 pb-2 border-b border-slate-100 flex items-center gap-2">
-                    <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs">#{matIndex + 1}</span> 
+                    <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs">#{matIndex + 1}</span>
                     {mat.grade || "Unnamed Material"}
                   </h4>
-                  
+                 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Chemical Entry */}
                     <div>
@@ -228,12 +229,12 @@ const RMQualityPlanForm = () => {
                             <label className="text-xs font-semibold text-slate-600 w-1/3 truncate" title={prop.parameter}>
                               {prop.parameter || `Property ${propIndex + 1}`}
                             </label>
-                            <input 
-                              type="text" 
-                              placeholder="Value" 
-                              value={mat.chemValues[propIndex] || ""} 
+                            <input
+                              type="text"
+                              placeholder="Value"
+                              value={mat.chemValues[propIndex] || ""}
                               onChange={(e) => handleValueChange(matIndex, 'chemValues', propIndex, e.target.value)}
-                              className="w-2/3 bg-slate-50 border border-slate-200 rounded p-1.5 text-xs font-bold text-slate-800 outline-none focus:border-emerald-400 focus:bg-white" 
+                              className="w-2/3 bg-slate-50 border border-slate-200 rounded p-1.5 text-xs font-bold text-slate-800 outline-none focus:border-emerald-400 focus:bg-white"
                             />
                           </div>
                         ))}
@@ -249,12 +250,12 @@ const RMQualityPlanForm = () => {
                             <label className="text-xs font-semibold text-slate-600 w-1/3 truncate" title={prop.parameter}>
                               {prop.parameter || `Property ${propIndex + 1}`}
                             </label>
-                            <input 
-                              type="text" 
-                              placeholder="Value" 
-                              value={mat.mechValues[propIndex] || ""} 
+                            <input
+                              type="text"
+                              placeholder="Value"
+                              value={mat.mechValues[propIndex] || ""}
                               onChange={(e) => handleValueChange(matIndex, 'mechValues', propIndex, e.target.value)}
-                              className="w-2/3 bg-slate-50 border border-slate-200 rounded p-1.5 text-xs font-bold text-slate-800 outline-none focus:border-emerald-400 focus:bg-white" 
+                              className="w-2/3 bg-slate-50 border border-slate-200 rounded p-1.5 text-xs font-bold text-slate-800 outline-none focus:border-emerald-400 focus:bg-white"
                             />
                           </div>
                         ))}
@@ -281,12 +282,12 @@ const RMQualityPlanForm = () => {
             <div className="flex flex-col border-t border-slate-200 pt-5 mt-2 space-y-4">
               <div>
                 <label className="block text-[10px] font-black text-slate-500 mb-1 uppercase tracking-wider">Note</label>
-                <input 
-                  type="text" 
-                  name="note" 
-                  value={formData.note} 
-                  onChange={handleChange} 
-                  className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-xs text-slate-600 outline-none focus:bg-white focus:border-emerald-400 font-semibold" 
+                <input
+                  type="text"
+                  name="note"
+                  value={formData.note}
+                  onChange={handleChange}
+                  className="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-xs text-slate-600 outline-none focus:bg-white focus:border-emerald-400 font-semibold"
                 />
               </div>
               <div className="flex justify-end">

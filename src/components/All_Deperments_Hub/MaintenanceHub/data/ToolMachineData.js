@@ -75,7 +75,7 @@ export const toolReports = [
     icon: "bi-hammer",
     color: "#ef4444",
     bgColor: "#fef2f2",
-    isLive: false,
+    isLive: true,
   },
 ];
 

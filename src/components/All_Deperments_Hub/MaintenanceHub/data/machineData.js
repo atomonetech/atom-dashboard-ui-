@@ -73,7 +73,7 @@ export const machineDailyReports = [
         bgColor: "#fef2f2",
         isLive: true,
     },
-    // ✅ FIX: id aur fillRoute dono ko "Poka-Yoke" kar diya taaki router confuse na ho
+    // ✅ Poka-Yoke fixed for proper routing
     { 
         id: "Poka-Yoke", 
         title: "Daily Poka Yokes Check", 
@@ -91,32 +91,42 @@ export const machineDailyReports = [
 ];
 
 // 3. Machines Data for Weekly Sub-Menu
+
 const machinesWithColors = [
-    { name: "VMM", color: "#3b82f6", bgColor: "#eff6ff" },
-    { name: "Projection WELD", color: "#8b5cf6", bgColor: "#ede9fe" },
-    { name: "VMC", color: "#ec4899", bgColor: "#fce7f3" },
-    { name: "CNC", color: "#10b981", bgColor: "#d1fae5" },
-    { name: "Power Press", color: "#f59e0b", bgColor: "#fef3c7" },
-    { name: "Hydraulic MIG", color: "#ef4444", bgColor: "#fef2f2" },
-    { name: "TIG", color: "#06b6d4", bgColor: "#cffafe" },
-    { name: "Spot Welding", color: "#6366f1", bgColor: "#e0e7ff" },
-    { name: "Compressor", color: "#14b8a6", bgColor: "#ccfbf1" },
-    { name: "Lathe", color: "#f43f5e", bgColor: "#ffe4e6" },
-    { name: "Drill Machine", color: "#84cc16", bgColor: "#ecfccb" },
-    { name: "Surface Grinder", color: "#d946ef", bgColor: "#fae8ff" },
-    { name: "Belt Grinder", color: "#0ea5e9", bgColor: "#e0f2fe" },
-    { name: "Base Grinder", color: "#f97316", bgColor: "#ffedd5" },
-    { name: "Tapping Machine", color: "#eab308", bgColor: "#fef9c3" },
-    { name: "Pipe Cutter", color: "#64748b", bgColor: "#f1f5f9" },
-    { name: "Vibra", color: "#1d4ed8", bgColor: "#dbeafe" },
-    { name: "DIP Molding", color: "#be185d", bgColor: "#fce7f3" },
-    { name: "Servo Press", color: "#047857", bgColor: "#d1fae5" },
+    { id: "vmm", name: "VMM", color: "#3b82f6", bgColor: "#eff6ff" },
+    { id: "projection_weld", name: "Projection WELD", color: "#8b5cf6", bgColor: "#ede9fe" },
+    { id: "vmc", name: "VMC", color: "#ec4899", bgColor: "#fce7f3" },
+    { id: "cnc", name: "CNC", color: "#10b981", bgColor: "#d1fae5" },
+    { id: "power_press", name: "Power Press", color: "#f59e0b", bgColor: "#fef3c7" },
+    { id: "hydraulic_mig", name: "Hydraulic MIG", color: "#ef4444", bgColor: "#fef2f2" },
+    { id: "tig_welding", name: "TIG", color: "#06b6d4", bgColor: "#cffafe" },
+    { id: "spot_welding", name: "Spot Welding", color: "#6366f1", bgColor: "#e0e7ff" },
+    { id: "compressor", name: "Compressor", color: "#14b8a6", bgColor: "#ccfbf1" },
+    { id: "lathe_machine", name: "Lathe", color: "#f43f5e", bgColor: "#ffe4e6" },
+    { id: "vertical_drill", name: "Drill Machine", color: "#84cc16", bgColor: "#ecfccb" },
+    { id: "surface_grinder", name: "Surface Grinder", color: "#d946ef", bgColor: "#fae8ff" },
+    { id: "belt_grinder", name: "Belt Grinder", color: "#0ea5e9", bgColor: "#e0f2fe" },
+    { id: "base_grinder", name: "Base Grinder", color: "#f97316", bgColor: "#ffedd5" },
+    // { id: "tapping_machine", name: "Tapping Machine", color: "#eab308", bgColor: "#fef9c3" }, // ✅ Tumhari request: Tapping Machine nikalna nahi hai
+    { id: "pipe_cutting", name: "Pipe Cutter", color: "#64748b", bgColor: "#f1f5f9" },
+    { id: "vibra", name: "Vibra", color: "#1d4ed8", bgColor: "#dbeafe" },
+    { id: "dip_molding", name: "DIP Molding", color: "#be185d", bgColor: "#fce7f3" },
+    { id: "servo_press", name: "Servo Press", color: "#047857", bgColor: "#d1fae5" },
 ];
 
 export const weeklyMachineSubReports = machinesWithColors.map((m) => {
-    const idString = `weekly_pm_${m.name.replace(/\s+/g, "_").toLowerCase()}`;
-    const liveStatus = idString.includes('cnc') || idString.includes('vmc') || idString.includes('power_press');
-    
+    // 🔥 Puraana '.replace()' wala logic hata diya, ab direct custom 'id' jayega jo backend se match hai
+    const idString = m.id; 
+
+    // Tumhara live status condition maine naye IDs ke hisaab se update kar diya hai
+    const liveStatus = [
+        'cnc', 'vmc', 'power_press', 'dip_molding', 'servo_press', 
+        'hydraulic_mig', 'pipe_cutting', 'compressor', 'spot_welding', 
+        'tig_welding', 'projection_weld', 'vmm', 'lathe_machine', 
+        'vertical_drill', 'surface_grinder', 'belt_grinder', 
+        'base_grinder', 'tapping_machine', 'vibra'
+    ].includes(idString);
+
     return {
         id: idString,
         title: `${m.name} Weekly Maint.`,
@@ -141,7 +151,7 @@ export const machineMonthlyReports = [
         icon: "bi-file-earmark-bar-graph",
         color: "#8b5cf6",
         bgColor: "#f5f3ff",
-        isLive: true,
+        isLive: false,
     },
     {
         id: "why_why_analysis",

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { getApiUrl } from '../../../../config/api'; 
 
 const TIGMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ const TIGMaintenanceForm = () => {
   ];
 
   const initialMetaData = {
-    machineName: 'TIG WELDING MACHINE',
+    machineName: '', // <-- CHANGE: User input ke liye khali rakha hai
     date: new Date().toISOString().split('T')[0],
     machineNo: '',
     location: '',
@@ -36,7 +37,7 @@ const TIGMaintenanceForm = () => {
 
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
   
@@ -52,13 +53,47 @@ const TIGMaintenanceForm = () => {
     setTableData(tableData.map(row => row.id === id ? { ...row, remarks: value } : row));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setShowSuccess(true);
-    setTimeout(() => { 
-      setShowSuccess(false); 
-      window.scrollTo({ top: 0, behavior: 'smooth' }); 
-    }, 2000);
+    setIsSubmitting(true);
+
+    const payload = {
+      machineName: metaData.machineName,
+      date: metaData.date,
+      machineNo: metaData.machineNo,
+      location: metaData.location,
+      specification: metaData.specification,
+      maintenancePersonnel: metaData.maintenancePersonnel,
+      preparedBy: metaData.preparedBy,
+      checkedBy: metaData.checkedBy,
+      tableData: tableData
+    };
+
+    try {
+      const response = await fetch(getApiUrl('/api/tig-welding-maintenance/save/'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        alert("Success! TIG Maintenance record has been saved.");
+        
+        setMetaData(initialMetaData);
+        setTableData(initialChecklist);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        const errorData = await response.json();
+        alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
+      }
+    } catch (error) {
+      console.error("Error saving data:", error);
+      alert("An error occurred while saving the data.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -82,13 +117,17 @@ const TIGMaintenanceForm = () => {
           transition: all 0.3s ease; 
         }
         
-        .btn-theme:hover { 
+        .btn-theme:hover:not(:disabled) { 
           background: #049cb6; 
           transform: translateY(-2px); 
           box-shadow: 0 8px 15px rgba(5, 182, 212, 0.3); 
         }
 
-        /* --- STYLED BACK BUTTON --- */
+        .btn-theme:disabled {
+          background: #94a3b8;
+          cursor: not-allowed;
+        }
+
         .btn-outline-custom { 
           background: white;
           color: #05B6D4; 
@@ -128,7 +167,6 @@ const TIGMaintenanceForm = () => {
         select option[value="Ok"] { color: #10b981; font-weight: bold; }
         select option[value="Not Ok"] { color: #ef4444; font-weight: bold; }
 
-        /* Desktop Table CSS */
         .ss-table-container { border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; }
         .ss-table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
         .ss-table thead th { 
@@ -140,7 +178,6 @@ const TIGMaintenanceForm = () => {
         }
         .ss-table tbody td { padding: 10px; vertical-align: middle; }
 
-        /* Magic Mobile View CSS */
         .mobile-label { display: none; }
         @media (max-width: 767px) {
           .ss-table-container { border: none; background: transparent; }
@@ -175,7 +212,6 @@ const TIGMaintenanceForm = () => {
         }
       `}</style>
 
-      {/* --- TOP BACK BUTTON --- */}
       <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
         <button 
           className="btn btn-outline-custom rounded-pill"
@@ -186,7 +222,6 @@ const TIGMaintenanceForm = () => {
         </button>
       </div>
 
-      {/* Header Panel */}
       <div className="theme-card mx-auto mb-4 p-3 p-md-4 d-flex justify-content-between align-items-center" style={{ maxWidth: '1200px', borderTop: '6px solid #05B6D4' }}>
         <div>
           <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#1e293b' }}>TIG WELDING MAINTENANCE</h3>
@@ -196,11 +231,19 @@ const TIGMaintenanceForm = () => {
 
       <div className="theme-card mx-auto p-3 p-md-4" style={{ maxWidth: '1200px' }}>
         <form onSubmit={handleSubmit}>
-          {/* General Information */}
           <div className="row g-3 mb-4">
+            {/* <-- CHANGE: Editable Machine Name Input --> */}
             <div className="col-12 col-md-4">
               <label className="form-label">Machine Name</label>
-              <input type="text" className="form-control bg-light" value={metaData.machineName} readOnly />
+              <input 
+                type="text" 
+                className="form-control" 
+                name="machineName" 
+                value={metaData.machineName} 
+                onChange={handleMetaChange} 
+                placeholder="Enter Machine Name"
+                required 
+              />
             </div>
             <div className="col-12 col-md-4">
               <label className="form-label">Date</label>
@@ -283,7 +326,6 @@ const TIGMaintenanceForm = () => {
             </div>
           )}
 
-          {/* Signatures */}
           <div className="row g-4 mt-2">
             <div className="col-12 col-md-6">
               <div className="p-3 rounded-3" style={{ border: '1px dashed #cbd5e1' }}>
@@ -300,18 +342,16 @@ const TIGMaintenanceForm = () => {
           </div>
 
           <div className="d-flex flex-column flex-sm-row justify-content-end mt-4 pt-3">
-            <button type="submit" className="btn btn-theme rounded-pill px-5 w-100 w-sm-auto">
-              Submit Record
+            <button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="btn btn-theme rounded-pill px-5 w-100 w-sm-auto"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Record'}
             </button>
           </div>
         </form>
       </div>
-
-      {showSuccess && (
-        <div className="position-fixed bottom-0 end-0 m-4 p-3 bg-dark text-white rounded-4 shadow-lg">
-          ✨ Record saved successfully!
-        </div>
-      )}
     </div>
   );
 };

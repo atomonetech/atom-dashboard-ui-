@@ -148,7 +148,7 @@ import ReworkRepair from '../components/All_Deperments_Hub/QaHub/forms/daily/Rew
 import DeviationApprovalForm from '../components/All_Deperments_Hub/QaHub/forms/daily/DeviationApprovalForm';
 import GoodReceiptFrom from '../components/All_Deperments_Hub/QaHub/forms/daily/GoodReceiptFrom';
 import SampleInspectionReport from '../components/All_Deperments_Hub/QaHub/forms/daily/SampleInspectionReport';
-
+import RMQualityPlanForm from '../components/All_Deperments_Hub/QaHub/forms/daily/RMQualityPlanForm';
 // ========== DAILY PRINTS IMPORTS ==========
 import IncomingMaterialprint from '../components/All_Deperments_Hub/QaHub/forms/daily/IncomingMaterialprint';
 import RedBinprint from '../components/All_Deperments_Hub/QaHub/forms/daily/RedBinprint';
@@ -218,6 +218,7 @@ const QaRoutes = () => {
             <Route path="daily/sample-inspection" element={<SampleInspectionReport />} />
             <Route path="daily/Deviation-Approval-Form" element={<DeviationApprovalForm />} />
             <Route path="daily/Good-Receipt" element={<GoodReceiptFrom />} />
+            <Route path="daily/RM-Quality-Plan" element={<RMQualityPlanForm />} />
 
             {/* Daily Prints/Reports */}
             <Route path="daily/incomingmaterial-report" element={<IncomingMaterialprint />} />
