@@ -1,203 +1,681 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const MHEListForm = () => {
-    const navigate = useNavigate();
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    // State
-    const [updatedDate, setUpdatedDate] = useState(new Date().toLocaleDateString('en-GB'));
-    const [equipmentList, setEquipmentList] = useState([
-        { id: Date.now(), partDetail: '', containerDetail: '', handlingType: 'INHOUSE' }
-    ]);
+  const today = new Date().toISOString().split("T")[0];
 
-    const addRow = () => {
-        setEquipmentList([...equipmentList, { id: Date.now(), partDetail: '', containerDetail: '', handlingType: 'INHOUSE' }]);
-    };
+  const checklistPoints = [
+    "Painting",
+    "Name Plate",
+    "Locking System",
+    "Castor Wheel",
+    "Fork Guide",
+    "Plastic Pipe (PP) Strip",
+    "Transparent Pipe",
+    "Cup",
+    "Lock Pin",
+    "Cushioning",
+    "Cantilevers",
+  ];
 
-    const removeRow = (id) => {
-        if (equipmentList.length > 1) {
-            setEquipmentList(equipmentList.filter(item => item.id !== id));
+  const createRow = (point) => ({
+    point,
+
+    pm1Date: "",
+    pm1Status: "",
+    pm1Remarks: "",
+
+    pm2Date: "",
+    pm2Status: "",
+    pm2Remarks: "",
+
+    pm3Date: "",
+    pm3Status: "",
+    pm3Remarks: "",
+  });
+
+  const [date, setDate] = useState(today);
+  const navigate = useNavigate();
+  const [partName, setPartName] = useState("");
+  const [trolleyNo, setTrolleyNo] = useState("");
+  const [frequency, setFrequency] = useState("4 Months");
+  const [selectedPM, setSelectedPM] = useState("pm1");
+  const [remarks, setRemarks] = useState("");
+  const [checkedBy, setCheckedBy] = useState("");
+  const [verifiedBy, setVerifiedBy] = useState("");
+
+  const [rows, setRows] = useState(
+    checklistPoints.map((item) => createRow(item)),
+  );
+
+  const updateCell = (index, key, value) => {
+    const updated = [...rows];
+    updated[index][key] = value;
+    setRows(updated);
+  };
+
+  const handleReset = () => {
+    setPartName("");
+    setTrolleyNo("");
+    setFrequency("4 Months");
+    setRemarks("");
+    setCheckedBy("");
+    setVerifiedBy("");
+    setDate(today);
+    setRows(checklistPoints.map((item) => createRow(item)));
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    alert("✅ Preventive Maintenance Checklist Saved Successfully!");
+  };
+
+  return (
+    <>
+      <style>{`
+        *{
+          margin:0;
+          padding:0;
+          box-sizing:border-box;
         }
-    };
 
-    const handleInputChange = (id, field, value) => {
-        setEquipmentList(equipmentList.map(item => item.id === id ? { ...item, [field]: value } : item));
-    };
+        body{
+          background:white;
+        }
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        setTimeout(() => {
-            alert("List Saved!");
-            setIsSubmitting(false);
-        }, 1000);
-    };
+        .pm-root{
+          min-height:100vh;
+          background:#f0fafb;
+          padding:20px;
+          font-family:Inter,sans-serif;
+        }
 
-    return (
-        <div className="min-h-screen bg-[#f0f4f9] font-['Inter',system-ui,sans-serif] pb-10">
-            
-            <div className="w-full max-w-5xl mx-auto px-4 mt-6">
+        .pm-container{
+          max-width:1500px;
+          margin:auto;
+          background:white;
+          border-radius:16px;
+          border:1px solid #cceef3;
+          padding:20px;
+          box-shadow:0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .header{
+          border:2px solid #0891b2;
+          border-radius:12px;
+          overflow:hidden;
+          margin-bottom:20px;
+        }
+
+        .header-top{
+          display:grid;
+          grid-template-columns:180px 1fr 220px;
+        }
+
+        .logo-section{
+          display:flex;
+          justify-content:center;
+          align-items:center;
+          background:#e0f7fa;
+          border-right:1px solid #cceef3;
+          min-height:90px;
+        }
+
+        .logo-box{
+          width:120px;
+          height:50px;
+          border:2px dashed #0891b2;
+          display:flex;
+          justify-content:center;
+          align-items:center;
+          border-radius:8px;
+          color:#0891b2;
+          font-weight:600;
+          font-size:12px;
+        }
+
+        .title-section{
+          display:flex;
+          justify-content:center;
+          align-items:center;
+          padding:20px;
+          text-align:center;
+          background:white;
+          border-right:1px solid #cceef3;
+        }
+
+        .title-section h2{
+          font-size:20px;
+          color:#0e4a55;
+          font-weight:700;
+        }
+
+        .meta-section{
+          background:#f0fafb;
+          padding:15px;
+        }
+
+        .meta-section label{
+          display:block;
+          margin-bottom:5px;
+          font-size:12px;
+          font-weight:600;
+          color:#0e4a55;
+        }
+
+        .meta-section input{
+          width:100%;
+          padding:8px;
+          border:1px solid #cceef3;
+          border-radius:8px;
+        }
+
+        .info-grid{
+          display:grid;
+          grid-template-columns:1fr 1fr 1fr;
+          gap:15px;
+          margin-bottom:20px;
+        }
+
+        .field{
+          display:flex;
+          flex-direction:column;
+        }
+
+        .field label{
+          margin-bottom:5px;
+          font-size:12px;
+          font-weight:600;
+          color:#0e4a55;
+        }
+
+        .field input,
+        .field select,
+        .field textarea{
+          padding:10px;
+          text:gray-700;
+          border:1px solid #cceef3;
+          border-radius:8px;
+          background:transparent;
+        }
+
+        .table-wrapper{
+          overflow-x:auto;
+        }
+
+        table{
+          width:100%;
+          border-collapse:collapse;
+          min-width:1300px;
+        }
+
+        th{
+          background:linear-gradient(135deg,#0891b2,#06b6d4);
+          color:white;
+          border:1px solid #0e7490;
+          padding:10px;
+          font-size:12px;
+        }
+
+        td{
+          border:1px solid #cceef3;
+          padding:4px;
+        }
+
+        td input{
+          width:100%;
+          border:none;
+          padding:7px;
+          outline:none;
+          background:transparent;
+        }
+
+        tr:nth-child(even){
+          background:#f8fdfe;
+        }
+
+        .footer{
+          margin-top:20px;
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:15px;
+        }
+
+        .remarks{
+          margin-top:20px;
+        }
+
+        .legend{
+          margin-top:20px;
+          display:flex;
+          gap:10px;
+          flex-wrap:wrap;
+        }
+
+        .badge{
+          padding:8px 14px;
+          border-radius:20px;
+          font-size:12px;
+          font-weight:600;
+        }
+
+        .ok{
+          background:#dcfce7;
+          color:#15803d;
+        }
+
+        .notok{
+          background:#fee2e2;
+          color:#dc2626;
+        }
+
+        .na{
+          background:#fef3c7;
+          color:#d97706;
+        }
+
+        .action-bar{
+          margin-top:25px;
+          display:flex;
+          justify-content:flex-end;
+          gap:10px;
+        }
+
+        .btn{
+          border:none;
+          padding:12px 24px;
+          border-radius:10px;
+          cursor:pointer;
+          font-weight:600;
+        }
+
+        .reset-btn{
+          background:#e2e8f0;
+        }
+
+        .save-btn{
+          background:linear-gradient(135deg,#0891b2,#06b6d4);
+          color:white;
+        }
+
+        @media(max-width:900px){
+          .header-top{
+            grid-template-columns:1fr;
+          }
+
+          .title-section{
+            border-right:none;
+          }
+
+          .info-grid{
+            grid-template-columns:1fr;
+          }
+
+          .footer{
+            grid-template-columns:1fr;
+          }
+        }
+          .company-logo{
+  width:140px;
+  height:80px;
+  object-fit:contain;
+}
+
+.checkpoint-cell{
+  min-width:300px;
+  font-weight:600;
+  color:#0e4a55;
+}
+
+.status-group{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.status-group label{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  font-size:13px;
+}
+
+.status-group input{
+  width:auto;
+}
+
+td{
+  padding:12px;
+  font-size:14px;
+}
+
+tbody tr{
+  height:65px;
+}
+      `}</style>
+
+      <div className="pm-root">
+        <form className="pm-container" onSubmit={handleSave}>
+          {/* HEADER */}
+          <div className="header">
+              <button
+              type="button"
+              className="back-btn"
+              onClick={() => navigate(-1)}
+            >
+              ‹
+            </button>
+            <div className="header-top">
                 
-                {/* Back Button */}
-                <div className="flex justify-start mb-4">
-                    <button 
-                        onClick={() => navigate(-1)}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-all text-sm font-medium shadow-sm"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                        Back to MHE Hub
-                    </button>
-                </div>
+              <div className="logo-section">
+                <img
+                  src="/logo1.jpg"
+                  alt="Company Logo"
+                  className="company-logo"
+                />
+              </div>
 
-                {/* Header - Sky Blue, Title Left, Date Right */}
-                <div className="bg-gradient-to-r from-sky-500 to-sky-600 rounded-t-xl px-6 py-5 shadow-md">
-                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                        {/* Left Side - Title */}
-                        <div className="flex-1 text-left">
-                            <h1 className="text-2xl font-bold text-white tracking-tight">
-                                Material Handling Equipment List
-                            </h1>
-                            <p className="text-sky-100 text-xs mt-1">MHE Inventory & Tracking</p>
-                        </div>
-                        
-                        {/* Right Side - Date */}
-                        <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20">
-                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <span className="text-sm text-white font-medium">{updatedDate}</span>
-                        </div>
-                    </div>
-                </div>
+              <div className="title-section">
+                <h2>
+                  PREVENTIVE MAINTENANCE OF MATERIAL HANDLING EQUIPMENT
+                  CHECKLIST
+                </h2>
+              </div>
 
-                {/* Main Form Card */}
-                <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }} 
-                    className="bg-white rounded-b-xl shadow-md border border-t-0 border-gray-200 overflow-hidden"
-                >
-                    <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
-                        
-                        {/* Control Section */}
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                                <div className="w-1 h-4 bg-sky-400 rounded-full"></div>
-                                <h3 className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Equipment Grid</h3>
-                                <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{equipmentList.length} Items</span>
-                            </div>
-                            <button 
-                                type="button" 
-                                onClick={addRow}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 text-sky-700 rounded-lg font-semibold text-[11px] hover:bg-sky-100 transition-colors"
-                            >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                                Add Row
-                            </button>
-                        </div>
-
-                        {/* Responsive Table */}
-                        <div className="overflow-x-auto rounded-lg border border-gray-200">
-                            <table className="w-full text-left border-collapse min-w-[600px]">
-                                <thead className="bg-gray-50 border-b border-gray-200">
-                                    <tr>
-                                        <th className="p-3 w-12 text-center text-xs font-semibold text-gray-500">#</th>
-                                        <th className="p-3 text-xs font-semibold text-gray-500">Part Name / Number</th>
-                                        <th className="p-3 text-xs font-semibold text-gray-500">Container / Tray Detail</th>
-                                        <th className="p-3 w-32 text-center text-xs font-semibold text-gray-500">Type</th>
-                                        <th className="p-3 w-10 text-center text-xs font-semibold text-gray-500"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    <AnimatePresence initial={false}>
-                                        {equipmentList.map((item, index) => (
-                                            <motion.tr key={item.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="hover:bg-gray-50/50 transition-colors">
-                                                <td className="p-3 text-center text-gray-400 text-xs font-mono">
-                                                    {String(index + 1).padStart(2, '0')}
-                                                </td>
-                                                <td className="p-2">
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="Enter part name / number..."
-                                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm text-gray-700 focus:bg-white focus:border-sky-300 focus:ring-1 focus:ring-sky-200 transition-all" 
-                                                        value={item.partDetail}
-                                                        onChange={(e) => handleInputChange(item.id, 'partDetail', e.target.value)}
-                                                    />
-                                                </td>
-                                                <td className="p-2">
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="Enter container / tray details..."
-                                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm text-gray-700 focus:bg-white focus:border-sky-300 focus:ring-1 focus:ring-sky-200 transition-all" 
-                                                        value={item.containerDetail}
-                                                        onChange={(e) => handleInputChange(item.id, 'containerDetail', e.target.value)}
-                                                    />
-                                                </td>
-                                                <td className="p-2">
-                                                    <select 
-                                                        className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium outline-none cursor-pointer focus:border-sky-300"
-                                                        value={item.handlingType}
-                                                        onChange={(e) => handleInputChange(item.id, 'handlingType', e.target.value)}
-                                                    >
-                                                        <option value="INHOUSE">Inhouse</option>
-                                                        <option value="DISPATCH">Dispatch</option>
-                                                    </select>
-                                                </td>
-                                                <td className="p-2 text-center">
-                                                    <button 
-                                                        type="button"
-                                                        onClick={() => removeRow(item.id)}
-                                                        className="text-gray-300 hover:text-red-500 transition-colors p-1"
-                                                        disabled={equipmentList.length === 1}
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                        </svg>
-                                                    </button>
-                                                </td>
-                                            </motion.tr>
-                                        ))}
-                                    </AnimatePresence>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* Footer Section */}
-                        <div className="pt-4 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
-                            <div className="w-full md:w-64">
-                                <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider ml-1">Prepared By</label>
-                                <input 
-                                    type="text" 
-                                    placeholder="Enter name"
-                                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm font-medium focus:border-sky-300 transition-all" 
-                                />
-                            </div>
-                            
-                            <button 
-                                type="submit" 
-                                disabled={isSubmitting}
-                                className={`px-8 py-2.5 bg-sky-600 text-white rounded-lg font-semibold text-sm shadow-sm hover:bg-sky-700 transition-all active:scale-[0.98] ${isSubmitting ? 'opacity-50' : ''}`}
-                            >
-                                {isSubmitting ? 'Saving...' : 'Save List'}
-                            </button>
-                        </div>
-                    </form>
-                </motion.div>
-
-                {/* Footer Note */}
-                <div className="text-center mt-4">
-                    <p className="text-[10px] text-gray-400">
-                        AtomOne Technologies | Format: AOT-F-MHE-01 | Rev: 00
-                    </p>
-                </div>
+              <div className="meta-section">
+                <label>Date</label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </div>
             </div>
-        </div>
-    );
+          </div>
+
+          {/* INFO SECTION */}
+          <div className="info-grid">
+            <div className="field">
+              <label>Part Name / No.</label>
+              <input
+                value={partName}
+                onChange={(e) => setPartName(e.target.value)}
+                placeholder="Enter Part Name"
+              />
+            </div>
+
+            <div className="field">
+              <label>Trolley / Pallet / Bin / Tray No.</label>
+              <input
+                value={trolleyNo}
+                onChange={(e) => setTrolleyNo(e.target.value)}
+                placeholder="Enter Number"
+              />
+            </div>
+
+            <div className="field">
+              <label>PM Frequency</label>
+              <select
+                value={frequency}
+                onChange={(e) => setFrequency(e.target.value)}
+              >
+                <option>1 Month</option>
+                <option>2 Months</option>
+                <option>3 Months</option>
+                <option>4 Months</option>
+                <option>6 Months</option>
+                <option>Yearly</option>
+              </select>
+            </div>
+          </div>
+
+          {/* TABLE */}
+          {/* <div className="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th rowSpan="2">Sr. No.</th>
+                  <th rowSpan="2">Check Points</th>
+                  <th colSpan="2">PM Status - 1</th>
+                  <th colSpan="2">PM Status - 2</th>
+                  <th colSpan="2">PM Status - 3</th>
+                </tr>
+                <tr>
+                  <th>Done On</th>
+                  <th>Remarks</th>
+                  <th>Done On</th>
+                  <th>Remarks</th>
+                  <th>Done On</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {rows.map((row, index) => (
+                  <tr key={index}>
+                    <td style={{ textAlign: "center" }}>{index + 1}</td>
+
+                    <td>{row.point}</td>
+
+                    <td>
+                      <input
+                        type="date"
+                        value={row.pm1Date}
+                        onChange={(e) =>
+                          updateCell(index, "pm1Date", e.target.value)
+                        }
+                      />
+                    </td>
+
+                    <td>
+                      <input
+                        value={row.pm1Remarks}
+                        onChange={(e) =>
+                          updateCell(index, "pm1Remarks", e.target.value)
+                        }
+                      />
+                    </td>
+
+                    <td>
+                      <input
+                        type="date"
+                        value={row.pm2Date}
+                        onChange={(e) =>
+                          updateCell(index, "pm2Date", e.target.value)
+                        }
+                      />
+                    </td>
+
+                    <td>
+                      <input
+                        value={row.pm2Remarks}
+                        onChange={(e) =>
+                          updateCell(index, "pm2Remarks", e.target.value)
+                        }
+                      />
+                    </td>
+
+                    <td>
+                      <input
+                        type="date"
+                        value={row.pm3Date}
+                        onChange={(e) =>
+                          updateCell(index, "pm3Date", e.target.value)
+                        }
+                      />
+                    </td>
+
+                    <td>
+                      <input
+                        value={row.pm3Remarks}
+                        onChange={(e) =>
+                          updateCell(index, "pm3Remarks", e.target.value)
+                        }
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div> */}
+          <div className="field" style={{ marginBottom: "20px" }}>
+            <label>PM Cycle</label>
+
+            <select
+              value={selectedPM}
+              onChange={(e) => setSelectedPM(e.target.value)}
+            >
+              <option value="pm1">PM Status 1</option>
+              <option value="pm2">PM Status 2</option>
+              <option value="pm3">PM Status 3</option>
+            </select>
+          </div>
+
+          <div className="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Sr No</th>
+                  <th>Check Point</th>
+                  <th>Status</th>
+                  <th>Done On</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {rows.map((row, index) => (
+                  <tr key={index}>
+                    <td>{index + 1}</td>
+
+                    <td className="checkpoint-cell">{row.point}</td>
+
+                    <td>
+                      <div className="status-group">
+                        <label>
+                          <input
+                            type="radio"
+                            name={`${selectedPM}-${index}`}
+                            checked={row[`${selectedPM}Status`] === "OK"}
+                            onChange={() =>
+                              updateCell(index, `${selectedPM}Status`, "OK")
+                            }
+                          />
+                          OK
+                        </label>
+
+                        <label>
+                          <input
+                            type="radio"
+                            name={`${selectedPM}-${index}`}
+                            checked={row[`${selectedPM}Status`] === "NOT_OK"}
+                            onChange={() =>
+                              updateCell(index, `${selectedPM}Status`, "NOT_OK")
+                            }
+                          />
+                          Not OK
+                        </label>
+
+                        <label>
+                          <input
+                            type="radio"
+                            name={`${selectedPM}-${index}`}
+                            checked={row[`${selectedPM}Status`] === "NA"}
+                            onChange={() =>
+                              updateCell(index, `${selectedPM}Status`, "NA")
+                            }
+                          />
+                          N/A
+                        </label>
+                      </div>
+                    </td>
+
+                    <td>
+                      <input
+                        type="date"
+                        value={row[`${selectedPM}Date`]}
+                        onChange={(e) =>
+                          updateCell(index, `${selectedPM}Date`, e.target.value)
+                        }
+                      />
+                    </td>
+
+                    <td>
+                      <input
+                        placeholder="Enter remarks"
+                        value={row[`${selectedPM}Remarks`]}
+                        onChange={(e) =>
+                          updateCell(
+                            index,
+                            `${selectedPM}Remarks`,
+                            e.target.value,
+                          )
+                        }
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* REMARKS */}
+          <div className="remarks">
+            <div className="field">
+              <label>Remarks</label>
+              <textarea
+                rows="3"
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* FOOTER */}
+          <div className="footer">
+            <div className="field">
+              <label>Checked By</label>
+              <input
+                value={checkedBy}
+                onChange={(e) => setCheckedBy(e.target.value)}
+              />
+            </div>
+
+            <div className="field">
+              <label>Verified By</label>
+              <input
+                value={verifiedBy}
+                onChange={(e) => setVerifiedBy(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* LEGEND */}
+          <div className="legend">
+            <div className="badge ok checkbox">✓ OK</div>
+            <div className="badge notok">✕ NOT OK</div>
+            <div className="badge na">NA NOT REQUIRED</div>
+          </div>
+
+          {/* BUTTONS */}
+          <div className="action-bar">
+            <button
+              type="button"
+              className="btn reset-btn"
+              onClick={handleReset}
+            >
+              Reset
+            </button>
+
+            <button type="submit" className="btn save-btn">
+              Save Checklist
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
+  );
 };
 
 export default MHEListForm;

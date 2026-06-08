@@ -3,6 +3,8 @@ import { Factory, Users, Target, Award, Shield, Lightbulb, Heart, Eye, CheckCirc
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { useRef, useState } from 'react';
 import logo_head from '../logo_head.png';
+import TravelCarousel from './TravelCarousel';
+import ActionAreaCard from './ActionAreaCard';
 export default function LandingPage() {
   const navigate = useNavigate();
   const { scrollYProgress } = useScroll();
@@ -405,7 +407,7 @@ export default function LandingPage() {
       {/* Rest of your sections remain the same... */}
       {/* Vision Section (UPAR) */}
       <SectionWrapper>
-        <div className="relative bg-gradient-to-b from-[#0f172a] via-[#1e293b] to-[#0f172a] py-12 sm:py-16 overflow-hidden">
+       <div className="relative flex flex-col lg:flex-row gap-6 px-6 bg-gradient-to-b from-[#0f172a] via-[#1e293b] to-[#0f172a] py-12 sm:py-16 overflow-hidden">
           <div className="absolute inset-0 opacity-10">
             <motion.div 
               animate={{ scale: [1, 1.2, 1], rotate: [0, 5, 0] }}
@@ -414,7 +416,7 @@ export default function LandingPage() {
             />
           </div>
           
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+          {/* <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
             <motion.div 
               variants={fadeInRight}
               whileHover={{ scale: 1.02 }}
@@ -451,9 +453,17 @@ export default function LandingPage() {
                 </div>
               </div>
             </motion.div>
-          </div>
+             
+          </div> */}
+          <ActionAreaCard />
+           <ActionAreaCard />
+            <ActionAreaCard />
+             <ActionAreaCard />
         </div>
+       
       </SectionWrapper>
+      
+  
 
       {/* Mission Section (NICHE) */}
       <SectionWrapper>
@@ -628,6 +638,7 @@ export default function LandingPage() {
             </motion.div>
           </div>
         </div>
+         
       </SectionWrapper>
 
       {/* Team Excellence */}
@@ -674,6 +685,16 @@ export default function LandingPage() {
           </div>
         </div>
       </SectionWrapper>
+      <motion.h2 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              viewport={{ once: false, amount: 0.3 }}
+              className="text-2xl sm:text-3xl md:text-4xl mb-8 sm:mb-12 text-center text-[#f1f5f9]"
+            >
+              Our Costumers from World Wide
+            </motion.h2>
+            <TravelCarousel/>
 
       {/* Digital Impact */}
       <SectionWrapper>

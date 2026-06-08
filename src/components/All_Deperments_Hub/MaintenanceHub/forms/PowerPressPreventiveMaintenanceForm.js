@@ -44,6 +44,7 @@ const PowerPressPreventiveMaintenanceForm = () => {
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [preparedBy, setPreparedBy] = useState("");
 
   // --- HANDLERS ---
   const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
@@ -477,6 +478,19 @@ const PowerPressPreventiveMaintenanceForm = () => {
 
             {/* --- ACTION BUTTONS --- */}
             <div className="d-flex flex-column flex-sm-row justify-content-end gap-3 mt-4 pt-3 no-print border-top" style={{ borderTopColor: '#f3f4f6' }}>
+
+              <div className="flex flex-col">
+    <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+      Prepared By
+    </label>
+    <input
+      type="text"
+      value={preparedBy}
+      onChange={(e) => setPreparedBy(e.target.value)}
+      placeholder="Enter name"
+      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+    />
+  </div>
               <button 
                 type="button" 
                 className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto" 

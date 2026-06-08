@@ -15,6 +15,7 @@ const GoodReceiptForm = () => {
     receivedBy: "",
     receivedDate: today,
   });
+  const [preparedBy, setPreparedBy] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -247,7 +248,20 @@ const GoodReceiptForm = () => {
             </div>
 
             {/* Footer Actions */}
-            <div className="flex flex-col-reverse sm:flex-row gap-3 justify-end items-stretch sm:items-center border-t border-slate-200 pt-6 mt-2">
+            <div className="flex flex-col-reverse sm:flex-row gap-3 justify-end justify-between items-stretch sm:items-center border-t border-slate-200 pt-6 mt-2">
+                {/* Prepared By */}
+  <div className="flex flex-col">
+    <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+      Prepared By
+    </label>
+    <input
+      type="text"
+      value={preparedBy}
+      onChange={(e) => setPreparedBy(e.target.value)}
+      placeholder="Enter name"
+      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+    />
+  </div>
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <button
                   type="button"

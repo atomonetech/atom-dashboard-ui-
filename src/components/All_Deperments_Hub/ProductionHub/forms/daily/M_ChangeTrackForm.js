@@ -49,6 +49,7 @@ const MChangeTrackForm = () => {
 
   const [dailyTrackingData, setDailyTrackingData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [preparedBy, setPreparedBy] = useState("");
   
   const [currentDayData, setCurrentDayData] = useState({
     man: '',
@@ -699,7 +700,19 @@ const MChangeTrackForm = () => {
             </div>
 
             {/* Actions Buttons Corporate Style */}
-            <div className="mt-6 sm:mt-8 pt-5 border-t border-gray-200 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
+            <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                 <div className="flex flex-col">
+              <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+                Prepared By
+              </label>
+              <input
+                type="text"
+                value={preparedBy}
+                onChange={(e) => setPreparedBy(e.target.value)}
+                placeholder="Enter name"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+              />
+            </div>
               <button
                 onClick={handleReset}
                 disabled={isSubmitting}

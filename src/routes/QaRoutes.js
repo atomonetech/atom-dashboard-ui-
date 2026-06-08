@@ -160,6 +160,8 @@ import Reworkrepairprint from '../components/All_Deperments_Hub/QaHub/forms/dail
 import SampleInspectionprint from '../components/All_Deperments_Hub/QaHub/forms/daily/SampleInspectionprint';
 import DeviationApprovalprint from '../components/All_Deperments_Hub/QaHub/forms/daily/DeviationApprovalprint';
 import PdiReportprint from '../components/All_Deperments_Hub/QaHub/forms/daily/PdiReportprint';
+import RawMaterialQualityPlan from '../components/All_Deperments_Hub/QaHub/forms/daily/RawMaterialQualityPlan';
+import RMQualityPlanForm from '../components/All_Deperments_Hub/QaHub/forms/daily/RMQualityPlanForm';
 
 // ========== MONTHLY FORMS IMPORTS ==========
 import ProcessAuditChecksheet from '../components/All_Deperments_Hub/QaHub/forms/monthly/ProcessAuditChecksheet';
@@ -182,6 +184,7 @@ import SupplierPartList from '../components/All_Deperments_Hub/QaHub/forms/month
 import CustomerComplaintRegister from '../components/All_Deperments_Hub/QaHub/forms/monthly/CustomerComplaintRegister';
 import WarrantyClaimRegister from '../components/All_Deperments_Hub/QaHub/forms/monthly/WarrantyClaimRegister';
 import WorkInstruction from '../components/All_Deperments_Hub/QaHub/forms/monthly/WorkInstruction';
+import VisualInspectionStandard from '../components/All_Deperments_Hub/QaHub/forms/monthly/VisualInspectionStandard';
 
 // ========== YEARLY FORMS IMPORTS ==========
 import AnnualLayoutPlan from '../components/All_Deperments_Hub/QaHub/forms/yearly/AnnualLayoutPlan';
@@ -215,6 +218,7 @@ const QaRoutes = () => {
             <Route path="daily/inspection-form" element={<InspectionForm />} />
             <Route path="daily/pdi-report-form" element={<PdiReportForm />} />
             <Route path="daily/Rework" element={<ReworkRepair />} />
+            <Route path="daily/RM-Quality-Plan" element={<RawMaterialQualityPlan />} />
             <Route path="daily/sample-inspection" element={<SampleInspectionReport />} />
             <Route path="daily/Deviation-Approval-Form" element={<DeviationApprovalForm />} />
             <Route path="daily/Good-Receipt" element={<GoodReceiptFrom />} />
@@ -253,6 +257,8 @@ const QaRoutes = () => {
             <Route path="monthly/warranty-reg" element={<WarrantyClaimRegister />} />
             <Route path="monthly/work-instruction" element={<WorkInstruction />} />
             <Route path="monthly/customer-satisfaction" element={<CustomerSatisfactionCard/>}/>
+             <Route path="monthly/visual-std" element={<VisualInspectionStandard/>}/>
+
 
             {/* --- YEARLY SECTION --- */}
             <Route path="yearly/layout-plan" element={<AnnualLayoutPlan />} />

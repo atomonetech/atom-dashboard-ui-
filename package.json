@@ -5,8 +5,11 @@
   "dependencies": {
     "@capacitor/android": "^8.3.4",
     "@capacitor/core": "^8.3.4",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@fortune-sheet/react": "^1.0.4",
     "@handsontable/react": "^16.2.0",
+    "@mui/material": "^9.0.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
@@ -33,6 +36,7 @@
     "react-scripts": "5.0.1",
     "react-to-print": "^3.2.0",
     "recharts": "^3.5.1",
+    "swiper": "^12.2.0",
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },

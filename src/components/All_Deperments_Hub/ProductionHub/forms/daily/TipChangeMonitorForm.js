@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 
-const BASE_URL = "http://192.168.0.34:8000"; 
+const BASE_URL = "http://192.168.0.34:8000";
 
 const PLANT_MAP = {
-  'Plant 1': 'plant_1',
-  'Plant 2': 'plant_2',
+  "Plant 1": "plant_1",
+  "Plant 2": "plant_2",
 };
 
 const TipChangeMonitorForm = () => {
@@ -23,6 +23,7 @@ const TipChangeMonitorForm = () => {
   const [machinesLoading, setMachinesLoading] = useState(false);
   const [partsData, setPartsData] = useState([]);
   const [operationsData, setOperationsData] = useState([]);
+  const [preparedBy, setPreparedBy] = useState("");
 
   // 1. Component load hote hi Part Names fetch karna
   useEffect(() => {
@@ -30,7 +31,7 @@ const TipChangeMonitorForm = () => {
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          const uniquePartNames = [...new Set(data.map(item => item[0]))];
+          const uniquePartNames = [...new Set(data.map((item) => item[0]))];
           setPartsData(uniquePartNames);
         }
       })
@@ -44,10 +45,12 @@ const TipChangeMonitorForm = () => {
         // Press ke liye Backend API Call
         setMachinesLoading(true);
         const plantKey = PLANT_MAP[formData.plant];
-        
-        fetch(`${BASE_URL}/api/machines/list/?plant=${plantKey}&machine_name=Press`)
-          .then(res => res.json())
-          .then(data => {
+
+        fetch(
+          `${BASE_URL}/api/machines/list/?plant=${plantKey}&machine_name=Press`,
+        )
+          .then((res) => res.json())
+          .then((data) => {
             if (data.success && data.machines) {
               setMachineList(data.machines);
             } else if (Array.isArray(data)) {
@@ -56,21 +59,24 @@ const TipChangeMonitorForm = () => {
               setMachineList([]);
             }
           })
-          .catch(err => console.error('Error fetching machines:', err))
+          .catch((err) => console.error("Error fetching machines:", err))
           .finally(() => setMachinesLoading(false));
-
       } else if (formData.machineName === "CNC") {
         // CNC ke liye Frontend Hardcoded logic (12 Machines)
-        const cncMachines = Array.from({ length: 12 }, (_, i) => `CNC-${String(i + 1).padStart(2, '0')}`);
+        const cncMachines = Array.from(
+          { length: 12 },
+          (_, i) => `CNC-${String(i + 1).padStart(2, "0")}`,
+        );
         setMachineList(cncMachines);
         setMachinesLoading(false);
-
       } else if (formData.machineName === "VMC") {
         // VMC ke liye Frontend Hardcoded logic (4 Machines)
-        const vmcMachines = Array.from({ length: 4 }, (_, i) => `VMC-${String(i + 1).padStart(2, '0')}`);
+        const vmcMachines = Array.from(
+          { length: 4 },
+          (_, i) => `VMC-${String(i + 1).padStart(2, "0")}`,
+        );
         setMachineList(vmcMachines);
         setMachinesLoading(false);
-
       } else {
         setMachineList([]);
       }
@@ -82,29 +88,33 @@ const TipChangeMonitorForm = () => {
   // 3. Handle Input Changes aur Dependent Dropdown logic
   const handleChange = async (e) => {
     const { name, value } = e.target;
-    
+
     // Nayi value set karo
     setFormData((prev) => {
       const newData = { ...prev, [name]: value };
-      
+
       // Agar Plant ya Machine Name change ho raha hai, toh purana Machine No clear kar do
       if (name === "plant" || name === "machineName") {
         newData.machineNo = "";
       }
-      
+
       return newData;
     });
 
     // Agar Part Name change hota hai, toh uske operations fetch karo
     if (name === "partName") {
       setFormData((prev) => ({ ...prev, operation: "" }));
-      setOperationsData([]); 
+      setOperationsData([]);
 
       if (value) {
         try {
-          const response = await fetch(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(value)}`);
+          const response = await fetch(
+            `${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(
+              value,
+            )}`,
+          );
           const data = await response.json();
-          
+
           if (Array.isArray(data)) {
             setOperationsData(data);
           }
@@ -125,7 +135,7 @@ const TipChangeMonitorForm = () => {
       prdQty: "",
       tipChange: "",
     });
-    setOperationsData([]); 
+    setOperationsData([]);
     setMachineList([]);
   };
 
@@ -134,11 +144,11 @@ const TipChangeMonitorForm = () => {
 
     if (
       !formData.plant ||
-      !formData.machineName || 
-      !formData.machineNo || 
-      !formData.partName || 
-      !formData.operation || 
-      !formData.prdQty || 
+      !formData.machineName ||
+      !formData.machineNo ||
+      !formData.partName ||
+      !formData.operation ||
+      !formData.prdQty ||
       !formData.tipChange
     ) {
       alert("Please fill all fields");
@@ -214,10 +224,12 @@ const TipChangeMonitorForm = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            
             {/* 1. Plant Field */}
             <div className="flex flex-col min-w-0">
-              <label htmlFor="plant" className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="plant"
+                className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide"
+              >
                 Plant <span className="text-red-500">*</span>
               </label>
               <select
@@ -227,7 +239,9 @@ const TipChangeMonitorForm = () => {
                 onChange={handleChange}
                 className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-[#916cf6] focus:border-[#916cf6] text-gray-700 text-sm transition-colors"
               >
-                <option value="" className="text-gray-400">Select Plant</option>
+                <option value="" className="text-gray-400">
+                  Select Plant
+                </option>
                 <option value="Plant 1">Plant 1</option>
                 <option value="Plant 2">Plant 2</option>
               </select>
@@ -235,7 +249,10 @@ const TipChangeMonitorForm = () => {
 
             {/* 2. Machine Name Field */}
             <div className="flex flex-col min-w-0">
-              <label htmlFor="machineName" className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="machineName"
+                className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide"
+              >
                 Machine Name <span className="text-red-500">*</span>
               </label>
               <select
@@ -245,7 +262,9 @@ const TipChangeMonitorForm = () => {
                 onChange={handleChange}
                 className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-[#916cf6] focus:border-[#916cf6] text-gray-700 text-sm transition-colors"
               >
-                <option value="" className="text-gray-400">Select Machine</option>
+                <option value="" className="text-gray-400">
+                  Select Machine
+                </option>
                 <option value="Press">POWER PRESS</option>
                 <option value="CNC">CNC</option>
                 <option value="VMC">VMC</option>
@@ -254,7 +273,10 @@ const TipChangeMonitorForm = () => {
 
             {/* 3. Machine No Field (Now fully dropdown for all 3) */}
             <div className="flex flex-col min-w-0">
-              <label htmlFor="machineNo" className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="machineNo"
+                className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide"
+              >
                 Machine No <span className="text-red-500">*</span>
               </label>
               <select
@@ -262,15 +284,17 @@ const TipChangeMonitorForm = () => {
                 name="machineNo"
                 value={formData.machineNo}
                 onChange={handleChange}
-                disabled={!formData.plant || !formData.machineName || machinesLoading}
+                disabled={
+                  !formData.plant || !formData.machineName || machinesLoading
+                }
                 className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-[#916cf6] focus:border-[#916cf6] text-gray-700 text-sm transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="" className="text-gray-400">
-                  {machinesLoading 
-                    ? "Loading..." 
-                    : (!formData.plant || !formData.machineName) 
-                      ? "Select Plant & Machine" 
-                      : "Select Machine No"}
+                  {machinesLoading
+                    ? "Loading..."
+                    : !formData.plant || !formData.machineName
+                    ? "Select Plant & Machine"
+                    : "Select Machine No"}
                 </option>
                 {machineList.map((mc, index) => (
                   <option key={index} value={mc}>
@@ -282,7 +306,10 @@ const TipChangeMonitorForm = () => {
 
             {/* 4. Part Name Field */}
             <div className="flex flex-col min-w-0">
-              <label htmlFor="partName" className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="partName"
+                className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide"
+              >
                 Part Name <span className="text-red-500">*</span>
               </label>
               <select
@@ -292,16 +319,23 @@ const TipChangeMonitorForm = () => {
                 onChange={handleChange}
                 className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-[#916cf6] focus:border-[#916cf6] text-gray-700 text-sm truncate transition-colors"
               >
-                <option value="" className="text-gray-400">Select Part Name</option>
+                <option value="" className="text-gray-400">
+                  Select Part Name
+                </option>
                 {partsData.map((part, index) => (
-                  <option key={index} value={part}>{part}</option>
+                  <option key={index} value={part}>
+                    {part}
+                  </option>
                 ))}
               </select>
             </div>
 
             {/* 5. Operation Field */}
             <div className="flex flex-col min-w-0">
-              <label htmlFor="operation" className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="operation"
+                className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide"
+              >
                 Operation <span className="text-red-500">*</span>
               </label>
               <select
@@ -309,21 +343,26 @@ const TipChangeMonitorForm = () => {
                 name="operation"
                 value={formData.operation}
                 onChange={handleChange}
-                disabled={!formData.partName} 
+                disabled={!formData.partName}
                 className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-[#916cf6] focus:border-[#916cf6] text-gray-700 text-sm truncate transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="" className="text-gray-400">
                   {formData.partName ? "Select Operation" : "Select Part First"}
                 </option>
                 {operationsData.map((op, index) => (
-                  <option key={index} value={op}>{op}</option>
+                  <option key={index} value={op}>
+                    {op}
+                  </option>
                 ))}
               </select>
             </div>
 
             {/* 6. PRD QTY Field */}
             <div className="flex flex-col min-w-0">
-              <label htmlFor="prdQty" className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="prdQty"
+                className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide"
+              >
                 PRD QTY <span className="text-red-500">*</span>
               </label>
               <input
@@ -339,7 +378,10 @@ const TipChangeMonitorForm = () => {
 
             {/* 7. Tip Change Field */}
             <div className="flex flex-col min-w-0">
-              <label htmlFor="tipChange" className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="tipChange"
+                className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide"
+              >
                 Tip Change <span className="text-red-500">*</span>
               </label>
               <select
@@ -349,15 +391,28 @@ const TipChangeMonitorForm = () => {
                 onChange={handleChange}
                 className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-[#916cf6] focus:border-[#916cf6] text-gray-700 text-sm transition-colors"
               >
-                <option value="" className="text-gray-400">Select option</option>
+                <option value="" className="text-gray-400">
+                  Select option
+                </option>
                 <option value="Yes">Yes</option>
                 <option value="No">No</option>
               </select>
             </div>
-
           </div>
+          <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col">
+              <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+                Prepared By
+              </label>
+              <input
+                type="text"
+                value={preparedBy}
+                onChange={(e) => setPreparedBy(e.target.value)}
+                placeholder="Enter name"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+              />
+            </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-end gap-3 mt-8 pt-5 border-t border-gray-100">
             <button
               type="button"
               onClick={handleReset}

@@ -6,6 +6,7 @@ const BinTrollingForm = () => {
   const [currentMonth, setCurrentMonth] = useState('');
   const [isAlreadyFilled, setIsAlreadyFilled] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [preparedBy, setPreparedBy] = useState("");
 
   const checkpoints = [
     { id: 'cp1', label: 'Bin/Trolley Should Be Clean Properly', defaultMethod: 'VISUAL' },
@@ -504,7 +505,20 @@ const BinTrollingForm = () => {
               </div>
             ) : (
               // Normal mode — Reset + Save buttons
-              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2">
+               <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                   
+              <div className="flex flex-col">
+    <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+      Prepared By
+    </label>
+    <input
+      type="text"
+      value={preparedBy}
+      onChange={(e) => setPreparedBy(e.target.value)}
+      placeholder="Enter name"
+      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+    />
+  </div>
                 <button
                   type="button"
                   onClick={resetForm}

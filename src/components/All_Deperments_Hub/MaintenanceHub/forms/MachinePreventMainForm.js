@@ -9,6 +9,7 @@ const MachinePreventMainForm = () => {
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [preparedBy, setPreparedBy] = useState("");
 
   const statusOptions = ['', 'Ok', 'Not Ok', 'Ng', 'N/A'];
 
@@ -308,9 +309,29 @@ const MachinePreventMainForm = () => {
             </div>
 
             <div className="d-flex flex-column flex-sm-row justify-content-end gap-3 mt-4 pt-3 no-print border-top">
-              <button type="button" className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto" onClick={handleReset} disabled={isSubmitting} style={{ fontWeight: '600', border: '1px solid #dee2e6' }}>Reset Data</button>
-              <button type="submit" className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto" disabled={isSubmitting}>
-                <i className="bi bi-floppy me-2"></i> {isSubmitting ? 'Saving...' : 'Save Record'}
+                {/* Prepared By */}
+  <div className="flex flex-col">
+    <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+      Prepared By
+    </label>
+    <input
+      type="text"
+      value={preparedBy}
+      onChange={(e) => setPreparedBy(e.target.value)}
+      placeholder="Enter name"
+      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+    />
+  </div>
+              <button 
+                type="button" 
+                className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto" 
+                onClick={handleReset}
+                style={{ fontWeight: '600', border: '1px solid #dee2e6' }}
+              >
+                Reset Data
+              </button>
+              <button type="submit" className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto">
+                <i className="bi bi-floppy me-2"></i> Save Record
               </button>
             </div>
           </form>
