@@ -12,7 +12,7 @@ const formattedDate = `${String(today.getDate()).padStart(2, "0")}-${String(
 ).padStart(2, "0")}-${today.getFullYear()}`;
 const currentMonth = today.toLocaleString("default", { month: "long" });
 const currentYear = today.getFullYear();
-const [p]
+
 
 // Backend API URL
 const API_SAVE = "http://192.168.0.34:8000/api/redbin-attendance/save/";
@@ -61,6 +61,7 @@ const SelectWrapper = ({ children, color = "#f59e0b" }) => (
 
 export default function RedbinAttendance() {
   const navigate = useNavigate();
+ const [preparedBy, setPreparedBy] = useState("");
 
   // 👇 STATE FOR DYNAMIC LISTS (localStorage se data uthana)
   const [namesList, setNamesList] = useState(() => {
