@@ -12,6 +12,7 @@ const formattedDate = `${String(today.getDate()).padStart(2, "0")}-${String(
 ).padStart(2, "0")}-${today.getFullYear()}`;
 const currentMonth = today.toLocaleString("default", { month: "long" });
 const currentYear = today.getFullYear();
+const [p]
 
 // Backend API URL
 const API_SAVE = "http://192.168.0.34:8000/api/redbin-attendance/save/";
@@ -729,6 +730,19 @@ export default function RedbinAttendance() {
                   {saveMsg}
                 </span>
               )}
+                {/* Prepared By */}
+  <div className="flex flex-col">
+    <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+      Prepared By
+    </label>
+    <input
+      type="text"
+      value={preparedBy}
+      onChange={(e) => setPreparedBy(e.target.value)}
+      placeholder="Enter name"
+      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+    />
+  </div>
               <button className="rb-reset-btn" onClick={handleReset}>
                 <svg
                   width="13"

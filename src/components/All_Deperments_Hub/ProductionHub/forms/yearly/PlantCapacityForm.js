@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
-const CapacityPlanningForm = () => {
+const PlantCapacityForm = () => {
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -45,13 +45,26 @@ const CapacityPlanningForm = () => {
 
                 {/* Header Section */}
                 <div className="w-full bg-gradient-to-r from-[#3b82f6] to-[#1d4ed8] rounded-t-[2rem] p-8 md:p-12 text-center shadow-lg border-b border-white/10">
+                  <div className="logo-section">
+                <img
+                  src="/logo1.jpg"
+                  alt="Company Logo"
+                  className="company-logo"
+                />
+              </div>
                     <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight uppercase italic">
                         Capacity of <span className="text-blue-200">Line / Cell / Plant</span>
                     </h1>
                     <p className="text-blue-100 text-[10px] md:text-xs font-bold mt-2 tracking-[0.3em] uppercase opacity-90 italic">
                         AtomOne Technologies | Quality Assurance Grid
                     </p>
+                      <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner">
+                                <InputField label="Rev .No" defaultValue="00" />
+                                <InputField label="Rev. Date" type="date" />
+                                <InputField label="Rev. Details" placeholder="Initial Release" />
+                            </div>
                 </div>
+                
 
                 {/* Main Card */}
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-b-[2rem] shadow-2xl border-x border-b border-blue-50 overflow-hidden">
@@ -126,22 +139,26 @@ const CapacityPlanningForm = () => {
                         {/* 3. Revision & Approval Aligned */}
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-10 border-t border-slate-100">
                             {/* Revision Box */}
-                            <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner">
+                            {/* <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-3 gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner">
                                 <InputField label="Rev .No" defaultValue="00" />
                                 <InputField label="Rev. Date" type="date" />
                                 <InputField label="Rev. Details" placeholder="Initial Release" />
-                            </div>
+                            </div> */}
 
                             {/* Signatures */}
                             <div className="lg:col-span-5 grid grid-cols-2 gap-8 self-end pb-1">
                                 <div className="space-y-3">
                                     <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">Prepared By</label>
-                                    <div className="h-10 border-b-2 border-slate-200 flex items-end pb-1 text-xs font-bold text-slate-400">Sign / Name</div>
+                                    <div className="h-10 border-b-2 border-slate-200 flex items-end pb-1 text-xs font-bold text-slate-400">
+                                       <span>
+                                        <input type="text" placeholder="Your Name" className="w-full bg-transparent outline-none border-none text-center text-slate-400 focus:text-slate-900 focus:font-black transition-all" />
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="space-y-3">
+                                {/* <div className="space-y-3">
                                     <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1 text-right block">Approved By</label>
                                     <div className="h-10 border-b-2 border-slate-200 flex items-end pb-1 text-xs font-bold text-slate-400 text-right justify-end">Manager</div>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
 
@@ -180,4 +197,4 @@ const TableInput = ({ value, onChange, placeholder, isDark, isBold }) => (
     />
 );
 
-export default CapacityPlanningForm;
+export default PlantCapacityForm;

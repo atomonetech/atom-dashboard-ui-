@@ -6,11 +6,7 @@ import {
 } from 'lucide-react';
 import { getApiUrl } from '../../../../config/api';
 
-<<<<<<< HEAD
-const MachineBreakdownSummary = () => {
-=======
 const MachinebreakdownSummary = () => {
->>>>>>> b7e9c6154a0653bd876ba5fe52bfd9987defebc0
   const getCurrentDate = () => {
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');

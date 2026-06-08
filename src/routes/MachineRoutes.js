@@ -20,11 +20,7 @@ import TIGMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/
 import SpotWeldingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/SpotWeldingMaintenanceForm";
 import CompressorMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/CompressorMaintenanceForm";
 import DipMoldingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/DipMoldingMentinanceForm";
-<<<<<<< HEAD
-import PipeCuttingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/PipeCuttingMentinanceForm";
-=======
 import PipeCuttingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/PipeCuttingMaintenanceForm";
->>>>>>> b7e9c6154a0653bd876ba5fe52bfd9987defebc0
 import VibraMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/VibraMentinanceForm";
 import TappingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/TappingMentinanceForm";
 
@@ -36,11 +32,7 @@ import BeltGrinderMaintenanceForm from "../components/All_Deperments_Hub/Mainten
 import BaseGrinderMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/BaseGrinderMaintenanceForm";
 
 // Reports & Views
-<<<<<<< HEAD
-import MachineBreakdownSummary from "../components/All_Deperments_Hub/MaintenanceHub/views/MachineBreakdownSummary";
-=======
 // import MachinebreakdownSummary from "../components/All_Deperments_Hub/MaintenanceHub/forms/MachinebreakdownSummary";
->>>>>>> b7e9c6154a0653bd876ba5fe52bfd9987defebc0
 import MachineMonthlyReport from "../components/All_Deperments_Hub/MaintenanceHub/views/MachineMonthlyReport";
 import WhyAnalysisForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/WhyAnalysisForm";
 import CriticalSparesForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/CriticslSpareForm";
