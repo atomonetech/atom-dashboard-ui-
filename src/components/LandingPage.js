@@ -3,8 +3,7 @@ import { Factory, Users, Target, Award, Shield, Lightbulb, Heart, Eye, CheckCirc
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { useRef, useState } from 'react';
 import logo_head from '../logo_head.png';
-import TravelCarousel from './TravelCarousel';
-import ActionAreaCard from './ActionAreaCard';
+// import TravelCarousel from './TravelCarousel';
 export default function LandingPage() {
   const navigate = useNavigate();
   const { scrollYProgress } = useScroll();
@@ -416,7 +415,7 @@ export default function LandingPage() {
             />
           </div>
           
-          {/* <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
             <motion.div 
               variants={fadeInRight}
               whileHover={{ scale: 1.02 }}
@@ -454,11 +453,8 @@ export default function LandingPage() {
               </div>
             </motion.div>
              
-          </div> */}
-          <ActionAreaCard />
-           <ActionAreaCard />
-            <ActionAreaCard />
-             <ActionAreaCard />
+          </div>
+          
         </div>
        
       </SectionWrapper>
@@ -694,7 +690,7 @@ export default function LandingPage() {
             >
               Our Costumers from World Wide
             </motion.h2>
-            <TravelCarousel/>
+            {/* <TravelCarousel/> */}
 
       {/* Digital Impact */}
       <SectionWrapper>

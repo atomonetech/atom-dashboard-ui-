@@ -78,7 +78,8 @@ export default function RedbinAttendance() {
   const [selectedDesignation, setSelectedDesignation] = useState("");
   const [rows, setRows] = useState([]);
   const [saveMsg, setSaveMsg] = useState("");
-  const [preparedBy, setPreparedBy] = useState("");
+
+  
 
 
   // 👇 ERUDA INTEGRATION

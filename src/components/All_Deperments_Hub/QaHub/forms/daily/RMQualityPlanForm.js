@@ -1,8 +1,10 @@
 
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const RMQualityPlanForm = () => {
+   const navigate = useNavigate();
   const API_SAVE = "http://192.168.0.34:8000/api/rm-quality-plan/save/";
 
   const [formData, setFormData] = useState({
@@ -13,7 +15,8 @@ const RMQualityPlanForm = () => {
     mechanicalProperties: [{ parameter: "", uom: "", testMethod: "" }],
     materials: [{ grade: "", chemValues: {}, mechValues: {} }],
   });
-
+  
+ 
   // Handle Basic Inputs (Prepared By, Approved By, Note)
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -106,6 +109,26 @@ const RMQualityPlanForm = () => {
          
           {/* Header Section (Under Development removed from here) */}
           <div className="bg-gradient-to-r from-white to-emerald-50 px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <button
+                  onClick={() => navigate("/qa-hub")}
+                  className="inline-flex items-center text-xs font-bold text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-lg shadow-md transition-all active:scale-95 group"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className="w-3.5 h-3.5 mr-1.5 transition-transform group-hover:-translate-x-1"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+                    />
+                  </svg>
+                  Back to QA Hub
+                </button>
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-lg bg-emerald-100 text-emerald-600 shadow-sm shrink-0">
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">

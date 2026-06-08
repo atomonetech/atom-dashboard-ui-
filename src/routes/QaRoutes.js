@@ -160,8 +160,7 @@ import Reworkrepairprint from '../components/All_Deperments_Hub/QaHub/forms/dail
 import SampleInspectionprint from '../components/All_Deperments_Hub/QaHub/forms/daily/SampleInspectionprint';
 import DeviationApprovalprint from '../components/All_Deperments_Hub/QaHub/forms/daily/DeviationApprovalprint';
 import PdiReportprint from '../components/All_Deperments_Hub/QaHub/forms/daily/PdiReportprint';
-import RawMaterialQualityPlan from '../components/All_Deperments_Hub/QaHub/forms/daily/RawMaterialQualityPlan';
-import RMQualityPlanForm from '../components/All_Deperments_Hub/QaHub/forms/daily/RMQualityPlanForm';
+// import RawMaterialQualityPlan from '../components/All_Deperments_Hub/QaHub/forms/daily/RawMaterialQualityPlan';
 
 // ========== MONTHLY FORMS IMPORTS ==========
 import ProcessAuditChecksheet from '../components/All_Deperments_Hub/QaHub/forms/monthly/ProcessAuditChecksheet';
@@ -218,7 +217,7 @@ const QaRoutes = () => {
             <Route path="daily/inspection-form" element={<InspectionForm />} />
             <Route path="daily/pdi-report-form" element={<PdiReportForm />} />
             <Route path="daily/Rework" element={<ReworkRepair />} />
-            <Route path="daily/RM-Quality-Plan" element={<RawMaterialQualityPlan />} />
+            {/* <Route path="daily/RM-Quality-Plan" element={<RawMaterialQualityPlan />} /> */}
             <Route path="daily/sample-inspection" element={<SampleInspectionReport />} />
             <Route path="daily/Deviation-Approval-Form" element={<DeviationApprovalForm />} />
             <Route path="daily/Good-Receipt" element={<GoodReceiptFrom />} />
