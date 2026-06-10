@@ -32,7 +32,7 @@ import BeltGrinderMaintenanceForm from "../components/All_Deperments_Hub/Mainten
 import BaseGrinderMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/BaseGrinderMaintenanceForm";
 
 // Reports & Views
-import MachineBreakDownSummary from "../components/All_Deperments_Hub/MaintenanceHub/forms/MachinebreakdownSummary";
+import MachineBreakDownSummary from "../components/All_Deperments_Hub/MaintenanceHub/forms/MachineBreakDownSummary";
 import MachineMonthlyReport from "../components/All_Deperments_Hub/MaintenanceHub/views/MachineMonthlyReport";
 import WhyAnalysisForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/WhyAnalysisForm";
 import CriticalSparesForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/CriticslSpareForm";

@@ -141,7 +141,7 @@ const MachineBreakDownForm = () => {
     try {
       // Backend ko API request bhejna
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/api/machine-breakdown-summary/save/`, {
+      const response = await fetch(`${apiUrl}/api/machine-breakdown/save/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
