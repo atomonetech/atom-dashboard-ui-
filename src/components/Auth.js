@@ -40,7 +40,10 @@ export default function Auth({ onLogin }) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-      const response = await fetch('http://192.168.0.34:8000/api/login/', {
+      // 🔥 UPDATED: Dynamic API URL setup based on environment
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+      const response = await fetch(`${apiUrl}/api/login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

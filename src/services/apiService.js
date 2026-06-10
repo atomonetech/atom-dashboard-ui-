@@ -1,5 +1,6 @@
-// 🔥 Hardcoded to your exact PC IP and Backend Port (8000)
-const API_BASE_URL = 'http://192.168.0.34:8000';
+// 🔥 NOW USING ENVIRONMENT VARIABLES!
+// Agar env file mein URL hoga (Production) toh wo uthayega, warna default localhost (Local Devs) uthayega.
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 class ApiService {
   static async get(endpoint, params = {}) {
@@ -66,7 +67,7 @@ class ApiService {
   }
 }
 
-// 🔥 FIXED: Main Dashboard API - Matches your backend exactly
+// 🔥 Main Dashboard API
 export const getDashboardData = (params = {}) => {
   const { date, plant = "plant1_data", shift, hour, machine } = params;
 
@@ -87,7 +88,7 @@ export const getDashboardData = (params = {}) => {
   });
 };
 
-// 🔥 FIXED: Hourly production - Correct endpoint
+// 🔥 Hourly production
 export const getHourlyProductionData = (params = {}) => {
   const { date, plant = 'plant1_data', shift, machine } = params;
   
@@ -101,7 +102,7 @@ export const getHourlyProductionData = (params = {}) => {
   });
 };
 
-// 🔥 FIXED: Machine production - Correct endpoint with all filters
+// 🔥 Machine production
 export const getMachineProductionData = (params = {}) => {
   const { date, plant = 'plant1_data', shift, hour, machine, start_hour, end_hour } = params;
   
@@ -118,7 +119,7 @@ export const getMachineProductionData = (params = {}) => {
   });
 };
 
-// 🔥 FIXED: Production line status - Correct endpoint
+// 🔥 Production line status
 export const getProductionLineStatusData = (params = {}) => {
   const { date, plant = 'plant1_data', shift } = params;
   
@@ -131,13 +132,13 @@ export const getProductionLineStatusData = (params = {}) => {
   });
 };
 
-// 🔥 FIXED: Available dates - Correct endpoint
+// 🔥 Available dates
 export const getAvailableDates = (plant = "plant1_data") => {
   console.log("📅 Available Dates API for plant:", plant);
   return ApiService.get("/api/available-dates/", { plant });
 };
 
-// 🔥 NEW: Assignment and idle data for dashboard tables
+// 🔥 Assignment and idle data for dashboard tables
 export const getAssignmentIdleData = (params = {}) => {
   const { date, shift, plant = "plant1_data" } = params;
 
@@ -150,19 +151,19 @@ export const getAssignmentIdleData = (params = {}) => {
   });
 };
 
-// 🔥 NEW: Auto-fill data for idle case forms
+// 🔥 Auto-fill data for idle case forms
 export const getAutoFillData = (machineNo) => {
   console.log("🔧 Auto-fill API for machine:", machineNo);
   return ApiService.get(`/api/machines/${machineNo}/auto-fill/`);
 };
 
-// 🔥 NEW: Create idle report
+// 🔥 Create idle report
 export const createIdleReport = (reportData) => {
   console.log("📝 Creating idle report:", reportData);
   return ApiService.post("/api/idle-reports/", reportData);
 };
 
-// 🔥 NEW: Create operator assignment
+// 🔥 Create operator assignment
 export const createAssignment = (assignmentData) => {
   console.log("👷 Creating assignment:", assignmentData);
   return ApiService.post("/api/assignments/", assignmentData);

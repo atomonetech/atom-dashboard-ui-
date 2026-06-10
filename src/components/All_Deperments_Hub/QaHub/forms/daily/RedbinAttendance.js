@@ -15,7 +15,7 @@ const currentYear = today.getFullYear();
 
 
 // Backend API URL
-const API_SAVE = "http://192.168.0.34:8000/api/redbin-attendance/save/";
+const API_SAVE = `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/redbin-attendance/save/`;
 
 // Default arrays (Agar localStorage me kuch nahi hoga to ye use honge)
 const DEFAULT_DESIGNATIONS = [
@@ -735,7 +735,7 @@ export default function RedbinAttendance() {
                 </span>
               )}
                 {/* Prepared By */}
-  <div className="flex flex-col">
+  {/* <div className="flex flex-col">
     <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
       Prepared By
     </label>
@@ -746,7 +746,7 @@ export default function RedbinAttendance() {
       placeholder="Enter name"
       className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
     />
-  </div>
+  </div> */}
               <button className="rb-reset-btn" onClick={handleReset}>
                 <svg
                   width="13"

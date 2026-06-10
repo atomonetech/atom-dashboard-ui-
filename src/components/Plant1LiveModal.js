@@ -5,7 +5,7 @@ import './Plant1LiveModal.css';
 function Plant1LiveModal({ machine, onClose }) {
     const [changes, setChanges] = useState([]);
     const [loading, setLoading] = useState(true);
-    const API_BASE = process.env.REACT_APP_API_URL || 'http://192.168.0.105:8000';
+    const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
     useEffect(() => {
         if (machine) {

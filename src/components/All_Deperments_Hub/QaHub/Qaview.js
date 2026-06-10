@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const FORM_CONFIG = {
     'incoming-material-view':  { label: 'Incoming Material Inspection',  color: '#3b82f6', bg: '#eff6ff', icon: 'bi-box-seam',            formNo: 'AOT/F/QA/01' },
     'redbin-view':             { label: 'Red Bin Analysis - NC Reg.',    color: '#ef4444', bg: '#fef2f2', icon: 'bi-trash3',              formNo: 'AOT/F/QC/02' },
@@ -84,7 +86,7 @@ const Qaview = () => {
         // API Call with Query Parameters
         const queryString = new URLSearchParams({ start_date, end_date }).toString();
         
-        fetch(`http://192.168.0.34:8000/api/qa-data/${formKey}/?${queryString}`)
+        fetch(`${API_BASE_URL}/api/qa-data/${formKey}/?${queryString}`)
             .then(res => {
                 if (!res.ok) throw new Error('Server error');
                 return res.json();

@@ -16,7 +16,9 @@ import {
   PenTool,
   AlertCircle,
   FileCheck
-} from 'lucide-react';
+}from 'lucide-react';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const ToolHistoryForm = () => {
   const gradientColors = {
@@ -68,7 +70,7 @@ const ToolHistoryForm = () => {
 
   // 1. Fetch Customers on Component Load
   useEffect(() => {
-    fetch('http://192.168.0.34:8000/api/master-dropdown/?filter=customer')
+    fetch(`${API_BASE_URL}/api/master-dropdown/?filter=customer`)
       .then(res => res.json())
       .then(data => setCustomers(data))
       .catch(err => console.error("Error fetching customers:", err));
@@ -81,7 +83,7 @@ const ToolHistoryForm = () => {
     
     if (cust) {
       try {
-        const res = await fetch(`http://192.168.0.34:8000/api/master-dropdown/?filter=part&cust=${encodeURIComponent(cust)}`);
+        const res = await fetch(`${API_BASE_URL}/api/master-dropdown/?filter=part&cust=${encodeURIComponent(cust)}`);
         const data = await res.json();
         setPartNames(data);
       } catch (err) {
@@ -99,10 +101,10 @@ const ToolHistoryForm = () => {
 
     if (part) {
       try {
-        const resNo = await fetch(`http://192.168.0.34:8000/api/master-dropdown/?filter=part_no&part=${encodeURIComponent(part)}`);
+        const resNo = await fetch(`${API_BASE_URL}/api/master-dropdown/?filter=part_no&part=${encodeURIComponent(part)}`);
         const dataNo = await resNo.json();
         
-        const resModel = await fetch(`http://192.168.0.34:8000/api/master-dropdown/?filter=model_by_part&part=${encodeURIComponent(part)}`);
+        const resModel = await fetch(`${API_BASE_URL}/api/master-dropdown/?filter=model_by_part&part=${encodeURIComponent(part)}`);
         const dataModel = await resModel.json();
         
         setToolInfo(prev => ({ 
@@ -148,7 +150,7 @@ const ToolHistoryForm = () => {
     };
 
     try {
-      const response = await fetch('http://192.168.0.34:8000/api/tool-history/save/', {
+      const response = await fetch(`${API_BASE_URL}/api/tool-history/save/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

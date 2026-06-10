@@ -114,7 +114,8 @@ const CncPreventiveMaintenanceForm = () => {
     };
     
     try {
-      const response = await fetch('http://192.168.0.34:8000/api/cnc-maintenance/save/', {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/cnc-maintenance/save/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

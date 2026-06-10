@@ -4,7 +4,7 @@ import {
   AlertCircle, ArrowLeft
 } from 'lucide-react';
 
- const BASE_URL = 'http://192.168.0.34:8000';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const MChangeTrackForm = () => {
   const today = new Date().toISOString().split('T')[0];

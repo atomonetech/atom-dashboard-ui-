@@ -1,5 +1,6 @@
 const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://192.168.0.34:8000',
+  // Production server apna URL .env .
+  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
   ENDPOINTS: {
     DASHBOARD: '/api/dashboard/',
     PLANT2_LIVE: '/api/plant2-live/',

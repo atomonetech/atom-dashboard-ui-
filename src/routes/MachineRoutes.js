@@ -20,7 +20,7 @@ import TIGMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/
 import SpotWeldingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/SpotWeldingMaintenanceForm";
 import CompressorMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/CompressorMaintenanceForm";
 import DipMoldingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/DipMoldingMentinanceForm";
-import PipeCuttingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/PipeCuttingMaintenanceForm";
+import PipeCuttingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/PipeCuttingMentinanceForm";
 import VibraMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/VibraMentinanceForm";
 import TappingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/TappingMentinanceForm";
 
@@ -32,7 +32,7 @@ import BeltGrinderMaintenanceForm from "../components/All_Deperments_Hub/Mainten
 import BaseGrinderMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/BaseGrinderMaintenanceForm";
 
 // Reports & Views
-// import MachinebreakdownSummary from "../components/All_Deperments_Hub/MaintenanceHub/forms/MachinebreakdownSummary";
+import MachineBreakDownSummary from "../components/All_Deperments_Hub/MaintenanceHub/forms/MachinebreakdownSummary";
 import MachineMonthlyReport from "../components/All_Deperments_Hub/MaintenanceHub/views/MachineMonthlyReport";
 import WhyAnalysisForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/WhyAnalysisForm";
 import CriticalSparesForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/CriticslSpareForm";
@@ -61,7 +61,7 @@ const MachineRoutes = () => {
         element={<DailyPowerPressChecksheet />}
       />{" "}
       {/* This is Daily, so no weekly in path */}
-      {/* <Route path="breakdown-form" element={<MachinebreakdownSummary />} /> */}
+      { <Route path="breakdown-summary" element={<MachineBreakDownSummary />} /> }
       {/* FOOLPROOF POKA YOKE ROUTES */}
       <Route path="Poka-Yoke" element={<PokaYokeChecksheet />} />
       <Route path="poka_yoke_check" element={<PokaYokeChecksheet />} />

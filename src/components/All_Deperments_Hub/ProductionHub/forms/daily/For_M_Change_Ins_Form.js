@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 // Backend URL
-const BASE_URL = 'http://192.168.0.34:8000';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const For_M_Change_Ins_Form = () => {
   const navigate = useNavigate();

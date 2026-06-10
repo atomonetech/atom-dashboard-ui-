@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 // 🔥 Updated Config: Naye 12 machine reports aur tool_breakdown_slip add kar diye gaye hain
 const MAINT_CONFIG = {
     // MACHINE REPORTS
@@ -117,7 +118,7 @@ const MaintenanceView = () => {
 
         const queryString = new URLSearchParams({ start_date, end_date }).toString();
 
-        fetch(`http://192.168.0.34:8000/api/maintenance-data/${formKey}/?${queryString}`)
+        fetch(`${API_BASE_URL}/api/maintenance-data/${formKey}/?${queryString}`)
             .then(res => {
                 if (!res.ok) throw new Error('Server error');
                 return res.json();

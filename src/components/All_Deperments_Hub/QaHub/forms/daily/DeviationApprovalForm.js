@@ -9,8 +9,8 @@ const DeviationApprovalForm = () => {
     end: '#FFCC70'
   };
 
-  // 👈 Backend API URL for saving Deviation Approval
-  const API_SAVE = "http://192.168.0.34:8000/api/save-deviation/";
+
+  const API_SAVE = `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/save-deviation/`;
 
   const [formData, setFormData] = useState({
     toolNameNo: '',

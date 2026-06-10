@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { FiScissors } from "react-icons/fi";
 import { IoIosArrowDown } from "react-icons/io";
 import axios from "axios";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 let _id = 0;
 const nextId = () => ++_id;
@@ -66,7 +67,7 @@ export default function ReworkRepair() {
   useEffect(() => {
     const fetchDropdowns = async () => {
       try {
-        const partsRes = await axios.get("http://192.168.0.34:8000/api/master-dropdown/?filter=all_parts");
+        const partsRes = await axios.get(`${API_BASE_URL}/api/master-dropdown/?filter=all_parts`);
         const rawParts = partsRes.data; 
         
         const groupedMap = {};
@@ -81,7 +82,7 @@ export default function ReworkRepair() {
         }));
         setBackendParts(formattedParts);
 
-        const specsRes = await axios.get("http://192.168.0.34:8000/api/master-dropdown/?filter=spec");
+        const specsRes = await axios.get(`${API_BASE_URL}/api/master-dropdown/?filter=spec`);
         setBackendSpecs(specsRes.data);
       } catch (error) {
         console.error("Error fetching dropdown data:", error);
@@ -175,7 +176,7 @@ export default function ReworkRepair() {
     }
 
     try {
-      const response = await axios.post("http://192.168.0.34:8000/api/rework/save/", payload);
+      const response = await axios.post(`${API_BASE_URL}/api/rework/save/`, payload);
       if (response.data.success) {
         alert("Data has been saved successfully!"); // 🔥 YAHAN POPUP ADD KIYA HAI
         setSaveMsg("✓ Saved & Reset!");

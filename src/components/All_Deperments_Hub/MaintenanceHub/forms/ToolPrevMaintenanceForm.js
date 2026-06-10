@@ -21,7 +21,7 @@ const ToolPrevMaintenanceForm = () => {
    const [preparedBy, setPreparedBy] = useState("");
 
   // Constants
-  const BASE_API_URL = 'http://192.168.0.34:8000/api';
+  const BASE_API_URL = `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api`;
 
   // Simplified data: List of items only
   const itemsList = [

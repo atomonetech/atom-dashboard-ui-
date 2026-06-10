@@ -37,7 +37,7 @@ const InspectionForm = () => {
     const todayDate = new Date().toISOString().split('T')[0];
     const [selectedDate] = useState(todayDate);
 
-    const API_URL = "http://192.168.0.34:8000/api";
+    const API_URL = (process.env.REACT_APP_API_URL || "http://localhost:8000") + "/api";
     const [specList, setSpecList] = useState([]); 
 
     const [dbLogs, setDbLogs] = useState([]); 

@@ -5,6 +5,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 const sopDatabase = {
     1: { 
         titleEng: 'Air Pressure Switch', 
@@ -97,7 +99,7 @@ const PokaYokeChecksheet = () => {
 
             try {
                 // ESC key ke neeche wala Backtick (`) use karna hai starting aur end mein
-                const url = `http://192.168.0.34:8000/api/get_today_pokayoke_data/?plant_name=${selectedPlant}&date=${selectedDate}`; 
+                const url = `${API_BASE_URL}/get_today_pokayoke_data/?plant_name=${selectedPlant}&date=${selectedDate}`;
                 const res = await fetch(url);
                 const result = await res.json();
 
@@ -188,7 +190,7 @@ const PokaYokeChecksheet = () => {
         };
 
         try {
-            const response = await fetch('http://192.168.0.34:8000/api/save-checksheet/', {
+            const response = await fetch(`${API_BASE_URL}/api/save-checksheet/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)

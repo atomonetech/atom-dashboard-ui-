@@ -5,7 +5,7 @@ import axios from "axios";
 
 const RMQualityPlanForm = () => {
    const navigate = useNavigate();
-  const API_SAVE = "http://192.168.0.34:8000/api/rm-quality-plan/save/";
+  const API_SAVE = `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/rm-quality-plan/save/`;
 
   const [formData, setFormData] = useState({
     preparedBy: "",

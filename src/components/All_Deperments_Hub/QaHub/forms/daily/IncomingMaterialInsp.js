@@ -63,10 +63,10 @@ const TD = ({ children, style = {} }) => (
   <td style={{ padding: "8px 6px", fontSize: 12, textAlign: "center", color: "#1e293b", border: "1px solid #e2e8f0", ...style }}>{children}</td>
 );
 
-const API_URL = "http://192.168.0.34:8000/api";
+const API_URL = (process.env.REACT_APP_API_URL || "http://localhost:8000") + "/api";
 
 export default function IncomingMaterialInsp() {
-  const [supplier, setSupplier] = useState("ATOMONE TECHNOLOGIES PVT.LTD"); 
+  const [supplier, setSupplier] = useState("");
   const [customer, setCustomer] = useState("");
   const [selectedPartId, setSelectedPartId] = useState(""); 
   const [partNo, setPartNo] = useState("");
@@ -155,7 +155,7 @@ export default function IncomingMaterialInsp() {
     const partId = e.target.value;
     setSelectedPartId(partId);
 
-    const partData = partsList.find(p => p.id === parseInt(partId));
+    const partData = partsList.find(p => String(p.id) === String(partId));
     
     if (partData) {
       setPartNo(partData.part_no || ""); 
@@ -206,19 +206,59 @@ export default function IncomingMaterialInsp() {
   const addRow = () => setRows(prev => [...prev, emptyRow()]);
   const removeRow = i => setRows(prev => prev.filter((_, idx) => idx !== i));
 
-  const handleSave = () => {
-    const selectedPartName = partsList.find(p => p.id === parseInt(selectedPartId))?.part_name || "";
+  const handleSave = async () => {
+    const selectedPartName = partsList.find(p => String(p.id) === String(selectedPartId))?.part_name || "";
+    
+    const [d, m, y] = date.split('-');
+    const backendFormattedDate = `${y}-${m}-${d}`;
+
     const finalData = { 
-        supplier, customer, partName: selectedPartName, partNo, date, grade, mtc, gaNga, coilNo, invoiceNo, qty, preparedBy, checkedBy, approvedBy, rows 
+      supplier: supplier, 
+      customer: customer, 
+      part_name: selectedPartName, 
+      part_no: partNo, 
+      date: backendFormattedDate, 
+      grade: grade, 
+      mtc: mtc, 
+      ga_nga: gaNga, 
+      coil_no: coilNo, 
+      invoice_no: invoiceNo, 
+      qty: qty, 
+      prepared_by: preparedBy, 
+      checked_by: checkedBy, 
+      approved_by: approvedBy, 
+      inspection_data: rows 
     };
-    console.log("Saved Data:", finalData);
-    setSaveMsg("✓ Form Data Saved!");
-    setTimeout(() => setSaveMsg(""), 2500);
+    
+    try {
+      const response = await fetch(`${API_URL}/incoming-material-inspection/save/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(finalData),
+      });
+
+      if (response.ok) {
+        setSaveMsg("✓ Form Data Saved!");
+        setTimeout(() => {
+          setSaveMsg("");
+          window.location.reload(); 
+        }, 1500);
+      } else {
+        const errorData = await response.json();
+        console.error("Backend Validation Error:", errorData);
+        alert(`Validation Failed: ${JSON.stringify(errorData)}`); 
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+      alert("Network error occurred. Please check your connection or CORS settings.");
+    }
   };
 
   const handleReset = () => {
     if (window.confirm("Are you sure you want to clear the form?")) {
-      setSupplier("ATOMONE TECHNOLOGIES PVT.LTD");
+      setSupplier("");
       setCustomer(""); setSelectedPartId(""); setPartNo("");
       setDate(formattedDate); setGrade(""); setMtc(""); setGaNga("");
       setCoilNo(""); setInvoiceNo(""); setQty("");
@@ -303,8 +343,13 @@ export default function IncomingMaterialInsp() {
               </SelectWrapper>
             </div>
             <div>
-              <label style={LBL}>Part No.</label>
-              <input value={partNo} placeholder="Auto-filled..." readOnly style={fldStyle(partNo, true)} />
+            <label style={LBL}>Part No.</label>
+             <input 
+               value={partNo} 
+               onChange={e => setPartNo(e.target.value)} 
+               placeholder="Enter or Auto-filled..." 
+               style={fldStyle(partNo, false)} 
+              />
             </div>
           </div>
         </div>
@@ -379,7 +424,6 @@ export default function IncomingMaterialInsp() {
               </div>
             </div>
 
-            {/* 🔥 YAHAN MAINE DISPLAY BLOCK AUR WIDTH 100% ADD KIYA HAI 🔥 */}
             <div style={{ display: "block", width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", borderRadius: 8, border: "1px solid #cbd5e1", marginBottom: 20 }}>
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
                 <thead>

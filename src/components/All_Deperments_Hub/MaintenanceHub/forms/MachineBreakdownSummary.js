@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { getApiUrl } from '../../../../config/api';
 
-const MachinebreakdownSummary = () => {
+const MachineBreakDownSummary = () => {
   const getCurrentDate = () => {
     const date = new Date();
     const day = String(date.getDate()).padStart(2, '0');
@@ -47,7 +47,7 @@ const MachinebreakdownSummary = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(getApiUrl('/api/machine-breakdown/save/'), {
+      const response = await fetch(getApiUrl('/api/machine-breakdown-summary/save/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -261,4 +261,4 @@ const MachinebreakdownSummary = () => {
   );
 };
 
-export default MachinebreakdownSummary;
+export default MachineBreakDownSummary;

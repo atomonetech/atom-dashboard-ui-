@@ -32,7 +32,7 @@ const PdiReportForm = () => {
     const [modelName, setModelName] = useState('');
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
-    const API_URL = "http://192.168.0.34:8000/api";
+    const API_URL = (process.env.REACT_APP_API_URL || "http://localhost:8000") + "/api";
     const [specList, setSpecList] = useState([]); 
 
     const [dbLogs, setDbLogs] = useState([]); 

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+
 const BinTrollingForm = () => {
   const [currentDate, setCurrentDate] = useState('');
   const [currentWeek, setCurrentWeek] = useState('W1');
@@ -80,7 +82,7 @@ const BinTrollingForm = () => {
   const checkExistingData = async (month, week) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://192.168.0.34:8000/api/get-bin-trolley/?month=${month}`);
+      const response = await fetch(`${API_BASE_URL}/api/get-bin-trolley/?month=${month}`);
       const result = await response.json();
 
       if (result.success && result.data.length > 0) {
@@ -192,7 +194,7 @@ const BinTrollingForm = () => {
     };
 
     try {
-      const response = await fetch('http://192.168.0.34:8000/api/bin-trolley/save/', {
+      const response = await fetch(`${API_BASE_URL}/api/bin-trolley/save/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(completeData),

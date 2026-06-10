@@ -6,9 +6,10 @@ const ScrapNoteForm = () => {
   const navigate = useNavigate();
   const today = new Date().toISOString().split("T")[0];
   
-  const API_BASE = "http://192.168.0.34:8000/api/master-dropdown";
+  const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+  const API_BASE = `${API_BASE_URL}/api/master-dropdown`;
   // 👇 New endpoint for saving data
-  const API_SAVE = "http://192.168.0.34:8000/api/scrap-note/save/";
+  const API_SAVE = `${API_BASE_URL}/api/scrap-note/save/`;
 
   const initialState = {
     date: today,
@@ -202,7 +203,7 @@ const ScrapNoteForm = () => {
 
             <div className="flex flex-col-reverse sm:flex-row gap-2 justify-end justify-between items-stretch sm:items-center border-t border-slate-100 pt-3">
                 {/* Prepared By */}
-  <div className="flex flex-col">
+  {/* <div className="flex flex-col">
     <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
       Prepared By
     </label>
@@ -213,7 +214,7 @@ const ScrapNoteForm = () => {
       placeholder="Enter name"
       className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
     />
-  </div>
+  </div> */}
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <button
                   type="button"

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 // API Base URL
-const API_BASE_URL = 'http://192.168.0.34:8000/api';
+const API_BASE_URL = `${process.env.REACT_APP_API_URL || 'https://localhost:8000'}/api`;
 
 // Helper function to convert minutes to hours
 const convertMinutesToHours = (minutes) => {

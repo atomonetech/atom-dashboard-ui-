@@ -4,6 +4,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const atomone = '/logo1.jpg';
 
@@ -69,7 +70,7 @@ const PokaYokeChecksheetprint = ({ onEditForm }) => {
             if (filterPlant === "Plant 1") apiPlantNameForList = "plant_1";
             if (filterPlant === "Plant 2") apiPlantNameForList = "plant_2";
 
-            const response = await fetch(`http://192.168.0.34:8000/api/machines/list/?plant=${encodeURIComponent(apiPlantNameForList)}`);
+            const response = await fetch(`${API_BASE_URL}/api/machines/list/?plant=${encodeURIComponent(apiPlantNameForList)}`);
             const result = await response.json();
             
             if (result.success && result.machines) {
@@ -125,7 +126,7 @@ const PokaYokeChecksheetprint = ({ onEditForm }) => {
 
     try {
         const monthIndex = MONTH_NAMES.indexOf(filterMonth) + 1;
-        const url = `http://192.168.0.34:8000/api/get_monitoring_data/?machine_no=${encodeURIComponent(filterMachine)}&plant_name=${encodeURIComponent(filterPlant)}&month=${monthIndex}&year=${filterYear}`;
+        const url = `${API_BASE_URL}/api/get_monitoring_data/?machine_no=${encodeURIComponent(filterMachine)}&plant_name=${encodeURIComponent(filterPlant)}&month=${monthIndex}&year=${filterYear}`;
         const response = await fetch(url);
         const result = await response.json();
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const BASE_URL = "http://192.168.0.34:8000"; 
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const PLANT_MAP = {
     'Plant 1': 'plant_1',

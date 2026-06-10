@@ -6,7 +6,7 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE = 'http://192.168.0.34:8000';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 export default function Notifications() {
   const navigate = useNavigate();

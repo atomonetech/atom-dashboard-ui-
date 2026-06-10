@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const areaOptions = [
     "Weld Shop",
@@ -87,7 +88,7 @@ const Operator5S = () => {
         const checkTodayStatus = async () => {
             try {
                 const dbDate = new Date().toISOString().split('T')[0];
-                const response = await fetch(`http://192.168.0.34:8000/api/check-5s-status/?date=${dbDate}&area=${encodeURIComponent(area)}`);
+                const response = await fetch(`${API_BASE_URL}/api/check-5s-status/?date=${dbDate}&area=${encodeURIComponent(area)}`);
 
                 if (response.ok) {
                     const data = await response.json();
@@ -172,7 +173,7 @@ const Operator5S = () => {
         setIsSubmitting(true);
 
         try {
-            const response = await fetch('http://192.168.0.34:8000/api/5s-checksheet/save/', {
+            const response = await fetch(`${API_BASE_URL}/api/5s-checksheet/save/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

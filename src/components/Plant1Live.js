@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import Plant1LiveModal from './Plant1LiveModal';
 
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://192.168.0.105:8000';
+const API_BASE = process.env.REACT_APP_API_URL || 'https://localhost:8000';
 
 
 export default function Plant1Live() {

@@ -20,8 +20,8 @@ export const productionReports = [
     { id: 18, title: 'Operator observance checklist', formNo: 'AOT-F-TR-7', resp: 'Production Engineer', category: 'monthly', icon: 'bi-list-check', color: '#ff6721', bg: '#ede9fe', formRoute: 'Operator-Observance-Check-Form', printRoute: null, viewKey: 'operator-observance-checklist', isLive: true  },
 
     // --- YEARLY CATEGORY ---
-    { id: 1, title: 'Capacity of Line / Cell / Plant', formNo: 'AOT-F-PROD-02', resp: 'Production Manager', category: 'yearly', icon: 'bi-factory', color: '#3b82f6', bg: '#eff6ff', formRoute: 'Plant-Capacity-Form', printRoute: 'production-hub/yearly', viewKey: 'Plant-Capacity-Form', isLive: true},
+    { id: 1, title: 'Capacity of Line / Cell / Plant', formNo: 'AOT-F-PROD-02', resp: 'Production Manager', category: 'yearly', icon: 'bi-factory', color: '#3b82f6', bg: '#eff6ff', formRoute: 'Plant-Capacity-Form', printRoute: 'production-hub/yearly', viewKey: 'Plant-Capacity-Form', isLive: false},
     { id: 8, title: 'Operator 5S Skill Matrix', formNo: 'AOT-F-PROD-13A', resp: 'Production Engineer', category: 'yearly', icon: 'bi-grid-3x3', color: '#f59e0b', bg: '#fef3c7', formRoute: 'Operator-5S-Skill-Form', printRoute: null, viewKey: null, isLive: false},
     { id: 12, title: 'Skill Matrix for Operators', formNo: 'AOT-F-PROD-13A', resp: 'Production Engineer', category: 'yearly', icon: 'bi-person-badge-fill', color: '#f5490b', bg: '#fef3c7', formRoute: 'Skill-Matrix-Form', printRoute: null, viewKey: null, isLive: false },
-    { id: 13, title: 'List of Material Handling Equip.', formNo: 'AOT-F-PROD-04', resp: 'Production Manager', category: 'yearly', icon: 'bi-list-columns', color: '#06b6d4', bg: '#cffafe', formRoute: 'MHE-List-Form', printRoute: null, viewKey: null, isLive: true}
+    { id: 13, title: 'List of Material Handling Equip.', formNo: 'AOT-F-PROD-04', resp: 'Production Manager', category: 'yearly', icon: 'bi-list-columns', color: '#06b6d4', bg: '#cffafe', formRoute: 'MHE-List-Form', printRoute: null, viewKey: null, isLive: false}
 ];

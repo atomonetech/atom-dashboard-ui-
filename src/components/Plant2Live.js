@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom'; 
 
-const API_BASE = 'http://192.168.0.34:8000';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 // =================================================================================
 // IDLE REASONS & ICONS DATA

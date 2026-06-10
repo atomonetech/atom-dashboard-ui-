@@ -149,7 +149,8 @@ const ToolBreakdownForm = () => {
     };
     
     try {
-      const response = await fetch('http://192.168.0.34:8000/api/tool-breakdown-slip/save/', {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/tool-breakdown-slip/save/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submissionData),

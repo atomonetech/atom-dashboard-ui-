@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 // 🔥 Production ke saare form configs yahan
 const PROD_CONFIG = {
@@ -56,7 +57,7 @@ const ProductionView = () => {
     const fetchData = () => {
         setLoading(true);
         setError(null);
-        fetch(`http://192.168.0.34:8000/api/production-data/${formKey}/`)
+        fetch(`${API_BASE_URL}/api/production-data/${formKey}/`)
             .then(res => {
                 if (!res.ok) throw new Error('Server error');
                 return res.json();
@@ -124,7 +125,7 @@ const ProductionView = () => {
         };
 
         try {
-            const response = await fetch(`http://192.168.0.34:8000/api/update-daily-production/${rowId}/`, {
+            const response = await fetch(`${API_BASE_URL}/api/update-daily-production/${rowId}/`, {
                 method: 'PATCH',
                 headers: { 
                     'Content-Type': 'application/json',
