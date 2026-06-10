@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Plant1LiveModal from './Plant1LiveModal';
 
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://192.168.0.105:8000';
+const API_BASE = process.env.REACT_APP_API_URL || 'https://localhost:8000';
 const IDLE_REASONS = {
   "Tool Breakdown": [
     "Overload / Wrong Parameters", "Material Hardness", "Coolant Issue", "Improper Clamping", "Wear and Tear", "Other"
