@@ -4,6 +4,7 @@ import { Factory, Zap, Mail, Lock, Eye, EyeOff, Cpu, TrendingUp, User } from 'lu
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
+import { toast } from "react-toastify";
 
 export default function Auth({ onLogin }) {
   const navigate = useNavigate();
@@ -60,6 +61,7 @@ export default function Auth({ onLogin }) {
         localStorage.setItem('refresh_token', data.refresh);
         localStorage.setItem('user_role', data.role);
         localStorage.setItem('username', username);
+          toast.success(`Welcome ${username} to AtomOne Dashboard 🚀`);
 
         if (onLogin) {
           console.log('🔐 Calling onLogin - Setting auth TRUE');

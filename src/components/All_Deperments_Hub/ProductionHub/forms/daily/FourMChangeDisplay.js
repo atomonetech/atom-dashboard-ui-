@@ -18,7 +18,24 @@ import {
 } from "lucide-react";
 
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-
+const C = {
+  pageBg: "#f5f5f0",
+  white: "#ffffff",
+  red: "#b91c1c",
+  redLight: "#fef2f2",
+  redBorder: "#fca5a5",
+  redDark: "#991b1b",
+  border: "#e2e2de",
+  borderFoc: "#b91c1c",
+  text: "#1a1a1a",
+  textMid: "#6b7280",
+  textLight: "#9ca3af",
+  inputBg: "#ffffff",
+  inputHov: "#fafaf8",
+  rowHead: "#fafaf8",
+  rowBorder: "#e8e4de",
+  shadow: "0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04)",
+};
 const EMPTY_ROW = {
   machineNo: "",
   operatorName: "",
@@ -38,7 +55,7 @@ const FourMDisplayBoard = () => {
   const formattedDate = `${day}.${month}.${year}`;
 
   const [rows, setRows] = useState(
-    Array.from({ length: 3 }, (_, i) => ({ id: i + 1, ...EMPTY_ROW }))
+    Array.from({ length: 3 }, (_, i) => ({ id: i + 1, ...EMPTY_ROW })),
   );
   const [isLoading, setIsLoading] = useState(false);
 
@@ -54,7 +71,7 @@ const FourMDisplayBoard = () => {
 
   const handleChange = (id, field, value) => {
     setRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, [field]: value } : row))
+      prev.map((row) => (row.id === id ? { ...row, [field]: value } : row)),
     );
   };
 
@@ -103,9 +120,14 @@ const FourMDisplayBoard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 font-sans">
+    <div
+      className="min-h-screen p-4"
+      style={{
+        background: C.pageBg,
+        fontFamily: "'Inter', system-ui, sans-serif",
+      }}
+    >
       <div className="max-w-4xl mx-auto">
-
         {/* Back Button */}
         <div className="mb-4 flex justify-between items-center">
           <button
@@ -119,10 +141,23 @@ const FourMDisplayBoard = () => {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="bg-white rounded-none shadow-md border border-gray-200 overflow-hidden">
-
+          <div
+            style={{
+              background: C.white,
+              borderRadius: 8,
+              border: `1px solid ${C.border}`,
+              overflow: "hidden",
+              boxShadow: C.shadow,
+            }}
+          >
             {/* Header */}
-            <div className="bg-gradient-to-r from-red-600 to-red-500 px-6 py-5 border-b border-red-300">
+            <div
+              style={{
+                background: C.red,
+                padding: "20px 28px",
+                borderBottom: `1px solid ${C.redDark}`,
+              }}
+            >
               <div className="hidden sm:flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <ClipboardList className="h-6 w-6 text-white/90" />
@@ -151,14 +186,28 @@ const FourMDisplayBoard = () => {
 
             {/* Form Body */}
             <div className="p-6 space-y-6">
-
               {rows.map((row, idx) => (
                 <div
                   key={row.id}
-                  className="border border-slate-200 rounded-none bg-white shadow-sm"
+                  style={{
+                    border: `1px solid ${C.rowBorder}`,
+                    borderRadius: 8,
+                    overflow: "hidden",
+                    background: C.white,
+                    boxShadow: "0 1px 4px rgba(0,0,0,.04)",
+                  }}
                 >
                   {/* Entry Header — S.No + Delete */}
-                  <div className="flex items-center justify-between bg-slate-100 border-b border-slate-200 px-4 py-2">
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      background: C.rowHead,
+                      borderBottom: `1px solid ${C.rowBorder}`,
+                      padding: "10px 16px",
+                    }}
+                  >
                     <div className="flex items-center gap-2">
                       <Hash className="h-3.5 w-3.5 text-red-500" />
                       <span className="text-xs font-bold text-slate-700 uppercase tracking-widest">
@@ -178,7 +227,6 @@ const FourMDisplayBoard = () => {
 
                   {/* Fields inside card */}
                   <div className="p-4 space-y-4">
-
                     {/* Row 1: Machine No. + Operator Name */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div className="flex flex-col">
@@ -189,9 +237,30 @@ const FourMDisplayBoard = () => {
                         <input
                           type="text"
                           value={row.machineNo}
-                          onChange={(e) => handleChange(row.id, "machineNo", e.target.value)}
+                          onChange={(e) =>
+                            handleChange(row.id, "machineNo", e.target.value)
+                          }
                           placeholder="e.g. MC-101"
-                          className="w-full px-4 py-2.5 text-sm bg-white border border-slate-300 rounded-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 placeholder-slate-400 transition-colors"
+                          style={{
+                            width: "100%",
+                            padding: "10px 13px",
+                            fontSize: 13,
+                            background: C.inputBg,
+                            color: C.text,
+                            border: `1.5px solid ${C.border}`,
+                            borderRadius: 6,
+                            outline: "none",
+                            transition: "all .15s",
+                          }}
+                          onFocus={(e) => {
+                            e.target.style.borderColor = C.red;
+                            e.target.style.boxShadow =
+                              "0 0 0 3px rgba(185,28,28,.1)";
+                          }}
+                          onBlur={(e) => {
+                            e.target.style.borderColor = C.border;
+                            e.target.style.boxShadow = "none";
+                          }}
                         />
                       </div>
                       <div className="flex flex-col">
@@ -202,9 +271,30 @@ const FourMDisplayBoard = () => {
                         <input
                           type="text"
                           value={row.operatorName}
-                          onChange={(e) => handleChange(row.id, "operatorName", e.target.value)}
+                          onChange={(e) =>
+                            handleChange(row.id, "operatorName", e.target.value)
+                          }
                           placeholder="Enter operator name"
-                          className="w-full px-4 py-2.5 text-sm bg-white border border-slate-300 rounded-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 placeholder-slate-400 transition-colors"
+                          style={{
+                            width: "100%",
+                            padding: "10px 13px",
+                            fontSize: 13,
+                            background: C.inputBg,
+                            color: C.text,
+                            border: `1.5px solid ${C.border}`,
+                            borderRadius: 6,
+                            outline: "none",
+                            transition: "all .15s",
+                          }}
+                          onFocus={(e) => {
+                            e.target.style.borderColor = C.red;
+                            e.target.style.boxShadow =
+                              "0 0 0 3px rgba(185,28,28,.1)";
+                          }}
+                          onBlur={(e) => {
+                            e.target.style.borderColor = C.border;
+                            e.target.style.boxShadow = "none";
+                          }}
                         />
                       </div>
                     </div>
@@ -219,9 +309,30 @@ const FourMDisplayBoard = () => {
                         <input
                           type="text"
                           value={row.man}
-                          onChange={(e) => handleChange(row.id, "man", e.target.value)}
+                          onChange={(e) =>
+                            handleChange(row.id, "man", e.target.value)
+                          }
                           placeholder="Enter man detail"
-                          className="w-full px-4 py-2.5 text-sm bg-white border border-slate-300 rounded-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 placeholder-slate-400 transition-colors"
+                          style={{
+                            width: "100%",
+                            padding: "10px 13px",
+                            fontSize: 13,
+                            background: C.inputBg,
+                            color: C.text,
+                            border: `1.5px solid ${C.border}`,
+                            borderRadius: 6,
+                            outline: "none",
+                            transition: "all .15s",
+                          }}
+                          onFocus={(e) => {
+                            e.target.style.borderColor = C.red;
+                            e.target.style.boxShadow =
+                              "0 0 0 3px rgba(185,28,28,.1)";
+                          }}
+                          onBlur={(e) => {
+                            e.target.style.borderColor = C.border;
+                            e.target.style.boxShadow = "none";
+                          }}
                         />
                       </div>
                       <div className="flex flex-col">
@@ -232,9 +343,30 @@ const FourMDisplayBoard = () => {
                         <input
                           type="text"
                           value={row.machine}
-                          onChange={(e) => handleChange(row.id, "machine", e.target.value)}
+                          onChange={(e) =>
+                            handleChange(row.id, "machine", e.target.value)
+                          }
                           placeholder="Enter machine detail"
-                          className="w-full px-4 py-2.5 text-sm bg-white border border-slate-300 rounded-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 placeholder-slate-400 transition-colors"
+                          style={{
+                            width: "100%",
+                            padding: "10px 13px",
+                            fontSize: 13,
+                            background: C.inputBg,
+                            color: C.text,
+                            border: `1.5px solid ${C.border}`,
+                            borderRadius: 6,
+                            outline: "none",
+                            transition: "all .15s",
+                          }}
+                          onFocus={(e) => {
+                            e.target.style.borderColor = C.red;
+                            e.target.style.boxShadow =
+                              "0 0 0 3px rgba(185,28,28,.1)";
+                          }}
+                          onBlur={(e) => {
+                            e.target.style.borderColor = C.border;
+                            e.target.style.boxShadow = "none";
+                          }}
                         />
                       </div>
                     </div>
@@ -249,9 +381,30 @@ const FourMDisplayBoard = () => {
                         <input
                           type="text"
                           value={row.material}
-                          onChange={(e) => handleChange(row.id, "material", e.target.value)}
+                          onChange={(e) =>
+                            handleChange(row.id, "material", e.target.value)
+                          }
                           placeholder="Enter material detail"
-                          className="w-full px-4 py-2.5 text-sm bg-white border border-slate-300 rounded-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 placeholder-slate-400 transition-colors"
+                          style={{
+                            width: "100%",
+                            padding: "10px 13px",
+                            fontSize: 13,
+                            background: C.inputBg,
+                            color: C.text,
+                            border: `1.5px solid ${C.border}`,
+                            borderRadius: 6,
+                            outline: "none",
+                            transition: "all .15s",
+                          }}
+                          onFocus={(e) => {
+                            e.target.style.borderColor = C.red;
+                            e.target.style.boxShadow =
+                              "0 0 0 3px rgba(185,28,28,.1)";
+                          }}
+                          onBlur={(e) => {
+                            e.target.style.borderColor = C.border;
+                            e.target.style.boxShadow = "none";
+                          }}
                         />
                       </div>
                       <div className="flex flex-col">
@@ -262,13 +415,33 @@ const FourMDisplayBoard = () => {
                         <input
                           type="text"
                           value={row.method}
-                          onChange={(e) => handleChange(row.id, "method", e.target.value)}
+                          onChange={(e) =>
+                            handleChange(row.id, "method", e.target.value)
+                          }
                           placeholder="Enter method detail"
-                          className="w-full px-4 py-2.5 text-sm bg-white border border-slate-300 rounded-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 placeholder-slate-400 transition-colors"
+                          style={{
+                            width: "100%",
+                            padding: "10px 13px",
+                            fontSize: 13,
+                            background: C.inputBg,
+                            color: C.text,
+                            border: `1.5px solid ${C.border}`,
+                            borderRadius: 6,
+                            outline: "none",
+                            transition: "all .15s",
+                          }}
+                          onFocus={(e) => {
+                            e.target.style.borderColor = C.red;
+                            e.target.style.boxShadow =
+                              "0 0 0 3px rgba(185,28,28,.1)";
+                          }}
+                          onBlur={(e) => {
+                            e.target.style.borderColor = C.border;
+                            e.target.style.boxShadow = "none";
+                          }}
                         />
                       </div>
                     </div>
-
                   </div>
                 </div>
               ))}
@@ -304,11 +477,14 @@ const FourMDisplayBoard = () => {
                   disabled={isLoading}
                   className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-[#e03131] text-white px-8 py-3 hover:bg-[#c92a2a] transition-all shadow-sm font-bold tracking-widest text-sm disabled:opacity-70 disabled:cursor-not-allowed rounded-none uppercase"
                 >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                   {isLoading ? "Submitting..." : "Submit Board"}
                 </button>
               </div>
-
             </div>
           </div>
         </form>

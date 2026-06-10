@@ -25,5 +25,25 @@ module.exports = {
       },
     },
   },
+   theme: {
+    extend: {
+      keyframes: {
+        "scroll-left": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+        "scroll-right": {
+          "0%": { transform: "translateX(-50%)" },
+          "100%": { transform: "translateX(0)" },
+        },
+        shimmer: { '0%': { backgroundPosition: '200% 0' }, '100%': { backgroundPosition: '-200% 0' } }
+      },
+      animation: {
+        "scroll-left": "scroll-left var(--speed, 30s) linear infinite",
+        "scroll-right": "scroll-right var(--speed, 30s) linear infinite",
+         shimmer: 'shimmer 3s linear infinite'
+      },
+    },
+  },
   plugins: [],
 };

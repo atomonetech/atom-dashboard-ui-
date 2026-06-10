@@ -11,515 +11,603 @@ import {
   FileText,
   UserCheck,
   PenTool,
-  Hash
+  Hash,
 } from "lucide-react";
 
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
-const EMPTY_ROW = {
-  date: "",
-  customer: "", // Customer field added
-  partNameNo: "",
-  typeOfChange: "",
-  changeDetail: "",
-  retroTotalQty: "",
-  retroOkQty: "",
-  retroRejQty: "",
-  statusAfterFinal: "",
-  actionForNG: "",
-  supSignature: "",
-  signProdHead: "",
-  signQAHead: "",
-  remarks: "",
+/* ─── design tokens (matches red-white theme) ────────────────── */
+const C = {
+  pageBg:      "#f5f5f0",
+  white:       "#ffffff",
+  red:         "#b91c1c",
+  redLight:    "#fef2f2",
+  redBorder:   "#fca5a5",
+  redDark:     "#991b1b",
+  border:      "#e2e2de",
+  borderFoc:   "#b91c1c",
+  text:        "#1a1a1a",
+  textMid:     "#6b7280",
+  textLight:   "#9ca3af",
+  inputBg:     "#ffffff",
+  inputHov:    "#fafaf8",
+  rowHead:     "#fafaf8",
+  rowBorder:   "#e8e4de",
+  green:       "#16a34a",
+  greenLight:  "#f0fdf4",
+  greenBorder: "#86efac",
+  shadow:      "0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04)",
 };
 
+/* ─── shared input base ──────────────────────────────────────── */
+const inputBase = {
+  width: "100%",
+  padding: "10px 13px",
+  fontSize: 13,
+  background: C.inputBg,
+  color: C.text,
+  border: `1.5px solid ${C.border}`,
+  borderRadius: 6,
+  outline: "none",
+  fontFamily: "inherit",
+  appearance: "none",
+  transition: "border-color .15s, box-shadow .15s",
+};
+
+const focusHandlers = (overrideBorder, overrideBg) => ({
+  onFocus: e => {
+    e.target.style.borderColor = overrideBorder || C.borderFoc;
+    e.target.style.boxShadow   = `0 0 0 3px ${overrideBorder === C.green ? "rgba(22,163,74,.1)" : "rgba(185,28,28,.1)"}`;
+    if (overrideBg) e.target.style.background = overrideBg;
+  },
+  onBlur: e => {
+    e.target.style.borderColor = overrideBorder || C.border;
+    e.target.style.boxShadow   = "none";
+    if (overrideBg) e.target.style.background = overrideBg;
+  },
+});
+
+const SI = ({ style = {}, readOnly, focBorder, focBg, ...props }) => (
+  <input
+    readOnly={readOnly}
+    style={{
+      ...inputBase,
+      ...(readOnly ? { background: "#f9f9f7", color: C.textMid, cursor: "not-allowed" } : {}),
+      ...style,
+    }}
+    {...(readOnly ? {} : focusHandlers(focBorder, focBg))}
+    {...props}
+  />
+);
+
+const SS = ({ disabled, style = {}, focBorder, children, ...props }) => (
+  <select
+    disabled={disabled}
+    style={{
+      ...inputBase,
+      background:   disabled ? "#f9f9f7" : C.inputBg,
+      color:        disabled ? C.textLight : C.text,
+      cursor:       disabled ? "not-allowed" : "pointer",
+      borderColor:  disabled ? C.border : C.border,
+      ...style,
+    }}
+    {...(disabled ? {} : focusHandlers(focBorder))}
+    {...props}
+  >
+    {children}
+  </select>
+);
+
+/* ─── small label ────────────────────────────────────────────── */
+const FL = ({ icon: Icon, children, iconColor = C.red }) => (
+  <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
+    {Icon && <Icon size={11} color={iconColor} strokeWidth={2.5} />}
+    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".11em", textTransform: "uppercase", color: C.textMid }}>
+      {children}
+    </span>
+  </div>
+);
+
+/* ─── section heading inside a row card ─────────────────────── */
+const SecHead = ({ n, label }) => (
+  <div style={{
+    display: "flex", alignItems: "center", gap: 8,
+    borderBottom: `1px solid ${C.border}`,
+    paddingBottom: 8, marginBottom: 14,
+  }}>
+    <span style={{
+      fontSize: 9, fontWeight: 700, letterSpacing: ".1em",
+      background: C.redLight, color: C.red,
+      border: `1px solid ${C.redBorder}`,
+      padding: "2px 7px", borderRadius: 3,
+    }}>{n}</span>
+    <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: C.text }}>
+      {label}
+    </span>
+  </div>
+);
+
+/* ─── empty row template ─────────────────────────────────────── */
+const EMPTY_ROW = {
+  date: "", customer: "", partNameNo: "", typeOfChange: "", changeDetail: "",
+  retroTotalQty: "", retroOkQty: "", retroRejQty: "",
+  statusAfterFinal: "", actionForNG: "",
+  supSignature: "", signProdHead: "", signQAHead: "", remarks: "",
+};
+
+/* ─── main component ─────────────────────────────────────────── */
 const FourMSummarySheet = () => {
   const navigate = useNavigate();
 
-  const [rows, setRows] = useState([{ id: 1, ...EMPTY_ROW }]);
-  const [preparedBy, setPreparedBy] = useState("");
-  const [approvedBy, setApprovedBy] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // State for Cascading Dropdowns
+  const [rows, setRows]               = useState([{ id: 1, ...EMPTY_ROW }]);
+  const [preparedBy, setPreparedBy]   = useState("");
+  const [approvedBy, setApprovedBy]   = useState("");
+  const [isLoading, setIsLoading]     = useState(false);
   const [customersData, setCustomersData] = useState([]);
-  const [partsCache, setPartsCache] = useState({}); 
+  const [partsCache, setPartsCache]   = useState({});
 
-  // 1. Fetch Customers on component mount
   useEffect(() => {
     fetch(`${BASE_URL}/api/master-dropdown/?filter=customer`)
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return res.json();
-      })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {
-        console.log("RAW CUSTOMER API RESPONSE:", data);
-
-        let formattedCustomers = [];
+        let list = [];
         if (Array.isArray(data)) {
-          formattedCustomers = data.map(item => {
-            if (typeof item === 'string') return item; 
-            if (item.customer_name) return item.customer_name; 
-            if (Array.isArray(item)) return item[0]; 
-            return item.customer || String(item);
-          });
-        } 
-        else if (data && typeof data === 'object') {
-          const arrayData = data.data || data.customers || data.results || [];
-          if (Array.isArray(arrayData)) {
-            formattedCustomers = arrayData.map(item => 
-              typeof item === 'object' ? (item.customer_name || item.customer || item[0]) : item
-            );
-          }
+          list = data.map(i =>
+            typeof i === "string" ? i :
+            i.customer_name ? i.customer_name :
+            Array.isArray(i) ? i[0] :
+            i.customer || String(i)
+          );
+        } else if (data && typeof data === "object") {
+          const arr = data.data || data.customers || data.results || [];
+          list = arr.map(i => typeof i === "object" ? (i.customer_name || i.customer || i[0]) : i);
         }
-
-        const uniqueCustomers = [...new Set(formattedCustomers)].filter(Boolean);
-        setCustomersData(uniqueCustomers);
+        setCustomersData([...new Set(list)].filter(Boolean));
       })
-      .catch(err => {
-        console.error('Error fetching customers:', err);
-        setCustomersData(['MARUTI', 'TATA', 'FIG']); // Fallback
-      });
+      .catch(() => setCustomersData(["MARUTI", "TATA", "FIG"]));
   }, []);
 
   const handleAddRow = () => {
-    const nextId = rows.length > 0 ? Math.max(...rows.map((r) => r.id)) + 1 : 1;
-    setRows((prev) => [...prev, { id: nextId, ...EMPTY_ROW }]);
+    const nextId = rows.length > 0 ? Math.max(...rows.map(r => r.id)) + 1 : 1;
+    setRows(prev => [...prev, { id: nextId, ...EMPTY_ROW }]);
   };
 
-  const handleDeleteRow = (id) => {
+  const handleDeleteRow = id => {
     if (rows.length === 1) return;
-    setRows((prev) => prev.filter((r) => r.id !== id));
+    setRows(prev => prev.filter(r => r.id !== id));
   };
 
-  const handleChange = (id, field, value) => {
-    setRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, [field]: value } : row))
-    );
-  };
+  const handleChange = (id, field, value) =>
+    setRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
 
- // 2. Handle Customer Selection & Fetch Dependent Parts
   const handleCustomerChange = async (id, customerName) => {
     handleChange(id, "customer", customerName);
-    handleChange(id, "partNameNo", ""); 
-
+    handleChange(id, "partNameNo", "");
     if (!customerName) return;
-
     if (!partsCache[customerName]) {
       try {
-        const res = await fetch(`${BASE_URL}/api/master-dropdown/?filter=part&cust=${encodeURIComponent(customerName)}`);
-        if (!res.ok) throw new Error("Failed to fetch parts");
+        const res  = await fetch(`${BASE_URL}/api/master-dropdown/?filter=part&cust=${encodeURIComponent(customerName)}`);
+        if (!res.ok) throw new Error("Failed");
         const data = await res.json();
-        
-        // 🔥 DEBUG LOG 🔥 - F12 (Console) mein check karein ki data ka format kya hai
-        console.log("DEBUG - Backend se aaya hua data:", data);
-        
-        let formattedParts = [];
-        
-        if (Array.isArray(data)) {
-            formattedParts = data.map(item => {
-                // Agar data object hai (jaise {part_name: "Pipe", part_no: "123"})
-                if (typeof item === 'object' && item !== null) {
-                    // Yahan hum try karenge ki kisi bhi tarah se name aur no nikal sakein
-                    const name = item.part_name || item.name || item.part || item[0] || 'Unknown';
-                    const no = item.part_number || item.part_no || item.number || item[1] || '';
-                    return { part_name: name, part_no: no };
-                }
-                // Agar data sirf string hai (Sirf naam)
-                return { part_name: item, part_no: '' };
-            });
-        } 
-
-        setPartsCache(prev => ({ ...prev, [customerName]: formattedParts }));
-      } catch (err) {
-        console.error(`Error fetching parts for ${customerName}:`, err);
-      }
+        const formatted = Array.isArray(data) ? data.map(item => {
+          if (typeof item === "object" && item !== null) {
+            const name = item.part_name || item.name || item.part || item[0] || "Unknown";
+            const no   = item.part_number || item.part_no || item.number || item[1] || "";
+            return { part_name: name, part_no: no };
+          }
+          return { part_name: item, part_no: "" };
+        }) : [];
+        setPartsCache(prev => ({ ...prev, [customerName]: formatted }));
+      } catch (err) { console.error(`Error fetching parts for ${customerName}:`, err); }
     }
   };
 
-  const handleReset = () => {
-    setRows([{ id: 1, ...EMPTY_ROW }]);
-    setPreparedBy("");
-    setApprovedBy("");
-  };
+  const handleReset = () => { setRows([{ id: 1, ...EMPTY_ROW }]); setPreparedBy(""); setApprovedBy(""); };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
-    const filledRows = rows.filter((r) => r.partNameNo || r.date || r.changeDetail);
-    if (filledRows.length === 0) {
-      alert("Please fill at least one entry before submitting.");
-      return;
-    }
-
+    const filled = rows.filter(r => r.partNameNo || r.date || r.changeDetail);
+    if (!filled.length) { alert("Please fill at least one entry before submitting."); return; }
     const payload = {
-      prepared_by: preparedBy,
-      approved_by: approvedBy,
-      entries: filledRows.map((row, idx) => ({
-        s_no: idx + 1,
-        date: row.date,
-        customer: row.customer,
-        part_name_no: row.partNameNo,
-        type_of_change: row.typeOfChange,
-        change_detail: row.changeDetail,
-        retro_total_qty: row.retroTotalQty,
-        retro_ok_qty: row.retroOkQty,
-        retro_rej_qty: row.retroRejQty,
-        status_after_final: row.statusAfterFinal,
-        action_for_ng: row.actionForNG,
-        sup_signature: row.supSignature,
-        sign_prod_head: row.signProdHead,
-        sign_qa_head: row.signQAHead,
-        remarks: row.remarks,
-      }))
+      prepared_by: preparedBy, approved_by: approvedBy,
+      entries: filled.map((r, i) => ({
+        s_no: i + 1, date: r.date, customer: r.customer,
+        part_name_no: r.partNameNo, type_of_change: r.typeOfChange,
+        change_detail: r.changeDetail,
+        retro_total_qty: r.retroTotalQty, retro_ok_qty: r.retroOkQty, retro_rej_qty: r.retroRejQty,
+        status_after_final: r.statusAfterFinal, action_for_ng: r.actionForNG,
+        sup_signature: r.supSignature, sign_prod_head: r.signProdHead,
+        sign_qa_head: r.signQAHead, remarks: r.remarks,
+      })),
     };
-
     setIsLoading(true);
     try {
-      const response = await fetch(`${BASE_URL}/api/save-4m-summary/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res    = await fetch(`${BASE_URL}/api/save-4m-summary/`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const result = await response.json();
-      if (response.ok && result.success) {
-        alert(result.message || "4M Summary Sheet saved successfully!");
-        handleReset();
-      } else {
-        alert("Error: " + (result.error || "Please check console."));
-      }
-    } catch (err) {
-      console.error("Network Error:", err);
-      alert("Failed to connect to the server. Make sure Django is running.");
-    } finally {
-      setIsLoading(false);
-    }
+      const result = await res.json();
+      if (res.ok && result.success) { alert(result.message || "Saved successfully!"); handleReset(); }
+      else alert("Error: " + (result.error || "Check console."));
+    } catch (err) { console.error("Network error:", err); alert("Cannot reach server."); }
+    finally { setIsLoading(false); }
   };
 
+  /* ── render ── */
   return (
-    <div className="min-h-screen bg-gray-50 p-4 font-sans text-slate-800">
-      <div className="max-w-7xl mx-auto">
+    <div style={{
+      minHeight: "100vh", background: C.pageBg,
+      padding: "28px 16px", fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+    }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
 
-        {/* Back Button */}
-        <div className="mb-4 flex justify-between items-center">
+        {/* ── back button ── */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <button
             type="button"
             onClick={() => navigate("/production-hub")}
-            className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors text-sm font-bold bg-white px-4 py-2 border border-red-200 shadow-sm rounded-none tracking-wide"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 7,
+              background: C.white, border: `1.5px solid ${C.redBorder}`,
+              color: C.red, padding: "8px 16px",
+              fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase",
+              cursor: "pointer", borderRadius: 4, fontFamily: "inherit", transition: "background .15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = C.redLight}
+            onMouseLeave={e => e.currentTarget.style.background = C.white}
           >
-            <ArrowLeft className="h-4 w-4" />
-            BACK TO PRODUCTION HUB
+            <ArrowLeft size={13} /> Back to Production Hub
           </button>
         </div>
 
+        {/* ── main card ── */}
         <form onSubmit={handleSubmit}>
-          <div className="bg-white rounded-none shadow-md border border-gray-200 overflow-hidden">
+          <div style={{
+            background: C.white, borderRadius: 8,
+            border: `1px solid ${C.border}`, overflow: "hidden", boxShadow: C.shadow,
+          }}>
 
-            {/* Header section */}
-            <div className="bg-gradient-to-r from-red-600 to-red-500 px-6 py-5 border-b border-red-300 flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="flex items-center gap-4">
+            {/* ── header ── */}
+            <div style={{
+              background: C.red, padding: "20px 28px",
+              display: "flex", justifyContent: "space-between",
+              alignItems: "center", flexWrap: "wrap", gap: 16,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <ClipboardList size={22} color="rgba(255,255,255,.9)" strokeWidth={2} />
                 <div>
-                  <h1 className="text-xl md:text-2xl font-bold text-white tracking-widest uppercase flex items-center gap-2">
-                    <ClipboardList className="h-6 w-6 text-white/90" />
-                    4M SUMMARY SHEET
-                  </h1>
+                  <h1 style={{
+                    margin: 0, fontSize: 18, fontWeight: 700,
+                    color: "#fff", letterSpacing: ".18em", textTransform: "uppercase",
+                  }}>4M Summary Sheet</h1>
                 </div>
               </div>
 
-              {/* Document details */}
-              <div className="bg-red-700/40 text-xs border border-white/30 grid grid-cols-2 w-full md:w-64">
-                <div className="border-b border-r border-white/30 p-1 font-bold text-white/90">DOC.NO.</div>
-                <div className="border-b border-white/30 p-1 font-semibold text-white">AOT-F-4M-05A</div>
-                
-                <div className="border-b border-r border-white/30 p-1 font-bold text-white/90">REVISION NO.</div>
-                <div className="border-b border-white/30 p-1 font-semibold text-white">00</div>
-                
-                <div className="border-r border-white/30 p-1 font-bold text-white/90">DATE</div>
-                <div className="p-1 font-semibold text-white">01.01.2019</div>
+              {/* doc meta box */}
+              <div style={{
+                display: "grid", gridTemplateColumns: "auto auto",
+                background: "rgba(0,0,0,.2)", border: "1px solid rgba(255,255,255,.25)",
+                borderRadius: 4, overflow: "hidden", fontSize: 11,
+              }}>
+                {[
+                  ["DOC. NO.", "AOT-F-4M-05A"],
+                  ["REVISION NO.", "00"],
+                  ["DATE", "01.01.2019"],
+                ].map(([k, v], i, arr) => (
+                  <React.Fragment key={k}>
+                    <div style={{
+                      padding: "5px 12px", fontWeight: 700, color: "rgba(255,255,255,.8)",
+                      borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,.2)" : "none",
+                      borderRight: "1px solid rgba(255,255,255,.2)",
+                    }}>{k}</div>
+                    <div style={{
+                      padding: "5px 14px", fontWeight: 600, color: "#fff",
+                      borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,.2)" : "none",
+                    }}>{v}</div>
+                  </React.Fragment>
+                ))}
               </div>
             </div>
 
-            {/* Form Body */}
-            <div className="p-6 space-y-8">
-              {rows.map((row, idx) => {
-                
-                // Get parts from cache for this row's selected customer
-                const rowPartsOptions = partsCache[row.customer] || [];
+            {/* ── form body ── */}
+            <div style={{ padding: "28px 28px 24px" }}>
 
-                return (
-                <div
-                  key={row.id}
-                  className="border border-slate-200 rounded-none bg-white shadow-sm"
-                >
-                  <div className="flex items-center justify-between bg-slate-100 border-b border-slate-200 px-4 py-2">
-                    <div className="flex items-center gap-2">
-                      <Hash className="h-4 w-4 text-red-500" />
-                      <span className="text-sm font-bold text-slate-800 uppercase tracking-widest">
-                        Row Entry {idx + 1}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteRow(row.id)}
-                      disabled={rows.length === 1}
-                      className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 px-2 py-1 border border-red-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded-none font-bold uppercase tracking-wide bg-white"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                      Remove
-                    </button>
-                  </div>
+              {/* ── row cards ── */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {rows.map((row, idx) => {
+                  const rowParts = partsCache[row.customer] || [];
+                  return (
+                    <div key={row.id} style={{
+                      border: `1px solid ${C.rowBorder}`, borderRadius: 8,
+                      overflow: "hidden", background: C.white,
+                      boxShadow: "0 1px 4px rgba(0,0,0,.04)",
+                    }}>
 
-                  <div className="p-4 space-y-6">
-                    
-                    {/* Section 1: Basic Information */}
-                    <div>
-                      <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 border-b border-slate-200 pb-1">1. Basic Details</h3>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        <div className="flex flex-col">
-                          <label className="block text-xs font-bold text-slate-700 mb-1">Date</label>
-                          <input
-                            type="date"
-                            value={row.date}
-                            onChange={(e) => handleChange(row.id, "date", e.target.value)}
-                            className="w-full px-3 py-2 text-sm bg-white border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                          />
+                      {/* row card header */}
+                      <div style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                        background: C.rowHead, borderBottom: `1px solid ${C.rowBorder}`,
+                        padding: "10px 16px",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{
+                            width: 26, height: 26, background: C.redLight,
+                            border: `1px solid ${C.redBorder}`, borderRadius: 4,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <Hash size={12} color={C.red} strokeWidth={2.5} />
+                          </div>
+                          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: C.text }}>
+                            Entry {idx + 1}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteRow(row.id)}
+                          disabled={rows.length === 1}
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: 5,
+                            background: C.white, border: `1.5px solid ${C.redBorder}`,
+                            color: C.red, padding: "5px 12px", borderRadius: 4,
+                            fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase",
+                            cursor: rows.length === 1 ? "not-allowed" : "pointer",
+                            opacity: rows.length === 1 ? .3 : 1,
+                            fontFamily: "inherit", transition: "background .15s",
+                          }}
+                          onMouseEnter={e => { if (rows.length > 1) e.currentTarget.style.background = C.redLight; }}
+                          onMouseLeave={e => e.currentTarget.style.background = C.white}
+                        >
+                          <Trash2 size={11} /> Remove
+                        </button>
+                      </div>
+
+                      {/* row card body */}
+                      <div style={{ padding: "18px 16px", display: "flex", flexDirection: "column", gap: 22 }}>
+
+                        {/* Section 1: Basic Details */}
+                        <div>
+                          <SecHead n="1" label="Basic Details" />
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0,1fr))", gap: 14 }}>
+
+                            <div>
+                              <FL>Date</FL>
+                              <SI type="date" value={row.date} onChange={e => handleChange(row.id, "date", e.target.value)} />
+                            </div>
+
+                            <div>
+                              <FL>Customer</FL>
+                              <SS
+                                value={row.customer}
+                                onChange={e => handleCustomerChange(row.id, e.target.value)}
+                              >
+                                <option value="">Select Customer</option>
+                                {customersData.map((c, i) => <option key={i} value={c}>{c}</option>)}
+                              </SS>
+                            </div>
+
+                            <div>
+                              <FL>Part Name & No.</FL>
+                              <SS
+                                value={row.partNameNo}
+                                onChange={e => handleChange(row.id, "partNameNo", e.target.value)}
+                                disabled={!row.customer}
+                              >
+                                <option value="">{row.customer ? "Select Part" : "Select Customer First"}</option>
+                                {rowParts.map((p, i) => {
+                                  const display = p.part_no ? `${p.part_name} (${p.part_no})` : p.part_name;
+                                  return <option key={i} value={display}>{display}</option>;
+                                })}
+                              </SS>
+                            </div>
+
+                            <div>
+                              <FL>Type of Change</FL>
+                              <SI
+                                type="text" value={row.typeOfChange}
+                                onChange={e => handleChange(row.id, "typeOfChange", e.target.value)}
+                                placeholder="Man / Machine / Material"
+                              />
+                            </div>
+
+                            <div>
+                              <FL>Change Detail</FL>
+                              <SI
+                                type="text" value={row.changeDetail}
+                                onChange={e => handleChange(row.id, "changeDetail", e.target.value)}
+                                placeholder="Describe change"
+                              />
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="flex flex-col">
-                          <label className="block text-xs font-bold text-slate-700 mb-1">Customer</label>
-                          <select
-                            value={row.customer}
-                            onChange={(e) => handleCustomerChange(row.id, e.target.value)}
-                            className="w-full px-3 py-2 text-sm bg-white border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                          >
-                            <option value="">Select Customer</option>
-                            {customersData.map((cust, index) => (
-                              <option key={index} value={cust}>{cust}</option>
+                        {/* Section 2: Inspection & Action */}
+                        <div>
+                          <SecHead n="2" label="Inspection & Action Status" />
+                          <div style={{ display: "grid", gridTemplateColumns: "3fr 1fr 1fr", gap: 14 }}>
+
+                            {/* retro group */}
+                            <div style={{
+                              border: `1.5px solid ${C.border}`, borderRadius: 6,
+                              padding: "12px 14px", background: "#fafaf8",
+                            }}>
+                              <div style={{
+                                fontSize: 9, fontWeight: 700, letterSpacing: ".12em",
+                                textTransform: "uppercase", color: C.textMid,
+                                borderBottom: `1px solid ${C.border}`,
+                                paddingBottom: 6, marginBottom: 12, textAlign: "center",
+                              }}>
+                                Retroactive Inspection Status
+                              </div>
+                              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+                                {[
+                                  { field: "retroTotalQty", label: "Total Qty" },
+                                  { field: "retroOkQty",    label: "OK Qty",   green: true },
+                                  { field: "retroRejQty",   label: "Rej. Qty", red: true },
+                                ].map(({ field, label, green, red }) => (
+                                  <div key={field}>
+                                    <FL iconColor={green ? C.green : red ? C.red : C.red}>{label}</FL>
+                                    <SI
+                                      type="number" value={row[field]}
+                                      onChange={e => handleChange(row.id, field, e.target.value)}
+                                      focBorder={green ? C.green : undefined}
+                                      focBg={green ? C.greenLight : red ? C.redLight : undefined}
+                                      style={
+                                        green ? { borderColor: C.greenBorder, background: C.greenLight } :
+                                        red   ? { borderColor: C.redBorder,   background: C.redLight   } : {}
+                                      }
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div>
+                              <FL>Status after Final Insp.</FL>
+                              <SI
+                                type="text" value={row.statusAfterFinal}
+                                onChange={e => handleChange(row.id, "statusAfterFinal", e.target.value)}
+                                style={{ height: "calc(100% - 22px)" }}
+                              />
+                            </div>
+
+                            <div>
+                              <FL>Action for NG Material</FL>
+                              <SI
+                                type="text" value={row.actionForNG}
+                                onChange={e => handleChange(row.id, "actionForNG", e.target.value)}
+                                style={{ height: "calc(100% - 22px)" }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Section 3: Approvals */}
+                        <div>
+                          <SecHead n="3" label="Approvals & Remarks" />
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 14 }}>
+                            {[
+                              { field: "supSignature",  label: "Sup. Signature",      Icon: PenTool    },
+                              { field: "signProdHead",  label: "Sign Production Head", Icon: UserCheck  },
+                              { field: "signQAHead",    label: "Sign QA Head",         Icon: UserCheck  },
+                              { field: "remarks",       label: "Remarks",              Icon: FileText   },
+                            ].map(({ field, label, Icon }) => (
+                              <div key={field}>
+                                <FL icon={Icon}>{label}</FL>
+                                <SI
+                                  type="text" value={row[field]}
+                                  onChange={e => handleChange(row.id, field, e.target.value)}
+                                />
+                              </div>
                             ))}
-                          </select>
+                          </div>
                         </div>
 
-                        <div className="flex flex-col">
-                          <label className="block text-xs font-bold text-slate-700 mb-1">Part Name & No</label>
-                          <select
-                            value={row.partNameNo}
-                            onChange={(e) => handleChange(row.id, "partNameNo", e.target.value)}
-                            disabled={!row.customer} 
-                            className="w-full px-3 py-2 text-sm bg-white border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 disabled:bg-slate-100 disabled:cursor-not-allowed"
-                          >
-                            <option value="">{row.customer ? "Select Part" : "Select Customer First"}</option>
-                            {rowPartsOptions.map((part, index) => {
-                              // Yahan name ke saath number jod diya gaya hai
-                              const displayName = part.part_no ? `${part.part_name} (${part.part_no})` : part.part_name;
-                              return (
-                                <option key={index} value={displayName}>
-                                  {displayName}
-                                </option>
-                              );
-                            })}
-                          </select>
-                        </div>
-
-                        <div className="flex flex-col">
-                          <label className="block text-xs font-bold text-slate-700 mb-1">Type of Change</label>
-                          <input
-                            type="text"
-                            value={row.typeOfChange}
-                            onChange={(e) => handleChange(row.id, "typeOfChange", e.target.value)}
-                            placeholder="Man/Machine/Material/Method"
-                            className="w-full px-3 py-2 text-sm bg-white border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                          />
-                        </div>
-
-                        <div className="flex flex-col">
-                          <label className="block text-xs font-bold text-slate-700 mb-1">Change Detail</label>
-                          <input
-                            type="text"
-                            value={row.changeDetail}
-                            onChange={(e) => handleChange(row.id, "changeDetail", e.target.value)}
-                            placeholder="Describe change"
-                            className="w-full px-3 py-2 text-sm bg-white border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                          />
-                        </div>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
 
-                    {/* Section 2: Inspections & Actions */}
-                    <div>
-                      <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 border-b border-slate-200 pb-1">2. Inspection & Action Status</h3>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        <div className="col-span-1 md:col-span-3 grid grid-cols-3 gap-2 p-3 border border-slate-200 bg-white">
-                          <div className="col-span-3 text-[10px] font-bold text-slate-500 uppercase mb-1 text-center border-b border-slate-100 pb-1">
-                            Retroactive Inspection Status
-                          </div>
-                          <div className="flex flex-col">
-                            <label className="block text-xs font-bold text-slate-700 mb-1">Total Qty</label>
-                            <input
-                              type="number"
-                              value={row.retroTotalQty}
-                              onChange={(e) => handleChange(row.id, "retroTotalQty", e.target.value)}
-                              className="w-full px-2 py-1.5 text-sm bg-slate-50 border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                            />
-                          </div>
-                          <div className="flex flex-col">
-                            <label className="block text-xs font-bold text-slate-700 mb-1">Ok</label>
-                            <input
-                              type="number"
-                              value={row.retroOkQty}
-                              onChange={(e) => handleChange(row.id, "retroOkQty", e.target.value)}
-                              className="w-full px-2 py-1.5 text-sm bg-slate-50 border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                            />
-                          </div>
-                          <div className="flex flex-col">
-                            <label className="block text-xs font-bold text-slate-700 mb-1">Rej. Qty</label>
-                            <input
-                              type="number"
-                              value={row.retroRejQty}
-                              onChange={(e) => handleChange(row.id, "retroRejQty", e.target.value)}
-                              className="w-full px-2 py-1.5 text-sm bg-slate-50 border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col">
-                          <label className="block text-[11px] font-bold text-slate-700 mb-1">Status after Final Insp.</label>
-                          <input
-                            type="text"
-                            value={row.statusAfterFinal}
-                            onChange={(e) => handleChange(row.id, "statusAfterFinal", e.target.value)}
-                            className="w-full px-3 py-2 text-sm bg-white border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 h-[calc(100%-1.25rem)]"
-                          />
-                        </div>
-                        <div className="flex flex-col">
-                          <label className="block text-[11px] font-bold text-slate-700 mb-1">Action for NG Material</label>
-                          <input
-                            type="text"
-                            value={row.actionForNG}
-                            onChange={(e) => handleChange(row.id, "actionForNG", e.target.value)}
-                            className="w-full px-3 py-2 text-sm bg-white border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 h-[calc(100%-1.25rem)]"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Section 3: Signatures & Remarks */}
-                    <div>
-                      <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 border-b border-slate-200 pb-1">3. Approvals & Remarks</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div className="flex flex-col">
-                          <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1"><PenTool className="h-3 w-3" /> Sup. Signature</label>
-                          <input
-                            type="text"
-                            value={row.supSignature}
-                            onChange={(e) => handleChange(row.id, "supSignature", e.target.value)}
-                            className="w-full px-3 py-2 text-sm bg-white border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                          />
-                        </div>
-                        <div className="flex flex-col">
-                          <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1"><UserCheck className="h-3 w-3" /> Sign Production Head</label>
-                          <input
-                            type="text"
-                            value={row.signProdHead}
-                            onChange={(e) => handleChange(row.id, "signProdHead", e.target.value)}
-                            className="w-full px-3 py-2 text-sm bg-white border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                          />
-                        </div>
-                        <div className="flex flex-col">
-                          <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1"><UserCheck className="h-3 w-3" /> Sign QA Head</label>
-                          <input
-                            type="text"
-                            value={row.signQAHead}
-                            onChange={(e) => handleChange(row.id, "signQAHead", e.target.value)}
-                            className="w-full px-3 py-2 text-sm bg-white border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                          />
-                        </div>
-                        <div className="flex flex-col">
-                          <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1"><FileText className="h-3 w-3" /> Remarks</label>
-                          <input
-                            type="text"
-                            value={row.remarks}
-                            onChange={(e) => handleChange(row.id, "remarks", e.target.value)}
-                            className="w-full px-3 py-2 text-sm bg-white border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-              )})}
-
-              {/* Add Entry Button */}
-              <div>
+              {/* ── add row button ── */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 16 }}>
                 <button
                   type="button"
                   onClick={handleAddRow}
-                  className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors text-sm font-bold bg-white px-5 py-2.5 border border-red-200 shadow-sm rounded-none tracking-wide uppercase"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 7,
+                    background: C.white, border: `1.5px solid ${C.redBorder}`,
+                    color: C.red, padding: "9px 18px", borderRadius: 4,
+                    fontSize: 12, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase",
+                    cursor: "pointer", fontFamily: "inherit", transition: "background .15s",
+                    boxShadow: "0 1px 3px rgba(0,0,0,.05)",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = C.redLight}
+                  onMouseLeave={e => e.currentTarget.style.background = C.white}
                 >
-                  <Plus className="h-4 w-4" />
-                  Add Another Row
+                  <Plus size={14} /> Add Another Entry
                 </button>
-                <span className="ml-3 text-xs font-semibold text-slate-500">
-                  {rows.length} row{rows.length !== 1 ? "s" : ""} added
+                <span style={{ fontSize: 12, color: C.textMid, fontWeight: 600 }}>
+                  {rows.length} entr{rows.length !== 1 ? "ies" : "y"} added
                 </span>
               </div>
 
-              {/* Footer Section: Prepared By & Approved By */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-slate-300">
-                <div className="flex flex-col">
-                  <label className="block text-sm font-bold text-slate-800 mb-2 uppercase tracking-wide">
-                    Prepared By:
-                  </label>
-                  <input
-                    type="text"
-                    value={preparedBy}
-                    onChange={(e) => setPreparedBy(e.target.value)}
-                    placeholder="Name / Signature"
-                    className="w-full max-w-sm px-4 py-2.5 text-sm bg-white border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                  />
-                </div>
-                <div className="flex flex-col md:items-end">
-                  <div className="w-full max-w-sm">
-                    <label className="block text-sm font-bold text-slate-800 mb-2 uppercase tracking-wide">
-                      Approved By:
-                    </label>
-                    <input
-                      type="text"
-                      value={approvedBy}
-                      onChange={(e) => setApprovedBy(e.target.value)}
+              {/* ── prepared / approved ── */}
+              <div style={{
+                display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24,
+                borderTop: `1px solid ${C.border}`, marginTop: 28, paddingTop: 24,
+              }}>
+                {[
+                  { label: "Prepared By", value: preparedBy, set: setPreparedBy },
+                  { label: "Approved By", value: approvedBy, set: setApprovedBy },
+                ].map(({ label, value, set }) => (
+                  <div key={label}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: C.textMid, marginBottom: 7 }}>
+                      {label}
+                    </div>
+                    <SI
+                      type="text" value={value}
+                      onChange={e => set(e.target.value)}
                       placeholder="Name / Signature"
-                      className="w-full px-4 py-2.5 text-sm bg-white border border-slate-300 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                      style={{ maxWidth: 320 }}
                     />
                   </div>
-                </div>
+                ))}
               </div>
 
-              {/* Form Actions */}
-              <div className="flex flex-col sm:flex-row justify-end gap-4 pt-6 mt-6 border-t border-slate-200">
+              {/* ── form actions ── */}
+              <div style={{
+                display: "flex", justifyContent: "flex-end", gap: 12, flexWrap: "wrap",
+                borderTop: `1px solid ${C.border}`, marginTop: 24, paddingTop: 22,
+              }}>
+
+                {/* Reset */}
                 <button
                   type="button"
                   onClick={handleReset}
                   disabled={isLoading}
-                  className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white text-slate-700 px-6 py-3 hover:bg-slate-50 transition-all font-bold tracking-widest border-2 border-slate-300 text-sm disabled:opacity-50 rounded-none uppercase"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    background: C.white, border: `2px solid #d1d5db`,
+                    color: "#374151", padding: "11px 24px", borderRadius: 6,
+                    fontSize: 12, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase",
+                    cursor: isLoading ? "not-allowed" : "pointer",
+                    opacity: isLoading ? .5 : 1, fontFamily: "inherit", transition: "all .15s",
+                  }}
+                  onMouseEnter={e => { if (!isLoading) { e.currentTarget.style.background = "#f9fafb"; e.currentTarget.style.borderColor = "#9ca3af"; } }}
+                  onMouseLeave={e => { e.currentTarget.style.background = C.white; e.currentTarget.style.borderColor = "#d1d5db"; }}
                 >
-                  <RotateCcw className="h-4 w-4" />
-                  Reset Form
+                  <RotateCcw size={14} /> Reset Form
                 </button>
+
+                {/* Submit */}
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-[#e03131] text-white px-8 py-3 hover:bg-[#c92a2a] transition-all shadow-sm font-bold tracking-widest text-sm disabled:opacity-70 disabled:cursor-not-allowed rounded-none uppercase"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    background: isLoading ? C.redDark : C.red,
+                    border: "none", color: "#fff", padding: "11px 28px", borderRadius: 6,
+                    fontSize: 12, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase",
+                    cursor: isLoading ? "not-allowed" : "pointer",
+                    fontFamily: "inherit", transition: "background .15s",
+                    boxShadow: "0 2px 8px rgba(185,28,28,.35)",
+                  }}
+                  onMouseEnter={e => { if (!isLoading) e.currentTarget.style.background = C.redDark; }}
+                  onMouseLeave={e => { if (!isLoading) e.currentTarget.style.background = C.red; }}
                 >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  {isLoading ? "Submitting..." : "Submit Sheet"}
+                  {isLoading
+                    ? <><Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> Submitting…</>
+                    : <><Send size={14} /> Submit Sheet</>
+                  }
                 </button>
-              </div>
 
+              </div>
             </div>
           </div>
         </form>
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };

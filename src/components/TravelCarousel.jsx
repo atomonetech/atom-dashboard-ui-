@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { EffectCoverflow, Navigation } from "swiper/modules";
+import { EffectCoverflow, Navigation, Autoplay } from "swiper/modules";
 import { useRef } from "react";
 
 import "swiper/css";
@@ -9,78 +9,96 @@ import "swiper/css/navigation";
 
 const destinations = [
   {
-    country: "Japan",
-    properties: "YAZAKI",
-    image: "https://images.unsplash.com/photo-1513326738677-b964603b136d",
+    country: "JAPAN",
+    properties:
+      "YAZAKI, is a global automotive parts supplier with a focus on wire harnesses, instruments and components such as connectors and terminals.",
+    image: "./yazaki.png",
   },
   {
-    country: "Japan",
-    properties: "AISIN",
-    image: "https://images.unsplash.com/photo-1572252009286-268acec5ca0a",
+    country: "JAPAN",
+    properties:
+      "AISIN, Corporation (株式会社アイシン, Kabushiki gaisha Aishin) is a Japanese corporation that develops and produces components and systems for the automotive industry.",
+    image: "./AISIN.jpg",
   },
   {
-    country: "India",
-    properties: "SUBROS",
-    image: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da",
+    country: "INDIA",
+    properties:
+      "SUBROS, Limited is an Indian leader in automotive thermal solutions, specializing in air conditioning and engine cooling systems",
+    image: "./Subros.avif",
   },
   {
-    country: "Japan",
-    properties: "FUTABA",
-    image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34",
+    country: "JAPAN",
+    properties:
+      "FUTABA,Corporation is a Japanese company founded in 1948, originally producing vacuum tubes.",
+    image: "./FUTABA.jpg",
   },
   {
     country: "USA",
-    properties: "TENNECO",
-    image: "https://images.unsplash.com/photo-1513326738677-b964603b136d",
+    properties:
+      "TENNECO, Inc. (formerly Tenneco Automotive and originally Tennessee Gas Transmission Company) is an American automotive components original equipment manufacturer. ",
+    image: "./TENECO.jpg",
   },
   {
-    country: "Japan",
-    properties: "TOPRE",
-    image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34",
+    country: "JAPAN",
+    properties:
+      "TOPRE,Corporation is a Japanese engineering company founded in 1935, known for manufacturing automobile components, refrigeration units",
+    image: "./topre.png",
+  },
+  {
+    country: "SPAIN",
+    properties:
+      "GESTAMP,Gestamp is a Spanish multinational company specializing in the design, development, and manufacture of metal automotive components.",
+    image: "./gestamp.jpg",
   },
 ];
 
 export default function TravelCarousel() {
   const [activeIndex, setActiveIndex] = useState(1);
-  
-  const swiperRef = useRef(null);
-  const activeCountry =
-  destinations[activeIndex]?.country || "Japan";
 
-const countryImages = {
-  Japan: "/globes/globe-japan.png",
-  India: "/globes/globe-india.png",
-  USA: "/globes/globe-usa.png",
-};
-  const countryRotation = {
-    Japan: 0,
-    India: -120,
-    USA: -240,
+  const swiperRef = useRef(null);
+  const activeCountry = destinations[activeIndex]?.country || "Japan";
+
+  const countryImages = {
+    JAPAN: "./japan.jpg",
+    INDIA: "./india.jpg",
+    USA: "./usa.avif",
+    SPAIN: "./spain.jpg",
   };
+  // const countryRotation = {
+  //   Japan: 0,
+  //   India: -120,
+  //   USA: -240,
+  //   Spain: -360,
+  // };
   const globeAnimationStyle = {
-  animation: "globeZoom 0.8s ease",
-};
+    animation: "globeZoom 0.8s ease",
+    bgColor: "#1e293b",
+  };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#0f172a] via-[#1e293b] to-[#0f172a]">
+    <div className="relative h-auto overflow-hidden bg-gradient-to-b from-[#0f172a] via-[#1e293b] to-[#0f172a]">
+      <h1 className="text-[#E5E7EB] text-3xl font-bold text-center mb-4 tracking-wide">
+        OUR WORLD WIDE COSTUMERS
+      </h1>
       {/* Globe Section */}
-    {/* Globe Section */}
-<div className="pt-8 pb-8 flex justify-center">
-  <div className="relative flex flex-col items-center">
+      {/* Globe Section */}
+      <div className="pt-8 pb-8 flex justify-center">
+        <h1 className="text-[#fbbf24] text-3xl font-bold mb-4 tracking-wide">
+          {activeCountry}
+        </h1>
+        {/* <div className="relative flex flex-col items-center">
 
-    <h1 className="text-white text-5xl font-bold mb-4 tracking-wide">
-      {activeCountry}
-    </h1>
+  
 
     <img
       key={activeCountry}
       src={countryImages[activeCountry]}
       alt={activeCountry}
-      className="w-[500px] md:w-[650px]"
+      className="w-[50px] md:w-[60px]"
       style={globeAnimationStyle}
     />
-  </div>
-</div>
+  </div> */}
+      </div>
       {/* Carousel */}
       <div className="-mt-8 px-4 pb-20">
         {/* <Swiper
@@ -142,12 +160,18 @@ const countryImages = {
           ))}
         </Swiper> */}
         <Swiper
-          modules={[EffectCoverflow, Navigation]}
+          modules={[EffectCoverflow, Navigation, Autoplay]}
           effect="coverflow"
           centeredSlides
           loop={true}
           navigation
           grabCursor={true}
+          autoplay={{
+            delay: 800,
+            disableOnInteraction: false,
+            pauseOnMouseEnter: true,
+          }}
+          speed={800}
           initialSlide={0}
           slidesPerView={3}
           spaceBetween={30}
@@ -204,7 +228,7 @@ const countryImages = {
           ))}
         </Swiper>
         <style>
-  {`
+          {`
     @keyframes globeZoom {
       0% {
         opacity: 0;
@@ -222,7 +246,7 @@ const countryImages = {
       }
     }
   `}
-</style>
+        </style>
       </div>
     </div>
   );

@@ -4,6 +4,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Core Components
 import Auth from './components/Auth';
@@ -130,6 +132,8 @@ function App() {
   }, [isAuthenticated]);
 
   const handleLogin = () => setIsAuthenticated(true);
+   
+      
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
@@ -167,6 +171,14 @@ function App() {
 
   return (
     <Router>
+       <ToastContainer
+      position="top-right"
+      autoClose={3000}
+      theme="dark"
+      newestOnTop
+      closeOnClick
+      pauseOnHover
+    />
       <div className="App">
         <Routes>
           <Route path="/" element={<LandingPage />} />

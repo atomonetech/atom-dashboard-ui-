@@ -440,10 +440,10 @@ export default function Profile({ onLogout }) {
   const fileInputRef = useRef(null);
   
   const [profileData, setProfileData] = useState({
-    name: 'Admin User',
+    name: 'admin',
     email: 'admin@atomone.in',
     phone: '+91 98765 43210',
-    location: 'Mumbai, India',
+    location: 'Kadi, Gujrat',
     role: 'Plant Manager',
     department: 'Operations'
   });
@@ -726,14 +726,14 @@ export default function Profile({ onLogout }) {
                     className="p-4 rounded-xl bg-[#0f172a] text-center"
                     style={{ border: '2px solid #1e3a52' }}
                   >
-                    <p className="text-3xl font-bold mb-1" style={{ color: '#14b8a6' }}>156</p>
+                    <p className="text-3xl font-bold mb-1" style={{ color: '#14b8a6' }}>0</p>
                     <p className="text-slate-400 text-xs">Tasks Done</p>
                   </div>
                   <div 
                     className="p-4 rounded-xl bg-[#0f172a] text-center"
                     style={{ border: '2px solid #fbbf24' }}
                   >
-                    <p className="text-3xl font-bold text-[#fbbf24] mb-1">98.5%</p>
+                    <p className="text-3xl font-bold text-[#fbbf24] mb-1">0%</p>
                     <p className="text-slate-400 text-xs">Efficiency</p>
                   </div>
                 </div>
@@ -774,10 +774,10 @@ export default function Profile({ onLogout }) {
             >
               {/* Personal Information - ✅ DARK NAVY BLUE BORDER */}
               <div 
-                className="bg-[#1e293b] rounded-3xl p-8"
+                className="bg-[#1e293b] h-full rounded-3xl p-8"
                 style={{ border: '2px solid #1e3a52' }}
               >
-                <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center  gap-3 mb-6">
                   <motion.div
                     whileHover={{ rotate: 360 }}
                     transition={{ duration: 0.6 }}
@@ -819,7 +819,7 @@ export default function Profile({ onLogout }) {
               </div>
 
               {/* Recent Activity - ✅ YELLOW BORDER */}
-              <div 
+              {/* <div 
                 className="bg-[#1e293b] rounded-3xl p-8"
                 style={{ border: '2px solid #fbbf24' }}
               >
@@ -862,7 +862,7 @@ export default function Profile({ onLogout }) {
                     </motion.div>
                   ))}
                 </div>
-              </div>
+              </div> */}
             </motion.div>
           </div>
         </div>

@@ -1,62 +1,85 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Calendar, User, Cpu, Package, BookOpen,
-  AlertCircle, ArrowLeft
-} from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import {
+  Calendar,
+  User,
+  Cpu,
+  Package,
+  BookOpen,
+  AlertCircle,
+  ArrowLeft,
+} from "lucide-react";
 
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const C = {
+  pageBg: "#f5f5f0",
+  white: "#ffffff",
+  red: "#b91c1c",
+  redLight: "#fef2f2",
+  redBorder: "#fca5a5",
+  redDark: "#991b1b",
+  border: "#e2e2de",
+  borderFoc: "#b91c1c",
+  text: "#1a1a1a",
+  textMid: "#6b7280",
+  textLight: "#9ca3af",
+  inputBg: "#ffffff",
+  inputHov: "#fafaf8",
+  rowHead: "#fafaf8",
+  rowBorder: "#e8e4de",
+  shadow: "0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04)",
+};
 
 const MChangeTrackForm = () => {
-  const today = new Date().toISOString().split('T')[0];
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
+  const today = new Date().toISOString().split("T")[0];
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
-  
+
   const [formData, setFormData] = useState({
-    time: '',
-    mcNo: '',
-    changeDesc: '',
-    natureOfChange: 'Planned',
-    actionTaken: '',
-    partNameNo: '', 
-    operationNo: '',
-    trainingProvided: '',
+    time: "",
+    mcNo: "",
+    changeDesc: "",
+    natureOfChange: "Planned",
+    actionTaken: "",
+    partNameNo: "",
+    operationNo: "",
+    trainingProvided: "",
     setupApproval: {
-      status: ''
+      status: "",
     },
     retroactive: {
-      qtyChecked: '',
-      entryQty: '',
-      qtyOk: '',
-      rw: '',
-      scrap: ''
+      qtyChecked: "",
+      entryQty: "",
+      qtyOk: "",
+      rw: "",
+      scrap: "",
     },
     containmentSuspected: {
-      qtyChecked: '',
-      entryQty: '',
-      qtyOk: '',
-      rw: '',
-      scrap: ''
+      qtyChecked: "",
+      entryQty: "",
+      qtyOk: "",
+      rw: "",
+      scrap: "",
     },
     dispatchDetail: {
-      customer: '',
-      date: today
+      customer: "",
+      date: today,
     },
-    remark: ''
+    remark: "",
   });
 
   const [dailyTrackingData, setDailyTrackingData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [preparedBy, setPreparedBy] = useState("");
-  
+
   const [currentDayData, setCurrentDayData] = useState({
-    man: '',
-    machine: '',
-    material: '',
-    method: '',
-    submittedAt: null
+    man: "",
+    machine: "",
+    material: "",
+    method: "",
+    submittedAt: null,
   });
 
   // Backend Lists
@@ -65,46 +88,61 @@ const MChangeTrackForm = () => {
 
   // Clear localStorage on first load & fetch parts
   useEffect(() => {
-    localStorage.removeItem('mChangeTrackingData');
+    localStorage.removeItem("mChangeTrackingData");
     setDailyTrackingData({});
     setCurrentDayData({
-      man: '',
-      machine: '',
-      material: '',
-      method: '',
-      submittedAt: null
+      man: "",
+      machine: "",
+      material: "",
+      method: "",
+      submittedAt: null,
     });
 
     // Fetch Parts on load
     fetch(`${BASE_URL}/api/master-dropdown/?filter=all_parts`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (Array.isArray(data)) {
-          const formattedParts = data.map(item => ({
+          const formattedParts = data.map((item) => ({
             part_name: item[0],
-            part_no: item[1]
+            part_no: item[1],
           }));
           setPartsList(formattedParts);
         }
       })
-      .catch(err => console.error("Error fetching parts:", err));
+      .catch((err) => console.error("Error fetching parts:", err));
   }, []);
 
   const getNextStatus = (currentStatus) => {
-    if (currentStatus === '') return 'CHANGE';
-    if (currentStatus === 'CHANGE') return 'NO CHANGE';
-    if (currentStatus === 'NO CHANGE') return '';
-    return '';
+    if (currentStatus === "") return "CHANGE";
+    if (currentStatus === "CHANGE") return "NO CHANGE";
+    if (currentStatus === "NO CHANGE") return "";
+    return "";
   };
-  
+
   const getStatusDot = (status) => {
-    switch(status) {
-      case 'CHANGE':
-        return <span className="inline-block w-8 h-8 rounded-full bg-red-500 cursor-pointer hover:ring-2 hover:ring-red-300 transition-all shadow-sm" title="Change"></span>;
-      case 'NO CHANGE':
-        return <span className="inline-block w-8 h-8 rounded-full bg-green-500 cursor-pointer hover:ring-2 hover:ring-green-300 transition-all shadow-sm" title="No Change"></span>;
+    switch (status) {
+      case "CHANGE":
+        return (
+          <span
+            className="inline-block w-8 h-8 rounded-full bg-red-500 cursor-pointer hover:ring-2 hover:ring-red-300 transition-all shadow-sm"
+            title="Change"
+          ></span>
+        );
+      case "NO CHANGE":
+        return (
+          <span
+            className="inline-block w-8 h-8 rounded-full bg-green-500 cursor-pointer hover:ring-2 hover:ring-green-300 transition-all shadow-sm"
+            title="No Change"
+          ></span>
+        );
       default:
-        return <span className="inline-block w-8 h-8 rounded-full bg-gray-200 cursor-pointer hover:ring-2 hover:ring-gray-300 transition-all shadow-sm" title="Not Set"></span>;
+        return (
+          <span
+            className="inline-block w-8 h-8 rounded-full bg-gray-200 cursor-pointer hover:ring-2 hover:ring-gray-300 transition-all shadow-sm"
+            title="Not Set"
+          ></span>
+        );
     }
   };
 
@@ -113,53 +151,59 @@ const MChangeTrackForm = () => {
     newData[field] = value;
     newData.submittedAt = new Date().toISOString();
     setCurrentDayData(newData);
-    
+
     const today_date = new Date();
     const year = today_date.getFullYear();
     const month = today_date.getMonth() + 1;
     const day = today_date.getDate();
-    const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    
-    setDailyTrackingData(prev => ({
+    const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(
+      day,
+    ).padStart(2, "0")}`;
+
+    setDailyTrackingData((prev) => ({
       ...prev,
-      [dateKey]: newData
+      [dateKey]: newData,
     }));
   };
 
   const handleFormChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   // COMBINED PART HANDLER
   const handlePartChange = (e) => {
-    const value = e.target.value; 
+    const value = e.target.value;
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      partNameNo: value, 
-      operationNo: "" 
+      partNameNo: value,
+      operationNo: "",
     }));
 
     if (value) {
-      fetch(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(value)}`)
-        .then(res => res.json())
-        .then(data => setOperationList(data))
-        .catch(err => console.error('Error fetching operations:', err));
+      fetch(
+        `${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(
+          value,
+        )}`,
+      )
+        .then((res) => res.json())
+        .then((data) => setOperationList(data))
+        .catch((err) => console.error("Error fetching operations:", err));
     } else {
       setOperationList([]);
     }
   };
 
   const handleNestedChange = (section, field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [section]: {
         ...prev[section],
-        [field]: value
-      }
+        [field]: value,
+      },
     }));
   };
 
@@ -174,13 +218,15 @@ const MChangeTrackForm = () => {
     const year = today_date.getFullYear();
     const month = today_date.getMonth() + 1;
     const day = today_date.getDate();
-    const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    
+    const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(
+      day,
+    ).padStart(2, "0")}`;
+
     const finalDailyTrackingData = {
       ...dailyTrackingData,
-      [dateKey]: currentDayData
+      [dateKey]: currentDayData,
     };
-    
+
     const payload = {
       time: formData.time,
       machine_no: formData.mcNo,
@@ -191,7 +237,7 @@ const MChangeTrackForm = () => {
       operation_no: formData.operationNo,
       training_provided: formData.trainingProvided,
       setup_approval: formData.setupApproval.status,
-      
+
       // Retroactive Mapping
       retro_qty_checked: formData.retroactive.qtyChecked,
       retro_entry_qty: formData.retroactive.entryQty,
@@ -209,41 +255,50 @@ const MChangeTrackForm = () => {
       // Dispatch Mapping
       customer: formData.dispatchDetail.customer,
       dispatch_date: formData.dispatchDetail.date,
-      
+
       remark: formData.remark,
 
       // Meta Data
       daily_tracking_data: finalDailyTrackingData,
       submission_date: dateKey,
-      submitted_at: new Date().toISOString()
+      submitted_at: new Date().toISOString(),
     };
-    
+
     setDailyTrackingData(finalDailyTrackingData);
-    
+
     try {
       const response = await fetch(`${BASE_URL}/api/save-4m-record/`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload) 
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Backend Response:', data);
-        localStorage.setItem('mChangeTrackingData', JSON.stringify(finalDailyTrackingData));
-        alert('Form submitted successfully to the backend!');
+        console.log("Backend Response:", data);
+        localStorage.setItem(
+          "mChangeTrackingData",
+          JSON.stringify(finalDailyTrackingData),
+        );
+        alert("Form submitted successfully to the backend!");
         handleReset();
       } else {
         const errorData = await response.json();
-        console.error('Validation Error Details:', errorData);
-        alert(`Validation Error! Check console for details. ` + JSON.stringify(errorData));
+        console.error("Validation Error Details:", errorData);
+        alert(
+          `Validation Error! Check console for details. ` +
+            JSON.stringify(errorData),
+        );
       }
     } catch (error) {
-      console.error('Error saving to backend:', error);
+      console.error("Error saving to backend:", error);
       alert(`Failed to save data to the backend. Check the console.`);
-      localStorage.setItem('mChangeTrackingData', JSON.stringify(finalDailyTrackingData));
+      localStorage.setItem(
+        "mChangeTrackingData",
+        JSON.stringify(finalDailyTrackingData),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -251,61 +306,123 @@ const MChangeTrackForm = () => {
 
   const handleReset = () => {
     setFormData({
-      time: '',
-      mcNo: '',
-      changeDesc: '',
-      natureOfChange: 'Planned',
-      actionTaken: '',
-      partNameNo: '', 
-      operationNo: '',
-      trainingProvided: '',
-      setupApproval: { status: '' },
-      retroactive: { qtyChecked: '', entryQty: '', qtyOk: '', rw: '', scrap: '' },
-      containmentSuspected: { qtyChecked: '', entryQty: '', qtyOk: '', rw: '', scrap: '' },
-      dispatchDetail: { customer: '', date: today },
-      remark: ''
+      time: "",
+      mcNo: "",
+      changeDesc: "",
+      natureOfChange: "Planned",
+      actionTaken: "",
+      partNameNo: "",
+      operationNo: "",
+      trainingProvided: "",
+      setupApproval: { status: "" },
+      retroactive: {
+        qtyChecked: "",
+        entryQty: "",
+        qtyOk: "",
+        rw: "",
+        scrap: "",
+      },
+      containmentSuspected: {
+        qtyChecked: "",
+        entryQty: "",
+        qtyOk: "",
+        rw: "",
+        scrap: "",
+      },
+      dispatchDetail: { customer: "", date: today },
+      remark: "",
     });
-    
-    setCurrentDayData({ man: '', machine: '', material: '', method: '', submittedAt: null });
+
+    setCurrentDayData({
+      man: "",
+      machine: "",
+      material: "",
+      method: "",
+      submittedAt: null,
+    });
     setOperationList([]);
   };
 
   const handleBack = () => {
-    window.location.href = '/production-hub';
+    window.location.href = "/production-hub";
   };
 
   const getFormattedDate = () => {
-    return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return new Date().toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
   const categories = [
-    { id: 'man', label: 'MAN', icon: <User className="w-5 h-5" /> },
-    { id: 'machine', label: 'MACHINE', icon: <Cpu className="w-5 h-5" /> },
-    { id: 'material', label: 'MATERIAL', icon: <Package className="w-5 h-5" /> },
-    { id: 'method', label: 'METHOD', icon: <BookOpen className="w-5 h-5" /> }
+    { id: "man", label: "MAN", icon: <User className="w-5 h-5" /> },
+    { id: "machine", label: "MACHINE", icon: <Cpu className="w-5 h-5" /> },
+    {
+      id: "material",
+      label: "MATERIAL",
+      icon: <Package className="w-5 h-5" />,
+    },
+    { id: "method", label: "METHOD", icon: <BookOpen className="w-5 h-5" /> },
   ];
 
-  const statusOptions = ['OK', 'NOT OK', 'PENDING', 'NA'];
+  const statusOptions = ["OK", "NOT OK", "PENDING", "NA"];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 font-sans">
+    <div
+      style={{
+        minHeight: "100vh",
+        background: C.pageBg,
+        padding: "28px 16px",
+        fontFamily: "'Inter', system-ui, sans-serif",
+      }}
+    >
       <div className="max-w-7xl mx-auto mb-4">
         <button
           onClick={handleBack}
-          className="flex items-center text-gray-600 hover:text-gray-900 transition-colors group"
+         
         >
-          <div className="bg-white border border-gray-200 rounded-none p-2 shadow-sm group-hover:shadow-md transition-shadow">
+          {/* <div className="bg-white border border-gray-200 rounded-none p-2 shadow-sm group-hover:shadow-md transition-shadow">
             <ArrowLeft className="w-5 h-5 text-gray-500" />
-          </div>
-          <span className="ml-2 text-sm font-bold uppercase tracking-wide">Back to Production Hub</span>
+          </div> */}
+          <span  style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap:7,
+            background: C.white,
+            border: `1.5px solid ${C.redBorder}`,
+            color: C.red,
+            padding: "8px 8px",
+            borderRadius: 4,
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: ".1em",
+            textTransform: "uppercase",
+            cursor: "pointer",
+            boxShadow: "0 1px 3px rgba(0,0,0,.05)",
+          }}>
+            Back to Production Hub
+          </span>
         </button>
       </div>
 
-      <div className="max-w-7xl mx-auto bg-white rounded-none shadow-lg border border-gray-200 overflow-hidden">
+      <div
+        style={{
+          background: C.white,
+          borderRadius: 8,
+          border: `1px solid ${C.border}`,
+          overflow: "hidden",
+          boxShadow: C.shadow,
+        }}
+      >
         {/* Header */}
-        <div className="px-4 sm:px-6 md:px-8 py-6 sm:py-7 md:py-8" style={{ 
-          background: 'linear-gradient(105deg, #8a0000 0%, #ffd6d6 30%, #ff8686 70%, #e11515 100%)'
-        }}>
+        <div
+         style={{
+                background: C.red,
+                padding: "20px 28px",
+                borderBottom: `1px solid ${C.redDark}`,
+              }}
+        >
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
             <h1 className="text-2xl sm:text-2xl font-bold text-white uppercase tracking-widest">
               4M Change Record Sheet
@@ -313,7 +430,9 @@ const MChangeTrackForm = () => {
             <div className="flex items-center sm:items-center">
               <div className="inline-flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-none border border-white/30 shadow-lg">
                 <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-white mr-2" />
-                <span className="text-sm sm:text-base font-bold text-white xs:text-red-500 uppercase">{currentDate}</span>
+                <span className="text-sm sm:text-base font-bold text-white xs:text-red-500 uppercase">
+                  {currentDate}
+                </span>
               </div>
             </div>
           </div>
@@ -328,29 +447,41 @@ const MChangeTrackForm = () => {
                   <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-red-500" />
                   Legend
                 </h3>
-                
+
                 <div className="space-y-2 sm:space-y-3">
                   <div className="flex items-center space-x-3 p-1 sm:p-2">
                     <span className="inline-block w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-red-500"></span>
                     <div>
-                      <span className="text-xs sm:text-sm font-bold text-gray-800 uppercase">CHANGE</span>
-                      <p className="text-xs text-gray-500 hidden sm:block">Change implemented</p>
+                      <span className="text-xs sm:text-sm font-bold text-gray-800 uppercase">
+                        CHANGE
+                      </span>
+                      <p className="text-xs text-gray-500 hidden sm:block">
+                        Change implemented
+                      </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-3 p-1 sm:p-2">
                     <span className="inline-block w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-green-500"></span>
                     <div>
-                      <span className="text-xs sm:text-sm font-bold text-gray-800 uppercase">NO CHANGE</span>
-                      <p className="text-xs text-gray-500 hidden sm:block">No change from standard</p>
+                      <span className="text-xs sm:text-sm font-bold text-gray-800 uppercase">
+                        NO CHANGE
+                      </span>
+                      <p className="text-xs text-gray-500 hidden sm:block">
+                        No change from standard
+                      </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-3 p-1 sm:p-2">
                     <span className="inline-block w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gray-200"></span>
                     <div>
-                      <span className="text-xs sm:text-sm font-bold text-gray-800 uppercase">Not Set</span>
-                      <p className="text-xs text-gray-500 hidden sm:block">No status selected</p>
+                      <span className="text-xs sm:text-sm font-bold text-gray-800 uppercase">
+                        Not Set
+                      </span>
+                      <p className="text-xs text-gray-500 hidden sm:block">
+                        No status selected
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -365,20 +496,27 @@ const MChangeTrackForm = () => {
                     4M Status for Today - {getFormattedDate()}
                   </h3>
                 </div>
-                
+
                 <div className="p-4 sm:p-5 md:p-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {categories.map((category) => (
-                      <div key={category.id} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-none border border-gray-200">
+                      <div
+                        key={category.id}
+                        className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-none border border-gray-200"
+                      >
                         <div className="flex items-center space-x-2 sm:space-x-3">
                           <div className="text-gray-500 bg-white p-1.5 sm:p-2 rounded-none shadow-sm border border-gray-200">
                             {category.icon}
                           </div>
-                          <span className="text-xs sm:text-sm font-bold text-gray-700 uppercase">{category.label}</span>
+                          <span className="text-xs sm:text-sm font-bold text-gray-700 uppercase">
+                            {category.label}
+                          </span>
                         </div>
                         <button
                           onClick={() => {
-                            const nextValue = getNextStatus(currentDayData[category.id]);
+                            const nextValue = getNextStatus(
+                              currentDayData[category.id],
+                            );
                             handleDailyChange(category.id, nextValue);
                           }}
                           className="focus:outline-none transform hover:scale-110 transition-transform"
@@ -395,25 +533,31 @@ const MChangeTrackForm = () => {
 
           {/* Change Details Section */}
           <div className="border-t-2 border-gray-200 mt-6 sm:mt-7 md:mt-8 pt-6 sm:pt-7 md:pt-8">
-            <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-5 md:mb-6 uppercase tracking-wide">Change Details</h2>
-            
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-5 md:mb-6 uppercase tracking-wide">
+              Change Details
+            </h2>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6 mb-4 sm:mb-5 md:mb-6">
               <div>
-                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Time</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                  Time
+                </label>
                 <input
                   type="time"
                   value={formData.time}
-                  onChange={(e) => handleFormChange('time', e.target.value)}
+                  onChange={(e) => handleFormChange("time", e.target.value)}
                   className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Machine No</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                  Machine No
+                </label>
                 <input
                   type="text"
                   value={formData.mcNo}
-                  onChange={(e) => handleFormChange('mcNo', e.target.value)}
+                  onChange={(e) => handleFormChange("mcNo", e.target.value)}
                   className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700"
                   placeholder="Enter machine number"
                 />
@@ -421,10 +565,12 @@ const MChangeTrackForm = () => {
             </div>
 
             <div className="mb-4 sm:mb-5 md:mb-6">
-              <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Change Description</label>
+              <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                Change Description
+              </label>
               <textarea
                 value={formData.changeDesc}
-                onChange={(e) => handleFormChange('changeDesc', e.target.value)}
+                onChange={(e) => handleFormChange("changeDesc", e.target.value)}
                 className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700"
                 rows="3"
                 placeholder="Enter change description..."
@@ -433,10 +579,14 @@ const MChangeTrackForm = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6 mb-4 sm:mb-5 md:mb-6">
               <div>
-                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Nature of Change</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                  Nature of Change
+                </label>
                 <select
                   value={formData.natureOfChange}
-                  onChange={(e) => handleFormChange('natureOfChange', e.target.value)}
+                  onChange={(e) =>
+                    handleFormChange("natureOfChange", e.target.value)
+                  }
                   className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700"
                 >
                   <option value="Planned">Planned</option>
@@ -444,13 +594,17 @@ const MChangeTrackForm = () => {
                   <option value="Emergency">Emergency</option>
                 </select>
               </div>
-              
+
               <div>
-                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Action Taken</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                  Action Taken
+                </label>
                 <input
                   type="text"
                   value={formData.actionTaken}
-                  onChange={(e) => handleFormChange('actionTaken', e.target.value)}
+                  onChange={(e) =>
+                    handleFormChange("actionTaken", e.target.value)
+                  }
                   className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700"
                   placeholder="Enter action taken"
                 />
@@ -468,28 +622,36 @@ const MChangeTrackForm = () => {
                   onChange={handlePartChange}
                   className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700"
                 >
-                  <option value="" className="text-slate-400">Select Part Name / Number</option>
+                  <option value="" className="text-slate-400">
+                    Select Part Name / Number
+                  </option>
                   {partsList.map((part, index) => (
                     <option key={index} value={part.part_name}>
-                      {part.part_name} {part.part_no ? `(${part.part_no})` : ''}
+                      {part.part_name} {part.part_no ? `(${part.part_no})` : ""}
                     </option>
                   ))}
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Operation No <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.operationNo}
-                  onChange={(e) => handleFormChange('operationNo', e.target.value)}
+                  onChange={(e) =>
+                    handleFormChange("operationNo", e.target.value)
+                  }
                   disabled={!formData.partNameNo}
                   className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700 disabled:bg-slate-50"
                 >
-                  <option value="" className="text-slate-400">Select Operation</option>
+                  <option value="" className="text-slate-400">
+                    Select Operation
+                  </option>
                   {operationList.map((op, index) => (
-                    <option key={index} value={op}>{op}</option>
+                    <option key={index} value={op}>
+                      {op}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -497,32 +659,50 @@ const MChangeTrackForm = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6 mb-6 sm:mb-7 md:mb-8">
               <div className="bg-gray-50 p-3 sm:p-4 rounded-none border border-gray-200">
-                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 sm:mb-2 uppercase tracking-wide">Setup Approval</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 sm:mb-2 uppercase tracking-wide">
+                  Setup Approval
+                </label>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                  <span className="text-xs sm:text-sm font-bold text-gray-500 uppercase">Date: {getFormattedDate()}</span>
+                  <span className="text-xs sm:text-sm font-bold text-gray-500 uppercase">
+                    Date: {getFormattedDate()}
+                  </span>
                   <select
                     value={formData.setupApproval.status}
-                    onChange={(e) => handleNestedChange('setupApproval', 'status', e.target.value)}
+                    onChange={(e) =>
+                      handleNestedChange(
+                        "setupApproval",
+                        "status",
+                        e.target.value,
+                      )
+                    }
                     className="w-full sm:flex-1 border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                   >
                     <option value="">Not Set</option>
-                    {statusOptions.map(option => (
-                      <option key={option} value={option}>{option}</option>
+                    {statusOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
                     ))}
                   </select>
                 </div>
               </div>
 
               <div className="bg-gray-50 p-3 sm:p-4 rounded-none border border-gray-200">
-                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 sm:mb-2 uppercase tracking-wide">Training Provided</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 sm:mb-2 uppercase tracking-wide">
+                  Training Provided
+                </label>
                 <select
                   value={formData.trainingProvided}
-                  onChange={(e) => handleFormChange('trainingProvided', e.target.value)}
+                  onChange={(e) =>
+                    handleFormChange("trainingProvided", e.target.value)
+                  }
                   className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                 >
                   <option value="">Not Set</option>
-                  {statusOptions.map(option => (
-                    <option key={option} value={option}>{option}</option>
+                  {statusOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -531,64 +711,108 @@ const MChangeTrackForm = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 mb-4 sm:mb-5 md:mb-6">
               {/* Retroactive */}
               <div className="bg-white p-3 sm:p-4 rounded-none border border-gray-200 shadow-sm">
-                <h4 className="font-bold text-gray-800 mb-2 sm:mb-3 pb-1 sm:pb-2 border-b-2 border-gray-200 text-sm sm:text-base uppercase tracking-wide">Retroactive</h4>
+                <h4 className="font-bold text-gray-800 mb-2 sm:mb-3 pb-1 sm:pb-2 border-b-2 border-gray-200 text-sm sm:text-base uppercase tracking-wide">
+                  Retroactive
+                </h4>
                 <div className="space-y-2 sm:space-y-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Qty Checked</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
+                      Qty Checked
+                    </label>
                     <input
                       type="text"
                       value={formData.retroactive.qtyChecked}
-                      onChange={(e) => handleNestedChange('retroactive', 'qtyChecked', e.target.value)}
+                      onChange={(e) =>
+                        handleNestedChange(
+                          "retroactive",
+                          "qtyChecked",
+                          e.target.value,
+                        )
+                      }
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                       placeholder="Enter quantity"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Entry Quantity</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
+                      Entry Quantity
+                    </label>
                     <input
                       type="text"
                       value={formData.retroactive.entryQty}
-                      onChange={(e) => handleNestedChange('retroactive', 'entryQty', e.target.value)}
+                      onChange={(e) =>
+                        handleNestedChange(
+                          "retroactive",
+                          "entryQty",
+                          e.target.value,
+                        )
+                      }
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                       placeholder="Enter quantity"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Qty OK</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
+                      Qty OK
+                    </label>
                     <select
                       value={formData.retroactive.qtyOk}
-                      onChange={(e) => handleNestedChange('retroactive', 'qtyOk', e.target.value)}
+                      onChange={(e) =>
+                        handleNestedChange(
+                          "retroactive",
+                          "qtyOk",
+                          e.target.value,
+                        )
+                      }
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                     >
                       <option value="">Not Set</option>
-                      {statusOptions.map(option => (
-                        <option key={option} value={option}>{option}</option>
+                      {statusOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">R/W</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
+                      R/W
+                    </label>
                     <select
                       value={formData.retroactive.rw}
-                      onChange={(e) => handleNestedChange('retroactive', 'rw', e.target.value)}
+                      onChange={(e) =>
+                        handleNestedChange("retroactive", "rw", e.target.value)
+                      }
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                     >
                       <option value="">Not Set</option>
-                      {statusOptions.map(option => (
-                        <option key={option} value={option}>{option}</option>
+                      {statusOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Scrap</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
+                      Scrap
+                    </label>
                     <select
                       value={formData.retroactive.scrap}
-                      onChange={(e) => handleNestedChange('retroactive', 'scrap', e.target.value)}
+                      onChange={(e) =>
+                        handleNestedChange(
+                          "retroactive",
+                          "scrap",
+                          e.target.value,
+                        )
+                      }
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                     >
                       <option value="">Not Set</option>
-                      {statusOptions.map(option => (
-                        <option key={option} value={option}>{option}</option>
+                      {statusOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -597,64 +821,112 @@ const MChangeTrackForm = () => {
 
               {/* Containment Suspected */}
               <div className="bg-white p-3 sm:p-4 rounded-none border border-gray-200 shadow-sm">
-                <h4 className="font-bold text-gray-800 mb-2 sm:mb-3 pb-1 sm:pb-2 border-b-2 border-gray-200 text-sm sm:text-base uppercase tracking-wide">Containment Suspected</h4>
+                <h4 className="font-bold text-gray-800 mb-2 sm:mb-3 pb-1 sm:pb-2 border-b-2 border-gray-200 text-sm sm:text-base uppercase tracking-wide">
+                  Containment Suspected
+                </h4>
                 <div className="space-y-2 sm:space-y-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Qty Checked</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
+                      Qty Checked
+                    </label>
                     <input
                       type="text"
                       value={formData.containmentSuspected.qtyChecked}
-                      onChange={(e) => handleNestedChange('containmentSuspected', 'qtyChecked', e.target.value)}
+                      onChange={(e) =>
+                        handleNestedChange(
+                          "containmentSuspected",
+                          "qtyChecked",
+                          e.target.value,
+                        )
+                      }
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                       placeholder="Enter quantity"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Entry Quantity</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
+                      Entry Quantity
+                    </label>
                     <input
                       type="text"
                       value={formData.containmentSuspected.entryQty}
-                      onChange={(e) => handleNestedChange('containmentSuspected', 'entryQty', e.target.value)}
+                      onChange={(e) =>
+                        handleNestedChange(
+                          "containmentSuspected",
+                          "entryQty",
+                          e.target.value,
+                        )
+                      }
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                       placeholder="Enter quantity"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Qty OK</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
+                      Qty OK
+                    </label>
                     <select
                       value={formData.containmentSuspected.qtyOk}
-                      onChange={(e) => handleNestedChange('containmentSuspected', 'qtyOk', e.target.value)}
+                      onChange={(e) =>
+                        handleNestedChange(
+                          "containmentSuspected",
+                          "qtyOk",
+                          e.target.value,
+                        )
+                      }
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                     >
                       <option value="">Not Set</option>
-                      {statusOptions.map(option => (
-                        <option key={option} value={option}>{option}</option>
+                      {statusOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">R/W</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
+                      R/W
+                    </label>
                     <select
                       value={formData.containmentSuspected.rw}
-                      onChange={(e) => handleNestedChange('containmentSuspected', 'rw', e.target.value)}
+                      onChange={(e) =>
+                        handleNestedChange(
+                          "containmentSuspected",
+                          "rw",
+                          e.target.value,
+                        )
+                      }
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                     >
                       <option value="">Not Set</option>
-                      {statusOptions.map(option => (
-                        <option key={option} value={option}>{option}</option>
+                      {statusOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Scrap</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
+                      Scrap
+                    </label>
                     <select
                       value={formData.containmentSuspected.scrap}
-                      onChange={(e) => handleNestedChange('containmentSuspected', 'scrap', e.target.value)}
+                      onChange={(e) =>
+                        handleNestedChange(
+                          "containmentSuspected",
+                          "scrap",
+                          e.target.value,
+                        )
+                      }
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                     >
                       <option value="">Not Set</option>
-                      {statusOptions.map(option => (
-                        <option key={option} value={option}>{option}</option>
+                      {statusOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -663,24 +935,42 @@ const MChangeTrackForm = () => {
 
               {/* Dispatch Detail */}
               <div className="bg-white p-3 sm:p-4 rounded-none border border-gray-200 shadow-sm">
-                <h4 className="font-bold text-gray-800 mb-2 sm:mb-3 pb-1 sm:pb-2 border-b-2 border-gray-200 text-sm sm:text-base uppercase tracking-wide">Dispatch Detail</h4>
+                <h4 className="font-bold text-gray-800 mb-2 sm:mb-3 pb-1 sm:pb-2 border-b-2 border-gray-200 text-sm sm:text-base uppercase tracking-wide">
+                  Dispatch Detail
+                </h4>
                 <div className="space-y-2 sm:space-y-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Customer</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
+                      Customer
+                    </label>
                     <input
                       type="text"
                       value={formData.dispatchDetail.customer}
-                      onChange={(e) => handleNestedChange('dispatchDetail', 'customer', e.target.value)}
+                      onChange={(e) =>
+                        handleNestedChange(
+                          "dispatchDetail",
+                          "customer",
+                          e.target.value,
+                        )
+                      }
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                       placeholder="Enter customer name"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Date</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
+                      Date
+                    </label>
                     <input
                       type="date"
                       value={formData.dispatchDetail.date}
-                      onChange={(e) => handleNestedChange('dispatchDetail', 'date', e.target.value)}
+                      onChange={(e) =>
+                        handleNestedChange(
+                          "dispatchDetail",
+                          "date",
+                          e.target.value,
+                        )
+                      }
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                     />
                   </div>
@@ -689,10 +979,12 @@ const MChangeTrackForm = () => {
             </div>
 
             <div className="mt-4 sm:mt-5 md:mt-6">
-              <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Remark</label>
+              <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
+                Remark
+              </label>
               <textarea
                 value={formData.remark}
-                onChange={(e) => handleFormChange('remark', e.target.value)}
+                onChange={(e) => handleFormChange("remark", e.target.value)}
                 className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700"
                 rows="3"
                 placeholder="Enter remarks..."
@@ -701,18 +993,18 @@ const MChangeTrackForm = () => {
 
             {/* Actions Buttons Corporate Style */}
             <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                 <div className="flex flex-col">
-              <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-                Prepared By
-              </label>
-              <input
-                type="text"
-                value={preparedBy}
-                onChange={(e) => setPreparedBy(e.target.value)}
-                placeholder="Enter name"
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
-              />
-            </div>
+              <div className="flex flex-col">
+                <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+                  Prepared By
+                </label>
+                <input
+                  type="text"
+                  value={preparedBy}
+                  onChange={(e) => setPreparedBy(e.target.value)}
+                  placeholder="Enter name"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+                />
+              </div>
               <button
                 onClick={handleReset}
                 disabled={isSubmitting}
@@ -725,7 +1017,7 @@ const MChangeTrackForm = () => {
                 disabled={isSubmitting}
                 className="w-full sm:w-auto px-8 py-3 bg-[#e03131] text-white rounded-none text-xs sm:text-sm font-bold tracking-widest uppercase hover:bg-[#c92a2a] transition-all shadow-sm order-1 sm:order-2 disabled:opacity-70"
               >
-                {isSubmitting ? 'Saving...' : 'Save Data'}
+                {isSubmitting ? "Saving..." : "Save Data"}
               </button>
             </div>
           </div>

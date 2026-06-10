@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Example SOP Content
 const sopDatabase = {
@@ -25,6 +26,7 @@ const InspectionForm = () => {
     // ==========================================
     //  1. STATE MANAGEMENT
     // ==========================================
+     const navigate = useNavigate();
     const [customers, setCustomers] = useState([]);
     const [parts, setParts] = useState([]);
     const [tools, setTools] = useState([]);
@@ -521,7 +523,7 @@ const InspectionForm = () => {
             )}
 
             {/* NAVBAR */}
-            <nav className="navbar-light-custom d-flex justify-content-between align-items-center px-4">
+            {/* <nav className="navbar-light-custom d-flex justify-content-between align-items-center px-4">
                 <div className="brand-logo">
                     <i className="bi bi-box-seam-fill"></i> QMS Dashboard
                 </div>
@@ -532,12 +534,16 @@ const InspectionForm = () => {
                     </div>
                     <span className="badge" style={{backgroundColor: '#f1f5f9', color: '#0f172a', padding: '0.5rem 1rem', fontSize: '0.75rem', border: '1px solid #cbd5e1'}}>Operator Terminal</span>
                 </div>
-            </nav>
+            </nav> */}
 
             <div className="main-container">
                 {/* 🌟 STEP 1: CONTEXT */}
                 <div className="card-custom animate-pop" style={{animationDelay: '0.1s'}}>
                     <div className="card-header-custom">
+                        <button
+                  onClick={() => navigate("/qa-hub")}
+                  className="inline-flex items-center text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg shadow-md transition-all active:scale-95 group"
+                > Back to QaHub</button>
                         <h6 className="card-title-custom"><i className="bi bi-sliders text-primary"></i> Process Context Filters</h6>
                         <input type="date" className="form-control-light w-auto fw-bold" style={{padding: '0.4rem 0.8rem', color: 'var(--accent-primary)', cursor: 'not-allowed', backgroundColor: '#f1f5f9'}} value={selectedDate} readOnly />
                     </div>

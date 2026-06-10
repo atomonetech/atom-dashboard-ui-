@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  ArrowLeft, 
+import {
+  ArrowLeft,
   Calendar,
   Package,
   Wrench,
@@ -15,438 +15,493 @@ import {
   RotateCcw,
   Send,
   Hash,
-  Loader2
+  Loader2,
 } from "lucide-react";
 
 // Backend URL
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
+/* ─── tokens ─────────────────────────────────────────────────── */
+const C = {
+  pageBg:     "#f5f5f0",
+  white:      "#ffffff",
+  red:        "#b91c1c",
+  redHdr:     "#b91c1c",
+  redLight:   "#fef2f2",
+  redBorder:  "#fca5a5",
+  border:     "#e2e2de",
+  borderFoc:  "#b91c1c",
+  text:       "#1a1a1a",
+  textMid:    "#6b7280",
+  textLight:  "#9ca3af",
+  inputBg:    "#ffffff",
+  inputHov:   "#fafaf8",
+  greenLight: "#f0fdf4",
+  greenBorder:"#86efac",
+  green:      "#16a34a",
+};
+
+/* ─── shared input style ─────────────────────────────────────── */
+const inputBase = {
+  width: "100%",
+  padding: "11px 14px",
+  fontSize: 14,
+  fontWeight: 400,
+  background: C.inputBg,
+  color: C.text,
+  border: `1.5px solid ${C.border}`,
+  borderRadius: 6,
+  outline: "none",
+  fontFamily: "inherit",
+  appearance: "none",
+  transition: "border-color .15s, box-shadow .15s",
+};
+
+const StyledInput = ({ style = {}, readOnly, ...props }) => (
+  <input
+    readOnly={readOnly}
+    style={{
+      ...inputBase,
+      ...(readOnly ? { background: "#f9f9f7", color: C.textMid, cursor: "not-allowed" } : {}),
+      ...style,
+    }}
+    onFocus={e => {
+      if (!readOnly) {
+        e.target.style.borderColor = C.borderFoc;
+        e.target.style.boxShadow = "0 0 0 3px rgba(185,28,28,.1)";
+      }
+    }}
+    onBlur={e => {
+      e.target.style.borderColor = style.borderColor || C.border;
+      e.target.style.boxShadow = "none";
+    }}
+    {...props}
+  />
+);
+
+const StyledSelect = ({ disabled, style = {}, children, ...props }) => (
+  <select
+    disabled={disabled}
+    style={{
+      ...inputBase,
+      background: disabled ? "#f9f9f7" : C.inputBg,
+      color: disabled ? C.textLight : C.text,
+      cursor: disabled ? "not-allowed" : "pointer",
+      borderColor: disabled ? C.border : C.border,
+      ...style,
+    }}
+    onFocus={e => {
+      if (!disabled) {
+        e.target.style.borderColor = C.borderFoc;
+        e.target.style.boxShadow = "0 0 0 3px rgba(185,28,28,.1)";
+      }
+    }}
+    onBlur={e => {
+      e.target.style.borderColor = C.border;
+      e.target.style.boxShadow = "none";
+    }}
+    {...props}
+  >
+    {children}
+  </select>
+);
+
+/* ─── label ──────────────────────────────────────────────────── */
+const FieldLabel = ({ icon: Icon, children, iconColor = C.red }) => (
+  <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 6 }}>
+    {Icon && <Icon size={12} color={iconColor} strokeWidth={2.5} />}
+    <span style={{
+      fontSize: 10, fontWeight: 700, letterSpacing: ".12em",
+      textTransform: "uppercase", color: C.textMid,
+    }}>
+      {children}
+    </span>
+  </div>
+);
+
+/* ─── section heading ────────────────────────────────────────── */
+const SectionHead = ({ icon: Icon, label, color = C.red, borderColor = "#fca5a5" }) => (
+  <div style={{
+    display: "flex", alignItems: "center", gap: 8,
+    borderBottom: `2px solid ${borderColor}`,
+    paddingBottom: 8, marginBottom: 16,
+  }}>
+    {Icon && <Icon size={15} color={color} strokeWidth={2.5} />}
+    <span style={{
+      fontSize: 10, fontWeight: 700, letterSpacing: ".14em",
+      textTransform: "uppercase", color: C.text,
+    }}>
+      {label}
+    </span>
+  </div>
+);
+
+/* ─── main component ─────────────────────────────────────────── */
 const For_M_Change_Ins_Form = () => {
   const navigate = useNavigate();
 
-  // Get current date in DD.MM.YYYY format for header display only
-  const currentDate = new Date();
-  const day = String(currentDate.getDate()).padStart(2, "0");
-  const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-  const year = currentDate.getFullYear();
-  const formattedDate = `${day}.${month}.${year}`;
+  const now = new Date();
+  const formattedDate = `${String(now.getDate()).padStart(2,"0")}.${String(now.getMonth()+1).padStart(2,"0")}.${now.getFullYear()}`;
 
-  // Initial empty form state
   const initialFormState = {
-    partName: "",
-    partNo: "",
-    operation: "",
-    lotQty: "",
-    okQty: "",
-    rejQty: "",
-    paramSpec: "",
-    before: ["", "", "", "", ""],
-    after: ["", "", "", "", ""],
-    inspBy: "",
-    remarks: ""
+    partName: "", partNo: "", operation: "",
+    lotQty: "", okQty: "", rejQty: "", paramSpec: "",
+    before: ["","","","",""],
+    after:  ["","","","",""],
+    inspBy: "", remarks: "",
   };
 
-  // Form states
-  const [formData, setFormData] = useState(initialFormState);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Backend se fetch kiye gaye data ke liye states
-  const [partsList, setPartsList] = useState([]);
+  const [formData, setFormData]           = useState(initialFormState);
+  const [isLoading, setIsLoading]         = useState(false);
+  const [partsList, setPartsList]         = useState([]);
   const [operationList, setOperationList] = useState([]);
-  const [preparedBy, setPreparedBy] = useState("");
+  const [preparedBy, setPreparedBy]       = useState("");
 
-  // Component load hone par Parts fetch karna
   useEffect(() => {
     fetch(`${BASE_URL}/api/master-dropdown/?filter=all_parts`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          // Data format [["PartName", "PartNo"], ...]
-          const formattedParts = data.map(item => ({
-            part_name: item[0],
-            part_no: item[1]
-          }));
-          setPartsList(formattedParts);
-        }
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data))
+          setPartsList(data.map(i => ({ part_name: i[0], part_no: i[1] })));
       })
-      .catch((err) => console.error("Error fetching parts:", err));
+      .catch(err => console.error("Error fetching parts:", err));
   }, []);
 
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
     if (name === "partName") {
-      const selectedPart = partsList.find(p => p.part_name === value);
-      const autoPartNo = selectedPart ? selectedPart.part_no : "";
-
-      setFormData(prev => ({
-        ...prev,
-        partName: value,
-        partNo: autoPartNo,
-        operation: "" // Part change hone par operation reset
-      }));
-
-      // Part ke hisab se operations fetch karna
+      const sel = partsList.find(p => p.part_name === value);
+      setFormData(prev => ({ ...prev, partName: value, partNo: sel?.part_no || "", operation: "" }));
       if (value) {
         fetch(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(value)}`)
-          .then(res => res.json())
-          .then(data => setOperationList(data))
-          .catch(err => console.error('Error fetching operations:', err));
-      } else {
-        setOperationList([]);
-      }
+          .then(r => r.json()).then(setOperationList)
+          .catch(err => console.error("Error fetching operations:", err));
+      } else setOperationList([]);
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  // Handle before/after array changes
-  const handleArrayChange = (section, index, value) => {
+  const handleArrayChange = (section, index, value) =>
     setFormData(prev => ({
       ...prev,
-      [section]: prev[section].map((item, i) => i === index ? value : item)
+      [section]: prev[section].map((it, i) => i === index ? value : it),
     }));
-  };
 
-  // Handle form reset
-  const handleReset = () => {
-    setFormData(initialFormState);
-    setOperationList([]); // Dropdown list reset
-  };
+  const handleReset = () => { setFormData(initialFormState); setOperationList([]); };
 
-  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate Required Fields
     if (!formData.partName || !formData.partNo || !formData.operation) {
-      alert("Part Name, Part No, and Operation are required fields.");
-      return;
+      alert("Part Name, Part No, and Operation are required."); return;
     }
-
-    // React State ko Django Fields mein map karna
     const payload = {
-      part_name: formData.partName,
-      part_no: formData.partNo,
-      operation: formData.operation,
-      lot_qty: formData.lotQty ? parseInt(formData.lotQty) : null,
-      ok_qty: formData.okQty ? parseInt(formData.okQty) : null,
-      rej_qty: formData.rejQty ? parseInt(formData.rejQty) : null,
+      part_name: formData.partName, part_no: formData.partNo, operation: formData.operation,
+      lot_qty:  formData.lotQty  ? parseInt(formData.lotQty)  : null,
+      ok_qty:   formData.okQty   ? parseInt(formData.okQty)   : null,
+      rej_qty:  formData.rejQty  ? parseInt(formData.rejQty)  : null,
       parameter_specs: formData.paramSpec,
-      
-      // Before Array Mapping
-      before_1: formData.before[0],
-      before_2: formData.before[1],
-      before_3: formData.before[2],
-      before_4: formData.before[3],
-      before_5: formData.before[4],
-      
-      // After Array Mapping
-      after_1: formData.after[0],
-      after_2: formData.after[1],
-      after_3: formData.after[2],
-      after_4: formData.after[3],
-      after_5: formData.after[4],
-      
-      inspected_by: formData.inspBy,
-      remarks: formData.remarks
+      before_1: formData.before[0], before_2: formData.before[1], before_3: formData.before[2],
+      before_4: formData.before[3], before_5: formData.before[4],
+      after_1:  formData.after[0],  after_2:  formData.after[1],  after_3:  formData.after[2],
+      after_4:  formData.after[3],  after_5:  formData.after[4],
+      inspected_by: formData.inspBy, remarks: formData.remarks,
     };
-
     setIsLoading(true);
-
     try {
-      // Django API ko hit karna
-      const response = await fetch(`${BASE_URL}/api/save-4m-change/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
+      const res    = await fetch(`${BASE_URL}/api/save-4m-change/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
+      const result = await res.json();
+      if (res.ok && result.success) { alert(result.message || "Saved successfully!"); handleReset(); }
+      else { console.error("Backend error:", result); alert("Error: " + (result.error || "Check console.")); }
+    } catch (err) {
+      console.error("Network error:", err);
+      alert("Cannot reach server. Make sure Django is running.");
+    } finally { setIsLoading(false); }
+  };
 
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        // Success
-        alert(result.message || "4M Change Inspection Report saved successfully!");
-        handleReset(); // Form clear karna
-      } else {
-        // Backend Validation Error
-        console.error('Backend Error:', result);
-        alert('Error saving data: ' + (result.error || 'Please check console.'));
-      }
-    } catch (error) {
-      // Network Error
-      console.error('Network Error:', error);
-      alert('Failed to connect to the server. Make sure Django is running.');
-    } finally {
-      setIsLoading(false);
-    }
+  /* ── styles shared across numbered fields ── */
+  const numBadgeBase = {
+    position: "absolute", top: 0, left: 0, zIndex: 1,
+    fontSize: 10, fontWeight: 700,
+    padding: "1px 6px",
+    borderRadius: "0 0 4px 0",
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 font-sans">
-      {/* Main Form Card */}
-      <div className="max-w-4xl mx-auto">
-        
-        {/* Back Button */}
-        <div className="mb-4 flex justify-between items-center">
+    <div style={{
+      minHeight: "100vh",
+      background: C.pageBg,
+      padding: "28px 16px",
+      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+    }}>
+      <div style={{ maxWidth: 880, margin: "0 auto" }}>
+
+        {/* ── back button ── */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <button
             type="button"
             onClick={() => navigate("/production-hub")}
-            className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors text-sm font-bold bg-white px-4 py-2 border border-red-200 shadow-sm rounded-none tracking-wide"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 7,
+              background: C.white,
+              border: `1.5px solid ${C.redBorder}`,
+              color: C.red,
+              padding: "8px 16px",
+              fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase",
+              cursor: "pointer", borderRadius: 4, fontFamily: "inherit",
+              transition: "background .15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = C.redLight}
+            onMouseLeave={e => e.currentTarget.style.background = C.white}
           >
-            <ArrowLeft className="h-4 w-4" />
-            BACK TO PRODUCTION HUB
+            <ArrowLeft size={13} />
+            Back to Production Hub
           </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="bg-white rounded-none shadow-md border border-gray-200 overflow-hidden">
-            
-            {/* Header */}
-            <div className="bg-gradient-to-r from-red-600 to-red-500 px-6 py-5 border-b border-red-300">
-              <div className="hidden sm:flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <ClipboardList className="h-6 w-6 text-white/90" />
-                  <h1 className="text-xl md:text-2xl font-bold text-white tracking-widest uppercase">
-                    4M Change Inspection Report
-                  </h1>
-                </div>
-                <div className="flex items-center gap-2 text-white font-bold text-sm bg-red-700/40 px-4 py-2 rounded-none border border-white/30 shadow-sm">
-                  <Calendar className="h-4 w-4" />
-                  {formattedDate}
-                </div>
-              </div>
-              
-              <div className="sm:hidden flex flex-col items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <ClipboardList className="h-5 w-5 text-white/90" />
-                  <h1 className="text-lg font-bold text-white text-center tracking-widest uppercase">
-                    4M Change Inspection Report
-                  </h1>
-                </div>
-                <div className="flex items-center gap-2 text-white font-bold text-sm bg-red-700/40 px-4 py-2 border border-white/30 shadow-sm rounded-none">
-                  <Calendar className="h-4 w-4" />
-                  {formattedDate}
-                </div>
-              </div>
+        {/* ── main card ── */}
+        <div style={{
+          background: C.white,
+          borderRadius: 8,
+          border: `1px solid ${C.border}`,
+          overflow: "hidden",
+          boxShadow: "0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04)",
+        }}>
+
+          {/* ── header ── */}
+          <div style={{
+            background: C.redHdr,
+            padding: "20px 28px",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <ClipboardList size={22} color="rgba(255,255,255,.9)" strokeWidth={2} />
+              <h1 style={{
+                margin: 0, fontSize: 18, fontWeight: 700,
+                color: "#fff", letterSpacing: ".18em", textTransform: "uppercase",
+              }}>
+                4M Change Inspection Report
+              </h1>
             </div>
-
-            {/* Form Body */}
-            <div className="p-6 space-y-6">
-              
-              {/* Row 1: Part Name and Part No */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="flex flex-col">
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                    <Package className="inline h-3.5 w-3.5 mr-1 text-red-500" />
-                    Part Name <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="partName"
-                    value={formData.partName}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 text-sm bg-white border border-slate-300 rounded-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 transition-colors"
-                  >
-                    <option value="" className="text-slate-400">Select Part Name</option>
-                    {partsList.map((part, index) => (
-                      <option key={index} value={part.part_name}>
-                        {part.part_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="flex flex-col">
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                    <Hash className="inline h-3.5 w-3.5 mr-1 text-red-500" />
-                    Part No. <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="partNo"
-                    value={formData.partNo}
-                    readOnly
-                    placeholder="Auto-filled part number"
-                    className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-none focus:outline-none text-slate-500 cursor-not-allowed"
-                  />
-                </div>
-              </div>
-
-              {/* Row 2: Operation */}
-              <div className="flex flex-col">
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                  <Wrench className="inline h-3.5 w-3.5 mr-1 text-red-500" />
-                  Operation <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="operation"
-                  value={formData.operation}
-                  onChange={handleChange}
-                  disabled={!formData.partName}
-                  className="w-full px-4 py-2.5 text-sm bg-white border border-slate-300 rounded-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 disabled:bg-slate-50 disabled:text-slate-400 transition-colors"
-                >
-                  <option value="" className="text-slate-400">Select Operation</option>
-                  {operationList.map((op, index) => (
-                    <option key={index} value={op}>{op}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Row 3: Quantities & Specs (FIXED TEXT COLOR HERE) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div className="flex flex-col">
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                    <Layers className="inline h-3.5 w-3.5 mr-1 text-red-500" />
-                    Lot Qty
-                  </label>
-                  <input type="number" name="lotQty" value={formData.lotQty} onChange={handleChange} placeholder="e.g. 100" className="w-full px-4 py-2.5 text-sm bg-white text-slate-700 border border-slate-300 rounded-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 placeholder-slate-400" />
-                </div>
-                <div className="flex flex-col">
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                    <CheckCircle className="inline h-3.5 w-3.5 mr-1 text-green-500" />
-                    OK Qty
-                  </label>
-                  <input type="number" name="okQty" value={formData.okQty} onChange={handleChange} placeholder="e.g. 95" className="w-full px-4 py-2.5 text-sm bg-white text-slate-700 border border-slate-300 rounded-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 placeholder-slate-400" />
-                </div>
-                <div className="flex flex-col">
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                    <XCircle className="inline h-3.5 w-3.5 mr-1 text-red-500" />
-                    Rej. Qty
-                  </label>
-                  <input type="number" name="rejQty" value={formData.rejQty} onChange={handleChange} placeholder="e.g. 5" className="w-full px-4 py-2.5 text-sm bg-white text-slate-700 border border-slate-300 rounded-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 placeholder-slate-400" />
-                </div>
-                <div className="flex flex-col">
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                    <Gauge className="inline h-3.5 w-3.5 mr-1 text-red-500" />
-                    Parameter/Specs
-                  </label>
-                  <input type="text" name="paramSpec" value={formData.paramSpec} onChange={handleChange} placeholder="Enter specs" className="w-full px-4 py-2.5 text-sm bg-white text-slate-700 border border-slate-300 rounded-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 placeholder-slate-400" />
-                </div>
-              </div>
-
-              {/* Row 4: Before (Retroactive) */}
-              <div>
-                <div className="flex items-center gap-2 border-b-2 border-red-200 pb-2 mb-5">
-                  <Layers className="h-4 w-4 text-red-500" />
-                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">BEFORE (RETROACTIVE)</h3>
-                </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  {[0, 1, 2, 3, 4].map((index) => (
-                    <div key={`before-${index}`} className="relative mt-2">
-                      <span className="absolute -top-2.5 left-3 bg-red-50 text-red-600 text-[11px] font-bold px-2 py-0.5 border border-red-200 z-10 shadow-sm">
-                        {index + 1}
-                      </span>
-                      <input
-                        type="text"
-                        value={formData.before[index]}
-                        onChange={(e) => handleArrayChange('before', index, e.target.value)}
-                        placeholder={`Value ${index + 1}`}
-                        className="w-full px-3 py-2.5 text-sm bg-white border border-slate-300 rounded-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 placeholder-slate-400"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Row 5: After / Setup Approval */}
-              <div>
-                <div className="flex items-center gap-2 border-b-2 border-green-200 pb-2 mb-5 mt-4">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-widest">AFTER / SETUP APPROVAL</h3>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  {[0, 1, 2, 3, 4].map((index) => (
-                    <div key={`after-${index}`} className="relative mt-2">
-                      <span className="absolute -top-2.5 left-3 bg-green-50 text-green-700 text-[11px] font-bold px-2 py-0.5 border border-green-200 z-10 shadow-sm">
-                        {index + 1}
-                      </span>
-                      <input
-                        type="text"
-                        value={formData.after[index]}
-                        onChange={(e) => handleArrayChange('after', index, e.target.value)}
-                        placeholder={`Value ${index + 1}`}
-                        className="w-full px-3 py-2.5 text-sm bg-white border border-slate-300 rounded-none focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 text-slate-700 placeholder-slate-400"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Row 6: Inspector and Remarks */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
-                <div className="flex flex-col">
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                    <User className="inline h-3.5 w-3.5 mr-1 text-red-500" />
-                    Insp. By
-                  </label>
-                  <input
-                    type="text"
-                    name="inspBy"
-                    value={formData.inspBy}
-                    onChange={handleChange}
-                    placeholder="Inspector name"
-                    className="w-full px-4 py-2.5 text-sm bg-white border border-slate-300 rounded-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 placeholder-slate-400"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-                    <MessageSquare className="inline h-3.5 w-3.5 mr-1 text-red-500" />
-                    Remarks
-                  </label>
-                  <input
-                    type="text"
-                    name="remarks"
-                    value={formData.remarks}
-                    onChange={handleChange}
-                    placeholder="Any remarks"
-                    className="w-full px-4 py-2.5 text-sm bg-white border border-slate-300 rounded-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 text-slate-700 placeholder-slate-400"
-                  />
-                </div>
-              </div>
-
-              {/* Form Actions */}
-               <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                 <div className="flex flex-col">
-              <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-                Prepared By
-              </label>
-              <input
-                type="text"
-                value={preparedBy}
-                onChange={(e) => setPreparedBy(e.target.value)}
-                placeholder="Enter name"
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
-              />
-            </div>
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  disabled={isLoading}
-                  className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white text-slate-700 px-6 py-3 hover:bg-slate-50 transition-all font-bold tracking-widest border-2 border-slate-300 text-sm disabled:opacity-50 rounded-none uppercase"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Reset Form
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-[#e03131] text-white px-8 py-3 hover:bg-[#c92a2a] transition-all shadow-sm font-bold tracking-widest text-sm disabled:opacity-70 disabled:cursor-not-allowed rounded-none uppercase"
-                >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  {isLoading ? 'Submitting...' : 'Submit Report'}
-                </button>
-              </div>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 7,
+              background: "rgba(0,0,0,.2)",
+              border: "1px solid rgba(255,255,255,.25)",
+              padding: "7px 16px", borderRadius: 4,
+            }}>
+              <Calendar size={14} color="#fff" />
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#fff", letterSpacing: ".06em" }}>
+                {formattedDate}
+              </span>
             </div>
           </div>
-        </form>
+
+          {/* ── form body ── */}
+          <form onSubmit={handleSubmit}>
+            <div style={{ padding: "28px 28px 24px" }}>
+
+              {/* Row 1 — Part Name / Part No */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
+                <div>
+                  <FieldLabel icon={Package}>Part Name <span style={{ color: C.red }}>*</span></FieldLabel>
+                  <StyledSelect name="partName" value={formData.partName} onChange={handleChange}>
+                    <option value="">Select Part Name</option>
+                    {partsList.map((p, i) => <option key={i} value={p.part_name}>{p.part_name}</option>)}
+                  </StyledSelect>
+                </div>
+                <div>
+                  <FieldLabel icon={Hash}>Part No. <span style={{ color: C.red }}>*</span></FieldLabel>
+                  <StyledInput
+                    type="text" name="partNo" value={formData.partNo}
+                    readOnly placeholder="Auto-filled part number"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2 — Operation */}
+              <div style={{ marginBottom: 24 }}>
+                <FieldLabel icon={Wrench}>Operation <span style={{ color: C.red }}>*</span></FieldLabel>
+                <StyledSelect
+                  name="operation" value={formData.operation}
+                  onChange={handleChange} disabled={!formData.partName}
+                >
+                  <option value="">Select Operation</option>
+                  {operationList.map((op, i) => <option key={i} value={op}>{op}</option>)}
+                </StyledSelect>
+              </div>
+
+              {/* Row 3 — Quantities */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 16, marginBottom: 28 }}>
+                <div>
+                  <FieldLabel icon={Layers}>Lot Qty</FieldLabel>
+                  <StyledInput type="number" name="lotQty" value={formData.lotQty} onChange={handleChange} placeholder="e.g. 100" />
+                </div>
+                <div>
+                  <FieldLabel icon={CheckCircle} iconColor={C.green}>OK Qty</FieldLabel>
+                  <StyledInput
+                    type="number" name="okQty" value={formData.okQty} onChange={handleChange} placeholder="e.g. 95"
+                    style={{ borderColor: C.greenBorder, background: C.greenLight }}
+                    onFocus={e => { e.target.style.borderColor = C.green; e.target.style.boxShadow = "0 0 0 3px rgba(22,163,74,.1)"; }}
+                    onBlur={e => { e.target.style.borderColor = C.greenBorder; e.target.style.boxShadow = "none"; }}
+                  />
+                </div>
+                <div>
+                  <FieldLabel icon={XCircle}>Rej. Qty</FieldLabel>
+                  <StyledInput
+                    type="number" name="rejQty" value={formData.rejQty} onChange={handleChange} placeholder="e.g. 5"
+                    style={{ borderColor: C.redBorder, background: C.redLight }}
+                    onFocus={e => { e.target.style.borderColor = C.red; e.target.style.boxShadow = "0 0 0 3px rgba(185,28,28,.1)"; }}
+                    onBlur={e => { e.target.style.borderColor = C.redBorder; e.target.style.boxShadow = "none"; }}
+                  />
+                </div>
+                <div>
+                  <FieldLabel icon={Gauge}>Parameter / Specs</FieldLabel>
+                  <StyledInput type="text" name="paramSpec" value={formData.paramSpec} onChange={handleChange} placeholder="Enter specs" />
+                </div>
+              </div>
+
+              {/* Row 4 — Before */}
+              <SectionHead icon={Layers} label="Before (Retroactive)" color={C.red} borderColor={C.redBorder} />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0,1fr))", gap: 12, marginBottom: 28 }}>
+                {[0,1,2,3,4].map(i => (
+                  <div key={i} style={{ position: "relative", paddingTop: 10 }}>
+                    <span style={{
+                      ...numBadgeBase,
+                      background: C.redLight, color: C.red,
+                      border: `1px solid ${C.redBorder}`,
+                    }}>
+                      {i + 1}
+                    </span>
+                    <StyledInput
+                      type="text"
+                      value={formData.before[i]}
+                      onChange={e => handleArrayChange("before", i, e.target.value)}
+                      placeholder={`Value ${i + 1}`}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Row 5 — After */}
+              <SectionHead icon={CheckCircle} label="After / Setup Approval" color={C.green} borderColor={C.greenBorder} />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0,1fr))", gap: 12, marginBottom: 28 }}>
+                {[0,1,2,3,4].map(i => (
+                  <div key={i} style={{ position: "relative", paddingTop: 10 }}>
+                    <span style={{
+                      ...numBadgeBase,
+                      background: C.greenLight, color: C.green,
+                      border: `1px solid ${C.greenBorder}`,
+                    }}>
+                      {i + 1}
+                    </span>
+                    <StyledInput
+                      type="text"
+                      value={formData.after[i]}
+                      onChange={e => handleArrayChange("after", i, e.target.value)}
+                      placeholder={`Value ${i + 1}`}
+                      style={{ borderColor: C.greenBorder }}
+                      onFocus={e => { e.target.style.borderColor = C.green; e.target.style.boxShadow = "0 0 0 3px rgba(22,163,74,.1)"; }}
+                      onBlur={e => { e.target.style.borderColor = C.greenBorder; e.target.style.boxShadow = "none"; }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Row 6 — Inspector & Remarks */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
+                <div>
+                  <FieldLabel icon={User}>Insp. By</FieldLabel>
+                  <StyledInput type="text" name="inspBy" value={formData.inspBy} onChange={handleChange} placeholder="Inspector name" />
+                </div>
+                <div>
+                  <FieldLabel icon={MessageSquare}>Remarks</FieldLabel>
+                  <StyledInput type="text" name="remarks" value={formData.remarks} onChange={handleChange} placeholder="Any remarks" />
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div style={{ height: 1, background: C.border, margin: "8px 0 22px" }} />
+
+              {/* Footer */}
+              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: 14 }}>
+
+                {/* Prepared by */}
+                <div style={{ minWidth: 200 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".12em", textTransform: "uppercase", color: C.textMid, marginBottom: 6 }}>
+                    Prepared By
+                  </div>
+                  <StyledInput
+                    type="text"
+                    value={preparedBy}
+                    onChange={e => setPreparedBy(e.target.value)}
+                    placeholder="Enter name"
+                    style={{ width: 220 }}
+                  />
+                </div>
+
+                {/* Action buttons */}
+                <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
+
+                  {/* Reset */}
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    disabled={isLoading}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 8,
+                      background: C.white,
+                      border: `2px solid #d1d5db`,
+                      color: "#374151",
+                      padding: "11px 24px",
+                      fontSize: 12, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase",
+                      borderRadius: 6, cursor: isLoading ? "not-allowed" : "pointer",
+                      fontFamily: "inherit", opacity: isLoading ? .5 : 1,
+                      transition: "all .15s",
+                    }}
+                    onMouseEnter={e => { if (!isLoading) { e.currentTarget.style.background = "#f9fafb"; e.currentTarget.style.borderColor = "#9ca3af"; } }}
+                    onMouseLeave={e => { e.currentTarget.style.background = C.white; e.currentTarget.style.borderColor = "#d1d5db"; }}
+                  >
+                    <RotateCcw size={14} />
+                    Reset Form
+                  </button>
+
+                  {/* Submit */}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 8,
+                      background: isLoading ? "#9b1c1c" : C.red,
+                      border: "none",
+                      color: "#fff",
+                      padding: "11px 28px",
+                      fontSize: 12, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase",
+                      borderRadius: 6, cursor: isLoading ? "not-allowed" : "pointer",
+                      fontFamily: "inherit",
+                      transition: "background .15s",
+                      boxShadow: "0 2px 8px rgba(185,28,28,.35)",
+                    }}
+                    onMouseEnter={e => { if (!isLoading) e.currentTarget.style.background = "#991b1b"; }}
+                    onMouseLeave={e => { if (!isLoading) e.currentTarget.style.background = C.red; }}
+                  >
+                    {isLoading
+                      ? <><Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> Submitting…</>
+                      : <><Send size={14} /> Submit Report</>
+                    }
+                  </button>
+
+                </div>
+              </div>
+
+            </div>
+          </form>
+        </div>
+
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     </div>
   );
