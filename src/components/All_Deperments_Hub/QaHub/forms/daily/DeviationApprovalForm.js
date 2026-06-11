@@ -9,8 +9,9 @@ const DeviationApprovalForm = () => {
     end: '#FFCC70'
   };
 
-
   const API_SAVE = `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/save-deviation/`;
+  // 🔥 NAYA CODE: Log API ka URL
+  const API_LOG = `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/log-report/`;
 
   const [formData, setFormData] = useState({
     toolNameNo: '',
@@ -72,6 +73,20 @@ const DeviationApprovalForm = () => {
       const response = await axios.post(API_SAVE, dataToSave);
       
       if (response.status === 201 || response.status === 200) {
+        
+        // 🔥 NAYA CODE: Report save hone ke baad Activity Log save karna
+        const currentUser = localStorage.getItem('username') || 'Unknown User';
+        
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: 'Deviation Approval Form' // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error('Activity log save karne mein error aayi:', logError);
+        }
+
         alert('Deviation Approval Form Saved to Database Successfully!');
         resetForm();
       }
