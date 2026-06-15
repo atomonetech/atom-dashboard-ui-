@@ -58,46 +58,58 @@ const Inspectionprint = ({ items = [], currentReport, onEditForm, onBack }) => {
             return res.json();
         })
         .then(data => {
-          // 1. Parameters Set Karein
           setFetchedItems(data.inspection_data?.parameters || []);
 
-          // 2. Logs ko Schedule Format me badle (UPDATED LOGIC)
           const rawLogs = data.inspection_data?.logs || [];
-          
           const stageTracker = {};
           let currentSlotIndex = 0;
+          const formattedEntries = [];
 
-          const formattedEntries = rawLogs.map((log) => {
+          rawLogs.forEach((log) => {
             const trackKey = `${log.operator}_${log.machine}_${log.date}_${log.baseStage}`;
 
             if (!stageTracker[trackKey]) {
-              stageTracker[trackKey] = {
-                slot_index: currentSlotIndex++,
-                row_order: 0
-              };
-            } else {
-              stageTracker[trackKey].row_order++;
+              stageTracker[trackKey] = { slot_index: currentSlotIndex++ };
             }
 
-            let entry = {
+            let entry1 = {
               operator: log.operator,
               machine_no: log.machine,
               date: log.date,
-              time_type: log.baseStage, // SETUP, 4HRS, LAST
+              time_type: log.baseStage,
               slot_index: stageTracker[trackKey].slot_index,
-              row_order: stageTracker[trackKey].row_order
+              row_order: 0 
             };
-            
-            // Value_1, Value_2 ... mapping
+
+            let entry2 = {
+              operator: log.operator,
+              machine_no: log.machine,
+              date: log.date,
+              time_type: log.baseStage,
+              slot_index: stageTracker[trackKey].slot_index,
+              row_order: 1 
+            };
+
+            let hasReading2 = false;
+
             if (log.readings) {
               Object.keys(log.readings).forEach(srNo => {
-                entry[`value_${srNo}`] = log.readings[srNo].val1 || log.readings[srNo].val2 || '';
+                const val1 = log.readings[srNo].val1 ?? '';
+                const val2 = log.readings[srNo].val2 ?? '';
+                
+                entry1[`value_${srNo}`] = val1;
+                entry2[`value_${srNo}`] = val2;
+
+                if (val2 !== '') hasReading2 = true;
               });
             }
-            return entry;
+
+            formattedEntries.push(entry1);
+            if (log.entryFormat === 'dual' || hasReading2) {
+                formattedEntries.push(entry2);
+            }
           });
 
-          // 3. Final Report Object Banaye
           setFetchedReport({
             doc_no: 'KGTL-QCL-01',
             revision_no: '01',
@@ -106,8 +118,8 @@ const Inspectionprint = ({ items = [], currentReport, onEditForm, onBack }) => {
             part_name: data.part_name,
             operation_name: data.operation,
             part_number: data.part_number,
-            prepared_by: data.operator_name,
-            approved_by: 'QA Head',
+            prepared_by: data.prepared_by , 
+            approved_by: data.approved_by || '', 
             schedule_entries: formattedEntries
           });
         })
@@ -116,18 +128,15 @@ const Inspectionprint = ({ items = [], currentReport, onEditForm, onBack }) => {
     }
   }, [urlCustomer, urlPart, urlOp, urlDate]);
 
-  // ── DECIDE WHICH DATA TO USE (Fetched API Data OR Passed Props) ──
   const activeItems = fetchedItems.length > 0 ? fetchedItems : items;
   const activeReport = fetchedReport || currentReport;
 
-  // ── FILTER STATES (For Dropdowns) ──
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterDate, setFilterDate] = useState(urlDate || "");
   const [filterCustomer, setFilterCustomer] = useState(urlCustomer || "All Customers");
   const [filterPartName, setFilterPartName] = useState(urlPart || "All Parts");
   const [filterOperation, setFilterOperation] = useState(urlOp || "All Operations");
 
-  // Close filter when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (filterRef.current && !filterRef.current.contains(event.target)) {
@@ -138,7 +147,6 @@ const Inspectionprint = ({ items = [], currentReport, onEditForm, onBack }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ── FILTER DROPDOWN HANDLERS ──
   const handleFilterCustomerChange = (e) => {
     const cust = e.target.value;
     setFilterCustomer(cust);
@@ -169,7 +177,6 @@ const Inspectionprint = ({ items = [], currentReport, onEditForm, onBack }) => {
   };
 
   const handleApplyFilter = () => {
-    // Navigate will update the URL, which triggers the main fetch useEffect
     navigate(`?customer=${encodeURIComponent(filterCustomer)}&part=${encodeURIComponent(filterPartName)}&operation=${encodeURIComponent(filterOperation)}&date=${filterDate}`);
     setIsFilterOpen(false); 
   };
@@ -180,32 +187,35 @@ const Inspectionprint = ({ items = [], currentReport, onEditForm, onBack }) => {
     setFilterPartName("All Parts"); 
     setFilterOperation("All Operations"); 
     setMasterLists(prev => ({ ...prev, parts: [], operations: [] }));
-    navigate(location.pathname); // Clear URL params
+    navigate(location.pathname);
     setIsFilterOpen(false);
   };
 
-  // ── DYNAMIC HEADER DATA ──
   const displayDate = formatDisplay(activeReport?.date) || 'DD/MM/YYYY';
   const displayCustomer = activeReport?.customer_name || '';
   const displayPart = activeReport?.part_name || '';
   const displayOp = activeReport?.operation_name || '';
 
-  // ── FILTERING SCHEDULE ENTRIES ──
   const rawScheduleEntries = activeReport?.schedule_entries || [];
   const scheduleEntries = rawScheduleEntries.filter(entry => {
     if (filterDate && filterDate !== urlDate) return entry.date === filterDate || formatDisplay(entry.date) === formatDisplay(filterDate);
     return true; 
   });
 
-  // ── SCHEDULE LOGIC ──
+  // ── SCHEDULE LOGIC (FIXED COLUMN MAPPING) ──
   const productItems    = activeItems.filter(x=>x.sr_no>=1 &&x.sr_no<=10).sort((a,b)=>a.sr_no-b.sr_no);
   const processItems    = activeItems.filter(x=>x.sr_no>=11&&x.sr_no<=20).sort((a,b)=>a.sr_no-b.sr_no);
-  const productCount    = productItems.filter(x=>x.item&&x.item.trim()!=='').length;
+  
+  const validProductItems = productItems.filter(x=>x.item&&x.item.trim()!=='');
+  const validProcessItems = processItems.filter(x=>x.item&&x.item.trim()!=='');
+  const orderedValidItems = [...validProductItems, ...validProcessItems];
+  
+  const productCount    = validProductItems.length;
   const totalRows       = 10;
-  const totalFilledCols = Math.min(productCount + processItems.filter(x=>x.item&&x.item.trim()!=='').length, 20);
-
+  const totalFilledCols = Math.max(1, orderedValidItems.length);
+  
   const buildScheduleRows = () => {
-    const empty20 = () => Array(20).fill('');
+    const emptyVals = () => Array(totalFilledCols).fill('');
     const grouped = {};
     let srCounter = 1;
     scheduleEntries.forEach(entry => {
@@ -218,9 +228,9 @@ const Inspectionprint = ({ items = [], currentReport, onEditForm, onBack }) => {
 
     if (Object.keys(grouped).length === 0) {
       return [{ sr:1, date:'', operator:'', mcNo:'', slots:[
-        {time:'SETUP', row_order:0, values:empty20()},
-        {time:'4HRS',  row_order:0, values:empty20()},
-        {time:'LAST',  row_order:0, values:empty20()},
+        {time:'SETUP', row_order:0, values:emptyVals()},
+        {time:'4HRS',  row_order:0, values:emptyVals()},
+        {time:'LAST',  row_order:0, values:emptyVals()},
       ]}];
     }
 
@@ -234,14 +244,21 @@ const Inspectionprint = ({ items = [], currentReport, onEditForm, onBack }) => {
       sorted.forEach(e => {
         const si = e.slot_index??0;
         if (!slotMap[si]) slotMap[si] = { time_type: e.time_type||'SETUP', readings: [] };
-        const vals = empty20();
-        for(let i=0;i<20;i++) vals[i]=e[`value_${i+1}`]||'';
+        
+        const vals = orderedValidItems.length > 0 
+          ? orderedValidItems.map(item => e[`value_${item.sr_no}`] || '') 
+          : emptyVals();
+          
         slotMap[si].readings[e.row_order??0] = vals;
       });
       const timeOrder = { SETUP:0,'4HRS':1,'2HRS':1,LAST:2 };
       const slots = Object.entries(slotMap)
         .sort((a,b)=>{ const ta=timeOrder[a[1].time_type]??9,tb=timeOrder[b[1].time_type]??9; return ta!==tb?ta-tb:Number(a[0])-Number(b[0]); })
-        .flatMap(([slotKey,s])=>{ if(!s.readings[0])s.readings[0]=empty20(); return s.readings.map((vals,ri)=>({time:s.time_type,slotKey,row_order:ri,values:vals||empty20()})).filter((row,ri)=>ri===0||row.values.some(v=>v!=='')); });
+        .flatMap(([slotKey,s])=>{ 
+          if(!s.readings[0]) s.readings[0] = emptyVals(); 
+          return s.readings.map((vals,ri)=>({time:s.time_type, slotKey, row_order:ri, values:vals||emptyVals()}))
+            .filter((row,ri)=>ri===0||row.values.some(v=>v!=='')); 
+        });
       return { sr:grp.sr, date:grp.date, operator:grp.operator, mcNo:grp.mcNo, slots };
     });
   };
@@ -249,19 +266,20 @@ const Inspectionprint = ({ items = [], currentReport, onEditForm, onBack }) => {
   const scheduleRows       = buildScheduleRows();
   const totalSchedHtmlRows = scheduleRows.reduce((sum,s)=>sum+s.slots.length,0);
 
-  const TOTAL_USABLE  = 572;
+  // 🚀 FIXED MATH FOR 1-PAGE GUARANTEE
+  const TOTAL_USABLE  = 500; // Reduced from 572 to provide a safe margin for printers
   const SCHED_THEAD   = 22;
-  const SCHED_ROW_H   = 26;
+  const SCHED_ROW_H   = 24;  // Slightly compressed
   const SCHED_H       = SCHED_THEAD + totalSchedHtmlRows * SCHED_ROW_H;
-  const INSP_THEAD    = 26;
+  const INSP_THEAD    = 24;
   const inspAvailable = TOTAL_USABLE - SCHED_H - INSP_THEAD;
-  const inspRowH      = Math.max(18, inspAvailable/10);
+  const inspRowH      = Math.max(14, inspAvailable/10); // Changed minimum from 18 to 14
   const inspTotalH    = INSP_THEAD + 10*inspRowH;
-  const colPct = `${(75/Math.max(totalFilledCols,1)).toFixed(2)}%`;
+  
+  const colPct = `${(75/totalFilledCols).toFixed(2)}%`;
   const TD = "border border-black text-center align-middle overflow-hidden";
   const TH = "border border-black text-center align-middle font-bold bg-[#f5f5f5]";
 
-  // Loader UI
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#f5f5f5] flex items-center justify-center">
@@ -275,17 +293,30 @@ const Inspectionprint = ({ items = [], currentReport, onEditForm, onBack }) => {
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] p-5 font-sans text-black">
+      {/* 🚀 STRICT PRINT STYLES */}
       <style>{`
         @media print {
-          @page { size: A4 landscape; margin: 6mm; }
-          body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: white !important; }
+          @page { size: A4 landscape; margin: 5mm; }
+          body { 
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important; 
+            background-color: white !important;
+            margin: 0;
+            padding: 0;
+          }
+          /* This wrapper strictly prevents overflow to page 2 */
+          .print-wrapper {
+             max-height: 98vh; 
+             overflow: hidden;
+             page-break-after: avoid;
+             page-break-inside: avoid;
+          }
           .print-text-sm { font-size: 8.5px !important; }
           .print-text-md { font-size: 9.5px !important; }
           .print-text-lg { font-size: 10px !important; }
         }
       `}</style>
 
-      {/* ── Top Bar (Buttons & Filter) ── */}
       <div className="flex justify-end items-center gap-3 mb-3 print:hidden">
         <button onClick={() => onBack ? onBack() : window.history.back()} className="bg-[#607d8b] hover:bg-[#4d646f] text-white border-none px-4 py-2 rounded-md font-bold cursor-pointer text-sm flex items-center gap-1.5 transition-colors shadow-sm">
           <i className="bi bi-arrow-left-circle-fill"></i> Back
@@ -298,6 +329,7 @@ const Inspectionprint = ({ items = [], currentReport, onEditForm, onBack }) => {
 
           {isFilterOpen && (
             <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+              {/* Filter UI remains unchanged */}
               <div className="flex justify-between items-center border-b p-3">
                 <h3 className="text-[#3b5998] font-bold text-sm flex items-center gap-2 m-0"><i className="bi bi-funnel-fill"></i> Filter Reports</h3>
                 <button onClick={() => setIsFilterOpen(false)} className="text-gray-400 hover:text-gray-600 bg-transparent border-none cursor-pointer"><i className="bi bi-x-lg"></i></button>
@@ -352,8 +384,8 @@ const Inspectionprint = ({ items = [], currentReport, onEditForm, onBack }) => {
         </button>
       </div>
 
-      {/* ── PRINT VIEW ── */}
-      <div className="bg-white mx-auto w-full min-h-[210mm] box-border p-5 md:p-[10mm] shadow-lg print:w-full print:h-auto print:min-h-0 print:p-0 print:m-0 print:shadow-none print:block">
+      {/* 🚀 ADDED 'print-wrapper' class here */}
+      <div className="bg-white mx-auto w-full min-h-[210mm] box-border p-5 md:p-[10mm] shadow-lg print:w-full print:h-full print:min-h-0 print:p-0 print:m-0 print:shadow-none print:block print-wrapper">
         <table className="w-full border-none border-collapse border border-black">
           <thead className="table-header-group">
             <tr>
@@ -432,7 +464,8 @@ const Inspectionprint = ({ items = [], currentReport, onEditForm, onBack }) => {
                       const bgClass = (i + 1) % 2 === 0 ? 'bg-[#fafafa]' : 'bg-white';
 
                       return (
-                        <tr key={i} style={{height:`${inspRowH}px`}} className="print:h-auto">
+                        /* 🚀 REMOVED className="print:h-auto" SO JS MATH WORKS FOR PRINT TOO */
+                        <tr key={i} style={{height:`${inspRowH}px`}}>
                           <td className={`${TD} ${bgClass} text-[11px] p-1 print:text-[9px] print:p-0`}>{pSR}</td>
                           <td className={`${TD} ${bgClass} text-[11px] p-1 text-center font-semibold pl-[5px] print:text-[9px] print:p-0`}>{product?.item||''}</td>
                           <td className={`${TD} ${bgClass} text-[11px] p-1 print:text-[9px] print:p-0`}>{product?.spec||''}</td>
