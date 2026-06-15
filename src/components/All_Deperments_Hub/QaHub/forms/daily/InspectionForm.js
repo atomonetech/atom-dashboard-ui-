@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useParams } from 'react-router-dom'; // 🔥 useParams added
+import axios from 'axios';
 
 // Example SOP Content
 const sopDatabase = {
@@ -26,7 +27,13 @@ const InspectionForm = () => {
     // ==========================================
     //  1. STATE MANAGEMENT
     // ==========================================
-     const navigate = useNavigate();
+    const navigate = useNavigate();
+    
+    // 🔥 View Mode Logic
+    const { id } = useParams();
+    const isViewMode = Boolean(id);
+    const currentUser = localStorage.getItem('username') || 'Unknown User';
+
     const [customers, setCustomers] = useState([]);
     const [parts, setParts] = useState([]);
     const [tools, setTools] = useState([]);
@@ -37,9 +44,13 @@ const InspectionForm = () => {
     const [partNumber, setPartNumber] = useState('');
     const [modelName, setModelName] = useState('');
     const todayDate = new Date().toISOString().split('T')[0];
-    const [selectedDate] = useState(todayDate);
+    const [selectedDate, setSelectedDate] = useState(todayDate);
 
-    const API_URL = (process.env.REACT_APP_API_URL || "http://localhost:8000") + "/api";
+    const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+    const API_URL = `${API_BASE_URL}/api`;
+    const API_LOG = `${API_URL}/log-report/`; // 🔥
+    const API_APPROVE = `${API_URL}/approve-report/`; // 🔥
+
     const [specList, setSpecList] = useState([]); 
 
     const [dbLogs, setDbLogs] = useState([]); 
@@ -64,10 +75,33 @@ const InspectionForm = () => {
             .then(res => res.json()).then(data => setCustomers(data)).catch(()=> {
                 setCustomers(['FIG', 'MARUTI', 'TATA']);
             });
-    }, []);
+
+        // 🔥 VIEW MODE: FETCH SPECIFIC REPORT DATA
+        if (isViewMode) {
+            axios.get(`${API_URL}/get-single-report/inspection-view/${id}/`)
+                .then(res => {
+                    if (res.data.success) {
+                        const d = res.data.data;
+                        setSelectedCustomer(d.customer);
+                        setSelectedPart(d.part_name);
+                        setSelectedTool(d.operation);
+                        setPartNumber(d.part_number);
+                        if (d.date) setSelectedDate(d.date.split(' ')[0] || d.date);
+
+                        setSpecList(d.inspection_data?.parameters || []);
+                        setLogColumns(d.inspection_data?.logs || []);
+                        setUserAction('VIEW'); // Custom mode to show full table instantly
+                        
+                        const fullName = d.submitted_by || 'Unknown User';
+                        setPreparedBy(fullName.split('@')[0]);
+                    }
+                })
+                .catch(err => console.error("Error loading view data", err));
+        }
+    }, [id, isViewMode, API_URL]);
 
     const loadDataForGates = async (cust, part, op, dateStr) => {
-        if (!cust || !part || !op || !dateStr) return;
+        if (!cust || !part || !op || !dateStr || isViewMode) return; // 🔥 Skip in view mode
         try {
             const masterRes = await fetch(`${API_URL}/master-parameters/?customer=${encodeURIComponent(cust)}&part=${encodeURIComponent(part)}&operation=${encodeURIComponent(op)}`);
             const masterData = await masterRes.json();
@@ -102,24 +136,26 @@ const InspectionForm = () => {
         } catch (e) { console.error(e); }
     };
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => { loadDataForGates(selectedCustomer, selectedPart, selectedTool, selectedDate); }, [selectedCustomer, selectedPart, selectedTool, selectedDate]);
+    useEffect(() => { 
+        if(!isViewMode) loadDataForGates(selectedCustomer, selectedPart, selectedTool, selectedDate); 
+    }, [selectedCustomer, selectedPart, selectedTool, selectedDate, isViewMode]);
 
     const handleCustomerChange = (e) => {
+        if(isViewMode) return;
         const cust = e.target.value; setSelectedCustomer(cust); setSelectedPart(''); setSelectedTool(''); setSpecList([]); setDbLogs([]); setUserAction('');
         if (cust) fetch(`${API_URL}/master-dropdown/?filter=part&cust=${encodeURIComponent(cust)}`).then(res => res.json()).then(data => setParts(data)).catch(()=>setParts(['INLET PIPE', 'OUTLET PIPE']));
     };
     const handlePartChange = (e) => {
+        if(isViewMode) return;
         const part = e.target.value; setSelectedPart(part); setSelectedTool(''); setSpecList([]); setDbLogs([]); setUserAction('');
         if (part) fetch(`${API_URL}/master-dropdown/?filter=operation&cust=${encodeURIComponent(selectedCustomer)}&part=${encodeURIComponent(part)}`).then(res => res.json()).then(data => setTools(data)).catch(()=>setTools(['BLANKING', 'BENDING']));
     };
 
     // ==========================================
-    //  3. ACTION & STAGE GATES LOGIC 🔥 (Updated with Cool English)
+    //  3. ACTION & STAGE GATES LOGIC
     // ==========================================
     const handleUpdateAction = () => {
         if (dbLogs.length === 0) {
-            // 🔥 Professional English Alert
             alert("ℹ️ No existing records found for this date. Please select 'New Record' to initiate an inspection.");
             return;
         }
@@ -132,15 +168,12 @@ const InspectionForm = () => {
 
     const handleDeleteAction = async () => {
         if (dbLogs.length === 0) {
-            // 🔥 Professional English Alert
             alert("ℹ️ No data available to purge for the selected date.");
             return;
         }
-        // 🔥 Professional English Confirm
         const confirmDelete = window.confirm("⚠️ Critical Warning: You are about to permanently purge all inspection records for this date. \n\nDo you wish to proceed?");
         if (confirmDelete) {
             try {
-                // 🔥 Professional English Alert
                 alert("🗑️ Records successfully purged from the database.");
                 loadDataForGates(selectedCustomer, selectedPart, selectedTool, selectedDate);
             } catch (err) { alert("❌ Deletion failed. Please verify database connection."); }
@@ -157,33 +190,24 @@ const InspectionForm = () => {
     const isLastDone = !!lastLog;
 
     const startFillingStage = (stageCode) => {
-        
-        // 🔥 4-HOUR STRICT TIME LOCK LOGIC 🔥
         if (stageCode === '4HRS') {
             if (!setupLog) {
-                // 🔥 Professional English Alert
                 alert("⛔ Sequence Error: Please complete the SETUP inspection before initiating the 4-Hourly report.");
                 return;
             }
             if (setupLog.timestamp) {
-                const FOUR_HOURS_MS = 4 * 60 * 60 * 1000; // Change to 2 * 60 * 1000 for 2 min testing
-                
+                const FOUR_HOURS_MS = 4 * 60 * 60 * 1000; 
                 const timePassed = Date.now() - setupLog.timestamp;
                 if (timePassed < FOUR_HOURS_MS) {
                     const timeLeft = FOUR_HOURS_MS - timePassed;
                     const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
                     const minsLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                    
-                    // 🔥 Professional English Alert (Cool Accent)
                     alert(`⏳ Time Restriction Active: The 4-Hourly inspection will unlock in ${hoursLeft}h ${minsLeft}m.`);
                     return; 
                 }
             }
         }
-
-        // 🔥 CONFIRMATION LOGIC FOR 'LAST PIECE'
         if (stageCode === 'LAST') {
-            // 🔥 Professional English Confirm
             const isConfirmed = window.confirm(`⚠️ Verification Required: Are you sure you want to log the LAST PIECE for the [${selectedTool}] operation?\n\nProceeding will finalize the batch inspection.`);
             if (!isConfirmed) return; 
         }
@@ -222,7 +246,7 @@ const InspectionForm = () => {
     };
 
     // ==========================================
-    //  4. INLINE HANDLING & SAVE
+    //  4. INLINE HANDLING & SAVE / APPROVE 🔥
     // ==========================================
     const handleActiveColChange = (field, value) => {
         setLogColumns(prev => prev.map(col => col.id === activeColId ? { ...col, [field]: value } : col));
@@ -242,87 +266,104 @@ const InspectionForm = () => {
         setShowInfoModal(true);
     };
     const handleVideoClick = (paramName) => { 
-        // 🔥 Professional English Alert
         alert(`🎥 Initializing tutorial video for: ${paramName}`); 
     };
 
-    // 🔥 STRICT SAVE DATA LOGIC 🔥
+    // 🔥 SAVE / APPROVE LOGIC
     const handleSaveData = async () => {
-        // 1. Validation for Meta Information (Plant, Operator, Machine)
-        if (!activeColumn?.plant || !activeColumn?.operator || !activeColumn?.machine) {
-            alert("⛔ Validation Error: Please select Plant Location, Operator ID, and Machine Node.");
-            return; // Stop execution
-        }
-
-        // 2. Validation for Table Readings
-        const format = activeColumn?.entryFormat || 'dual';
-        let allFilled = true;
-
-        for (let row of specList) {
-            const readObj = activeColumn.readings[row.sr] || { val1: '', val2: '' };
-            if (format === 'single') {
-                if (!readObj.val1 || String(readObj.val1).trim() === '') { 
-                    allFilled = false; 
-                    break; 
+        if (isViewMode) {
+            // ==== APPROVE LOGIC ====
+            try {
+                const response = await axios.post(API_APPROVE, {
+                    log_id: id,
+                    approver_username: currentUser
+                });
+                if (response.status === 200) {
+                    alert('✅ Report Approved Successfully!');
+                    navigate('/notifications'); 
                 }
-            } else {
-                if (!readObj.val1 || String(readObj.val1).trim() === '' || 
-                    !readObj.val2 || String(readObj.val2).trim() === '') { 
-                    allFilled = false; 
-                    break; 
+            } catch (error) {
+                console.error('Error approving data:', error);
+                alert('Failed to approve report.');
+            }
+        } else {
+            // ==== SAVE LOGIC ====
+            if (!activeColumn?.plant || !activeColumn?.operator || !activeColumn?.machine) {
+                alert("⛔ Validation Error: Please select Plant Location, Operator ID, and Machine Node.");
+                return;
+            }
+
+            const format = activeColumn?.entryFormat || 'dual';
+            let allFilled = true;
+
+            for (let row of specList) {
+                const readObj = activeColumn.readings[row.sr] || { val1: '', val2: '' };
+                if (format === 'single') {
+                    if (!readObj.val1 || String(readObj.val1).trim() === '') { 
+                        allFilled = false; break; 
+                    }
+                } else {
+                    if (!readObj.val1 || String(readObj.val1).trim() === '' || 
+                        !readObj.val2 || String(readObj.val2).trim() === '') { 
+                        allFilled = false; break; 
+                    }
                 }
             }
-        }
 
-        if (!allFilled) {
-            alert("⛔ Validation Error: All readings are compulsory. Please fill all the data fields before committing.");
-            return; // Stop execution
-        }
+            if (!allFilled) {
+                alert("⛔ Validation Error: All readings are compulsory. Please fill all the data fields before committing.");
+                return;
+            }
 
-        const timeNow = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        
-        let newLogs = logColumns.map(col => col.id === activeColId ? { ...col, isLocked: true, time: timeNow, timestamp: Date.now() } : col);
-        
-        const payload = {
-            master_data: { 
-                customer: selectedCustomer, 
-                part_name: selectedPart, 
-                operation: selectedTool, 
-                part_number: partNumber, 
-                plant_location: activeColumn?.plant || '', 
-                date: selectedDate 
-            },
-            parameters: specList, 
-            logs: newLogs
-        };
-        
-        try {
-            const response = await fetch(`${API_URL}/save-inspection-report/`, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(payload) 
-            });
+            const timeNow = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            let newLogs = logColumns.map(col => col.id === activeColId ? { ...col, isLocked: true, time: timeNow, timestamp: Date.now() } : col);
             
-            if (response.ok) {
-                // 🔥 Professional English Alert
-                alert(`✅ [${activeColumn?.displayStage || 'Data'}] inspection successfully committed to the database.`);
-            } else {
-                const errorData = await response.json();
-                console.error("Django Backend Error:", errorData);
-                // 🔥 Professional English Alert
-                alert(`❌ Synchronization Failed: The server rejected the payload. Please verify console logs (F12).`);
-            }
-        } catch (error) { 
-            console.error("Network / CORS Error:", error);
-            // 🔥 Professional English Alert
-            alert("❌ Connection Timeout: Unable to reach the server. Please verify your network or backend status."); 
-        }
+            const payload = {
+                master_data: { 
+                    customer: selectedCustomer, 
+                    part_name: selectedPart, 
+                    operation: selectedTool, 
+                    part_number: partNumber, 
+                    plant_location: activeColumn?.plant || '', 
+                    date: selectedDate 
+                },
+                parameters: specList, 
+                logs: newLogs
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}/save-inspection-report/`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload) 
+                });
+                
+                if (response.ok) {
+                    const resData = await response.json();
+                    
+                    // 🔥 Save Activity Log
+                    try {
+                        await axios.post(API_LOG, {
+                            username: currentUser,
+                            report_name: 'Inspection Report',
+                            record_id: resData.record_id || resData.report_id
+                        });
+                    } catch (logErr) {}
 
-        setDbLogs(newLogs);       
-        setLogColumns([]);        
-        setActiveColId('');       
-        setSelectedStage('');     
-        setUserAction('FILL');    
+                    alert(`✅ [${activeColumn?.displayStage || 'Data'}] inspection successfully committed to the database.`);
+                } else {
+                    alert(`❌ Synchronization Failed: The server rejected the payload. Please verify console logs (F12).`);
+                }
+            } catch (error) { 
+                alert("❌ Connection Timeout: Unable to reach the server. Please verify your network or backend status."); 
+            }
+
+            setDbLogs(newLogs);       
+            setLogColumns([]);        
+            setActiveColId('');       
+            setSelectedStage('');     
+            setUserAction('FILL');    
+        }
     };
 
     // ==========================================
@@ -330,7 +371,7 @@ const InspectionForm = () => {
     // ==========================================
     const renderCell = (col, rowSr, paramName) => {
         const readObj = col.readings[rowSr] || { val1: '', val2: '' };
-        const isActive = col.id === activeColId && !col.isLocked;
+        const isActive = col.id === activeColId && !col.isLocked && !isViewMode;
 
         if (isActive) {
             return (
@@ -386,9 +427,9 @@ const InspectionForm = () => {
                     --text-main: #0f172a;       
                     --text-muted: #64748b;      
                     --border-subtle: #e2e8f0;   
-                    --accent-primary: #4f46e5;  
-                    --accent-hover: #4338ca;    
-                    --accent-glow: rgba(79, 70, 229, 0.15);
+                    --accent-primary: ${isViewMode ? '#10b981' : '#4f46e5'};  
+                    --accent-hover: ${isViewMode ? '#059669' : '#4338ca'};    
+                    --accent-glow: rgba(${isViewMode ? '16, 185, 129' : '79, 70, 229'}, 0.15);
                     --danger: #ef4444;
                     --success: #10b981;
                 }
@@ -476,11 +517,11 @@ const InspectionForm = () => {
                 .sop-list-light li { margin-bottom: 0.8rem; display: flex; align-items: flex-start; gap: 10px; line-height: 1.5;}
                 .sop-list-light li::before { content: '\\F26A'; font-family: 'bootstrap-icons'; color: var(--success); margin-top: 2px;}
 
-                .main-container { padding: 100px 24px 60px 24px; max-width: 1600px; margin: 0 auto; }
+                .main-container { padding: 40px 24px 60px 24px; max-width: 1600px; margin: 0 auto; }
 
                 @media (max-width: 992px) { .col-responsive { flex: 0 0 50% !important; max-width: 50% !important; } }
                 @media (max-width: 768px) {
-                    .main-container { padding: 90px 12px 40px 12px; }
+                    .main-container { padding: 40px 12px 40px 12px; }
                     .col-responsive { flex: 0 0 100% !important; max-width: 100% !important; }
                     .card-body-custom { padding: 1rem; }
                     .gate-card-light { padding: 1.5rem 1rem; }
@@ -522,36 +563,28 @@ const InspectionForm = () => {
                 </div>
             )}
 
-            {/* NAVBAR */}
-            {/* <nav className="navbar-light-custom d-flex justify-content-between align-items-center px-4">
-                <div className="brand-logo">
-                    <i className="bi bi-box-seam-fill"></i> QMS Dashboard
-                </div>
-                <div className="d-flex align-items-center gap-3">
-                    <div className="d-flex align-items-center gap-2 px-3 py-1 rounded-pill" style={{backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0'}}>
-                        <span style={{width: '8px', height: '8px', backgroundColor: '#10B981', borderRadius: '50%', display: 'inline-block'}}></span>
-                        <span style={{fontSize: '0.75rem', fontWeight: '800', color: '#059669', letterSpacing: '0.5px'}}>LIVE</span>
-                    </div>
-                    <span className="badge" style={{backgroundColor: '#f1f5f9', color: '#0f172a', padding: '0.5rem 1rem', fontSize: '0.75rem', border: '1px solid #cbd5e1'}}>Operator Terminal</span>
-                </div>
-            </nav> */}
-
             <div className="main-container">
                 {/* 🌟 STEP 1: CONTEXT */}
                 <div className="card-custom animate-pop" style={{animationDelay: '0.1s'}}>
                     <div className="card-header-custom">
                         <button
-                  onClick={() => navigate("/qa-hub")}
-                  className="inline-flex items-center text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg shadow-md transition-all active:scale-95 group"
-                > Back to QaHub</button>
-                        <h6 className="card-title-custom"><i className="bi bi-sliders text-primary"></i> Process Context Filters</h6>
-                        <input type="date" className="form-control-light w-auto fw-bold" style={{padding: '0.4rem 0.8rem', color: 'var(--accent-primary)', cursor: 'not-allowed', backgroundColor: '#f1f5f9'}} value={selectedDate} readOnly />
+                          onClick={() => navigate(-1)}
+                          className="inline-flex items-center text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg shadow-md transition-all active:scale-95 group border-0"
+                          style={{backgroundColor: isViewMode ? '#10b981' : '#2563eb'}}
+                        > 
+                          <i className="bi bi-arrow-left me-1"></i> Back
+                        </button>
+                        <h6 className="card-title-custom">
+                          <i className={`bi bi-sliders text-${isViewMode ? 'success' : 'primary'}`}></i> 
+                          Process Context {isViewMode && <span className="text-success">(REVIEW)</span>}
+                        </h6>
+                        <input type="text" className="form-control-light w-auto fw-bold text-center" style={{padding: '0.4rem 0.8rem', color: 'var(--accent-primary)', cursor: 'not-allowed', backgroundColor: '#f1f5f9'}} value={selectedDate} readOnly />
                     </div>
                     <div className="card-body-custom">
                         <div className="row g-3">
-                            <div className="col-md-3 col-responsive"><label>Customer Account</label><select className="form-control-light" value={selectedCustomer} onChange={handleCustomerChange}><option value="">Select...</option>{customers.map((c, i)=><option key={i} value={c}>{c}</option>)}</select></div>
-                            <div className="col-md-3 col-responsive"><label>Part Name</label><select className="form-control-light" value={selectedPart} onChange={handlePartChange} disabled={!selectedCustomer}><option value="">Select...</option>{parts.map((p, i)=><option key={i} value={p}>{p}</option>)}</select></div>
-                            <div className="col-md-3 col-responsive"><label>Operation</label><select className="form-control-light" value={selectedTool} onChange={(e) => setSelectedTool(e.target.value)} disabled={!selectedPart}><option value="">Select...</option>{tools.map((t, i)=><option key={i} value={t}>{t}</option>)}</select></div>
+                            <div className="col-md-3 col-responsive"><label>Customer Account</label><select className="form-control-light" value={selectedCustomer} onChange={handleCustomerChange} disabled={isViewMode}><option value="">Select...</option>{customers.map((c, i)=><option key={i} value={c}>{c}</option>)}</select></div>
+                            <div className="col-md-3 col-responsive"><label>Part Name</label><select className="form-control-light" value={selectedPart} onChange={handlePartChange} disabled={!selectedCustomer || isViewMode}><option value="">Select...</option>{parts.map((p, i)=><option key={i} value={p}>{p}</option>)}</select></div>
+                            <div className="col-md-3 col-responsive"><label>Operation</label><select className="form-control-light" value={selectedTool} onChange={(e) => setSelectedTool(e.target.value)} disabled={!selectedPart || isViewMode}><option value="">Select...</option>{tools.map((t, i)=><option key={i} value={t}>{t}</option>)}</select></div>
                             <div className="col-md-3 col-responsive">
                                 <label>Model / Part No (Ref)</label>
                                 <div className="d-flex gap-2">
@@ -569,9 +602,9 @@ const InspectionForm = () => {
                         <div className="card-header-custom">
                             <h6 className="card-title-custom">
                                 <i className="bi bi-terminal-split text-primary"></i> 
-                                {userAction === '' ? 'Action Command' : (selectedStage === '' ? 'Stage Selection' : 'Data Entry Terminal')}
+                                {userAction === '' ? 'Action Command' : (selectedStage === '' && !isViewMode ? 'Stage Selection' : 'Data Entry Terminal')}
                             </h6>
-                            {userAction !== '' && (
+                            {userAction !== '' && !isViewMode && (
                                 <button className="btn-outline-custom" onClick={handleBackClick}>
                                     <i className="bi bi-arrow-left me-1"></i> Return
                                 </button>
@@ -580,8 +613,8 @@ const InspectionForm = () => {
                         
                         <div className="card-body-custom">
                             
-                            {/* GATE 1: SELECT ACTION */}
-                            {userAction === '' && (
+                            {/* GATE 1: SELECT ACTION (Hidden in View Mode) */}
+                            {userAction === '' && !isViewMode && (
                                 <div className="animate-pop">
                                     <div className="row justify-content-center g-4">
                                         <div className="col-md-3 col-responsive">
@@ -609,8 +642,8 @@ const InspectionForm = () => {
                                 </div>
                             )}
 
-                            {/* GATE 2: SELECT STAGE */}
-                            {userAction === 'FILL' && selectedStage === '' && (
+                            {/* GATE 2: SELECT STAGE (Hidden in View Mode) */}
+                            {userAction === 'FILL' && selectedStage === '' && !isViewMode && (
                                 <div className="animate-pop">
                                     <div className="row justify-content-center g-4">
                                         <div className="col-md-3 col-responsive">
@@ -645,17 +678,19 @@ const InspectionForm = () => {
                             )}
 
                             {/* GATE 3: FORM */}
-                            {selectedStage !== '' && (
+                            {(selectedStage !== '' || isViewMode) && (
                                 <div className="animate-pop">
-                                    {/* STEPPER */}
-                                    <div className="stepper-light">
-                                        <div className={`step-item-light ${currentStage > 1 ? 'completed' : 'active'}`}><div className="step-icon-light">{currentStage > 1 ? <i className="bi bi-check-lg"></i> : '1'}</div><div className="step-text-light">Setup</div></div>
-                                        <div className={`step-item-light ${currentStage > 2 ? 'completed' : (currentStage === 2 ? 'active' : '')}`}><div className="step-icon-light">{currentStage > 2 ? <i className="bi bi-check-lg"></i> : '2'}</div><div className="step-text-light">4-Hourly</div></div>
-                                        <div className={`step-item-light ${currentStage > 3 ? 'completed' : (currentStage === 3 ? 'active' : '')}`}><div className="step-icon-light">{currentStage > 3 ? <i className="bi bi-check-lg"></i> : '3'}</div><div className="step-text-light">Last Piece</div></div>
-                                    </div>
+                                    {/* STEPPER (Hide in View Mode) */}
+                                    {!isViewMode && (
+                                      <div className="stepper-light">
+                                          <div className={`step-item-light ${currentStage > 1 ? 'completed' : 'active'}`}><div className="step-icon-light">{currentStage > 1 ? <i className="bi bi-check-lg"></i> : '1'}</div><div className="step-text-light">Setup</div></div>
+                                          <div className={`step-item-light ${currentStage > 2 ? 'completed' : (currentStage === 2 ? 'active' : '')}`}><div className="step-icon-light">{currentStage > 2 ? <i className="bi bi-check-lg"></i> : '2'}</div><div className="step-text-light">4-Hourly</div></div>
+                                          <div className={`step-item-light ${currentStage > 3 ? 'completed' : (currentStage === 3 ? 'active' : '')}`}><div className="step-icon-light">{currentStage > 3 ? <i className="bi bi-check-lg"></i> : '3'}</div><div className="step-text-light">Last Piece</div></div>
+                                      </div>
+                                    )}
 
-                                    {/* META STRIP */}
-                                    {activeColId && activeColumn && (
+                                    {/* META STRIP (Visible only while filling a new col) */}
+                                    {activeColId && activeColumn && !isViewMode && (
                                         <div className="meta-strip-light">
                                             <div className="row g-3 align-items-center">
                                                 <div className="col-md-3 col-responsive">
@@ -683,7 +718,7 @@ const InspectionForm = () => {
                                     )}
 
                                     {/* TABLE */}
-                                    <div className="table-responsive-light shadow-sm">
+                                    <div className="table-responsive-light shadow-sm mt-3">
                                         <table className="table-light-custom">
                                             <thead>
                                                 <tr>
@@ -697,10 +732,11 @@ const InspectionForm = () => {
                                                         <th key={col.id} className={`${col.id === activeColId ? 'th-active' : ''} text-center`} style={{minWidth: '160px'}}>
                                                             <div className="d-flex justify-content-center align-items-center gap-2">
                                                                 {col.displayStage}
-                                                                {col.isLocked && <i className="bi bi-lock-fill text-muted"></i>}
+                                                                {(col.isLocked || isViewMode) && <i className="bi bi-lock-fill text-muted"></i>}
                                                             </div>
                                                             {col.time && <div style={{fontSize: '0.65rem', color: 'var(--text-muted)', marginTop:'4px', textTransform:'none'}}>Logged: {col.time}</div>}
-                                                            {col.isLocked && <button className="btn-edit-light mt-2 d-block mx-auto" onClick={() => unlockColumn(col.id)}>Edit</button>}
+                                                            {/* 🔥 Remove edit button in view mode */}
+                                                            {col.isLocked && !isViewMode && <button className="btn-edit-light mt-2 d-block mx-auto" onClick={() => unlockColumn(col.id)}>Edit</button>}
                                                         </th>
                                                     ))}
                                                 </tr>
@@ -721,28 +757,40 @@ const InspectionForm = () => {
                                         </table>
                                     </div>
 
-                                    {/* SAVE BUTTON */}
-                                    {activeColId && (
-                                        <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                                            
-                                             {/* Prepared By */}
-  <div className="flex flex-col">
-    <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-      Prepared By
-    </label>
-    <input
-      type="text"
-      value={preparedBy}
-      onChange={(e) => setPreparedBy(e.target.value)}
-      placeholder="Enter name"
-      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
-    />
-  </div>
-                                            <button className="btn-primary-glow" onClick={handleSaveData}>
-                                                <i className="bi bi-cloud-check-fill me-2"></i> Commit Records
-                                            </button>
+                                    {/* BUTTONS (Approve or Save) */}
+                                    <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-top pt-4">
+                                        
+                                        <div className="flex flex-col">
+                                          {isViewMode ? (
+                                            <>
+                                              <label className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">Prepared By</label>
+                                              <p className="m-0 fw-bolder text-success fs-5 text-capitalize">{preparedBy}</p>
+                                            </>
+                                          ) : (
+                                            activeColId && (
+                                              <>
+                                                <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">Prepared By</label>
+                                                <input type="text" value={preparedBy} onChange={(e) => setPreparedBy(e.target.value)} placeholder="Enter name" className="form-control-light w-100" style={{maxWidth: '250px'}} />
+                                              </>
+                                            )
+                                          )}
                                         </div>
-                                    )}
+
+                                        {(activeColId || isViewMode) && (
+                                            <button 
+                                              className="btn-primary-glow" 
+                                              style={{backgroundColor: isViewMode ? 'var(--success)' : 'var(--text-main)'}}
+                                              onClick={handleSaveData}
+                                            >
+                                                {isViewMode ? (
+                                                    <><i className="bi bi-check-circle-fill me-2"></i> Approve Report</>
+                                                ) : (
+                                                    <><i className="bi bi-cloud-check-fill me-2"></i> Commit Records</>
+                                                )}
+                                            </button>
+                                        )}
+                                    </div>
+
                                 </div>
                             )}
 
