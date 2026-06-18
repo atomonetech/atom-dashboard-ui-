@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
+import axios from "axios";
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+const API_LOG = `${
+  process.env.REACT_APP_API_URL || "http://localhost:8000"
+}/api/log-report/`;
 
 const PLANT_MAP = {
   "Plant 1": "plant_1",
@@ -175,6 +179,17 @@ const TipChangeMonitorForm = () => {
       });
 
       if (response.ok) {
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "Tip Chage Monitor sheet  Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
         alert("Data saved successfully!");
         handleReset();
       } else {
@@ -409,7 +424,7 @@ const TipChangeMonitorForm = () => {
                 value={preparedBy}
                 onChange={(e) => setPreparedBy(e.target.value)}
                 placeholder="Enter name"
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-blue-600 w-full sm:w-64"
               />
             </div>
 

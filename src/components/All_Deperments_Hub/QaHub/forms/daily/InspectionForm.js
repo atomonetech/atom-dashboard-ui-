@@ -45,6 +45,7 @@ const InspectionForm = () => {
     const [modelName, setModelName] = useState('');
     const todayDate = new Date().toISOString().split('T')[0];
     const [selectedDate, setSelectedDate] = useState(todayDate);
+    const [showExtraReadings, setShowExtraReadings] = useState(false);
 
     const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
     const API_URL = `${API_BASE_URL}/api`;
@@ -252,7 +253,7 @@ const InspectionForm = () => {
         setLogColumns(prev => prev.map(col => col.id === activeColId ? { ...col, [field]: value } : col));
     };
     const handleCellChange = (colId, rowSr, valKey, value) => {
-        setLogColumns(prev => prev.map(col => col.id === colId ? { ...col, readings: { ...col.readings, [rowSr]: { ...(col.readings[rowSr] || { val1: '', val2: '' }), [valKey]: value } } } : col));
+        setLogColumns(prev => prev.map(col => col.id === colId ? { ...col, readings: { ...col.readings, [rowSr]: { ...(col.readings[rowSr] || { val1: '', val2: '', val3: '', val4: '', status: '' }), [valKey]: value } } } : col));
     };
     const unlockColumn = (id) => {
         setLogColumns(prev => prev.map(col => col.id === id ? { ...col, isLocked: false } : col)); setActiveColId(id);
@@ -369,49 +370,251 @@ const InspectionForm = () => {
     // ==========================================
     //  5. RENDER HELPERS
     // ==========================================
-    const renderCell = (col, rowSr, paramName) => {
-        const readObj = col.readings[rowSr] || { val1: '', val2: '' };
-        const isActive = col.id === activeColId && !col.isLocked && !isViewMode;
+    const renderCell = (col, rowSr, paramName, instr) => {
+    const readObj = col.readings[rowSr] || {
+        val1: '',
+        val2: '',
+        val3: '',
+        val4: '',
+        status: ''
+    };
 
-        if (isActive) {
-            return (
-                <td className="table-active p-2" style={{minWidth: '240px', borderLeft: '2px solid var(--accent-primary)', borderRight: '2px solid var(--accent-primary)'}}>
-                    <div className="d-flex align-items-center gap-2">
-                        <div className="d-flex gap-2 flex-grow-1">
-                            {col.entryFormat === 'single' ? (
-                                <input type="text" className="form-input-light text-center fw-bold" placeholder="Value" value={readObj.val1} onChange={(e) => handleCellChange(col.id, rowSr, 'val1', e.target.value)} />
-                            ) : (
-                                <>
-                                    <input type="text" className="form-input-light text-center fw-bold" placeholder="Reading 1" value={readObj.val1} onChange={(e) => handleCellChange(col.id, rowSr, 'val1', e.target.value)} />
-                                    <input type="text" className="form-input-light text-center fw-bold" placeholder="Reading 2" value={readObj.val2} onChange={(e) => handleCellChange(col.id, rowSr, 'val2', e.target.value)} />
-                                </>
-                            )}
-                        </div>
-                        <div className="d-flex flex-column gap-1">
-                            <button className="btn-icon-simple" title="View Info" onClick={() => handleEyeClick(paramName)}>
-                                <img src="https://img.icons8.com/ios/50/000000/visible--v1.png" alt="Eye" style={{ width: '15px', height: '15px', opacity: 0.8 }} />
-                            </button>
-                            <button className="btn-icon-simple text-danger" title="Watch Video" onClick={() => handleVideoClick(paramName)}>
-                                <i className="bi bi-camera-video"></i>
-                            </button>
-                        </div>
-                    </div>
-                </td>
-            );
-        }
-        if (!readObj.val1 && !readObj.val2) return <td className="text-center text-muted fw-bold bg-light">--</td>;
+    const isActive =
+        col.id === activeColId &&
+        !col.isLocked &&
+        !isViewMode;
+
+    const isOkayNotOkay =
+        instr === 'VISUAL' ||
+        instr?.toUpperCase().includes('VISUAL');
+
+    if (isActive) {
         return (
-            <td className="bg-light text-center">
-                {col.entryFormat === 'single' ? 
-                    <span className="read-only-light">{readObj.val1}</span> :
-                    <div className="d-flex gap-2 justify-content-center">
-                        <span className="read-only-light flex-fill">{readObj.val1 || '--'}</span>
-                        <span className="read-only-light flex-fill">{readObj.val2 || '--'}</span>
+            <td
+                className="table-active p-2"
+                style={{
+                    minWidth: showExtraReadings ? '520px' : '280px',
+                    borderLeft: '2px solid var(--accent-primary)',
+                    borderRight: '2px solid var(--accent-primary)'
+                }}
+            >
+                <div className="d-flex align-items-center gap-2">
+
+                    <div
+                        style={{
+                            display: 'grid',
+                            gridTemplateColumns: showExtraReadings
+                                ? 'repeat(4, 1fr)'
+                                : 'repeat(2, 1fr)',
+                            gap: '8px',
+                            flexGrow: 1
+                        }}
+                    >
+
+                        {isOkayNotOkay ? (
+                            <>
+                                <select
+                                    className="form-input-light text-center fw-bold"
+                                    value={readObj.val1 || ''}
+                                    onChange={(e) =>
+                                        handleCellChange(
+                                            col.id,
+                                            rowSr,
+                                            'val1',
+                                            e.target.value
+                                        )
+                                    }
+                                >
+                                    <option value="">Reading 1</option>
+                                    <option value="OK">✓ OK</option>
+                                    <option value="NOT_OK">✗ NOT OK</option>
+                                </select>
+
+                                <select
+                                    className="form-input-light text-center fw-bold"
+                                    value={readObj.val2 || ''}
+                                    onChange={(e) =>
+                                        handleCellChange(
+                                            col.id,
+                                            rowSr,
+                                            'val2',
+                                            e.target.value
+                                        )
+                                    }
+                                >
+                                    <option value="">Reading 2</option>
+                                    <option value="OK">✓ OK</option>
+                                    <option value="NOT_OK">✗ NOT OK</option>
+                                </select>
+
+                                {showExtraReadings && (
+                                    <>
+                                        <select
+                                            className="form-input-light text-center fw-bold"
+                                            value={readObj.val3 || ''}
+                                            onChange={(e) =>
+                                                handleCellChange(
+                                                    col.id,
+                                                    rowSr,
+                                                    'val3',
+                                                    e.target.value
+                                                )
+                                            }
+                                        >
+                                            <option value="">Reading 3</option>
+                                            <option value="OK">✓ OK</option>
+                                            <option value="NOT_OK">✗ NOT OK</option>
+                                        </select>
+
+                                        <select
+                                            className="form-input-light text-center fw-bold"
+                                            value={readObj.val4 || ''}
+                                            onChange={(e) =>
+                                                handleCellChange(
+                                                    col.id,
+                                                    rowSr,
+                                                    'val4',
+                                                    e.target.value
+                                                )
+                                            }
+                                        >
+                                            <option value="">Reading 4</option>
+                                            <option value="OK">✓ OK</option>
+                                            <option value="NOT_OK">✗ NOT OK</option>
+                                        </select>
+                                    </>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <input
+                                    type="text"
+                                    className="form-input-light text-center fw-bold"
+                                    placeholder="Reading 1"
+                                    value={readObj.val1}
+                                    onChange={(e) =>
+                                        handleCellChange(
+                                            col.id,
+                                            rowSr,
+                                            'val1',
+                                            e.target.value
+                                        )
+                                    }
+                                />
+
+                                <input
+                                    type="text"
+                                    className="form-input-light text-center fw-bold"
+                                    placeholder="Reading 2"
+                                    value={readObj.val2}
+                                    onChange={(e) =>
+                                        handleCellChange(
+                                            col.id,
+                                            rowSr,
+                                            'val2',
+                                            e.target.value
+                                        )
+                                    }
+                                />
+
+                                {showExtraReadings && (
+                                    <>
+                                        <input
+                                            type="text"
+                                            className="form-input-light text-center fw-bold"
+                                            placeholder="Reading 3"
+                                            value={readObj.val3 || ''}
+                                            onChange={(e) =>
+                                                handleCellChange(
+                                                    col.id,
+                                                    rowSr,
+                                                    'val3',
+                                                    e.target.value
+                                                )
+                                            }
+                                        />
+
+                                        <input
+                                            type="text"
+                                            className="form-input-light text-center fw-bold"
+                                            placeholder="Reading 4"
+                                            value={readObj.val4 || ''}
+                                            onChange={(e) =>
+                                                handleCellChange(
+                                                    col.id,
+                                                    rowSr,
+                                                    'val4',
+                                                    e.target.value
+                                                )
+                                            }
+                                        />
+                                    </>
+                                )}
+                            </>
+                        )}
                     </div>
-                }
+
+                    <div className="d-flex flex-column gap-1">
+                        <button
+                            className="btn-icon-simple"
+                            title="View Info"
+                            onClick={() => handleEyeClick(paramName)}
+                        >
+                            <img
+                                src="https://img.icons8.com/ios/50/000000/visible--v1.png"
+                                alt="Eye"
+                                style={{
+                                    width: '15px',
+                                    height: '15px',
+                                    opacity: 0.8
+                                }}
+                            />
+                        </button>
+
+                        <button
+                            className="btn-icon-simple text-danger"
+                            title="Watch Video"
+                            onClick={() => handleVideoClick(paramName)}
+                        >
+                            <i className="bi bi-camera-video"></i>
+                        </button>
+                    </div>
+                </div>
             </td>
         );
-    };
+    }
+
+    const hasData =
+        readObj.val1 ||
+        readObj.val2 ||
+        readObj.val3 ||
+        readObj.val4;
+
+    if (!hasData) {
+        return (
+            <td className="text-center text-muted fw-bold bg-light">
+                --
+            </td>
+        );
+    }
+
+    return (
+        <td className="bg-light text-center">
+            <div className="d-flex gap-1 justify-content-center flex-wrap">
+                {[readObj.val1, readObj.val2, readObj.val3, readObj.val4]
+                    .filter(Boolean)
+                    .map((val, i) => (
+                        <span
+                            key={i}
+                            className="read-only-light"
+                        >
+                            {val}
+                        </span>
+                    ))}
+            </div>
+        </td>
+    );
+};
 
     return (
         <>
@@ -421,7 +624,7 @@ const InspectionForm = () => {
             <style>{`
                 /* ====== PREMIUM LIGHT THEME ====== */
                 :root {
-                    --bg-main: #f4f7f9;        
+                    --bg-main: #f8fafc;        
                     --bg-card: #ffffff;        
                     --bg-input: #f8fafc;        
                     --text-main: #0f172a;       
@@ -434,7 +637,10 @@ const InspectionForm = () => {
                     --success: #10b981;
                 }
 
-                body { background-color: var(--bg-main); font-family: 'Inter', 'Segoe UI', sans-serif; color: var(--text-main); }
+                * { background-color: inherit; }
+                html { background-color: #f8fafc; }
+                body { background-color: #f8fafc; font-family: 'Inter', 'Segoe UI', sans-serif; color: var(--text-main); }
+                .container, .container-fluid { background-color: transparent; }
                 
                 @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
                 .animate-pop { animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
@@ -448,10 +654,11 @@ const InspectionForm = () => {
                 .card-body-custom { padding: 1.5rem; }
 
                 label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block;}
-                .form-control-light { background-color: var(--bg-input); border: 1px solid #cbd5e1; color: var(--text-main); border-radius: 8px; padding: 0.7rem 1rem; font-size: 0.9rem; font-weight: 600; transition: all 0.2s ease; width: 100%; outline: none;}
+                .form-control-light { background-color: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 8px; padding: 0.7rem 1rem; font-size: 0.9rem; font-weight: 600; transition: all 0.2s ease; width: 100%; outline: none;}
                 .form-control-light:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--accent-glow); background-color: #fff;}
                 .form-control-light:disabled, .form-control-light[readonly] { background-color: #f1f5f9; color: #475569; cursor: not-allowed; font-weight: bold;}
                 select.form-control-light { cursor: pointer; }
+                .form-control-light::placeholder { color: #94a3b8; opacity: 0.7;}
 
                 .gate-card-light { background: #ffffff; border: 1px solid var(--border-subtle); border-radius: 16px; padding: 2rem 1.5rem; text-align: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.02);}
                 .gate-card-light::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: transparent; transition: 0.3s;}
@@ -493,8 +700,9 @@ const InspectionForm = () => {
                 .bg-proc-light { background-color: #ecfdf5; color: #059669; border-color: #d1fae5; }
                 .badge-instr-light { background-color: #f8fafc; color: #64748b; border-color: #e2e8f0; }
 
-                .form-input-light { background-color: #f8fafc; border: 1px solid #e2e8f0; color: var(--text-main); border-radius: 6px; padding: 0.5rem; width: 100%; transition: 0.2s; outline: none; font-size: 0.85rem;}
+                .form-input-light { background-color: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 6px; padding: 0.5rem; width: 100%; transition: 0.2s; outline: none; font-size: 0.85rem; font-weight: 600;}
                 .form-input-light:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--accent-glow); background-color: #ffffff;}
+                .form-input-light::placeholder { color: #94a3b8; opacity: 0.7;}
                 .read-only-light { display: block; padding: 0.5rem; color: #94a3b8; text-align: center; font-weight: 600;}
 
                 .btn-icon-simple { background: transparent; border: none; color: #94a3b8; padding: 6px; cursor: pointer; transition: 0.2s; border-radius: 6px; display: flex; align-items: center; justify-content: center;}
@@ -576,13 +784,13 @@ const InspectionForm = () => {
                         </button>
                         <h6 className="card-title-custom">
                           <i className={`bi bi-sliders text-${isViewMode ? 'success' : 'primary'}`}></i> 
-                          Process Context {isViewMode && <span className="text-success">(REVIEW)</span>}
+                          Setup & Petrol Inspectioon {isViewMode && <span className="text-success">(REVIEW)</span>}
                         </h6>
                         <input type="text" className="form-control-light w-auto fw-bold text-center" style={{padding: '0.4rem 0.8rem', color: 'var(--accent-primary)', cursor: 'not-allowed', backgroundColor: '#f1f5f9'}} value={selectedDate} readOnly />
                     </div>
                     <div className="card-body-custom">
                         <div className="row g-3">
-                            <div className="col-md-3 col-responsive"><label>Customer Account</label><select className="form-control-light" value={selectedCustomer} onChange={handleCustomerChange} disabled={isViewMode}><option value="">Select...</option>{customers.map((c, i)=><option key={i} value={c}>{c}</option>)}</select></div>
+                            <div className="col-md-3 col-responsive"><label>Customer Name</label><select className="form-control-light" value={selectedCustomer} onChange={handleCustomerChange} disabled={isViewMode}><option value="">Select...</option>{customers.map((c, i)=><option key={i} value={c}>{c}</option>)}</select></div>
                             <div className="col-md-3 col-responsive"><label>Part Name</label><select className="form-control-light" value={selectedPart} onChange={handlePartChange} disabled={!selectedCustomer || isViewMode}><option value="">Select...</option>{parts.map((p, i)=><option key={i} value={p}>{p}</option>)}</select></div>
                             <div className="col-md-3 col-responsive"><label>Operation</label><select className="form-control-light" value={selectedTool} onChange={(e) => setSelectedTool(e.target.value)} disabled={!selectedPart || isViewMode}><option value="">Select...</option>{tools.map((t, i)=><option key={i} value={t}>{t}</option>)}</select></div>
                             <div className="col-md-3 col-responsive">
@@ -705,8 +913,8 @@ const InspectionForm = () => {
                                                         <option value="Plant 2">Plant 2</option>
                                                     </select>
                                                 </div>
-                                                <div className="col-md-3 col-responsive"><label>Operator ID</label><input type="text" className="form-control-light" placeholder="Operator Name" value={activeColumn.operator || ''} onChange={(e) => handleActiveColChange('operator', e.target.value)} /></div>
-                                                <div className="col-md-3 col-responsive"><label>Machine Node</label><input type="text" className="form-control-light" placeholder="M-01" value={activeColumn.machine || ''} onChange={(e) => handleActiveColChange('machine', e.target.value)} /></div>
+                                                <div className="col-md-3 col-responsive"><label>Operator Name</label><input type="text" className="form-control-light" placeholder="Operator Name" value={activeColumn.operator || ''} onChange={(e) => handleActiveColChange('operator', e.target.value)} /></div>
+                                                <div className="col-md-3 col-responsive"><label>Machine No.</label><input type="text" className="form-control-light" placeholder="M-01" value={activeColumn.machine || ''} onChange={(e) => handleActiveColChange('machine', e.target.value)} /></div>
                                                 <div className="col-md-3 col-responsive"><label>Data Format</label>
                                                     <select className="form-control-light" value={activeColumn.entryFormat || 'dual'} onChange={(e) => handleActiveColChange('entryFormat', e.target.value)}>
                                                         <option value="single">Single Value</option>
@@ -730,10 +938,30 @@ const InspectionForm = () => {
                                                     <th className="text-center">Instrument</th>
                                                     {logColumns.map((col) => (
                                                         <th key={col.id} className={`${col.id === activeColId ? 'th-active' : ''} text-center`} style={{minWidth: '160px'}}>
-                                                            <div className="d-flex justify-content-center align-items-center gap-2">
-                                                                {col.displayStage}
-                                                                {(col.isLocked || isViewMode) && <i className="bi bi-lock-fill text-muted"></i>}
-                                                            </div>
+                                                           <div className="d-flex justify-content-center align-items-center gap-2">
+
+  <span>{col.displayStage}</span>
+
+  {col.displayStage === "SETUP" && (
+    <button
+      type="button"
+      className="btn btn-sm btn-outline-primary"
+      onClick={() => setShowExtraReadings(prev => !prev)}
+      style={{
+        padding: "0px 6px",
+        fontSize: "12px",
+        lineHeight: "1"
+      }}
+    >
+      {showExtraReadings ? "−" : "+"}
+    </button>
+  )}
+
+  {(col.isLocked || isViewMode) && (
+    <i className="bi bi-lock-fill text-muted"></i>
+  )}
+
+</div>
                                                             {col.time && <div style={{fontSize: '0.65rem', color: 'var(--text-muted)', marginTop:'4px', textTransform:'none'}}>Logged: {col.time}</div>}
                                                             {/* 🔥 Remove edit button in view mode */}
                                                             {col.isLocked && !isViewMode && <button className="btn-edit-light mt-2 d-block mx-auto" onClick={() => unlockColumn(col.id)}>Edit</button>}
@@ -750,7 +978,7 @@ const InspectionForm = () => {
                                                         <td style={{fontWeight: '700', color: '#334155'}}>{row.spec}</td>
                                                         <td className="text-center fw-bold text-danger">{row.tol}</td>
                                                         <td className="text-center"><span className="badge-pill-modern badge-instr-light">{row.instr || '-'}</span></td>
-                                                        {logColumns.map((col) => ( <React.Fragment key={col.id}>{renderCell(col, row.sr, row.item)}</React.Fragment> ))}
+                                                        {logColumns.map((col) => ( <React.Fragment key={col.id}>{renderCell(col, row.sr, row.item, row.instr)}</React.Fragment> ))}
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -803,3 +1031,4 @@ const InspectionForm = () => {
 };
 
 export default InspectionForm;
+

@@ -2,6 +2,10 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { getApiUrl } from '../../../../config/api'; // <--- API Import added
+import axios from "axios";
+const API_LOG = `${
+  process.env.REACT_APP_API_URL || "http://localhost:8000"
+}/api/log-report/`;
 
 const PipeCuttingMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -206,6 +210,17 @@ const PipeCuttingMaintenanceForm = () => {
       });
 
       if (response.ok) {
+          const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "Pipe cutter Mentinance Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
         setShowSuccess(true);
         setTimeout(() => {
           setMetaData(initialMetaData);

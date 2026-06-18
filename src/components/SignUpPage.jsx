@@ -27,6 +27,7 @@ export default function SignUpPage({ onLogin }) {
     
     navigate('/dashboard');
   };
+  
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));

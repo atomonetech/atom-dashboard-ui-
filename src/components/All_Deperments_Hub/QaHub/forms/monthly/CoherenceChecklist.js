@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getApiUrl } from '../../../../../config/api'; 
+import axios from "axios";
+const API_LOG = `${
+  process.env.REACT_APP_API_URL || "http://localhost:8000"
+}/api/log-report/`;
 
 const CoherenceChecklist = () => {
     const navigate = useNavigate();
@@ -114,6 +118,17 @@ const CoherenceChecklist = () => {
             });
 
             if (response.ok) {
+                  const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "cpherence checksheet Mentinance Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
                 alert('Coherence Check Sheet Submitted Successfully!');
                 const today = new Date().toISOString().split('T')[0];
                 setFormData({ ...initialFormState, date: today });

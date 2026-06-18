@@ -2,6 +2,10 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { getApiUrl } from '../../../../config/api'; // <--- API Import added
+import axios from "axios";
+const API_LOG = `${
+  process.env.REACT_APP_API_URL || "http://localhost:8000"
+}/api/log-report/`;
 
 const VibraMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -161,6 +165,7 @@ const VibraMaintenanceForm = () => {
       });
 
       if (response.ok) {
+           
         setShowSuccess(true);
         setTimeout(() => {
           setMetaData(initialMetaData);
@@ -168,6 +173,7 @@ const VibraMaintenanceForm = () => {
           setShowSuccess(false);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }, 1500);
+       
       } else {
         const errorData = await response.json();
         alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
@@ -176,6 +182,17 @@ const VibraMaintenanceForm = () => {
       console.error("Error saving data:", error);
       alert("An error occurred while saving the data.");
     } finally {
+       const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "Vibra Mentinance Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
       setIsSubmitting(false);
     }
   };
