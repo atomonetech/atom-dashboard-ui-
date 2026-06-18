@@ -34,6 +34,9 @@ const PLANT_MAP = {
   "Plant 2": "plant_2",
 };
 
+// Hardcoded machines list for Plant 2
+const PLANT2_MACHINES = Array.from({ length: 48 }, (_, i) => i + 1);
+
 const DailyProdForm = () => {
   // API states
   const [operatorNames, setOperatorNames] = useState([]);
@@ -115,18 +118,23 @@ const DailyProdForm = () => {
       .catch((err) => console.error("Error fetching operators:", err))
       .finally(() => setOperatorsLoading(false));
 
-    setMachinesLoading(true);
-    fetch(`${BASE_URL}/api/machines/list/?plant=${plantKey}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setMachineList(data.machines);
-        } else {
-          setMachineList([]);
-        }
-      })
-      .catch((err) => console.error("Error fetching machines:", err))
-      .finally(() => setMachinesLoading(false));
+    // For Plant 2, set hardcoded machines. For other plants (Plant 1), fetch from backend API.
+    if (selectedPlant === "Plant 2") {
+      setMachineList(PLANT2_MACHINES);
+    } else {
+      setMachinesLoading(true);
+      fetch(`${BASE_URL}/api/machines/list/?plant=${plantKey}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setMachineList(data.machines);
+          } else {
+            setMachineList([]);
+          }
+        })
+        .catch((err) => console.error("Error fetching machines:", err))
+        .finally(() => setMachinesLoading(false));
+    }
   }, [formData.plant]);
 
   // Helper: Calculate total working time from start and end
@@ -465,7 +473,7 @@ const DailyProdForm = () => {
                 </select>
               </div>
 
-              {/* Machine No */}
+              {/* Machine No - Handles loading for Plant 1, and static display for Plant 2 */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Cpu size={14} className="inline mr-1 text-blue-500" />{" "}
