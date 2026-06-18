@@ -79,7 +79,7 @@ const MaintenanceHub = () => {
         
         // Specifc Check: Tool Weekly bypass intermediate cards
         if (report.id === 'weekly' && activeTab === 'TOOL') {
-            navigate("/Maintenance/Tool/welding-fixture-checklist");
+            navigate("/Maintenance/Tool/weekly");
             return;
         }
 

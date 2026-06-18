@@ -22,7 +22,7 @@ const ToolDailyReports = () => {
             switch (reportId) {
                 case "tool_history": navigate(`${basePath}/history-form`); break;
                 case "tool_pm_check": navigate(`${basePath}/pm-checklist`); break;
-                case "tool_breakdown": navigate(`${basePath}/breakdown-form`); break;
+                case "tool_breakdown_slip": navigate(`${basePath}/breakdown-form`); break;
                 case "tool_stroke": navigate(`${basePath}/stroke-record`); break;
                 default: alert("🚧 Form logic coming soon!");
             }
@@ -32,7 +32,7 @@ const ToolDailyReports = () => {
             switch (reportId) {
                 case "tool_history": navigate(`${basePath}/history-form/print`); break;
                 case "tool_pm_check": navigate(`${basePath}/pm-checklist/print`); break;
-                case "tool_breakdown": navigate(`${basePath}/breakdown-form/print`); break;
+                case "tool_breakdown_slip": navigate(`${basePath}/breakdown-form/print`); break;
                 case "tool_stroke": navigate(`${basePath}/stroke-record/print`); break;
                 default: alert("🚧 Print page coming soon!");
             }
