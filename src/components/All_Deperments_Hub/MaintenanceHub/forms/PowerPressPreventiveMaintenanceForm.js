@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { getApiUrl } from '../../../../config/api'; // <--- API Import added
+import axios from "axios";
+const API_LOG = `${
+  process.env.REACT_APP_API_URL || "http://localhost:8000"
+}/api/log-report/`;
+
 
 const PowerPressPreventiveMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -112,7 +118,7 @@ const PowerPressPreventiveMaintenanceForm = () => {
     };
     
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/power-press-pm/save/', {
+      const response = await fetch(getApiUrl('/api/power-press-pm/save/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -122,6 +128,17 @@ const PowerPressPreventiveMaintenanceForm = () => {
       });
 
       if (response.ok) {
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "Power  Press Mentinance Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
         setShowSuccess(true);
         
         setTimeout(() => {

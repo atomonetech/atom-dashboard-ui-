@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-
+import axios from "axios";
+import { getApiUrl } from '../../../../config/api';
+const API_LOG = `${
+  process.env.REACT_APP_API_URL || "http://localhost:8000"
+}/api/log-report/`;
 const ProjectionWeldingMaintenanceForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -106,7 +110,7 @@ const handleSubmit = async (e) => {
   try {
     setIsSaving(true);
 
-    const response = await fetch('http://127.0.0.1:8000/api/projection-welding-pm/save/', {
+    const response = await fetch(getApiUrl('/api/projection-welding-pm/save/'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -118,6 +122,18 @@ const handleSubmit = async (e) => {
     const result = await response.json().catch(() => ({}));
 
     if (!response.ok || result.success === false) {
+
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "Projection welding Mentinance  Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
       console.error("Projection welding save failed:", result);
       throw new Error(formatBackendError(result) || `Request failed with status ${response.status}`);
     }

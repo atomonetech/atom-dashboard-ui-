@@ -17,8 +17,12 @@ import {
   AlertCircle,
   FileCheck
 }from 'lucide-react';
+import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+  const API_LOG = `${
+        process.env.REACT_APP_API_URL || "http://localhost:8000"
+      }/api/log-report/`;
 
 const ToolHistoryForm = () => {
   const gradientColors = {
@@ -160,6 +164,17 @@ const ToolHistoryForm = () => {
 
       if (result.success) {
         // 🔥 NATIVE SUCCESS POPUP 🔥
+         const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "Tool History card  Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
         window.alert('✅ Success! Tool History Record saved successfully in the database.');
         setToolInfo(initialToolInfo);
         setHistoryRecord({
@@ -500,7 +515,7 @@ const ToolHistoryForm = () => {
       value={preparedBy}
       onChange={(e) => setPreparedBy(e.target.value)}
       placeholder="Enter name"
-      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-[#4158D0]  w-full sm:w-64"
     />
   </div>
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, CheckCircle, RotateCcw, FileText } from 'lucide-react';
+import axios from 'axios';
 
 const ToolBreakdownForm = () => {
   const [language, setLanguage] = useState('hindi');
@@ -150,6 +151,9 @@ const ToolBreakdownForm = () => {
     
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      const API_LOG = `${
+        process.env.REACT_APP_API_URL || "http://localhost:8000"
+      }/api/log-report/`;
       const response = await fetch(`${apiUrl}/api/tool-breakdown-slip/save/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -159,6 +163,17 @@ const ToolBreakdownForm = () => {
       const result = await response.json();
 
       if (response.ok || result.success) {
+         const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "Tool BreakDown form Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
         setShowSuccess(true);
         alert("✅ Success: Tool breakdown slip has been submitted successfully!");
         resetForm();

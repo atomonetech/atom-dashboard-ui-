@@ -1,116 +1,117 @@
-import React, { useState } from 'react';
-import { ArrowLeft, CheckCircle, XCircle, Save, RotateCcw } from 'lucide-react';
+import React, { useState } from "react";
+import { ArrowLeft, CheckCircle, XCircle, Save, RotateCcw } from "lucide-react";
+import axios from "axios";
 
 const MachineBreakDownForm = () => {
-  const [language, setLanguage] = useState('english');
+  const [language, setLanguage] = useState("english");
   const [formData, setFormData] = useState({
-    givenDate: '',
-    givenTime: '',
-    machineNameNo: '',
-    breakdownName: '',
-    partMadeAfterInspection: '',
-    breakdownDesc: '',
-    repairDate: '',
-    repairTime: '',
-    repairHours: '',
-    mechanicsCount: '',
-    repairDesc: '',
-    status: 'OK',
-    verificationDate: '',
-    verificationTime: ''
+    givenDate: "",
+    givenTime: "",
+    machineNameNo: "",
+    breakdownName: "",
+    partMadeAfterInspection: "",
+    breakdownDesc: "",
+    repairDate: "",
+    repairTime: "",
+    repairHours: "",
+    mechanicsCount: "",
+    repairDesc: "",
+    status: "OK",
+    verificationDate: "",
+    verificationTime: "",
   });
 
   const content = {
     english: {
-      title: 'TOOL / MACHINE BREAKDOWN INTIMATION FORM',
-      givenOn: 'Given on Date',
-      givenAt: 'Given at Time',
-      machineName: 'Machine / Engine Name & No.',
-      breakdownName: 'Name of the Breakdown',
-      partMadeAfterInspection: 'Part made after last inspection',
-      breakdownDetails: 'Breakdown Details',
-      maintenanceOnly: '(FOR MAINTENANCE DEPTT. USE ONLY)',
-      repairDate: 'Repair Date',
-      repairTime: 'Repair Time',
-      hoursTaken: 'Hours taken for repair',
-      mechanicsInvolved: 'No. of mechanics involved',
-      repairDescription: 'Repair Description',
-      verification: 'VERIFICATION BY QUALITY',
-      statusOfProblem: 'STATUS OF PROBLEM',
-      ok: 'OK',
-      ng: 'NG',
-      date: 'Date',
-      time: 'Time',
-      restButton: 'Reset Form',
-      back: 'Back to Maintenance Hub',
-      submit: 'Submit Form',
-      submitting: 'Submitting...',
-      success: 'Form submitted successfully!',
-      resetConfirm: 'Are you sure you want to reset all fields?'
+      title: "TOOL / MACHINE BREAKDOWN INTIMATION FORM",
+      givenOn: "Given on Date",
+      givenAt: "Given at Time",
+      machineName: "Machine / Engine Name & No.",
+      breakdownName: "Name of the Breakdown",
+      partMadeAfterInspection: "Part made after last inspection",
+      breakdownDetails: "Breakdown Details",
+      maintenanceOnly: "(FOR MAINTENANCE DEPTT. USE ONLY)",
+      repairDate: "Repair Date",
+      repairTime: "Repair Time",
+      hoursTaken: "Hours taken for repair",
+      mechanicsInvolved: "No. of mechanics involved",
+      repairDescription: "Repair Description",
+      verification: "VERIFICATION BY QUALITY",
+      statusOfProblem: "STATUS OF PROBLEM",
+      ok: "OK",
+      ng: "NG",
+      date: "Date",
+      time: "Time",
+      restButton: "Reset Form",
+      back: "Back to Maintenance Hub",
+      submit: "Submit Form",
+      submitting: "Submitting...",
+      success: "Form submitted successfully!",
+      resetConfirm: "Are you sure you want to reset all fields?",
     },
     hindi: {
-      title: 'टूल / मशीन ब्रेकडाउन सूचना पर्ची',
-      givenOn: 'किस तारीख को दिया',
-      givenAt: 'किस समय दिया',
-      machineName: 'मशीन / इंजन का नाम व नंबर',
-      breakdownName: 'ब्रेकडाउन का नाम',
-      partMadeAfterInspection: 'अंतिम निरीक्षण के बाद बना भाग',
-      breakdownDetails: 'ब्रेकडाउन के बारे में विस्तार से लिखें',
-      maintenanceOnly: '(केवल रखरखाव विभाग के लिए)',
-      repairDate: 'मरम्मत तिथि',
-      repairTime: 'मरम्मत समय',
-      hoursTaken: 'मरम्मत में लगा समय (घंटे)',
-      mechanicsInvolved: 'कितने मैकेनिक लगे',
-      repairDescription: 'मरम्मत का विवरण',
-      verification: 'गुणवत्ता विभाग द्वारा जांच',
-      statusOfProblem: 'समस्या की स्थिति',
-      ok: 'सही',
-      ng: 'गलत',
-      date: 'तिथि',
-      time: 'समय',
-      restButton: 'फॉर्म रीसेट करें',
-      back: 'मेंटेनेंस हब पर वापस',
-      submit: 'फॉर्म जमा करें',
-      submitting: 'जमा हो रहा है...',
-      success: 'फॉर्म सफलतापूर्वक जमा हो गया!',
-      resetConfirm: 'क्या आप सभी फ़ील्ड रीसेट करना चाहते हैं?'
-    }
+      title: "टूल / मशीन ब्रेकडाउन सूचना पर्ची",
+      givenOn: "किस तारीख को दिया",
+      givenAt: "किस समय दिया",
+      machineName: "मशीन / इंजन का नाम व नंबर",
+      breakdownName: "ब्रेकडाउन का नाम",
+      partMadeAfterInspection: "अंतिम निरीक्षण के बाद बना भाग",
+      breakdownDetails: "ब्रेकडाउन के बारे में विस्तार से लिखें",
+      maintenanceOnly: "(केवल रखरखाव विभाग के लिए)",
+      repairDate: "मरम्मत तिथि",
+      repairTime: "मरम्मत समय",
+      hoursTaken: "मरम्मत में लगा समय (घंटे)",
+      mechanicsInvolved: "कितने मैकेनिक लगे",
+      repairDescription: "मरम्मत का विवरण",
+      verification: "गुणवत्ता विभाग द्वारा जांच",
+      statusOfProblem: "समस्या की स्थिति",
+      ok: "सही",
+      ng: "गलत",
+      date: "तिथि",
+      time: "समय",
+      restButton: "फॉर्म रीसेट करें",
+      back: "मेंटेनेंस हब पर वापस",
+      submit: "फॉर्म जमा करें",
+      submitting: "जमा हो रहा है...",
+      success: "फॉर्म सफलतापूर्वक जमा हो गया!",
+      resetConfirm: "क्या आप सभी फ़ील्ड रीसेट करना चाहते हैं?",
+    },
   };
 
   const initialFormState = {
-    givenDate: '',
-    givenTime: '',
-    machineNameNo: '',
-    breakdownName: '',
-    partMadeAfterInspection: '',
-    breakdownDesc: '',
-    repairDate: '',
-    repairTime: '',
-    repairHours: '',
-    mechanicsCount: '',
-    repairDesc: '',
-    status: 'OK',
-    verificationDate: '',
-    verificationTime: ''
+    givenDate: "",
+    givenTime: "",
+    machineNameNo: "",
+    breakdownName: "",
+    partMadeAfterInspection: "",
+    breakdownDesc: "",
+    repairDate: "",
+    repairTime: "",
+    repairHours: "",
+    mechanicsCount: "",
+    repairDesc: "",
+    status: "OK",
+    verificationDate: "",
+    verificationTime: "",
   };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [preparedBy, setPreparedBy] = useState("");
-  
-  const currentLang = language === 'english' ? content.english : content.hindi;
-  const currentDate = new Date().toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
+
+  const currentLang = language === "english" ? content.english : content.hindi;
+  const currentDate = new Date().toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -131,20 +132,23 @@ const MachineBreakDownForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     // Create submission data
     const submissionData = {
       ...formData,
-      language: language
+      language: language,
     };
-    
+
     try {
       // Backend ko API request bhejna
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/api/machine-breakdown/save/`, {
-        method: 'POST',
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
+      const API_LOG = `${
+        process.env.REACT_APP_API_URL || "http://localhost:8000"
+      }/api/log-report/`;
+      const response = await fetch(`${apiUrl}/api/machine-breakdown-summary/save/`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(submissionData),
       });
@@ -152,12 +156,23 @@ const MachineBreakDownForm = () => {
       const result = await response.json();
 
       if (result.success) {
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "machine breakdown  Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
         setShowSuccess(true);
         alert("✅ Success: Breakdown report has been submitted successfully!");
-        
+
         // Reset form after successful submission
         resetForm();
-        
+
         // Hide success message after 3 seconds
         setTimeout(() => {
           setShowSuccess(false);
@@ -174,11 +189,11 @@ const MachineBreakDownForm = () => {
   };
 
   const handleBack = () => {
-    window.location.href = '/Maintenance/Machine/daily';
+    window.location.href = "/Maintenance/Machine/daily";
   };
 
   const toggleLanguage = () => {
-    setLanguage(prev => prev === 'english' ? 'hindi' : 'english');
+    setLanguage((prev) => (prev === "english" ? "hindi" : "english"));
   };
 
   return (
@@ -186,15 +201,17 @@ const MachineBreakDownForm = () => {
       <div className="max-w-4xl mx-auto">
         {/* Back Button and Header */}
         <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <button 
+          <button
             onClick={handleBack}
             className="flex items-center text-gray-600 hover:text-[#ef4444] transition-colors bg-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md cursor-pointer"
             type="button"
           >
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-            <span className="text-sm sm:text-base font-medium">{currentLang.back}</span>
+            <span className="text-sm sm:text-base font-medium">
+              {currentLang.back}
+            </span>
           </button>
-          
+
           <div className="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
             <div className="bg-white px-4 py-2 rounded-lg shadow-sm">
               <span className="text-sm text-gray-600 font-medium">
@@ -206,7 +223,7 @@ const MachineBreakDownForm = () => {
               className="px-4 py-2 bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white rounded-lg hover:from-[#dc2626] hover:to-[#b91c1c] transition-all shadow-sm hover:shadow-md text-sm font-medium min-w-[80px] cursor-pointer"
               type="button"
             >
-              {language === 'english' ? 'हिंदी' : 'English'}
+              {language === "english" ? "हिंदी" : "English"}
             </button>
           </div>
         </div>
@@ -258,22 +275,29 @@ const MachineBreakDownForm = () => {
           </div>
 
           {/* Form Body */}
-          <form onSubmit={handleSubmit} className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
-            
+          <form
+            onSubmit={handleSubmit}
+            className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8"
+          >
             {/* First Section - Production fields (no heading) */}
             <div className="space-y-4 sm:space-y-5">
               {/* Row 1: Breakdown Name and Part made after inspection - Side by side */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                 <div className="space-y-1">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                    {currentLang.breakdownName} <span className="text-[#ef4444]">*</span>
+                    {currentLang.breakdownName}{" "}
+                    <span className="text-[#ef4444]">*</span>
                   </label>
                   <input
                     type="text"
                     name="breakdownName"
                     value={formData.breakdownName}
                     onChange={handleInputChange}
-                    placeholder={language === 'english' ? "Enter breakdown name" : "ब्रेकडाउन का नाम दर्ज करें"}
+                    placeholder={
+                      language === "english"
+                        ? "Enter breakdown name"
+                        : "ब्रेकडाउन का नाम दर्ज करें"
+                    }
                     className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
                     required
                   />
@@ -281,14 +305,19 @@ const MachineBreakDownForm = () => {
 
                 <div className="space-y-1">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                    {currentLang.partMadeAfterInspection} <span className="text-[#ef4444]">*</span>
+                    {currentLang.partMadeAfterInspection}{" "}
+                    <span className="text-[#ef4444]">*</span>
                   </label>
                   <input
                     type="text"
                     name="partMadeAfterInspection"
                     value={formData.partMadeAfterInspection}
                     onChange={handleInputChange}
-                    placeholder={language === 'english' ? "Enter part details" : "भाग का विवरण दर्ज करें"}
+                    placeholder={
+                      language === "english"
+                        ? "Enter part details"
+                        : "भाग का विवरण दर्ज करें"
+                    }
                     className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
                     required
                   />
@@ -298,14 +327,19 @@ const MachineBreakDownForm = () => {
               {/* Row 2: Machine Name - Full width */}
               <div className="space-y-1">
                 <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                  {currentLang.machineName} <span className="text-[#ef4444]">*</span>
+                  {currentLang.machineName}{" "}
+                  <span className="text-[#ef4444]">*</span>
                 </label>
                 <input
                   type="text"
                   name="machineNameNo"
                   value={formData.machineNameNo}
                   onChange={handleInputChange}
-                  placeholder={language === 'english' ? "e.g., 3.00 No.S" : "उदा., 3.00 नं.एस"}
+                  placeholder={
+                    language === "english"
+                      ? "e.g., 3.00 No.S"
+                      : "उदा., 3.00 नं.एस"
+                  }
                   className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
                   required
                 />
@@ -315,7 +349,8 @@ const MachineBreakDownForm = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                 <div className="space-y-1">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                    {currentLang.givenOn} <span className="text-[#ef4444]">*</span>
+                    {currentLang.givenOn}{" "}
+                    <span className="text-[#ef4444]">*</span>
                   </label>
                   <input
                     type="date"
@@ -326,10 +361,11 @@ const MachineBreakDownForm = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="space-y-1">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                    {currentLang.givenAt} <span className="text-[#ef4444]">*</span>
+                    {currentLang.givenAt}{" "}
+                    <span className="text-[#ef4444]">*</span>
                   </label>
                   <input
                     type="time"
@@ -345,14 +381,19 @@ const MachineBreakDownForm = () => {
               {/* Row 4: Breakdown Details - Full width */}
               <div className="space-y-1">
                 <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                  {currentLang.breakdownDetails} <span className="text-[#ef4444]">*</span>
+                  {currentLang.breakdownDetails}{" "}
+                  <span className="text-[#ef4444]">*</span>
                 </label>
                 <textarea
                   name="breakdownDesc"
                   value={formData.breakdownDesc}
                   onChange={handleInputChange}
                   rows="3"
-                  placeholder={language === 'english' ? "Describe the breakdown in detail" : "ब्रेकडाउन के बारे में विस्तार से लिखें"}
+                  placeholder={
+                    language === "english"
+                      ? "Describe the breakdown in detail"
+                      : "ब्रेकडाउन के बारे में विस्तार से लिखें"
+                  }
                   className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
                   required
                 />
@@ -367,7 +408,7 @@ const MachineBreakDownForm = () => {
               <h2 className="text-base sm:text-lg font-semibold text-gray-800 border-b-2 border-[#ef4444] pb-2">
                 {currentLang.maintenanceOnly}
               </h2>
-              
+
               {/* Row 1: Repair Date and Repair Time - Side by side */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                 <div className="space-y-1">
@@ -441,7 +482,11 @@ const MachineBreakDownForm = () => {
                   value={formData.repairDesc}
                   onChange={handleInputChange}
                   rows="2"
-                  placeholder={language === 'english' ? "Describe the repair work done" : "मरम्मत कार्य का विवरण लिखें"}
+                  placeholder={
+                    language === "english"
+                      ? "Describe the repair work done"
+                      : "मरम्मत कार्य का विवरण लिखें"
+                  }
                   className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
                 />
               </div>
@@ -455,7 +500,7 @@ const MachineBreakDownForm = () => {
               <h2 className="text-base sm:text-lg font-semibold text-gray-800 border-b-2 border-[#ef4444] pb-2">
                 {currentLang.verification}
               </h2>
-              
+
               <div className="space-y-3">
                 <label className="block text-xs sm:text-sm font-medium text-gray-700">
                   {currentLang.statusOfProblem}
@@ -466,7 +511,7 @@ const MachineBreakDownForm = () => {
                       type="radio"
                       name="status"
                       value="OK"
-                      checked={formData.status === 'OK'}
+                      checked={formData.status === "OK"}
                       onChange={handleInputChange}
                       className="w-4 h-4 text-[#ef4444]"
                     />
@@ -480,7 +525,7 @@ const MachineBreakDownForm = () => {
                       type="radio"
                       name="status"
                       value="NG"
-                      checked={formData.status === 'NG'}
+                      checked={formData.status === "NG"}
                       onChange={handleInputChange}
                       className="w-4 h-4 text-[#ef4444]"
                     />
@@ -524,20 +569,18 @@ const MachineBreakDownForm = () => {
 
             {/* Form Actions - Submit and Reset Buttons */}
             <div className="pt-4 sm:pt-6 flex flex-col sm:flex-row gap-4">
-
-              
               <div className="flex flex-col">
-    <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-      Prepared By
-    </label>
-    <input
-      type="text"
-      value={preparedBy}
-      onChange={(e) => setPreparedBy(e.target.value)}
-      placeholder="Enter name"
-      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
-    />
-  </div>
+                <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+                  Prepared By
+                </label>
+                <input
+                  type="text"
+                  value={preparedBy}
+                  onChange={(e) => setPreparedBy(e.target.value)}
+                  placeholder="Enter name"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-red-600 w-full sm:w-64"
+                />
+              </div>
               <button
                 type="button"
                 onClick={handleResetClick}
@@ -546,17 +589,37 @@ const MachineBreakDownForm = () => {
                 <RotateCcw className="w-5 h-5 mr-2" />
                 {currentLang.restButton}
               </button>
-              
+
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`flex-1 bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl transition-all font-medium text-base sm:text-lg shadow-lg flex items-center justify-center order-1 sm:order-2 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:from-[#dc2626] hover:to-[#b91c1c] hover:shadow-xl cursor-pointer'}`}
+                className={`flex-1 bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl transition-all font-medium text-base sm:text-lg shadow-lg flex items-center justify-center order-1 sm:order-2 ${
+                  isSubmitting
+                    ? "opacity-70 cursor-not-allowed"
+                    : "hover:from-[#dc2626] hover:to-[#b91c1c] hover:shadow-xl cursor-pointer"
+                }`}
               >
                 {isSubmitting ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     {currentLang.submitting}
                   </>

@@ -8,8 +8,12 @@ import {
   AlertCircle,
   ArrowLeft,
 } from "lucide-react";
+import axios from "axios";
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+const API_LOG = `${
+  process.env.REACT_APP_API_URL || "http://localhost:8000"
+}/api/log-report/`;
 const C = {
   pageBg: "#f5f5f0",
   white: "#ffffff",
@@ -276,6 +280,17 @@ const MChangeTrackForm = () => {
       });
 
       if (response.ok) {
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "4M Tracking Summary Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
         const data = await response.json();
         console.log("Backend Response:", data);
         localStorage.setItem(
@@ -378,29 +393,28 @@ const MChangeTrackForm = () => {
       }}
     >
       <div className="max-w-7xl mx-auto mb-4">
-        <button
-          onClick={handleBack}
-         
-        >
+        <button onClick={handleBack}>
           {/* <div className="bg-white border border-gray-200 rounded-none p-2 shadow-sm group-hover:shadow-md transition-shadow">
             <ArrowLeft className="w-5 h-5 text-gray-500" />
           </div> */}
-          <span  style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap:7,
-            background: C.white,
-            border: `1.5px solid ${C.redBorder}`,
-            color: C.red,
-            padding: "8px 8px",
-            borderRadius: 4,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: ".1em",
-            textTransform: "uppercase",
-            cursor: "pointer",
-            boxShadow: "0 1px 3px rgba(0,0,0,.05)",
-          }}>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 7,
+              background: C.white,
+              border: `1.5px solid ${C.redBorder}`,
+              color: C.red,
+              padding: "8px 8px",
+              borderRadius: 4,
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: ".1em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              boxShadow: "0 1px 3px rgba(0,0,0,.05)",
+            }}
+          >
             Back to Production Hub
           </span>
         </button>
@@ -417,11 +431,11 @@ const MChangeTrackForm = () => {
       >
         {/* Header */}
         <div
-         style={{
-                background: C.red,
-                padding: "20px 28px",
-                borderBottom: `1px solid ${C.redDark}`,
-              }}
+          style={{
+            background: C.red,
+            padding: "20px 28px",
+            borderBottom: `1px solid ${C.redDark}`,
+          }}
         >
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
             <h1 className="text-2xl sm:text-2xl font-bold text-white uppercase tracking-widest">
