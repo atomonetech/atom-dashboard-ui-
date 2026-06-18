@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion'; // Framer motion import theek kiya hai
+import { motion } from 'framer-motion'; 
 import { Bell, Check, X, AlertCircle, CheckCircle2, Clock, Settings, FileText } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { Card } from './ui/card';
@@ -13,8 +13,8 @@ export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // LocalStorage se logged-in user nikal rahe hain
-  const currentUser = localStorage.getItem('username') || '';
+  // 🔥 FIX: .trim() lagaya gaya hai taaki extra space hat jaye aur URL sahi bane
+  const currentUser = (localStorage.getItem('username') || '').trim();
 
   // Helper time format function
   const formatTimeAgo = (dateString) => {
@@ -36,6 +36,7 @@ export default function Notifications() {
   const fetchNotifications = async () => {
     if (!currentUser) return;
     try {
+      // Ab currentUser mein koi space nahi hoga
       const res = await fetch(`${API_BASE}/api/qa-notifications/${currentUser}/`);
       const data = await res.json();
       if (res.ok && data.notifications) {
@@ -53,7 +54,7 @@ export default function Notifications() {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentUser]); // currentUser add kar diya dependency mein
 
   const activeNotifications = notifications; 
 
