@@ -693,23 +693,78 @@ const Dashboard = ({ onLogout }) => {
             
             {/* 🔥 BLUR OVERLAY FOR WORKERS (Only covers main content) 🔥 */}
             {isWorker && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#0f172a]/70 backdrop-blur-md rounded-l-3xl">
-                <div className="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-md border border-red-100">
-                  <h1 className="text-3xl font-bold text-red-600 mb-2">Access Restricted 🚫</h1>
-                  <p className="text-slate-600 mb-6 font-medium">Aapke paas main Analytics dekhne ki permission nahi hai.</p>
-                  <button
-                    onClick={() => {
-                      if (userRole === 'QA_Hub') window.location.href = '/qa-hub';
-                      if (userRole === 'Production_Hub') window.location.href = '/production-hub';
-                      if (userRole === 'Maintenance_Hub') window.location.href = '/maintenance-hub';
-                    }}
-                    className="w-full bg-red-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-red-700 shadow-md"
-                  >
-                    Go to My Department
-                  </button>
-                </div>
-              </div>
-            )}
+      <div
+  style={{
+    position: "fixed",
+    top: "24Px",
+    left: "50%",
+    transform: "translate(-50%)",
+    width: "min(520px, 90vw)",
+    zIndex: 99999,
+    background: "rgba(15, 23, 42, 0.92)",
+    backdropFilter: "blur(24px)",
+    border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: "24px",
+    padding: "32px",
+    boxShadow: "0 25px 80px rgba(0,0,0,0.35)",
+    textAlign: "center",
+  }}
+>
+  <div
+    style={{
+      width: 72,
+      height: 72,
+      margin: "0 auto 20px",
+      borderRadius: "18px",
+     background: "linear-gradient(135deg,#fffdf7,#f5f1e8)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: 32,
+    }}
+  >
+    🔒
+  </div>
+
+  <h2
+    style={{
+      color: "#fff",
+      fontSize: 24,
+      fontWeight: 800,
+      marginBottom: 10,
+    }}
+  >
+    Access Restricted
+  </h2>
+
+  <p
+    style={{
+      color: "#94a3b8",
+      fontSize: 15,
+      lineHeight: 1.7,
+      marginBottom: 28,
+    }}
+  >
+    Analytics Hub is currently unavailable for your role.
+    Contact your administrator if you believe access is required.
+  </p>
+
+  <button
+    onClick={() => navigate(-1)}
+    style={{
+      border: "none",
+      borderRadius: "12px",
+      padding: "12px 20px",
+      background:
+        "linear-gradient(135deg,#3b82f6,#2563eb)",
+      color: "#fff",
+      fontWeight: 700,
+      cursor: "pointer",
+    }}
+  >
+    ← Return to Department Dashboard
+  </button>
+</div>    )}
 
             {/* 🔥 MAIN CONTENT (Blurred if Worker) 🔥 */}
             <div className={`max-w-[1600px] mx-auto ${getContainerPadding()} ${isWorker ? "blur-md pointer-events-none opacity-40 select-none" : ""}`}>

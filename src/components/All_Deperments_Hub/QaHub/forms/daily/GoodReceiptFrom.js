@@ -67,6 +67,16 @@ const GoodReceiptForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+     const dataToSave = {
+       requestedBy: formData.requestedBy,
+    itemName: formData.itemName,
+    specification: formData.specification,
+    department: formData.department,
+    qty: formData.qty,
+    remark: formData.remark,
+    receivedBy: formData.receivedBy,
+    receivedDate: today,
+    };
     
     if (isViewMode) {
       // 🔥 APPROVE REPORT LOGIC

@@ -438,14 +438,23 @@ export default function Profile({ onLogout }) {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [customImage, setCustomImage] = useState(null);
   const fileInputRef = useRef(null);
+   const userRole = localStorage.getItem("user_role");
+    const userName = localStorage.getItem("username");
+   const cleanUserName = userName
+  .split("@")[0]
+  .replace(/\./g, " ")
+  .toLowerCase()
+  .replace(/\b\w/g, (char) => char.toUpperCase());
+   console.log(userName);
+   
   
   const [profileData, setProfileData] = useState({
-    name: 'admin',
-    email: 'admin@atomone.in',
+    name: cleanUserName,
+    email: `${userName}`,
     phone: '+91 98765 43210',
     location: 'Kadi, Gujrat',
-    role: 'Plant Manager',
-    department: 'Operations'
+    role: userRole,
+    department: "Quality",
   });
 
   const avatars = [

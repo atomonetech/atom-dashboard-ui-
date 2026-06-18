@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_LOG = `${
+  process.env.REACT_APP_API_URL || "http://localhost:8000"
+}/api/log-report/`;
 
 const PLANT_MAP = {
     'Plant 1': 'plant_1',
@@ -139,6 +143,17 @@ const MachineHistoryCard = () => {
             const result = await response.json();
 
             if (result.success || response.ok) {
+                 const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "Machine History Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
                 alert(" Success: Machine History Card successfully updated in database!");
                 
                 // Reset form after successful submission

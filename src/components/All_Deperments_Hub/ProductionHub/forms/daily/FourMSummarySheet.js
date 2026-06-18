@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   ArrowLeft,
   ClipboardList,
@@ -15,6 +16,8 @@ import {
 } from "lucide-react";
 
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+ const API_LOG = `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/log-report/`;
+
 
 /* ─── design tokens (matches red-white theme) ────────────────── */
 const C = {
@@ -227,7 +230,19 @@ const FourMSummarySheet = () => {
         body: JSON.stringify(payload),
       });
       const result = await res.json();
-      if (res.ok && result.success) { alert(result.message || "Saved successfully!"); handleReset(); }
+      if (res.ok && result.success) { 
+         const currentUser = localStorage.getItem('username') || 'Unknown User';
+        
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: '4M Summary sheet  Form' // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error('Activity log save karne mein error aayi:', logError);
+        }
+        alert(result.message || "Saved successfully!"); handleReset(); }
       else alert("Error: " + (result.error || "Check console."));
     } catch (err) { console.error("Network error:", err); alert("Cannot reach server."); }
     finally { setIsLoading(false); }

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import axios from 'axios';
+
 
 const CncPreventiveMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -115,6 +117,9 @@ const CncPreventiveMaintenanceForm = () => {
     
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+     const API_LOG = `${
+  process.env.REACT_APP_API_URL || "http://localhost:8000"
+}/api/log-report/`;
       const response = await fetch(`${apiUrl}/api/cnc-maintenance/save/`, {
         method: 'POST',
         headers: {
@@ -127,6 +132,17 @@ const CncPreventiveMaintenanceForm = () => {
       const result = await response.json().catch(() => ({}));
 
       if (!response.ok || result.success === false) {
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "CNC Mentinance  Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
         console.error("CNC maintenance save failed:", result);
         throw new Error(formatBackendError(result) || `Request failed with status ${response.status}`);
       }
@@ -502,7 +518,7 @@ const CncPreventiveMaintenanceForm = () => {
       value={preparedBy}
       onChange={(e) => setPreparedBy(e.target.value)}
       placeholder="Enter name"
-      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-green-600 w-full sm:w-64"
     />
   </div>
               <button 

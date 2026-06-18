@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   ArrowLeft,
   Calendar,
@@ -17,7 +18,10 @@ import {
   Hash,
 } from "lucide-react";
 
-const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+const API_LOG = `${
+  process.env.REACT_APP_API_URL || "http://localhost:8000"
+}/api/log-report/`;
 const C = {
   pageBg: "#f5f5f0",
   white: "#ffffff",
@@ -106,6 +110,17 @@ const FourMDisplayBoard = () => {
       });
       const result = await response.json();
       if (response.ok && result.success) {
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "4M Change Display  Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
         alert(result.message || "4M Display Board saved successfully!");
         handleReset();
       } else {

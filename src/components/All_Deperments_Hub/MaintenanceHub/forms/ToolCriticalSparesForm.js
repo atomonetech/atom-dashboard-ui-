@@ -2,6 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Save, Package, Calendar } from 'lucide-react';
 import { getApiUrl } from '../../../../config/api';
+import axios from "axios";
+const API_LOG = `${
+  process.env.REACT_APP_API_URL || "http://localhost:8000"
+}/api/log-report/`;
 
 const ToolCriticalSparesForm = () => {
   const [currentDate, setCurrentDate] = useState('');
@@ -47,6 +51,17 @@ const ToolCriticalSparesForm = () => {
       });
 
       if (response.ok) {
+         const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "Tool criticalSpare Mentinance Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
         setSubmitted(true);
         setFormData({ ...initialState, date: currentDate });
         setTimeout(() => setSubmitted(false), 3000);

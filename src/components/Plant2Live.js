@@ -243,6 +243,13 @@ export default function Plant2Live() {
             setMachines(data.machines); 
             setError(''); 
 
+            // 🔥 FIX: selectedMachine ko bhi fresh data se update karo
+            setSelectedMachine(prev => {
+              if (!prev) return null;
+              const updated = data.machines.find(m => m.machine_no === prev.machine_no);
+              return updated || prev;
+            });
+
             setReasonLoggedStates(prev => {
                 const newState = { ...prev };
                 data.machines.forEach(m => {
@@ -274,7 +281,7 @@ export default function Plant2Live() {
     const pollData = async () => {
       if (isFetching) return; 
       
-      if (showHistoryView || selectedMachine) {
+      if (showHistoryView) {
         timerId = setTimeout(pollData, 2000);
         return;
       }
@@ -287,7 +294,7 @@ export default function Plant2Live() {
 
     pollData();
     return () => clearTimeout(timerId);
-  }, [isMounted, showHistoryView, selectedMachine]);
+  }, [isMounted, showHistoryView]);
 
   useEffect(() => {
     const idleTimer = setInterval(() => {

@@ -2,6 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { getApiUrl } from '../../../../config/api';
+import axios from "axios";
+const API_LOG = `${
+  process.env.REACT_APP_API_URL || "http://localhost:8000"
+}/api/log-report/`;
+
 
 const LatheMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -82,6 +87,17 @@ const LatheMaintenanceForm = () => {
       });
 
       if (response.ok) {
+         const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "Lathe Mentinance Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
         alert("✨ Lathe record saved successfully!");
         setMetaData(initialMetaData);
         setTableData(initialChecklist); 

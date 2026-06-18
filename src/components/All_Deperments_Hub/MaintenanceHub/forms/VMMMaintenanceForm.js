@@ -2,6 +2,12 @@ import { getApiUrl } from '../../../../config/api';
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import axios from 'axios';
+
+
+const API_LOG = `${
+  process.env.REACT_APP_API_URL || "http://localhost:8000"
+}/api/log-report/`;
 
 const VMMMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -109,7 +115,7 @@ const VMMMaintenanceForm = () => {
   try {
   setIsSaving(true);
 
-  const response = await fetch('http://127.0.0.1:8000/api/vertical-milling-checksheet/save/', {
+  const response = await fetch(getApiUrl('/api/vertical-milling-checksheet/save/'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -121,6 +127,17 @@ const VMMMaintenanceForm = () => {
   const data = await response.json();
 
   if (!response.ok || !data.success) {
+     const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "VMM Mentinance Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
     console.error('Save failed:', data);
     alert(data.error || 'Failed to save record');
     return;

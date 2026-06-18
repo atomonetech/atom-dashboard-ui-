@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { getApiUrl } from '../../../../config/api'; // <--- API Import added
+import axios from "axios";
+const API_LOG = `${
+  process.env.REACT_APP_API_URL || "http://localhost:8000"
+}/api/log-report/`;
+
 
 const MachinePreventMainForm = () => {
   const navigate = useNavigate();
@@ -113,7 +119,7 @@ const MachinePreventMainForm = () => {
     };
     
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/machine-preventive-maintenance/save/', {
+      const response = await fetch(getApiUrl('/api/machine-preventive-maintenance/save/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,6 +131,17 @@ const MachinePreventMainForm = () => {
       const result = await response.json().catch(() => ({}));
 
       if (response.ok && result.success !== false) {
+         const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        try {
+          await axios.post(API_LOG, {
+            username: currentUser,
+            report_name: "VMC Mentinance Form", // Yahan hardcode kar diya form ka naam
+          });
+          console.log("Activity log successfully saved!");
+        } catch (logError) {
+          console.error("Activity log save karne mein error aayi:", logError);
+        }
         setShowSuccess(true);
         setTimeout(() => {
           setMetaData(initialMetaData);
@@ -319,7 +336,7 @@ const MachinePreventMainForm = () => {
       value={preparedBy}
       onChange={(e) => setPreparedBy(e.target.value)}
       placeholder="Enter name"
-      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-pink-600 w-full sm:w-64"
     />
   </div>
               <button 

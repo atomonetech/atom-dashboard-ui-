@@ -2,6 +2,10 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../../../../../config/api';
+import axios from 'axios';
+const API_LOG = `${
+  process.env.REACT_APP_API_URL || "http://localhost:8000"
+}/api/log-report/`;
 
 const WelderQualificationForm = () => {
     const navigate = useNavigate();
@@ -86,6 +90,17 @@ const WelderQualificationForm = () => {
             });
 
             if (response.ok) {
+                const currentUser = localStorage.getItem("username") || "Unknown User";
+                
+                        try {
+                          await axios.post(API_LOG, {
+                            username: currentUser,
+                            report_name: "Welder Qualification test Form", // Yahan hardcode kar diya form ka naam
+                          });
+                          console.log("Activity log successfully saved!");
+                        } catch (logError) {
+                          console.error("Activity log save karne mein error aayi:", logError);
+                        }
                 alert("Welder Qualification Test Saved Successfully!");
             } else {
                 alert("Failed to save data.");
