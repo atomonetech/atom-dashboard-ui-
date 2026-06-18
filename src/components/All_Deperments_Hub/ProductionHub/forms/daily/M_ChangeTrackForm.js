@@ -45,7 +45,7 @@ const MChangeTrackForm = () => {
     time: "",
     mcNo: "",
     changeDesc: "",
-    natureOfChange: "Planned",
+    natureOfChange: "Planned", // Default to Planned
     actionTaken: "",
     partNameNo: "",
     operationNo: "",
@@ -77,6 +77,8 @@ const MChangeTrackForm = () => {
   const [dailyTrackingData, setDailyTrackingData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [preparedBy, setPreparedBy] = useState("");
+  
+  const [activeAction, setActiveAction] = useState(""); // "retroactive" | "containment" | ""
 
   const [currentDayData, setCurrentDayData] = useState({
     man: "",
@@ -89,8 +91,12 @@ const MChangeTrackForm = () => {
   // Backend Lists
   const [partsList, setPartsList] = useState([]);
   const [operationList, setOperationList] = useState([]);
+  const [customerList, setCustomerList] = useState([]);
 
-  // Clear localStorage on first load & fetch parts
+  // STATES: For Custom Searchable Dropdown (Styled natively)
+  const [showPartDropdown, setShowPartDropdown] = useState(false);
+  const [partSearch, setPartSearch] = useState("");
+
   useEffect(() => {
     localStorage.removeItem("mChangeTrackingData");
     setDailyTrackingData({});
@@ -102,7 +108,6 @@ const MChangeTrackForm = () => {
       submittedAt: null,
     });
 
-    // Fetch Parts on load
     fetch(`${BASE_URL}/api/master-dropdown/?filter=all_parts`)
       .then((res) => res.json())
       .then((data) => {
@@ -115,6 +120,15 @@ const MChangeTrackForm = () => {
         }
       })
       .catch((err) => console.error("Error fetching parts:", err));
+
+    fetch(`${BASE_URL}/api/master-dropdown/?filter=customer`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setCustomerList(data);
+        }
+      })
+      .catch((err) => console.error("Error fetching customers:", err));
   }, []);
 
   const getNextStatus = (currentStatus) => {
@@ -161,7 +175,7 @@ const MChangeTrackForm = () => {
     const month = today_date.getMonth() + 1;
     const day = today_date.getDate();
     const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(
-      day,
+      day
     ).padStart(2, "0")}`;
 
     setDailyTrackingData((prev) => ({
@@ -177,21 +191,21 @@ const MChangeTrackForm = () => {
     }));
   };
 
-  // COMBINED PART HANDLER
-  const handlePartChange = (e) => {
-    const value = e.target.value;
-
+  // Custom Part Selection
+  const handlePartSelection = (partName, displayName) => {
     setFormData((prev) => ({
       ...prev,
-      partNameNo: value,
-      operationNo: "",
+      partNameNo: displayName,
+      operationNo: "", // Reset operation when part changes
     }));
+    setShowPartDropdown(false);
+    setPartSearch("");
 
-    if (value) {
+    if (partName) {
       fetch(
         `${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(
-          value,
-        )}`,
+          partName
+        )}`
       )
         .then((res) => res.json())
         .then((data) => setOperationList(data))
@@ -223,12 +237,19 @@ const MChangeTrackForm = () => {
     const month = today_date.getMonth() + 1;
     const day = today_date.getDate();
     const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(
-      day,
+      day
     ).padStart(2, "0")}`;
 
     const finalDailyTrackingData = {
       ...dailyTrackingData,
       [dateKey]: currentDayData,
+    };
+
+    // YEH FUNCTION STRING KO NUMBER MEIN YA KHALI HONE PAR NULL MEIN CONVERT KAREGA
+    const parseNumOrNull = (val) => {
+      if (val === "" || val === null || val === undefined) return null;
+      const parsed = Number(val);
+      return isNaN(parsed) ? null : parsed;
     };
 
     const payload = {
@@ -242,27 +263,25 @@ const MChangeTrackForm = () => {
       training_provided: formData.trainingProvided,
       setup_approval: formData.setupApproval.status,
 
-      // Retroactive Mapping
-      retro_qty_checked: formData.retroactive.qtyChecked,
-      retro_entry_qty: formData.retroactive.entryQty,
-      retro_qty_ok: formData.retroactive.qtyOk,
-      retro_rw: formData.retroactive.rw,
-      retro_scrap: formData.retroactive.scrap,
+      // YAHAN CONDITION LAGAYI HAI KI JO ACTIVE HO SIRF USI KA DATA JAYE
+      retro_qty_checked: activeAction === "retroactive" ? parseNumOrNull(formData.retroactive.qtyChecked) : null,
+      retro_entry_qty: activeAction === "retroactive" ? parseNumOrNull(formData.retroactive.entryQty) : null,
+      retro_qty_ok: activeAction === "retroactive" ? parseNumOrNull(formData.retroactive.qtyOk) : null,
+      retro_rw: activeAction === "retroactive" ? parseNumOrNull(formData.retroactive.rw) : null,
+      retro_scrap: activeAction === "retroactive" ? parseNumOrNull(formData.retroactive.scrap) : null,
 
-      // Containment Mapping
-      cont_qty_checked: formData.containmentSuspected.qtyChecked,
-      cont_entry_qty: formData.containmentSuspected.entryQty,
-      cont_qty_ok: formData.containmentSuspected.qtyOk,
-      cont_rw: formData.containmentSuspected.rw,
-      cont_scrap: formData.containmentSuspected.scrap,
+      cont_qty_checked: activeAction === "containment" ? parseNumOrNull(formData.containmentSuspected.qtyChecked) : null,
+      cont_entry_qty: activeAction === "containment" ? parseNumOrNull(formData.containmentSuspected.entryQty) : null,
+      cont_qty_ok: activeAction === "containment" ? parseNumOrNull(formData.containmentSuspected.qtyOk) : null,
+      cont_rw: activeAction === "containment" ? parseNumOrNull(formData.containmentSuspected.rw) : null,
+      cont_scrap: activeAction === "containment" ? parseNumOrNull(formData.containmentSuspected.scrap) : null,
 
-      // Dispatch Mapping
       customer: formData.dispatchDetail.customer,
       dispatch_date: formData.dispatchDetail.date,
 
       remark: formData.remark,
+      prepared_by: preparedBy,
 
-      // Meta Data
       daily_tracking_data: finalDailyTrackingData,
       submission_date: dateKey,
       submitted_at: new Date().toISOString(),
@@ -295,7 +314,7 @@ const MChangeTrackForm = () => {
         console.log("Backend Response:", data);
         localStorage.setItem(
           "mChangeTrackingData",
-          JSON.stringify(finalDailyTrackingData),
+          JSON.stringify(finalDailyTrackingData)
         );
         alert("Form submitted successfully to the backend!");
         handleReset();
@@ -304,7 +323,7 @@ const MChangeTrackForm = () => {
         console.error("Validation Error Details:", errorData);
         alert(
           `Validation Error! Check console for details. ` +
-            JSON.stringify(errorData),
+            JSON.stringify(errorData)
         );
       }
     } catch (error) {
@@ -312,7 +331,7 @@ const MChangeTrackForm = () => {
       alert(`Failed to save data to the backend. Check the console.`);
       localStorage.setItem(
         "mChangeTrackingData",
-        JSON.stringify(finalDailyTrackingData),
+        JSON.stringify(finalDailyTrackingData)
       );
     } finally {
       setIsSubmitting(false);
@@ -348,6 +367,8 @@ const MChangeTrackForm = () => {
       remark: "",
     });
 
+    setPreparedBy("");
+    setActiveAction(""); 
     setCurrentDayData({
       man: "",
       machine: "",
@@ -373,11 +394,7 @@ const MChangeTrackForm = () => {
   const categories = [
     { id: "man", label: "MAN", icon: <User className="w-5 h-5" /> },
     { id: "machine", label: "MACHINE", icon: <Cpu className="w-5 h-5" /> },
-    {
-      id: "material",
-      label: "MATERIAL",
-      icon: <Package className="w-5 h-5" />,
-    },
+    { id: "material", label: "MATERIAL", icon: <Package className="w-5 h-5" /> },
     { id: "method", label: "METHOD", icon: <BookOpen className="w-5 h-5" /> },
   ];
 
@@ -429,7 +446,6 @@ const MChangeTrackForm = () => {
           boxShadow: C.shadow,
         }}
       >
-        {/* Header */}
         <div
           style={{
             background: C.red,
@@ -454,7 +470,6 @@ const MChangeTrackForm = () => {
 
         <div className="p-4 sm:p-6 md:p-8">
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-            {/* Legend */}
             <div className="w-full lg:w-72 order-1 lg:order-2">
               <div className="bg-white rounded-none border border-gray-200 p-4 sm:p-5 md:p-6 shadow-sm">
                 <h3 className="font-bold text-gray-800 mb-3 sm:mb-4 flex items-center text-base sm:text-lg uppercase tracking-wide">
@@ -466,43 +481,30 @@ const MChangeTrackForm = () => {
                   <div className="flex items-center space-x-3 p-1 sm:p-2">
                     <span className="inline-block w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-red-500"></span>
                     <div>
-                      <span className="text-xs sm:text-sm font-bold text-gray-800 uppercase">
-                        CHANGE
-                      </span>
-                      <p className="text-xs text-gray-500 hidden sm:block">
-                        Change implemented
-                      </p>
+                      <span className="text-xs sm:text-sm font-bold text-gray-800 uppercase">CHANGE</span>
+                      <p className="text-xs text-gray-500 hidden sm:block">Change implemented</p>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-3 p-1 sm:p-2">
                     <span className="inline-block w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-green-500"></span>
                     <div>
-                      <span className="text-xs sm:text-sm font-bold text-gray-800 uppercase">
-                        NO CHANGE
-                      </span>
-                      <p className="text-xs text-gray-500 hidden sm:block">
-                        No change from standard
-                      </p>
+                      <span className="text-xs sm:text-sm font-bold text-gray-800 uppercase">NO CHANGE</span>
+                      <p className="text-xs text-gray-500 hidden sm:block">No change from standard</p>
                     </div>
                   </div>
 
                   <div className="flex items-center space-x-3 p-1 sm:p-2">
                     <span className="inline-block w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gray-200"></span>
                     <div>
-                      <span className="text-xs sm:text-sm font-bold text-gray-800 uppercase">
-                        Not Set
-                      </span>
-                      <p className="text-xs text-gray-500 hidden sm:block">
-                        No status selected
-                      </p>
+                      <span className="text-xs sm:text-sm font-bold text-gray-800 uppercase">Not Set</span>
+                      <p className="text-xs text-gray-500 hidden sm:block">No status selected</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* 4M Status */}
             <div className="flex-1 order-2 lg:order-1">
               <div className="bg-white rounded-none border border-gray-200 overflow-hidden shadow-sm">
                 <div className="bg-gray-50 px-4 sm:px-5 md:px-6 py-3 sm:py-4 border-b border-gray-200">
@@ -528,9 +530,7 @@ const MChangeTrackForm = () => {
                         </div>
                         <button
                           onClick={() => {
-                            const nextValue = getNextStatus(
-                              currentDayData[category.id],
-                            );
+                            const nextValue = getNextStatus(currentDayData[category.id]);
                             handleDailyChange(category.id, nextValue);
                           }}
                           className="focus:outline-none transform hover:scale-110 transition-transform"
@@ -545,7 +545,6 @@ const MChangeTrackForm = () => {
             </div>
           </div>
 
-          {/* Change Details Section */}
           <div className="border-t-2 border-gray-200 mt-6 sm:mt-7 md:mt-8 pt-6 sm:pt-7 md:pt-8">
             <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-5 md:mb-6 uppercase tracking-wide">
               Change Details
@@ -605,7 +604,6 @@ const MChangeTrackForm = () => {
                 >
                   <option value="Planned">Planned</option>
                   <option value="Unplanned">Unplanned</option>
-                  <option value="Emergency">Emergency</option>
                 </select>
               </div>
 
@@ -625,26 +623,76 @@ const MChangeTrackForm = () => {
               </div>
             </div>
 
-            {/* DYNAMIC PART AND OPERATION SECTION (COMBINED FIELD) */}
+            {/* CUSTOM SEARCHABLE DROPDOWN FOR PART NAME */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6 mb-4 sm:mb-5 md:mb-6">
-              <div>
+              <div className="relative">
                 <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Part Name / Number <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={formData.partNameNo}
-                  onChange={handlePartChange}
-                  className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700"
+                
+                {/* Invisible Overlay to close dropdown when clicking outside */}
+                {showPartDropdown && (
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setShowPartDropdown(false)}
+                  ></div>
+                )}
+
+                {/* Dropdown Trigger Box (Looks exactly like a select) */}
+                <div
+                  className={`w-full border ${showPartDropdown ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'} rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm bg-white text-slate-700 cursor-pointer flex justify-between items-center transition-all`}
+                  onClick={() => setShowPartDropdown(!showPartDropdown)}
                 >
-                  <option value="" className="text-slate-400">
-                    Select Part Name / Number
-                  </option>
-                  {partsList.map((part, index) => (
-                    <option key={index} value={part.part_name}>
-                      {part.part_name} {part.part_no ? `(${part.part_no})` : ""}
-                    </option>
-                  ))}
-                </select>
+                  <span className={formData.partNameNo ? "text-slate-700" : "text-slate-400"}>
+                    {formData.partNameNo || "Select Part Name / Number"}
+                  </span>
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+
+                {/* Dropdown List (Increased max height to 400px) */}
+                {showPartDropdown && (
+                  <div className="absolute z-50 w-full mt-0 bg-white border border-gray-300 shadow-xl max-h-[400px] flex flex-col">
+                    <div className="p-1.5 border-b border-gray-200 bg-gray-50 sticky top-0">
+                      {/* FIXED SEARCH INPUT COLOR HERE */}
+                      <input
+                        type="text"
+                        className="w-full border border-gray-300 rounded-none px-2 py-1.5 text-xs sm:text-sm focus:outline-none focus:border-gray-400 text-slate-800 bg-white placeholder-gray-400"
+                        placeholder="Search part..."
+                        value={partSearch}
+                        onChange={(e) => setPartSearch(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                    <ul className="overflow-y-auto flex-1 py-1">
+                      <li
+                        className="px-3 py-1.5 text-xs sm:text-sm text-slate-700 hover:bg-gray-500 hover:text-white cursor-pointer transition-none"
+                        onClick={() => handlePartSelection("", "")}
+                      >
+                        Select Part Name / Number
+                      </li>
+                      {partsList
+                        .filter((part) => {
+                          const fullName = `${part.part_name} ${part.part_no ? `(${part.part_no})` : ""}`.toLowerCase();
+                          return fullName.includes(partSearch.toLowerCase());
+                        })
+                        .map((part, index) => {
+                          const displayName = `${part.part_name} ${part.part_no ? `(${part.part_no})` : ""}`;
+                          return (
+                            <li
+                              key={index}
+                              className="px-3 py-1.5 text-xs sm:text-sm text-slate-700 hover:bg-gray-500 hover:text-white cursor-pointer transition-none"
+                              onClick={() => handlePartSelection(part.part_name, displayName)}
+                            >
+                              {displayName}
+                            </li>
+                          );
+                        })}
+                      {partsList.filter((part) => `${part.part_name} ${part.part_no ? `(${part.part_no})` : ""}`.toLowerCase().includes(partSearch.toLowerCase())).length === 0 && (
+                        <li className="px-3 py-2 text-sm text-gray-500 text-center italic">No parts matched</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -657,7 +705,7 @@ const MChangeTrackForm = () => {
                     handleFormChange("operationNo", e.target.value)
                   }
                   disabled={!formData.partNameNo}
-                  className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700 disabled:bg-slate-50"
+                  className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700 disabled:bg-slate-50 disabled:cursor-not-allowed"
                 >
                   <option value="" className="text-slate-400">
                     Select Operation
@@ -683,19 +731,13 @@ const MChangeTrackForm = () => {
                   <select
                     value={formData.setupApproval.status}
                     onChange={(e) =>
-                      handleNestedChange(
-                        "setupApproval",
-                        "status",
-                        e.target.value,
-                      )
+                      handleNestedChange("setupApproval", "status", e.target.value)
                     }
                     className="w-full sm:flex-1 border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                   >
                     <option value="">Not Set</option>
                     {statusOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
+                      <option key={option} value={option}>{option}</option>
                     ))}
                   </select>
                 </div>
@@ -707,242 +749,164 @@ const MChangeTrackForm = () => {
                 </label>
                 <select
                   value={formData.trainingProvided}
-                  onChange={(e) =>
-                    handleFormChange("trainingProvided", e.target.value)
-                  }
+                  onChange={(e) => handleFormChange("trainingProvided", e.target.value)}
                   className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                 >
                   <option value="">Not Set</option>
                   {statusOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
+                    <option key={option} value={option}>{option}</option>
                   ))}
                 </select>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 mb-4 sm:mb-5 md:mb-6">
-              {/* Retroactive */}
-              <div className="bg-white p-3 sm:p-4 rounded-none border border-gray-200 shadow-sm">
-                <h4 className="font-bold text-gray-800 mb-2 sm:mb-3 pb-1 sm:pb-2 border-b-2 border-gray-200 text-sm sm:text-base uppercase tracking-wide">
-                  Retroactive
-                </h4>
+              {/* Retroactive Block */}
+              <div className={`p-3 sm:p-4 rounded-none border border-gray-200 shadow-sm transition-all ${activeAction === 'retroactive' ? 'bg-white ring-1 ring-red-500' : 'bg-gray-50 opacity-60'}`}>
+                <div className="flex items-center gap-3 mb-2 sm:mb-3 pb-1 sm:pb-2 border-b-2 border-gray-200">
+                  <input 
+                    type="radio" 
+                    id="radio-retro"
+                    name="mutuallyExclusiveAction" 
+                    checked={activeAction === "retroactive"} 
+                    onChange={() => setActiveAction("retroactive")}
+                    className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 cursor-pointer"
+                  />
+                  <label htmlFor="radio-retro" className="font-bold text-gray-800 text-sm sm:text-base uppercase tracking-wide cursor-pointer w-full">
+                    Retroactive
+                  </label>
+                </div>
                 <div className="space-y-2 sm:space-y-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
-                      Qty Checked
-                    </label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Qty Checked</label>
                     <input
                       type="text"
+                      disabled={activeAction !== "retroactive"}
                       value={formData.retroactive.qtyChecked}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "retroactive",
-                          "qtyChecked",
-                          e.target.value,
-                        )
-                      }
-                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
+                      onChange={(e) => handleNestedChange("retroactive", "qtyChecked", e.target.value)}
+                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
                       placeholder="Enter quantity"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
-                      Entry Quantity
-                    </label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Entry Quantity</label>
                     <input
                       type="text"
+                      disabled={activeAction !== "retroactive"}
                       value={formData.retroactive.entryQty}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "retroactive",
-                          "entryQty",
-                          e.target.value,
-                        )
-                      }
-                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
+                      onChange={(e) => handleNestedChange("retroactive", "entryQty", e.target.value)}
+                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
                       placeholder="Enter quantity"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
-                      Qty OK
-                    </label>
-                    <select
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Qty OK</label>
+                    <input
+                      type="text"
+                      disabled={activeAction !== "retroactive"}
                       value={formData.retroactive.qtyOk}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "retroactive",
-                          "qtyOk",
-                          e.target.value,
-                        )
-                      }
-                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
-                    >
-                      <option value="">Not Set</option>
-                      {statusOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(e) => handleNestedChange("retroactive", "qtyOk", e.target.value)}
+                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      placeholder="Enter amount (e.g. 1000)"
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
-                      R/W
-                    </label>
-                    <select
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">R/W</label>
+                    <input
+                      type="text"
+                      disabled={activeAction !== "retroactive"}
                       value={formData.retroactive.rw}
-                      onChange={(e) =>
-                        handleNestedChange("retroactive", "rw", e.target.value)
-                      }
-                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
-                    >
-                      <option value="">Not Set</option>
-                      {statusOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(e) => handleNestedChange("retroactive", "rw", e.target.value)}
+                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      placeholder="Enter amount"
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
-                      Scrap
-                    </label>
-                    <select
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Scrap</label>
+                    <input
+                      type="text"
+                      disabled={activeAction !== "retroactive"}
                       value={formData.retroactive.scrap}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "retroactive",
-                          "scrap",
-                          e.target.value,
-                        )
-                      }
-                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
-                    >
-                      <option value="">Not Set</option>
-                      {statusOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(e) => handleNestedChange("retroactive", "scrap", e.target.value)}
+                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      placeholder="Enter amount"
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Containment Suspected */}
-              <div className="bg-white p-3 sm:p-4 rounded-none border border-gray-200 shadow-sm">
-                <h4 className="font-bold text-gray-800 mb-2 sm:mb-3 pb-1 sm:pb-2 border-b-2 border-gray-200 text-sm sm:text-base uppercase tracking-wide">
-                  Containment Suspected
-                </h4>
+              {/* Containment Suspected Block */}
+              <div className={`p-3 sm:p-4 rounded-none border border-gray-200 shadow-sm transition-all ${activeAction === 'containment' ? 'bg-white ring-1 ring-red-500' : 'bg-gray-50 opacity-60'}`}>
+                <div className="flex items-center gap-3 mb-2 sm:mb-3 pb-1 sm:pb-2 border-b-2 border-gray-200">
+                  <input 
+                    type="radio" 
+                    id="radio-contain"
+                    name="mutuallyExclusiveAction" 
+                    checked={activeAction === "containment"} 
+                    onChange={() => setActiveAction("containment")}
+                    className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 cursor-pointer"
+                  />
+                  <label htmlFor="radio-contain" className="font-bold text-gray-800 text-sm sm:text-base uppercase tracking-wide cursor-pointer w-full">
+                    Containment Suspected
+                  </label>
+                </div>
                 <div className="space-y-2 sm:space-y-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
-                      Qty Checked
-                    </label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Qty Checked</label>
                     <input
                       type="text"
+                      disabled={activeAction !== "containment"}
                       value={formData.containmentSuspected.qtyChecked}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "containmentSuspected",
-                          "qtyChecked",
-                          e.target.value,
-                        )
-                      }
-                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
+                      onChange={(e) => handleNestedChange("containmentSuspected", "qtyChecked", e.target.value)}
+                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
                       placeholder="Enter quantity"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
-                      Entry Quantity
-                    </label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Entry Quantity</label>
                     <input
                       type="text"
+                      disabled={activeAction !== "containment"}
                       value={formData.containmentSuspected.entryQty}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "containmentSuspected",
-                          "entryQty",
-                          e.target.value,
-                        )
-                      }
-                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
+                      onChange={(e) => handleNestedChange("containmentSuspected", "entryQty", e.target.value)}
+                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
                       placeholder="Enter quantity"
                     />
                   </div>
+                  
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
-                      Qty OK
-                    </label>
-                    <select
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Qty OK</label>
+                    <input
+                      type="text"
+                      disabled={activeAction !== "containment"}
                       value={formData.containmentSuspected.qtyOk}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "containmentSuspected",
-                          "qtyOk",
-                          e.target.value,
-                        )
-                      }
-                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
-                    >
-                      <option value="">Not Set</option>
-                      {statusOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(e) => handleNestedChange("containmentSuspected", "qtyOk", e.target.value)}
+                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      placeholder="Enter amount (e.g. 1000)"
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
-                      R/W
-                    </label>
-                    <select
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">R/W</label>
+                    <input
+                      type="text"
+                      disabled={activeAction !== "containment"}
                       value={formData.containmentSuspected.rw}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "containmentSuspected",
-                          "rw",
-                          e.target.value,
-                        )
-                      }
-                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
-                    >
-                      <option value="">Not Set</option>
-                      {statusOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(e) => handleNestedChange("containmentSuspected", "rw", e.target.value)}
+                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      placeholder="Enter amount"
+                    />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
-                      Scrap
-                    </label>
-                    <select
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Scrap</label>
+                    <input
+                      type="text"
+                      disabled={activeAction !== "containment"}
                       value={formData.containmentSuspected.scrap}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "containmentSuspected",
-                          "scrap",
-                          e.target.value,
-                        )
-                      }
-                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
-                    >
-                      <option value="">Not Set</option>
-                      {statusOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(e) => handleNestedChange("containmentSuspected", "scrap", e.target.value)}
+                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      placeholder="Enter amount"
+                    />
                   </div>
                 </div>
               </div>
@@ -954,37 +918,37 @@ const MChangeTrackForm = () => {
                 </h4>
                 <div className="space-y-2 sm:space-y-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
-                      Customer
-                    </label>
-                    <input
-                      type="text"
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Customer</label>
+                    <select
                       value={formData.dispatchDetail.customer}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "dispatchDetail",
-                          "customer",
-                          e.target.value,
-                        )
-                      }
+                      onChange={(e) => handleNestedChange("dispatchDetail", "customer", e.target.value)}
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
-                      placeholder="Enter customer name"
-                    />
+                    >
+                      <option value="">Select Customer</option>
+                      {customerList.map((cust, idx) => {
+                        let customerName = cust;
+                        if (typeof cust === "string") {
+                          customerName = cust;
+                        } else if (Array.isArray(cust)) {
+                          customerName = cust[0];
+                        } else if (cust && typeof cust === "object") {
+                          customerName = cust.customer_name || cust.name || "";
+                        }
+                        
+                        return (
+                          <option key={idx} value={customerName}>
+                            {customerName}
+                          </option>
+                        );
+                      })}
+                    </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">
-                      Date
-                    </label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Date</label>
                     <input
                       type="date"
                       value={formData.dispatchDetail.date}
-                      onChange={(e) =>
-                        handleNestedChange(
-                          "dispatchDetail",
-                          "date",
-                          e.target.value,
-                        )
-                      }
+                      onChange={(e) => handleNestedChange("dispatchDetail", "date", e.target.value)}
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
                     />
                   </div>
@@ -1005,7 +969,6 @@ const MChangeTrackForm = () => {
               />
             </div>
 
-            {/* Actions Buttons Corporate Style */}
             <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="flex flex-col">
                 <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
@@ -1016,23 +979,27 @@ const MChangeTrackForm = () => {
                   value={preparedBy}
                   onChange={(e) => setPreparedBy(e.target.value)}
                   placeholder="Enter name"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+                  className="px-3 py-2 border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-red-500 text-sm w-full sm:w-64 bg-white text-slate-800"
                 />
               </div>
-              <button
-                onClick={handleReset}
-                disabled={isSubmitting}
-                className="w-full sm:w-auto px-6 py-3 border-2 border-gray-300 rounded-none text-xs sm:text-sm font-bold tracking-widest text-gray-700 bg-white hover:bg-gray-50 transition-all uppercase order-2 sm:order-1 disabled:opacity-50"
-              >
-                Reset Data
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="w-full sm:w-auto px-8 py-3 bg-[#e03131] text-white rounded-none text-xs sm:text-sm font-bold tracking-widest uppercase hover:bg-[#c92a2a] transition-all shadow-sm order-1 sm:order-2 disabled:opacity-70"
-              >
-                {isSubmitting ? "Saving..." : "Save Data"}
-              </button>
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={handleReset}
+                  disabled={isSubmitting}
+                  className="w-full sm:w-auto px-6 py-3 border-2 border-gray-300 rounded-none text-xs sm:text-sm font-bold tracking-widest text-gray-700 bg-white hover:bg-gray-50 transition-all uppercase disabled:opacity-50"
+                >
+                  Reset Data
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="w-full sm:w-auto px-8 py-3 bg-[#e03131] text-white rounded-none text-xs sm:text-sm font-bold tracking-widest uppercase hover:bg-[#c92a2a] transition-all shadow-sm disabled:opacity-70"
+                >
+                  {isSubmitting ? "Saving..." : "Save Data"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
