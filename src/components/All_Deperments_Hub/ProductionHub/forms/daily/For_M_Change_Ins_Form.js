@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom"; // 🔥 IMPORT useParams
 import axios from "axios";
 import {
   ArrowLeft,
@@ -17,6 +17,7 @@ import {
   Send,
   Hash,
   Loader2,
+  Check, // 🔥 Import Check for Approve button
 } from "lucide-react";
 
 // Backend URL
@@ -167,11 +168,17 @@ const SectionHead = ({
 /* ─── main component ─────────────────────────────────────────── */
 const For_M_Change_Ins_Form = () => {
   const navigate = useNavigate();
+  const { id } = useParams(); // 🔥 GET ID FROM URL
 
-  const now = new Date();
-  const formattedDate = `${String(now.getDate()).padStart(2, "0")}.${String(
-    now.getMonth() + 1,
-  ).padStart(2, "0")}.${now.getFullYear()}`;
+  const [formDate, setFormDate] = useState("");
+
+  useEffect(() => {
+    const now = new Date();
+    const formattedDate = `${String(now.getDate()).padStart(2, "0")}.${String(
+      now.getMonth() + 1,
+    ).padStart(2, "0")}.${now.getFullYear()}`;
+    setFormDate(formattedDate);
+  }, []);
 
   const initialFormState = {
     partName: "",
@@ -193,6 +200,54 @@ const For_M_Change_Ins_Form = () => {
   const [operationList, setOperationList] = useState([]);
   const [preparedBy, setPreparedBy] = useState("");
 
+  // 🔥 FETCH REPORT DATA IF ID EXISTS (VIEW/APPROVE MODE)
+  useEffect(() => {
+    if (id) {
+      const fetchReportData = async () => {
+        setIsLoading(true);
+        try {
+          const response = await axios.get(`${BASE_URL}/api/get-single-production-report/four-m-inspection/${id}/`);
+          
+          if (response.data.success) {
+            const data = response.data.data;
+            
+            setFormData({
+              partName: data.part_name || "",
+              partNo: data.part_no || "",
+              operation: data.operation || "",
+              lotQty: data.lot_qty || "",
+              okQty: data.ok_qty || "",
+              rejQty: data.rej_qty || "",
+              paramSpec: data.parameter_specs || "",
+              before: [data.before_1 || "", data.before_2 || "", data.before_3 || "", data.before_4 || "", data.before_5 || ""],
+              after: [data.after_1 || "", data.after_2 || "", data.after_3 || "", data.after_4 || "", data.after_5 || ""],
+              inspBy: data.inspected_by || "",
+              remarks: data.remarks || "",
+            });
+            setPreparedBy(data.submitted_by || "");
+            if (data.inspection_date) {
+               // convert YYYY-MM-DD back to DD.MM.YYYY
+               const parts = data.inspection_date.split("-");
+               if(parts.length === 3) setFormDate(`${parts[2]}.${parts[1]}.${parts[0]}`);
+            }
+
+            // Pre-fetch operations
+            if (data.part_name) {
+              axios.get(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(data.part_name)}`)
+                .then(res => setOperationList(res.data))
+                .catch(err => console.error(err));
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching report data:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchReportData();
+    }
+  }, [id]);
+
   useEffect(() => {
     fetch(`${BASE_URL}/api/master-dropdown/?filter=all_parts`)
       .then((r) => r.json())
@@ -204,6 +259,8 @@ const For_M_Change_Ins_Form = () => {
   }, []);
 
   const handleChange = (e) => {
+    if (id) return; // Disable changes in view mode
+
     const { name, value } = e.target;
     if (name === "partName") {
       const sel = partsList.find((p) => p.part_name === value);
@@ -228,19 +285,24 @@ const For_M_Change_Ins_Form = () => {
     }
   };
 
-  const handleArrayChange = (section, index, value) =>
+  const handleArrayChange = (section, index, value) => {
+    if (id) return; // Disable changes in view mode
     setFormData((prev) => ({
       ...prev,
       [section]: prev[section].map((it, i) => (i === index ? value : it)),
     }));
+  };
 
   const handleReset = () => {
+    if (id) return;
     setFormData(initialFormState);
     setOperationList([]);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (id) return; // Prevent saving if in view mode
+
     if (!formData.partName || !formData.partNo || !formData.operation) {
       alert("Part Name, Part No, and Operation are required.");
       return;
@@ -280,20 +342,18 @@ const For_M_Change_Ins_Form = () => {
         try {
           await axios.post(API_LOG, {
             username: currentUser,
-            report_name: "4M Change Inspection  Form", // Yahan hardcode kar diya form ka naam
+            report_name: "4M Change Inspection Form",
+            record_id: result.record_id // 🔥 Pass ID to log
           });
-          console.log("Activity log successfully saved!");
         } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
+          console.error("Activity log error:", logError);
         }
         alert(result.message || "Saved successfully!");
         handleReset();
       } else {
-        console.error("Backend error:", result);
         alert("Error: " + (result.error || "Check console."));
       }
     } catch (err) {
-      console.error("Network error:", err);
       alert("Cannot reach server. Make sure Django is running.");
     } finally {
       setIsLoading(false);
@@ -333,7 +393,7 @@ const For_M_Change_Ins_Form = () => {
         >
           <button
             type="button"
-            onClick={() => navigate("/production-hub")}
+            onClick={() => navigate(-1)} // 🔥 Sends user back to previous page (Hub or Notifications)
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -357,7 +417,7 @@ const For_M_Change_Ins_Form = () => {
             onMouseLeave={(e) => (e.currentTarget.style.background = C.white)}
           >
             <ArrowLeft size={13} />
-            Back to Production Hub
+            Back
           </button>
         </div>
 
@@ -397,7 +457,7 @@ const For_M_Change_Ins_Form = () => {
                   textTransform: "uppercase",
                 }}
               >
-                4M Change Inspection Report
+                {id ? "4M Change Inspection Report (REVIEW)" : "4M Change Inspection Report"}
               </h1>
             </div>
             <div
@@ -420,7 +480,7 @@ const For_M_Change_Ins_Form = () => {
                   letterSpacing: ".06em",
                 }}
               >
-                {formattedDate}
+                {formDate}
               </span>
             </div>
           </div>
@@ -445,6 +505,7 @@ const For_M_Change_Ins_Form = () => {
                     name="partName"
                     value={formData.partName}
                     onChange={handleChange}
+                    disabled={!!id} // 🔥 DISABLED IN VIEW MODE
                   >
                     <option value="">Select Part Name</option>
                     {partsList.map((p, i) => (
@@ -452,6 +513,9 @@ const For_M_Change_Ins_Form = () => {
                         {p.part_name}
                       </option>
                     ))}
+                    {id && formData.partName && !partsList.some(p => p.part_name === formData.partName) && (
+                      <option value={formData.partName}>{formData.partName}</option>
+                    )}
                   </StyledSelect>
                 </div>
                 <div>
@@ -477,7 +541,7 @@ const For_M_Change_Ins_Form = () => {
                   name="operation"
                   value={formData.operation}
                   onChange={handleChange}
-                  disabled={!formData.partName}
+                  disabled={!!id || !formData.partName}
                 >
                   <option value="">Select Operation</option>
                   {operationList.map((op, i) => (
@@ -485,6 +549,9 @@ const For_M_Change_Ins_Form = () => {
                       {op}
                     </option>
                   ))}
+                  {id && formData.operation && !operationList.includes(formData.operation) && (
+                    <option value={formData.operation}>{formData.operation}</option>
+                  )}
                 </StyledSelect>
               </div>
 
@@ -504,6 +571,7 @@ const For_M_Change_Ins_Form = () => {
                     name="lotQty"
                     value={formData.lotQty}
                     onChange={handleChange}
+                    readOnly={!!id}
                     placeholder="e.g. 100"
                   />
                 </div>
@@ -516,18 +584,11 @@ const For_M_Change_Ins_Form = () => {
                     name="okQty"
                     value={formData.okQty}
                     onChange={handleChange}
+                    readOnly={!!id}
                     placeholder="e.g. 95"
                     style={{
                       borderColor: C.greenBorder,
                       background: C.greenLight,
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = C.green;
-                      e.target.style.boxShadow = "0 0 0 3px rgba(22,163,74,.1)";
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = C.greenBorder;
-                      e.target.style.boxShadow = "none";
                     }}
                   />
                 </div>
@@ -538,16 +599,9 @@ const For_M_Change_Ins_Form = () => {
                     name="rejQty"
                     value={formData.rejQty}
                     onChange={handleChange}
+                    readOnly={!!id}
                     placeholder="e.g. 5"
                     style={{ borderColor: C.redBorder, background: C.redLight }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = C.red;
-                      e.target.style.boxShadow = "0 0 0 3px rgba(185,28,28,.1)";
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = C.redBorder;
-                      e.target.style.boxShadow = "none";
-                    }}
                   />
                 </div>
                 <div>
@@ -557,6 +611,7 @@ const For_M_Change_Ins_Form = () => {
                     name="paramSpec"
                     value={formData.paramSpec}
                     onChange={handleChange}
+                    readOnly={!!id}
                     placeholder="Enter specs"
                   />
                 </div>
@@ -595,6 +650,7 @@ const For_M_Change_Ins_Form = () => {
                       onChange={(e) =>
                         handleArrayChange("before", i, e.target.value)
                       }
+                      readOnly={!!id}
                       placeholder={`Value ${i + 1}`}
                     />
                   </div>
@@ -634,17 +690,9 @@ const For_M_Change_Ins_Form = () => {
                       onChange={(e) =>
                         handleArrayChange("after", i, e.target.value)
                       }
+                      readOnly={!!id}
                       placeholder={`Value ${i + 1}`}
                       style={{ borderColor: C.greenBorder }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = C.green;
-                        e.target.style.boxShadow =
-                          "0 0 0 3px rgba(22,163,74,.1)";
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = C.greenBorder;
-                        e.target.style.boxShadow = "none";
-                      }}
                     />
                   </div>
                 ))}
@@ -666,6 +714,7 @@ const For_M_Change_Ins_Form = () => {
                     name="inspBy"
                     value={formData.inspBy}
                     onChange={handleChange}
+                    readOnly={!!id}
                     placeholder="Inspector name"
                   />
                 </div>
@@ -676,6 +725,7 @@ const For_M_Change_Ins_Form = () => {
                     name="remarks"
                     value={formData.remarks}
                     onChange={handleChange}
+                    readOnly={!!id}
                     placeholder="Any remarks"
                   />
                 </div>
@@ -718,95 +768,127 @@ const For_M_Change_Ins_Form = () => {
                     type="text"
                     value={preparedBy}
                     onChange={(e) => setPreparedBy(e.target.value)}
+                    readOnly={!!id} // 🔥 DISABLED IN VIEW MODE
                     placeholder="Enter name"
                     style={{ width: 220 }}
                   />
                 </div>
 
-                {/* Action buttons */}
+                {/* Action buttons (CONDITIONAL FOR VIEW MODE) */}
                 <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
-                  {/* Reset */}
-                  <button
-                    type="button"
-                    onClick={handleReset}
-                    disabled={isLoading}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 8,
-                      background: C.white,
-                      border: `2px solid #d1d5db`,
-                      color: "#374151",
-                      padding: "11px 24px",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      letterSpacing: ".1em",
-                      textTransform: "uppercase",
-                      borderRadius: 6,
-                      cursor: isLoading ? "not-allowed" : "pointer",
-                      fontFamily: "inherit",
-                      opacity: isLoading ? 0.5 : 1,
-                      transition: "all .15s",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isLoading) {
-                        e.currentTarget.style.background = "#f9fafb";
-                        e.currentTarget.style.borderColor = "#9ca3af";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = C.white;
-                      e.currentTarget.style.borderColor = "#d1d5db";
-                    }}
-                  >
-                    <RotateCcw size={14} />
-                    Reset Form
-                  </button>
+                  {id ? (
+                    <button
+                      type="button"
+                      onClick={() => alert("Report Approved Successfully!")}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        background: C.green,
+                        border: "none",
+                        color: "#fff",
+                        padding: "11px 28px",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        letterSpacing: ".1em",
+                        textTransform: "uppercase",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        transition: "background .15s",
+                        boxShadow: "0 2px 8px rgba(22,163,74,.35)",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#15803d")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = C.green)}
+                    >
+                      <Check size={14} strokeWidth={2.5} /> APPROVE REPORT
+                    </button>
+                  ) : (
+                    <>
+                      {/* Reset */}
+                      <button
+                        type="button"
+                        onClick={handleReset}
+                        disabled={isLoading}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          background: C.white,
+                          border: `2px solid #d1d5db`,
+                          color: "#374151",
+                          padding: "11px 24px",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          letterSpacing: ".1em",
+                          textTransform: "uppercase",
+                          borderRadius: 6,
+                          cursor: isLoading ? "not-allowed" : "pointer",
+                          fontFamily: "inherit",
+                          opacity: isLoading ? 0.5 : 1,
+                          transition: "all .15s",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isLoading) {
+                            e.currentTarget.style.background = "#f9fafb";
+                            e.currentTarget.style.borderColor = "#9ca3af";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = C.white;
+                          e.currentTarget.style.borderColor = "#d1d5db";
+                        }}
+                      >
+                        <RotateCcw size={14} />
+                        Reset Form
+                      </button>
 
-                  {/* Submit */}
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 8,
-                      background: isLoading ? "#9b1c1c" : C.red,
-                      border: "none",
-                      color: "#fff",
-                      padding: "11px 28px",
-                      fontSize: 12,
-                      fontWeight: 700,
-                      letterSpacing: ".1em",
-                      textTransform: "uppercase",
-                      borderRadius: 6,
-                      cursor: isLoading ? "not-allowed" : "pointer",
-                      fontFamily: "inherit",
-                      transition: "background .15s",
-                      boxShadow: "0 2px 8px rgba(185,28,28,.35)",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isLoading)
-                        e.currentTarget.style.background = "#991b1b";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isLoading) e.currentTarget.style.background = C.red;
-                    }}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2
-                          size={14}
-                          style={{ animation: "spin 1s linear infinite" }}
-                        />{" "}
-                        Submitting…
-                      </>
-                    ) : (
-                      <>
-                        <Send size={14} /> Submit Report
-                      </>
-                    )}
-                  </button>
+                      {/* Submit */}
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          background: isLoading ? "#9b1c1c" : C.red,
+                          border: "none",
+                          color: "#fff",
+                          padding: "11px 28px",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          letterSpacing: ".1em",
+                          textTransform: "uppercase",
+                          borderRadius: 6,
+                          cursor: isLoading ? "not-allowed" : "pointer",
+                          fontFamily: "inherit",
+                          transition: "background .15s",
+                          boxShadow: "0 2px 8px rgba(185,28,28,.35)",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isLoading)
+                            e.currentTarget.style.background = "#991b1b";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isLoading) e.currentTarget.style.background = C.red;
+                        }}
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2
+                              size={14}
+                              style={{ animation: "spin 1s linear infinite" }}
+                            />{" "}
+                            Submitting…
+                          </>
+                        ) : (
+                          <>
+                            <Send size={14} /> Submit Report
+                          </>
+                        )}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

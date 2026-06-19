@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom"; // 🔥 IMPORT useParams
+import {
+  Calendar,
+  User,
+  Cpu,
+  Package,
+  BookOpen,
+  AlertCircle,
+  ArrowLeft,
+  Check, // 🔥 Import Check for Approve button
+} from "lucide-react";
 import axios from "axios";
+
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 const API_LOG = `${
   process.env.REACT_APP_API_URL || "http://localhost:8000"
@@ -120,12 +131,15 @@ const sColors = [
 
 const Operator5S = () => {
   const navigate = useNavigate();
+  const { id } = useParams(); // 🔥 GET ID FROM URL
+
   const today = new Date().toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
   });
 
+  const [formDate, setFormDate] = useState(today); // To handle view mode date
   const [lang, setLang] = useState("eng");
   const [area, setArea] = useState("");
   const [zoneLeader, setZoneLeader] = useState("");
@@ -138,7 +152,56 @@ const Operator5S = () => {
     ),
   );
 
+  // 🔥 FETCH REPORT DATA IF ID EXISTS (VIEW/APPROVE MODE)
   useEffect(() => {
+    if (id) {
+      const fetchReportData = async () => {
+        try {
+          const response = await axios.get(`${API_BASE_URL}/api/get-single-production-report/five-s/${id}/`);
+          
+          if (response.data.success) {
+            const data = response.data.data;
+            
+            setArea(data.area || "");
+            setZoneLeader(data.zoneLeader || "");
+            if (data.language) setLang(data.language);
+            if (data.date) {
+               // Convert YYYY-MM-DD to DD/MM/YYYY
+               const parts = data.date.split('-');
+               if(parts.length === 3) setFormDate(`${parts[2]}/${parts[1]}/${parts[0]}`);
+            }
+
+            // Map backend observations back to the checks state
+            if (data.observations && data.observations.length > 0) {
+              let flatIndex = 0;
+              const newChecks = fiveSData.flatMap((s, si) =>
+                s.points.map((_, pi) => {
+                  const obs = data.observations[flatIndex];
+                  flatIndex++;
+                  
+                  let mappedStatus = "";
+                  if (obs && (obs.status === "OK" || obs.status === "NG")) {
+                    mappedStatus = obs.status;
+                  }
+                  return { sIdx: si, pIdx: pi, status: mappedStatus };
+                })
+              );
+              setChecks(newChecks);
+            }
+            
+            setIsAlreadyFilled(true); // Lock the form entirely
+          }
+        } catch (error) {
+          console.error("Error fetching report data:", error);
+        }
+      };
+      fetchReportData();
+    }
+  }, [id]);
+
+  // Check today's status only in CREATE mode
+  useEffect(() => {
+    if (id) return; // Skip if in view mode
     if (!area) return;
 
     const checkTodayStatus = async () => {
@@ -164,13 +227,13 @@ const Operator5S = () => {
     };
 
     checkTodayStatus();
-  }, [area]);
+  }, [area, id]);
 
   const getCheck = (si, pi) =>
     checks.find((c) => c.sIdx === si && c.pIdx === pi);
 
   const setStatus = (si, pi, status) => {
-    if (isAlreadyFilled) return;
+    if (isAlreadyFilled) return; // Prevent clicking in view/locked mode
     setChecks((prev) =>
       prev.map((c) =>
         c.sIdx === si && c.pIdx === pi
@@ -183,6 +246,7 @@ const Operator5S = () => {
   const allDone = checks.every((c) => c.status !== "");
 
   const resetForm = () => {
+    if (id) return; // Disallow reset in view mode
     setZoneLeader("");
     setIsAlreadyFilled(false);
     setChecks(
@@ -193,7 +257,7 @@ const Operator5S = () => {
   };
 
   const handleSubmit = async () => {
-    if (isAlreadyFilled) return;
+    if (id || isAlreadyFilled) return;
 
     if (!area) {
       alert("⚠️ Please select an Area.");
@@ -252,11 +316,11 @@ const Operator5S = () => {
         try {
           await axios.post(API_LOG, {
             username: currentUser,
-            report_name: "operator 5s  Form", // Yahan hardcode kar diya form ka naam
+            report_name: "operator 5s Form",
+            record_id: data.record_id // 🔥 Attach Record ID
           });
-          console.log("Activity log successfully saved!");
         } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
+          console.error("Activity log save error:", logError);
         }
         alert("✅ 5S Checksheet saved successfully to the database!");
         setIsAlreadyFilled(true);
@@ -279,43 +343,17 @@ const Operator5S = () => {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-3">
               <button
-                onClick={() => navigate("/production-hub")}
+                onClick={() => navigate(-1)} // 🔥 Enhanced back navigation
                 className="p-1.5 sm:p-2 hover:bg-slate-100 rounded-lg transition-colors"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 sm:h-6 sm:w-6 text-slate-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-                  />
-                </svg>
+                <ArrowLeft className="h-5 w-5 sm:h-6 sm:w-6 text-slate-600" />
               </button>
               <div className="flex items-center gap-2">
                 <div className="p-1.5 sm:p-2">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                    />
-                  </svg>
+                  <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />
                 </div>
                 <span className="font-black text-slate-800 text-base sm:text-lg md:text-xl tracking-tight">
-                  5S Check Point
+                  {id ? "5S Check Point (REVIEW)" : "5S Check Point"}
                 </span>
               </div>
             </div>
@@ -324,7 +362,8 @@ const Operator5S = () => {
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value)}
-                className="bg-amber-50 border-2 border-amber-300 text-amber-700 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-bold outline-none focus:border-amber-500 cursor-pointer"
+                disabled={!!id} // Disable changing language in view mode
+                className={`bg-amber-50 border-2 border-amber-300 text-amber-700 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-bold outline-none focus:border-amber-500 ${id ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}
               >
                 <option value="eng">🌐 English</option>
                 <option value="hin">🇮🇳 हिंदी</option>
@@ -354,8 +393,9 @@ const Operator5S = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
-        {/* Error Banner */}
-        {isAlreadyFilled && (
+        
+        {/* Error Banner - HIDDEN in View Mode since being locked is expected */}
+        {isAlreadyFilled && !id && (
           <div className="bg-red-50 border-l-4 border-red-600 p-4 mb-6 rounded-r-lg shadow-sm">
             <div className="flex items-start gap-3">
               <span className="text-red-500 text-lg">⚠️</span>
@@ -389,24 +429,11 @@ const Operator5S = () => {
         {/* Header Card */}
         <div
           className={`bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6 mb-5 sm:mb-6 transition-all ${
-            isAlreadyFilled ? "opacity-70 pointer-events-none" : ""
+            isAlreadyFilled ? "opacity-90" : ""
           }`}
         >
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-amber-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <AlertCircle className="h-5 w-5 text-amber-500" />
             <h2 className="text-sm sm:text-base md:text-lg font-black text-slate-800">
               {lang === "eng"
                 ? "5S Check Point (Work Instruction)"
@@ -416,6 +443,7 @@ const Operator5S = () => {
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            
             {/* Area Dropdown */}
             <div>
               <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase mb-1">
@@ -425,9 +453,10 @@ const Operator5S = () => {
                 value={area}
                 onChange={(e) => {
                   setArea(e.target.value);
-                  resetForm();
+                  if(!id) resetForm();
                 }}
-                className="w-full border-2 rounded-lg p-2.5 sm:p-3 text-sm font-semibold outline-none transition-all bg-slate-50 border-slate-200 text-slate-700 focus:border-amber-500 focus:bg-white cursor-pointer"
+                disabled={isAlreadyFilled || !!id}
+                className="w-full border-2 rounded-lg p-2.5 sm:p-3 text-sm font-semibold outline-none transition-all bg-slate-50 border-slate-200 text-slate-700 focus:border-amber-500 disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed"
               >
                 <option value="">-- Select Area --</option>
                 {areaOptions.map((opt) => (
@@ -446,8 +475,8 @@ const Operator5S = () => {
               <input
                 type="text"
                 className={`w-full border-2 rounded-lg p-2.5 sm:p-3 text-sm font-semibold outline-none transition-all ${
-                  isAlreadyFilled
-                    ? "bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed select-none"
+                  isAlreadyFilled || !!id
+                    ? "bg-slate-200 border-slate-300 text-slate-500 cursor-not-allowed select-none"
                     : "bg-slate-50 border-slate-200 text-slate-700 focus:border-amber-500 focus:bg-white"
                 }`}
                 placeholder={
@@ -459,8 +488,7 @@ const Operator5S = () => {
                 }
                 value={zoneLeader}
                 onChange={(e) => setZoneLeader(e.target.value)}
-                disabled={isAlreadyFilled}
-                readOnly={isAlreadyFilled}
+                disabled={isAlreadyFilled || !!id}
               />
             </div>
 
@@ -471,26 +499,13 @@ const Operator5S = () => {
               </label>
               <div
                 className={`border-2 rounded-lg p-2.5 sm:p-3 text-sm font-bold ${
-                  isAlreadyFilled
+                  isAlreadyFilled || !!id
                     ? "bg-slate-100 border-slate-200 text-slate-500"
                     : "bg-amber-50 border-amber-200 text-amber-700"
                 }`}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4 inline mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                {today}
+                <Calendar className="h-4 w-4 inline mr-2" />
+                {formDate}
               </div>
             </div>
           </div>
@@ -499,7 +514,7 @@ const Operator5S = () => {
         {/* 5S Sections */}
         <div
           className={`transition-all ${
-            isAlreadyFilled ? "opacity-70 pointer-events-none" : ""
+            isAlreadyFilled && !id ? "opacity-80" : ""
           }`}
         >
           {fiveSData.map((s, si) => {
@@ -575,9 +590,12 @@ const Operator5S = () => {
                             <td className="px-2 sm:px-3 py-2">
                               <div className="flex items-center justify-center gap-2 sm:gap-3">
                                 <button
+                                  type="button"
                                   className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full font-bold text-base sm:text-lg transition-all flex items-center justify-center border-2 ${
                                     isAlreadyFilled
-                                      ? "border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed"
+                                      ? chk?.status === "OK" 
+                                        ? "border-green-500 bg-green-100 text-green-700 cursor-not-allowed scale-105"
+                                        : "border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed"
                                       : chk?.status === "OK"
                                       ? "border-green-500 bg-green-100 text-green-700 scale-110 shadow-md"
                                       : "border-slate-300 bg-white text-slate-400 hover:border-green-400"
@@ -588,9 +606,12 @@ const Operator5S = () => {
                                   ✓
                                 </button>
                                 <button
+                                  type="button"
                                   className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full font-bold text-base sm:text-lg transition-all flex items-center justify-center border-2 ${
                                     isAlreadyFilled
-                                      ? "border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed"
+                                      ? chk?.status === "NG" 
+                                        ? "border-red-500 bg-red-100 text-red-700 cursor-not-allowed scale-105"
+                                        : "border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed"
                                       : chk?.status === "NG"
                                       ? "border-red-500 bg-red-100 text-red-700 scale-110 shadow-md"
                                       : "border-slate-300 bg-white text-slate-400 hover:border-red-400"
@@ -614,69 +635,62 @@ const Operator5S = () => {
         </div>
 
         {/* Submit Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6 mt-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 text-green-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <span className="font-medium">
-                {lang === "eng"
-                  ? "Ensure all check points are marked before saving."
-                  : lang === "hin"
-                  ? "सहेजने से पहले सभी जांच बिंदुओं को चिह्नित करें।"
-                  : "સહેજ કરતા પહેલા તમામ ચેક પ્વાઇન્ટ ચિહ્નિત કરો."}
-              </span>
-            </div>
-
-            <button
-              className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide transition-all flex items-center gap-2 w-full sm:w-auto justify-center ${
-                isAlreadyFilled || isSubmitting
-                  ? "bg-slate-300 text-slate-500 cursor-not-allowed border-transparent shadow-none"
-                  : "bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg"
-              }`}
-              onClick={handleSubmit}
-              disabled={isSubmitting || isAlreadyFilled}
-            >
-              {isSubmitting ? (
-                "Saving..."
-              ) : isAlreadyFilled ? (
-                "Locked"
-              ) : (
-                <>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
-                    />
-                  </svg>
+            
+            {/* Context Text based on Mode */}
+            {id ? (
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 font-bold uppercase tracking-wider">
+                <Check className="h-4 w-4 text-green-600" />
+                <span>Report is under review.</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600">
+                <Check className="h-4 w-4 text-green-600" />
+                <span className="font-medium">
                   {lang === "eng"
-                    ? "Save Checksheet"
+                    ? "Ensure all check points are marked before saving."
                     : lang === "hin"
-                    ? "चेकशीट सहेजें"
-                    : "ચેકશીટ સહેજ કરો"}
-                </>
-              )}
-            </button>
+                    ? "सहेजने से पहले सभी जांच बिंदुओं को चिह्नित करें।"
+                    : "સહેજ કરતા પહેલા તમામ ચેક પ્વાઇન્ટ ચિહ્નિત કરો."}
+                </span>
+              </div>
+            )}
+
+            {/* 🔥 Action Buttons (Approve vs Save) */}
+            {id ? (
+              <button
+                type="button"
+                onClick={() => alert("Report Approved Successfully!")}
+                className="px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2 bg-[#10b981] hover:bg-[#059669] text-white shadow-md hover:shadow-lg w-full sm:w-auto"
+              >
+                <Check size={16} /> APPROVE REPORT
+              </button>
+            ) : (
+              <button
+                className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide transition-all flex items-center gap-2 w-full sm:w-auto justify-center ${
+                  isAlreadyFilled || isSubmitting
+                    ? "bg-slate-300 text-slate-500 cursor-not-allowed border-transparent shadow-none"
+                    : "bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg"
+                }`}
+                onClick={handleSubmit}
+                disabled={isSubmitting || isAlreadyFilled}
+              >
+                {isSubmitting ? (
+                  "Saving..."
+                ) : isAlreadyFilled ? (
+                  "Locked"
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    {lang === "eng" ? "Save Checksheet" : lang === "hin" ? "चेकशीट सहेजें" : "ચેકશીટ સહેજ કરો"}
+                  </>
+                )}
+              </button>
+            )}
+            
           </div>
         </div>
       </div>

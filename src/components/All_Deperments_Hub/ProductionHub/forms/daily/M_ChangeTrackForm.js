@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom"; // 🔥 IMPORT useParams & useNavigate
 import {
   Calendar,
   User,
@@ -7,6 +8,7 @@ import {
   BookOpen,
   AlertCircle,
   ArrowLeft,
+  Check, // 🔥 Import Check for Approve button
 } from "lucide-react";
 import axios from "axios";
 
@@ -34,6 +36,9 @@ const C = {
 };
 
 const MChangeTrackForm = () => {
+  const { id } = useParams(); // 🔥 GET ID FROM URL
+  const navigate = useNavigate();
+
   const today = new Date().toISOString().split("T")[0];
   const currentDate = new Date().toLocaleDateString("en-US", {
     year: "numeric",
@@ -93,20 +98,100 @@ const MChangeTrackForm = () => {
   const [operationList, setOperationList] = useState([]);
   const [customerList, setCustomerList] = useState([]);
 
-  // STATES: For Custom Searchable Dropdown (Styled natively)
+  // STATES: For Custom Searchable Dropdown
   const [showPartDropdown, setShowPartDropdown] = useState(false);
   const [partSearch, setPartSearch] = useState("");
 
+  // 🔥 FETCH REPORT DATA IF ID EXISTS (VIEW/APPROVE MODE)
   useEffect(() => {
-    localStorage.removeItem("mChangeTrackingData");
-    setDailyTrackingData({});
-    setCurrentDayData({
-      man: "",
-      machine: "",
-      material: "",
-      method: "",
-      submittedAt: null,
-    });
+    if (id) {
+      const fetchReportData = async () => {
+        try {
+          const response = await axios.get(`${BASE_URL}/api/get-single-production-report/four-m-record/${id}/`);
+          if (response.data.success) {
+            const d = response.data.data;
+            
+            setFormData({
+              time: d.time ? d.time.substring(0, 5) : "",
+              mcNo: d.machine_no || "",
+              changeDesc: d.description || "",
+              natureOfChange: d.nature_of_change || "Planned",
+              actionTaken: d.action_taken || "",
+              partNameNo: d.part_info || "",
+              operationNo: d.operation_no || "",
+              trainingProvided: d.training_provided || "",
+              setupApproval: { status: d.setup_approval || "" },
+              retroactive: {
+                qtyChecked: d.retro_qty_checked ?? "",
+                entryQty: d.retro_entry_qty ?? "",
+                qtyOk: d.retro_qty_ok ?? "",
+                rw: d.retro_rw ?? "",
+                scrap: d.retro_scrap ?? "",
+              },
+              containmentSuspected: {
+                qtyChecked: d.cont_qty_checked ?? "",
+                entryQty: d.cont_entry_qty ?? "",
+                qtyOk: d.cont_qty_ok ?? "",
+                rw: d.cont_rw ?? "",
+                scrap: d.cont_scrap ?? "",
+              },
+              dispatchDetail: {
+                customer: d.customer || "",
+                date: d.dispatch_date || today,
+              },
+              remark: d.remark || "",
+            });
+            setPreparedBy(d.submitted_by || d.prepared_by || "");
+
+            // Determine active action based on populated data
+            if (d.retro_qty_checked !== null || d.retro_qty_ok !== null || d.retro_entry_qty !== null) {
+              setActiveAction("retroactive");
+            } else if (d.cont_qty_checked !== null || d.cont_qty_ok !== null || d.cont_entry_qty !== null) {
+              setActiveAction("containment");
+            } else {
+              setActiveAction("");
+            }
+
+            // Restore daily tracking data (Dots)
+            if (d.daily_tracking_data) {
+              let trackingObj = typeof d.daily_tracking_data === 'string' ? JSON.parse(d.daily_tracking_data) : d.daily_tracking_data;
+              const keys = Object.keys(trackingObj);
+              if (keys.length > 0) {
+                // Get the latest day's state
+                setCurrentDayData(trackingObj[keys[keys.length - 1]] || {
+                  man: "", machine: "", material: "", method: "", submittedAt: null
+                });
+              }
+            }
+
+            // Fetch operations for the part
+            if (d.part_info) {
+              const basePartName = d.part_info.split(' (')[0];
+              axios.get(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(basePartName)}`)
+                .then(res => setOperationList(res.data))
+                .catch(err => console.error(err));
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching report data:", error);
+        }
+      };
+      fetchReportData();
+    }
+  }, [id, today]);
+
+  useEffect(() => {
+    if (!id) {
+      localStorage.removeItem("mChangeTrackingData");
+      setDailyTrackingData({});
+      setCurrentDayData({
+        man: "",
+        machine: "",
+        material: "",
+        method: "",
+        submittedAt: null,
+      });
+    }
 
     fetch(`${BASE_URL}/api/master-dropdown/?filter=all_parts`)
       .then((res) => res.json())
@@ -129,7 +214,7 @@ const MChangeTrackForm = () => {
         }
       })
       .catch((err) => console.error("Error fetching customers:", err));
-  }, []);
+  }, [id]);
 
   const getNextStatus = (currentStatus) => {
     if (currentStatus === "") return "CHANGE";
@@ -139,44 +224,26 @@ const MChangeTrackForm = () => {
   };
 
   const getStatusDot = (status) => {
+    const disableClass = id ? "cursor-not-allowed opacity-80" : "cursor-pointer hover:ring-2";
     switch (status) {
       case "CHANGE":
-        return (
-          <span
-            className="inline-block w-8 h-8 rounded-full bg-red-500 cursor-pointer hover:ring-2 hover:ring-red-300 transition-all shadow-sm"
-            title="Change"
-          ></span>
-        );
+        return <span className={`inline-block w-8 h-8 rounded-full bg-red-500 transition-all shadow-sm ${disableClass}`} title="Change"></span>;
       case "NO CHANGE":
-        return (
-          <span
-            className="inline-block w-8 h-8 rounded-full bg-green-500 cursor-pointer hover:ring-2 hover:ring-green-300 transition-all shadow-sm"
-            title="No Change"
-          ></span>
-        );
+        return <span className={`inline-block w-8 h-8 rounded-full bg-green-500 transition-all shadow-sm ${disableClass}`} title="No Change"></span>;
       default:
-        return (
-          <span
-            className="inline-block w-8 h-8 rounded-full bg-gray-200 cursor-pointer hover:ring-2 hover:ring-gray-300 transition-all shadow-sm"
-            title="Not Set"
-          ></span>
-        );
+        return <span className={`inline-block w-8 h-8 rounded-full bg-gray-200 transition-all shadow-sm ${disableClass}`} title="Not Set"></span>;
     }
   };
 
   const handleDailyChange = (field, value) => {
+    if (id) return; // Prevent change in view mode
     const newData = { ...currentDayData };
     newData[field] = value;
     newData.submittedAt = new Date().toISOString();
     setCurrentDayData(newData);
 
     const today_date = new Date();
-    const year = today_date.getFullYear();
-    const month = today_date.getMonth() + 1;
-    const day = today_date.getDate();
-    const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(
-      day
-    ).padStart(2, "0")}`;
+    const dateKey = `${today_date.getFullYear()}-${String(today_date.getMonth() + 1).padStart(2, "0")}-${String(today_date.getDate()).padStart(2, "0")}`;
 
     setDailyTrackingData((prev) => ({
       ...prev,
@@ -185,28 +252,23 @@ const MChangeTrackForm = () => {
   };
 
   const handleFormChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    if (id) return;
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   // Custom Part Selection
   const handlePartSelection = (partName, displayName) => {
+    if (id) return;
     setFormData((prev) => ({
       ...prev,
       partNameNo: displayName,
-      operationNo: "", // Reset operation when part changes
+      operationNo: "",
     }));
     setShowPartDropdown(false);
     setPartSearch("");
 
     if (partName) {
-      fetch(
-        `${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(
-          partName
-        )}`
-      )
+      fetch(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(partName)}`)
         .then((res) => res.json())
         .then((data) => setOperationList(data))
         .catch((err) => console.error("Error fetching operations:", err));
@@ -216,6 +278,7 @@ const MChangeTrackForm = () => {
   };
 
   const handleNestedChange = (section, field, value) => {
+    if (id) return;
     setFormData((prev) => ({
       ...prev,
       [section]: {
@@ -226,6 +289,8 @@ const MChangeTrackForm = () => {
   };
 
   const handleSubmit = async () => {
+    if (id) return;
+
     if (!formData.partNameNo || !formData.operationNo) {
       alert("Please select Part Name/Number and Operation No.");
       return;
@@ -233,19 +298,13 @@ const MChangeTrackForm = () => {
 
     setIsSubmitting(true);
     const today_date = new Date();
-    const year = today_date.getFullYear();
-    const month = today_date.getMonth() + 1;
-    const day = today_date.getDate();
-    const dateKey = `${year}-${String(month).padStart(2, "0")}-${String(
-      day
-    ).padStart(2, "0")}`;
+    const dateKey = `${today_date.getFullYear()}-${String(today_date.getMonth() + 1).padStart(2, "0")}-${String(today_date.getDate()).padStart(2, "0")}`;
 
     const finalDailyTrackingData = {
       ...dailyTrackingData,
       [dateKey]: currentDayData,
     };
 
-    // YEH FUNCTION STRING KO NUMBER MEIN YA KHALI HONE PAR NULL MEIN CONVERT KAREGA
     const parseNumOrNull = (val) => {
       if (val === "" || val === null || val === undefined) return null;
       const parsed = Number(val);
@@ -263,7 +322,6 @@ const MChangeTrackForm = () => {
       training_provided: formData.trainingProvided,
       setup_approval: formData.setupApproval.status,
 
-      // YAHAN CONDITION LAGAYI HAI KI JO ACTIVE HO SIRF USI KA DATA JAYE
       retro_qty_checked: activeAction === "retroactive" ? parseNumOrNull(formData.retroactive.qtyChecked) : null,
       retro_entry_qty: activeAction === "retroactive" ? parseNumOrNull(formData.retroactive.entryQty) : null,
       retro_qty_ok: activeAction === "retroactive" ? parseNumOrNull(formData.retroactive.qtyOk) : null,
@@ -292,103 +350,58 @@ const MChangeTrackForm = () => {
     try {
       const response = await fetch(`${BASE_URL}/api/save-4m-record/`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (response.ok) {
         const currentUser = localStorage.getItem("username") || "Unknown User";
-
         try {
+          const data = await response.json();
           await axios.post(API_LOG, {
             username: currentUser,
-            report_name: "4M Tracking Summary Form", // Yahan hardcode kar diya form ka naam
+            report_name: "4M Tracking Summary Form",
+            record_id: data.record_id // 🔥 Add Activity Record ID
           });
           console.log("Activity log successfully saved!");
         } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
+          console.error("Activity log error:", logError);
         }
-        const data = await response.json();
-        console.log("Backend Response:", data);
-        localStorage.setItem(
-          "mChangeTrackingData",
-          JSON.stringify(finalDailyTrackingData)
-        );
         alert("Form submitted successfully to the backend!");
         handleReset();
       } else {
         const errorData = await response.json();
-        console.error("Validation Error Details:", errorData);
-        alert(
-          `Validation Error! Check console for details. ` +
-            JSON.stringify(errorData)
-        );
+        alert(`Validation Error! Check console for details. ` + JSON.stringify(errorData));
       }
     } catch (error) {
       console.error("Error saving to backend:", error);
       alert(`Failed to save data to the backend. Check the console.`);
-      localStorage.setItem(
-        "mChangeTrackingData",
-        JSON.stringify(finalDailyTrackingData)
-      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleReset = () => {
+    if (id) return;
     setFormData({
-      time: "",
-      mcNo: "",
-      changeDesc: "",
-      natureOfChange: "Planned",
-      actionTaken: "",
-      partNameNo: "",
-      operationNo: "",
-      trainingProvided: "",
-      setupApproval: { status: "" },
-      retroactive: {
-        qtyChecked: "",
-        entryQty: "",
-        qtyOk: "",
-        rw: "",
-        scrap: "",
-      },
-      containmentSuspected: {
-        qtyChecked: "",
-        entryQty: "",
-        qtyOk: "",
-        rw: "",
-        scrap: "",
-      },
-      dispatchDetail: { customer: "", date: today },
-      remark: "",
+      time: "", mcNo: "", changeDesc: "", natureOfChange: "Planned", actionTaken: "",
+      partNameNo: "", operationNo: "", trainingProvided: "", setupApproval: { status: "" },
+      retroactive: { qtyChecked: "", entryQty: "", qtyOk: "", rw: "", scrap: "" },
+      containmentSuspected: { qtyChecked: "", entryQty: "", qtyOk: "", rw: "", scrap: "" },
+      dispatchDetail: { customer: "", date: today }, remark: "",
     });
-
     setPreparedBy("");
     setActiveAction(""); 
-    setCurrentDayData({
-      man: "",
-      machine: "",
-      material: "",
-      method: "",
-      submittedAt: null,
-    });
+    setCurrentDayData({ man: "", machine: "", material: "", method: "", submittedAt: null });
     setOperationList([]);
   };
 
   const handleBack = () => {
-    window.location.href = "/production-hub";
+    navigate(-1); // Changed to React Router navigation
   };
 
   const getFormattedDate = () => {
-    return new Date().toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    return new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
   const categories = [
@@ -401,61 +414,20 @@ const MChangeTrackForm = () => {
   const statusOptions = ["OK", "NOT OK", "PENDING", "NA"];
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: C.pageBg,
-        padding: "28px 16px",
-        fontFamily: "'Inter', system-ui, sans-serif",
-      }}
-    >
-      <div className="max-w-7xl mx-auto mb-4">
+    <div style={{ minHeight: "100vh", background: C.pageBg, padding: "28px 16px", fontFamily: "'Inter', system-ui, sans-serif" }}>
+      <div className="max-w-7xl mx-auto mb-4 flex justify-between items-center">
         <button onClick={handleBack}>
-          {/* <div className="bg-white border border-gray-200 rounded-none p-2 shadow-sm group-hover:shadow-md transition-shadow">
-            <ArrowLeft className="w-5 h-5 text-gray-500" />
-          </div> */}
-          <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 7,
-              background: C.white,
-              border: `1.5px solid ${C.redBorder}`,
-              color: C.red,
-              padding: "8px 8px",
-              borderRadius: 4,
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: ".1em",
-              textTransform: "uppercase",
-              cursor: "pointer",
-              boxShadow: "0 1px 3px rgba(0,0,0,.05)",
-            }}
-          >
-            Back to Production Hub
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 7, background: C.white, border: `1.5px solid ${C.redBorder}`, color: C.red, padding: "8px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,.05)" }}>
+            <ArrowLeft size={13}/> Back
           </span>
         </button>
       </div>
 
-      <div
-        style={{
-          background: C.white,
-          borderRadius: 8,
-          border: `1px solid ${C.border}`,
-          overflow: "hidden",
-          boxShadow: C.shadow,
-        }}
-      >
-        <div
-          style={{
-            background: C.red,
-            padding: "20px 28px",
-            borderBottom: `1px solid ${C.redDark}`,
-          }}
-        >
+      <div style={{ background: C.white, borderRadius: 8, border: `1px solid ${C.border}`, overflow: "hidden", boxShadow: C.shadow }}>
+        <div style={{ background: C.red, padding: "20px 28px", borderBottom: `1px solid ${C.redDark}` }}>
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
             <h1 className="text-2xl sm:text-2xl font-bold text-white uppercase tracking-widest">
-              4M Change Record Sheet
+              {id ? "4M Change Record Sheet (REVIEW)" : "4M Change Record Sheet"}
             </h1>
             <div className="flex items-center sm:items-center">
               <div className="inline-flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-none border border-white/30 shadow-lg">
@@ -485,7 +457,6 @@ const MChangeTrackForm = () => {
                       <p className="text-xs text-gray-500 hidden sm:block">Change implemented</p>
                     </div>
                   </div>
-
                   <div className="flex items-center space-x-3 p-1 sm:p-2">
                     <span className="inline-block w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-green-500"></span>
                     <div>
@@ -493,7 +464,6 @@ const MChangeTrackForm = () => {
                       <p className="text-xs text-gray-500 hidden sm:block">No change from standard</p>
                     </div>
                   </div>
-
                   <div className="flex items-center space-x-3 p-1 sm:p-2">
                     <span className="inline-block w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gray-200"></span>
                     <div>
@@ -516,10 +486,7 @@ const MChangeTrackForm = () => {
                 <div className="p-4 sm:p-5 md:p-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {categories.map((category) => (
-                      <div
-                        key={category.id}
-                        className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-none border border-gray-200"
-                      >
+                      <div key={category.id} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-none border border-gray-200">
                         <div className="flex items-center space-x-2 sm:space-x-3">
                           <div className="text-gray-500 bg-white p-1.5 sm:p-2 rounded-none shadow-sm border border-gray-200">
                             {category.icon}
@@ -529,11 +496,13 @@ const MChangeTrackForm = () => {
                           </span>
                         </div>
                         <button
+                          type="button"
                           onClick={() => {
+                            if (id) return; // Prevent clicks in view mode
                             const nextValue = getNextStatus(currentDayData[category.id]);
                             handleDailyChange(category.id, nextValue);
                           }}
-                          className="focus:outline-none transform hover:scale-110 transition-transform"
+                          className={`focus:outline-none ${!id && 'transform hover:scale-110'} transition-transform`}
                         >
                           {getStatusDot(currentDayData[category.id])}
                         </button>
@@ -558,8 +527,9 @@ const MChangeTrackForm = () => {
                 <input
                   type="time"
                   value={formData.time}
+                  readOnly={!!id}
                   onChange={(e) => handleFormChange("time", e.target.value)}
-                  className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700"
+                  className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700 disabled:bg-gray-50"
                 />
               </div>
 
@@ -570,8 +540,9 @@ const MChangeTrackForm = () => {
                 <input
                   type="text"
                   value={formData.mcNo}
+                  readOnly={!!id}
                   onChange={(e) => handleFormChange("mcNo", e.target.value)}
-                  className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700"
+                  className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700 disabled:bg-gray-50"
                   placeholder="Enter machine number"
                 />
               </div>
@@ -583,8 +554,9 @@ const MChangeTrackForm = () => {
               </label>
               <textarea
                 value={formData.changeDesc}
+                readOnly={!!id}
                 onChange={(e) => handleFormChange("changeDesc", e.target.value)}
-                className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700"
+                className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700 disabled:bg-gray-50"
                 rows="3"
                 placeholder="Enter change description..."
               />
@@ -597,10 +569,9 @@ const MChangeTrackForm = () => {
                 </label>
                 <select
                   value={formData.natureOfChange}
-                  onChange={(e) =>
-                    handleFormChange("natureOfChange", e.target.value)
-                  }
-                  className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700"
+                  disabled={!!id}
+                  onChange={(e) => handleFormChange("natureOfChange", e.target.value)}
+                  className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700 disabled:bg-gray-50"
                 >
                   <option value="Planned">Planned</option>
                   <option value="Unplanned">Unplanned</option>
@@ -614,10 +585,9 @@ const MChangeTrackForm = () => {
                 <input
                   type="text"
                   value={formData.actionTaken}
-                  onChange={(e) =>
-                    handleFormChange("actionTaken", e.target.value)
-                  }
-                  className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700"
+                  readOnly={!!id}
+                  onChange={(e) => handleFormChange("actionTaken", e.target.value)}
+                  className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700 disabled:bg-gray-50"
                   placeholder="Enter action taken"
                 />
               </div>
@@ -630,18 +600,13 @@ const MChangeTrackForm = () => {
                   Part Name / Number <span className="text-red-500">*</span>
                 </label>
                 
-                {/* Invisible Overlay to close dropdown when clicking outside */}
-                {showPartDropdown && (
-                  <div 
-                    className="fixed inset-0 z-40" 
-                    onClick={() => setShowPartDropdown(false)}
-                  ></div>
+                {showPartDropdown && !id && (
+                  <div className="fixed inset-0 z-40" onClick={() => setShowPartDropdown(false)}></div>
                 )}
 
-                {/* Dropdown Trigger Box (Looks exactly like a select) */}
                 <div
-                  className={`w-full border ${showPartDropdown ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'} rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm bg-white text-slate-700 cursor-pointer flex justify-between items-center transition-all`}
-                  onClick={() => setShowPartDropdown(!showPartDropdown)}
+                  className={`w-full border ${showPartDropdown ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'} rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm ${id ? 'bg-gray-50 cursor-not-allowed' : 'bg-white cursor-pointer'} text-slate-700 flex justify-between items-center transition-all`}
+                  onClick={() => { if (!id) setShowPartDropdown(!showPartDropdown) }}
                 >
                   <span className={formData.partNameNo ? "text-slate-700" : "text-slate-400"}>
                     {formData.partNameNo || "Select Part Name / Number"}
@@ -649,11 +614,9 @@ const MChangeTrackForm = () => {
                   <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
 
-                {/* Dropdown List (Increased max height to 400px) */}
-                {showPartDropdown && (
+                {showPartDropdown && !id && (
                   <div className="absolute z-50 w-full mt-0 bg-white border border-gray-300 shadow-xl max-h-[400px] flex flex-col">
                     <div className="p-1.5 border-b border-gray-200 bg-gray-50 sticky top-0">
-                      {/* FIXED SEARCH INPUT COLOR HERE */}
                       <input
                         type="text"
                         className="w-full border border-gray-300 rounded-none px-2 py-1.5 text-xs sm:text-sm focus:outline-none focus:border-gray-400 text-slate-800 bg-white placeholder-gray-400"
@@ -687,9 +650,6 @@ const MChangeTrackForm = () => {
                             </li>
                           );
                         })}
-                      {partsList.filter((part) => `${part.part_name} ${part.part_no ? `(${part.part_no})` : ""}`.toLowerCase().includes(partSearch.toLowerCase())).length === 0 && (
-                        <li className="px-3 py-2 text-sm text-gray-500 text-center italic">No parts matched</li>
-                      )}
                     </ul>
                   </div>
                 )}
@@ -701,20 +661,18 @@ const MChangeTrackForm = () => {
                 </label>
                 <select
                   value={formData.operationNo}
-                  onChange={(e) =>
-                    handleFormChange("operationNo", e.target.value)
-                  }
-                  disabled={!formData.partNameNo}
-                  className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700 disabled:bg-slate-50 disabled:cursor-not-allowed"
+                  disabled={!!id || !formData.partNameNo}
+                  onChange={(e) => handleFormChange("operationNo", e.target.value)}
+                  className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700 disabled:bg-gray-50 disabled:cursor-not-allowed"
                 >
-                  <option value="" className="text-slate-400">
-                    Select Operation
-                  </option>
+                  <option value="" className="text-slate-400">Select Operation</option>
                   {operationList.map((op, index) => (
-                    <option key={index} value={op}>
-                      {op}
-                    </option>
+                    <option key={index} value={op}>{op}</option>
                   ))}
+                  {/* Fallback for view mode if operation list didn't load */}
+                  {id && formData.operationNo && !operationList.includes(formData.operationNo) && (
+                    <option value={formData.operationNo}>{formData.operationNo}</option>
+                  )}
                 </select>
               </div>
             </div>
@@ -730,10 +688,9 @@ const MChangeTrackForm = () => {
                   </span>
                   <select
                     value={formData.setupApproval.status}
-                    onChange={(e) =>
-                      handleNestedChange("setupApproval", "status", e.target.value)
-                    }
-                    className="w-full sm:flex-1 border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
+                    disabled={!!id}
+                    onChange={(e) => handleNestedChange("setupApproval", "status", e.target.value)}
+                    className="w-full sm:flex-1 border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-50"
                   >
                     <option value="">Not Set</option>
                     {statusOptions.map((option) => (
@@ -749,8 +706,9 @@ const MChangeTrackForm = () => {
                 </label>
                 <select
                   value={formData.trainingProvided}
+                  disabled={!!id}
                   onChange={(e) => handleFormChange("trainingProvided", e.target.value)}
-                  className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
+                  className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-50"
                 >
                   <option value="">Not Set</option>
                   {statusOptions.map((option) => (
@@ -769,10 +727,11 @@ const MChangeTrackForm = () => {
                     id="radio-retro"
                     name="mutuallyExclusiveAction" 
                     checked={activeAction === "retroactive"} 
+                    disabled={!!id}
                     onChange={() => setActiveAction("retroactive")}
-                    className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 cursor-pointer"
+                    className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 cursor-pointer disabled:cursor-not-allowed"
                   />
-                  <label htmlFor="radio-retro" className="font-bold text-gray-800 text-sm sm:text-base uppercase tracking-wide cursor-pointer w-full">
+                  <label htmlFor="radio-retro" className={`font-bold text-gray-800 text-sm sm:text-base uppercase tracking-wide ${id ? 'cursor-not-allowed' : 'cursor-pointer'} w-full`}>
                     Retroactive
                   </label>
                 </div>
@@ -781,7 +740,7 @@ const MChangeTrackForm = () => {
                     <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Qty Checked</label>
                     <input
                       type="text"
-                      disabled={activeAction !== "retroactive"}
+                      disabled={activeAction !== "retroactive" || !!id}
                       value={formData.retroactive.qtyChecked}
                       onChange={(e) => handleNestedChange("retroactive", "qtyChecked", e.target.value)}
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -792,30 +751,29 @@ const MChangeTrackForm = () => {
                     <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Entry Quantity</label>
                     <input
                       type="text"
-                      disabled={activeAction !== "retroactive"}
+                      disabled={activeAction !== "retroactive" || !!id}
                       value={formData.retroactive.entryQty}
                       onChange={(e) => handleNestedChange("retroactive", "entryQty", e.target.value)}
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
                       placeholder="Enter quantity"
                     />
                   </div>
-
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Qty OK</label>
                     <input
                       type="text"
-                      disabled={activeAction !== "retroactive"}
+                      disabled={activeAction !== "retroactive" || !!id}
                       value={formData.retroactive.qtyOk}
                       onChange={(e) => handleNestedChange("retroactive", "qtyOk", e.target.value)}
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      placeholder="Enter amount (e.g. 1000)"
+                      placeholder="Enter amount"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">R/W</label>
                     <input
                       type="text"
-                      disabled={activeAction !== "retroactive"}
+                      disabled={activeAction !== "retroactive" || !!id}
                       value={formData.retroactive.rw}
                       onChange={(e) => handleNestedChange("retroactive", "rw", e.target.value)}
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -826,7 +784,7 @@ const MChangeTrackForm = () => {
                     <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Scrap</label>
                     <input
                       type="text"
-                      disabled={activeAction !== "retroactive"}
+                      disabled={activeAction !== "retroactive" || !!id}
                       value={formData.retroactive.scrap}
                       onChange={(e) => handleNestedChange("retroactive", "scrap", e.target.value)}
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -844,10 +802,11 @@ const MChangeTrackForm = () => {
                     id="radio-contain"
                     name="mutuallyExclusiveAction" 
                     checked={activeAction === "containment"} 
+                    disabled={!!id}
                     onChange={() => setActiveAction("containment")}
-                    className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 cursor-pointer"
+                    className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 cursor-pointer disabled:cursor-not-allowed"
                   />
-                  <label htmlFor="radio-contain" className="font-bold text-gray-800 text-sm sm:text-base uppercase tracking-wide cursor-pointer w-full">
+                  <label htmlFor="radio-contain" className={`font-bold text-gray-800 text-sm sm:text-base uppercase tracking-wide ${id ? 'cursor-not-allowed' : 'cursor-pointer'} w-full`}>
                     Containment Suspected
                   </label>
                 </div>
@@ -856,7 +815,7 @@ const MChangeTrackForm = () => {
                     <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Qty Checked</label>
                     <input
                       type="text"
-                      disabled={activeAction !== "containment"}
+                      disabled={activeAction !== "containment" || !!id}
                       value={formData.containmentSuspected.qtyChecked}
                       onChange={(e) => handleNestedChange("containmentSuspected", "qtyChecked", e.target.value)}
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -867,30 +826,29 @@ const MChangeTrackForm = () => {
                     <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Entry Quantity</label>
                     <input
                       type="text"
-                      disabled={activeAction !== "containment"}
+                      disabled={activeAction !== "containment" || !!id}
                       value={formData.containmentSuspected.entryQty}
                       onChange={(e) => handleNestedChange("containmentSuspected", "entryQty", e.target.value)}
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
                       placeholder="Enter quantity"
                     />
                   </div>
-                  
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Qty OK</label>
                     <input
                       type="text"
-                      disabled={activeAction !== "containment"}
+                      disabled={activeAction !== "containment" || !!id}
                       value={formData.containmentSuspected.qtyOk}
                       onChange={(e) => handleNestedChange("containmentSuspected", "qtyOk", e.target.value)}
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      placeholder="Enter amount (e.g. 1000)"
+                      placeholder="Enter amount"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">R/W</label>
                     <input
                       type="text"
-                      disabled={activeAction !== "containment"}
+                      disabled={activeAction !== "containment" || !!id}
                       value={formData.containmentSuspected.rw}
                       onChange={(e) => handleNestedChange("containmentSuspected", "rw", e.target.value)}
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -901,7 +859,7 @@ const MChangeTrackForm = () => {
                     <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Scrap</label>
                     <input
                       type="text"
-                      disabled={activeAction !== "containment"}
+                      disabled={activeAction !== "containment" || !!id}
                       value={formData.containmentSuspected.scrap}
                       onChange={(e) => handleNestedChange("containmentSuspected", "scrap", e.target.value)}
                       className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -921,8 +879,9 @@ const MChangeTrackForm = () => {
                     <label className="block text-xs font-bold text-slate-700 mb-1 uppercase">Customer</label>
                     <select
                       value={formData.dispatchDetail.customer}
+                      disabled={!!id}
                       onChange={(e) => handleNestedChange("dispatchDetail", "customer", e.target.value)}
-                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
+                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-50"
                     >
                       <option value="">Select Customer</option>
                       {customerList.map((cust, idx) => {
@@ -934,12 +893,7 @@ const MChangeTrackForm = () => {
                         } else if (cust && typeof cust === "object") {
                           customerName = cust.customer_name || cust.name || "";
                         }
-                        
-                        return (
-                          <option key={idx} value={customerName}>
-                            {customerName}
-                          </option>
-                        );
+                        return <option key={idx} value={customerName}>{customerName}</option>;
                       })}
                     </select>
                   </div>
@@ -948,8 +902,9 @@ const MChangeTrackForm = () => {
                     <input
                       type="date"
                       value={formData.dispatchDetail.date}
+                      disabled={!!id}
                       onChange={(e) => handleNestedChange("dispatchDetail", "date", e.target.value)}
-                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700"
+                      className="w-full border border-gray-300 rounded-none px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 bg-white text-slate-700 disabled:bg-gray-50"
                     />
                   </div>
                 </div>
@@ -962,8 +917,9 @@ const MChangeTrackForm = () => {
               </label>
               <textarea
                 value={formData.remark}
+                readOnly={!!id}
                 onChange={(e) => handleFormChange("remark", e.target.value)}
-                className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700"
+                className="w-full border border-gray-300 rounded-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-slate-700 disabled:bg-gray-50"
                 rows="3"
                 placeholder="Enter remarks..."
               />
@@ -977,28 +933,41 @@ const MChangeTrackForm = () => {
                 <input
                   type="text"
                   value={preparedBy}
+                  readOnly={!!id}
                   onChange={(e) => setPreparedBy(e.target.value)}
                   placeholder="Enter name"
-                  className="px-3 py-2 border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-red-500 text-sm w-full sm:w-64 bg-white text-slate-800"
+                  className="px-3 py-2 border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-red-500 text-sm w-full sm:w-64 bg-white text-slate-800 disabled:bg-gray-50 disabled:text-gray-500"
                 />
               </div>
               
               <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={handleReset}
-                  disabled={isSubmitting}
-                  className="w-full sm:w-auto px-6 py-3 border-2 border-gray-300 rounded-none text-xs sm:text-sm font-bold tracking-widest text-gray-700 bg-white hover:bg-gray-50 transition-all uppercase disabled:opacity-50"
-                >
-                  Reset Data
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="w-full sm:w-auto px-8 py-3 bg-[#e03131] text-white rounded-none text-xs sm:text-sm font-bold tracking-widest uppercase hover:bg-[#c92a2a] transition-all shadow-sm disabled:opacity-70"
-                >
-                  {isSubmitting ? "Saving..." : "Save Data"}
-                </button>
+                {id ? (
+                  <button
+                    type="button"
+                    onClick={() => alert("Report Approved Successfully!")}
+                    className="w-full sm:w-auto px-8 py-3 bg-[#10b981] hover:bg-[#059669] text-white rounded-none text-xs sm:text-sm font-bold tracking-widest uppercase transition-all shadow-sm flex items-center justify-center gap-2"
+                  >
+                    <Check size={16} /> APPROVE REPORT
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleReset}
+                      disabled={isSubmitting}
+                      className="w-full sm:w-auto px-6 py-3 border-2 border-gray-300 rounded-none text-xs sm:text-sm font-bold tracking-widest text-gray-700 bg-white hover:bg-gray-50 transition-all uppercase disabled:opacity-50"
+                    >
+                      Reset Data
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSubmit}
+                      disabled={isSubmitting}
+                      className="w-full sm:w-auto px-8 py-3 bg-[#e03131] text-white rounded-none text-xs sm:text-sm font-bold tracking-widest uppercase hover:bg-[#c92a2a] transition-all shadow-sm disabled:opacity-70"
+                    >
+                      {isSubmitting ? "Saving..." : "Save Data"}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>

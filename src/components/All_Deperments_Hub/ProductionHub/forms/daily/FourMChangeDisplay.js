@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom"; // 🔥 IMPORT useParams
 import axios from "axios";
 import {
   ArrowLeft,
@@ -16,6 +16,7 @@ import {
   Package,
   Layers,
   Hash,
+  Check, // 🔥 Import Check for Approve button
 } from "lucide-react";
 
 const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
@@ -39,7 +40,9 @@ const C = {
   rowHead: "#fafaf8",
   rowBorder: "#e8e4de",
   shadow: "0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04)",
+  green: "#16a34a", // Add green color for button
 };
+
 const EMPTY_ROW = {
   machineNo: "",
   operatorName: "",
@@ -51,40 +54,88 @@ const EMPTY_ROW = {
 
 const FourMDisplayBoard = () => {
   const navigate = useNavigate();
+  const { id } = useParams(); // 🔥 GET ID FROM URL
 
-  const currentDate = new Date();
-  const day = String(currentDate.getDate()).padStart(2, "0");
-  const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-  const year = currentDate.getFullYear();
-  const formattedDate = `${day}.${month}.${year}`;
+  const [formDate, setFormDate] = useState("");
+  const [preparedBy, setPreparedBy] = useState("");
+
+  useEffect(() => {
+    const currentDate = new Date();
+    const day = String(currentDate.getDate()).padStart(2, "0");
+    const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+    const year = currentDate.getFullYear();
+    setFormDate(`${day}.${month}.${year}`);
+  }, []);
 
   const [rows, setRows] = useState(
     Array.from({ length: 3 }, (_, i) => ({ id: i + 1, ...EMPTY_ROW })),
   );
   const [isLoading, setIsLoading] = useState(false);
 
+  // 🔥 FETCH REPORT DATA IF ID EXISTS (VIEW/APPROVE MODE)
+  useEffect(() => {
+    if (id) {
+      const fetchReportData = async () => {
+        setIsLoading(true);
+        try {
+          const response = await axios.get(`${BASE_URL}/api/get-single-production-report/four-m-display/${id}/`);
+          
+          if (response.data.success) {
+            const data = response.data.data;
+            
+            // This API returns a single record based on ID. We will display it as the only row.
+            setRows([
+              {
+                id: 1,
+                machineNo: data.machine_no || "",
+                operatorName: data.operator_name || "",
+                man: data.man || "",
+                machine: data.machine || "",
+                material: data.material || "",
+                method: data.method || "",
+              }
+            ]);
+            
+            setPreparedBy(data.submitted_by || "");
+          }
+        } catch (error) {
+          console.error("Error fetching report data:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchReportData();
+    }
+  }, [id]);
+
   const handleAddRow = () => {
+    if (id) return; // Disable in view mode
     const nextId = rows.length > 0 ? Math.max(...rows.map((r) => r.id)) + 1 : 1;
     setRows((prev) => [...prev, { id: nextId, ...EMPTY_ROW }]);
   };
 
-  const handleDeleteRow = (id) => {
+  const handleDeleteRow = (rowId) => {
+    if (id) return; // Disable in view mode
     if (rows.length === 1) return;
-    setRows((prev) => prev.filter((r) => r.id !== id));
+    setRows((prev) => prev.filter((r) => r.id !== rowId));
   };
 
-  const handleChange = (id, field, value) => {
+  const handleChange = (rowId, field, value) => {
+    if (id) return; // Disable in view mode
     setRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, [field]: value } : row)),
+      prev.map((row) => (row.id === rowId ? { ...row, [field]: value } : row)),
     );
   };
 
   const handleReset = () => {
+    if (id) return; // Disable in view mode
     setRows(Array.from({ length: 3 }, (_, i) => ({ id: i + 1, ...EMPTY_ROW })));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (id) return; // Disallow submission in view mode
+
     const filledRows = rows.filter((r) => r.machineNo || r.operatorName);
     if (filledRows.length === 0) {
       alert("Please fill at least one entry before submitting.");
@@ -115,11 +166,11 @@ const FourMDisplayBoard = () => {
         try {
           await axios.post(API_LOG, {
             username: currentUser,
-            report_name: "4M Change Display  Form", // Yahan hardcode kar diya form ka naam
+            report_name: "4M Change Display Form",
+            record_id: result.record_id // 🔥 Pass Record ID
           });
-          console.log("Activity log successfully saved!");
         } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
+          console.error("Activity log error:", logError);
         }
         alert(result.message || "4M Display Board saved successfully!");
         handleReset();
@@ -127,7 +178,6 @@ const FourMDisplayBoard = () => {
         alert("Error: " + (result.error || "Please check console."));
       }
     } catch (err) {
-      console.error("Network Error:", err);
       alert("Failed to connect to the server. Make sure Django is running.");
     } finally {
       setIsLoading(false);
@@ -147,11 +197,11 @@ const FourMDisplayBoard = () => {
         <div className="mb-4 flex justify-between items-center">
           <button
             type="button"
-            onClick={() => navigate("/production-hub")}
-            className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors text-sm font-bold bg-white px-4 py-2 border border-red-200 shadow-sm rounded-none tracking-wide"
+            onClick={() => navigate(-1)} // 🔥 Sends user back to previous page
+            className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors text-sm font-bold bg-white px-4 py-2 border border-red-200 shadow-sm rounded-none tracking-wide uppercase"
           >
             <ArrowLeft className="h-4 w-4" />
-            BACK TO PRODUCTION HUB
+            Back
           </button>
         </div>
 
@@ -177,24 +227,24 @@ const FourMDisplayBoard = () => {
                 <div className="flex items-center gap-3">
                   <ClipboardList className="h-6 w-6 text-white/90" />
                   <h1 className="text-xl md:text-2xl font-bold text-white tracking-widest uppercase">
-                    4M Change Display Board
+                    {id ? "4M Change Display Board (REVIEW)" : "4M Change Display Board"}
                   </h1>
                 </div>
                 <div className="flex items-center gap-2 text-white font-bold text-sm bg-red-700/40 px-4 py-2 rounded-none border border-white/30 shadow-sm">
                   <Calendar className="h-4 w-4" />
-                  {formattedDate}
+                  {formDate}
                 </div>
               </div>
               <div className="sm:hidden flex flex-col items-center gap-3">
                 <div className="flex items-center gap-2">
                   <ClipboardList className="h-5 w-5 text-white/90" />
                   <h1 className="text-lg font-bold text-white text-center tracking-widest uppercase">
-                    4M Change Display Board
+                    {id ? "4M Change Display (REVIEW)" : "4M Change Display Board"}
                   </h1>
                 </div>
                 <div className="flex items-center gap-2 text-white font-bold text-sm bg-red-700/40 px-4 py-2 border border-white/30 shadow-sm rounded-none">
                   <Calendar className="h-4 w-4" />
-                  {formattedDate}
+                  {formDate}
                 </div>
               </div>
             </div>
@@ -229,15 +279,18 @@ const FourMDisplayBoard = () => {
                         Entry {idx + 1}
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteRow(row.id)}
-                      disabled={rows.length === 1}
-                      className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 border border-red-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded-none font-bold uppercase tracking-wide"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                      Remove
-                    </button>
+                    {/* HIDE DELETE BUTTON IN VIEW MODE */}
+                    {!id && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteRow(row.id)}
+                        disabled={rows.length === 1}
+                        className="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 border border-red-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded-none font-bold uppercase tracking-wide"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        Remove
+                      </button>
+                    )}
                   </div>
 
                   {/* Fields inside card */}
@@ -252,25 +305,26 @@ const FourMDisplayBoard = () => {
                         <input
                           type="text"
                           value={row.machineNo}
-                          onChange={(e) =>
-                            handleChange(row.id, "machineNo", e.target.value)
-                          }
+                          onChange={(e) => handleChange(row.id, "machineNo", e.target.value)}
                           placeholder="e.g. MC-101"
+                          readOnly={!!id} // 🔥 READONLY IN VIEW MODE
                           style={{
                             width: "100%",
                             padding: "10px 13px",
                             fontSize: 13,
-                            background: C.inputBg,
-                            color: C.text,
+                            background: id ? "#f9f9f7" : C.inputBg,
+                            color: id ? C.textMid : C.text,
+                            cursor: id ? "not-allowed" : "text",
                             border: `1.5px solid ${C.border}`,
                             borderRadius: 6,
                             outline: "none",
                             transition: "all .15s",
                           }}
                           onFocus={(e) => {
-                            e.target.style.borderColor = C.red;
-                            e.target.style.boxShadow =
-                              "0 0 0 3px rgba(185,28,28,.1)";
+                            if (!id) {
+                              e.target.style.borderColor = C.red;
+                              e.target.style.boxShadow = "0 0 0 3px rgba(185,28,28,.1)";
+                            }
                           }}
                           onBlur={(e) => {
                             e.target.style.borderColor = C.border;
@@ -286,25 +340,26 @@ const FourMDisplayBoard = () => {
                         <input
                           type="text"
                           value={row.operatorName}
-                          onChange={(e) =>
-                            handleChange(row.id, "operatorName", e.target.value)
-                          }
+                          onChange={(e) => handleChange(row.id, "operatorName", e.target.value)}
                           placeholder="Enter operator name"
+                          readOnly={!!id} // 🔥 READONLY
                           style={{
                             width: "100%",
                             padding: "10px 13px",
                             fontSize: 13,
-                            background: C.inputBg,
-                            color: C.text,
+                            background: id ? "#f9f9f7" : C.inputBg,
+                            color: id ? C.textMid : C.text,
+                            cursor: id ? "not-allowed" : "text",
                             border: `1.5px solid ${C.border}`,
                             borderRadius: 6,
                             outline: "none",
                             transition: "all .15s",
                           }}
                           onFocus={(e) => {
-                            e.target.style.borderColor = C.red;
-                            e.target.style.boxShadow =
-                              "0 0 0 3px rgba(185,28,28,.1)";
+                            if (!id) {
+                              e.target.style.borderColor = C.red;
+                              e.target.style.boxShadow = "0 0 0 3px rgba(185,28,28,.1)";
+                            }
                           }}
                           onBlur={(e) => {
                             e.target.style.borderColor = C.border;
@@ -324,25 +379,26 @@ const FourMDisplayBoard = () => {
                         <input
                           type="text"
                           value={row.man}
-                          onChange={(e) =>
-                            handleChange(row.id, "man", e.target.value)
-                          }
+                          onChange={(e) => handleChange(row.id, "man", e.target.value)}
                           placeholder="Enter man detail"
+                          readOnly={!!id}
                           style={{
                             width: "100%",
                             padding: "10px 13px",
                             fontSize: 13,
-                            background: C.inputBg,
-                            color: C.text,
+                            background: id ? "#f9f9f7" : C.inputBg,
+                            color: id ? C.textMid : C.text,
+                            cursor: id ? "not-allowed" : "text",
                             border: `1.5px solid ${C.border}`,
                             borderRadius: 6,
                             outline: "none",
                             transition: "all .15s",
                           }}
                           onFocus={(e) => {
-                            e.target.style.borderColor = C.red;
-                            e.target.style.boxShadow =
-                              "0 0 0 3px rgba(185,28,28,.1)";
+                            if (!id) {
+                              e.target.style.borderColor = C.red;
+                              e.target.style.boxShadow = "0 0 0 3px rgba(185,28,28,.1)";
+                            }
                           }}
                           onBlur={(e) => {
                             e.target.style.borderColor = C.border;
@@ -358,25 +414,26 @@ const FourMDisplayBoard = () => {
                         <input
                           type="text"
                           value={row.machine}
-                          onChange={(e) =>
-                            handleChange(row.id, "machine", e.target.value)
-                          }
+                          onChange={(e) => handleChange(row.id, "machine", e.target.value)}
                           placeholder="Enter machine detail"
+                          readOnly={!!id}
                           style={{
                             width: "100%",
                             padding: "10px 13px",
                             fontSize: 13,
-                            background: C.inputBg,
-                            color: C.text,
+                            background: id ? "#f9f9f7" : C.inputBg,
+                            color: id ? C.textMid : C.text,
+                            cursor: id ? "not-allowed" : "text",
                             border: `1.5px solid ${C.border}`,
                             borderRadius: 6,
                             outline: "none",
                             transition: "all .15s",
                           }}
                           onFocus={(e) => {
-                            e.target.style.borderColor = C.red;
-                            e.target.style.boxShadow =
-                              "0 0 0 3px rgba(185,28,28,.1)";
+                            if (!id) {
+                              e.target.style.borderColor = C.red;
+                              e.target.style.boxShadow = "0 0 0 3px rgba(185,28,28,.1)";
+                            }
                           }}
                           onBlur={(e) => {
                             e.target.style.borderColor = C.border;
@@ -396,25 +453,26 @@ const FourMDisplayBoard = () => {
                         <input
                           type="text"
                           value={row.material}
-                          onChange={(e) =>
-                            handleChange(row.id, "material", e.target.value)
-                          }
+                          onChange={(e) => handleChange(row.id, "material", e.target.value)}
                           placeholder="Enter material detail"
+                          readOnly={!!id}
                           style={{
                             width: "100%",
                             padding: "10px 13px",
                             fontSize: 13,
-                            background: C.inputBg,
-                            color: C.text,
+                            background: id ? "#f9f9f7" : C.inputBg,
+                            color: id ? C.textMid : C.text,
+                            cursor: id ? "not-allowed" : "text",
                             border: `1.5px solid ${C.border}`,
                             borderRadius: 6,
                             outline: "none",
                             transition: "all .15s",
                           }}
                           onFocus={(e) => {
-                            e.target.style.borderColor = C.red;
-                            e.target.style.boxShadow =
-                              "0 0 0 3px rgba(185,28,28,.1)";
+                            if (!id) {
+                              e.target.style.borderColor = C.red;
+                              e.target.style.boxShadow = "0 0 0 3px rgba(185,28,28,.1)";
+                            }
                           }}
                           onBlur={(e) => {
                             e.target.style.borderColor = C.border;
@@ -430,25 +488,26 @@ const FourMDisplayBoard = () => {
                         <input
                           type="text"
                           value={row.method}
-                          onChange={(e) =>
-                            handleChange(row.id, "method", e.target.value)
-                          }
+                          onChange={(e) => handleChange(row.id, "method", e.target.value)}
                           placeholder="Enter method detail"
+                          readOnly={!!id}
                           style={{
                             width: "100%",
                             padding: "10px 13px",
                             fontSize: 13,
-                            background: C.inputBg,
-                            color: C.text,
+                            background: id ? "#f9f9f7" : C.inputBg,
+                            color: id ? C.textMid : C.text,
+                            cursor: id ? "not-allowed" : "text",
                             border: `1.5px solid ${C.border}`,
                             borderRadius: 6,
                             outline: "none",
                             transition: "all .15s",
                           }}
                           onFocus={(e) => {
-                            e.target.style.borderColor = C.red;
-                            e.target.style.boxShadow =
-                              "0 0 0 3px rgba(185,28,28,.1)";
+                            if (!id) {
+                              e.target.style.borderColor = C.red;
+                              e.target.style.boxShadow = "0 0 0 3px rgba(185,28,28,.1)";
+                            }
                           }}
                           onBlur={(e) => {
                             e.target.style.borderColor = C.border;
@@ -461,44 +520,113 @@ const FourMDisplayBoard = () => {
                 </div>
               ))}
 
-              {/* Add Entry Button */}
-              <div>
-                <button
-                  type="button"
-                  onClick={handleAddRow}
-                  className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors text-sm font-bold bg-white px-4 py-2 border border-red-200 shadow-sm rounded-none tracking-wide uppercase"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Entry
-                </button>
-                <span className="ml-3 text-xs text-slate-400">
-                  {rows.length} entr{rows.length !== 1 ? "ies" : "y"} total
-                </span>
-              </div>
+              {/* Add Entry Button - HIDE IN VIEW MODE */}
+              {!id && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleAddRow}
+                    className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors text-sm font-bold bg-white px-4 py-2 border border-red-200 shadow-sm rounded-none tracking-wide uppercase"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Entry
+                  </button>
+                  <span className="ml-3 text-xs text-slate-400">
+                    {rows.length} entr{rows.length !== 1 ? "ies" : "y"} total
+                  </span>
+                </div>
+              )}
 
               {/* Form Actions */}
-              <div className="flex flex-col sm:flex-row justify-end gap-4 pt-6 border-t border-slate-200">
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  disabled={isLoading}
-                  className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white text-slate-700 px-6 py-3 hover:bg-slate-50 transition-all font-bold tracking-widest border-2 border-slate-300 text-sm disabled:opacity-50 rounded-none uppercase"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Reset Form
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-[#e03131] text-white px-8 py-3 hover:bg-[#c92a2a] transition-all shadow-sm font-bold tracking-widest text-sm disabled:opacity-70 disabled:cursor-not-allowed rounded-none uppercase"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-slate-200">
+                {/* Prepared By (Moved down here for consistency) */}
+                <div style={{ minWidth: 200, alignSelf: 'flex-start' }}>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      letterSpacing: ".12em",
+                      textTransform: "uppercase",
+                      color: C.textMid,
+                      marginBottom: 6,
+                    }}
+                  >
+                    Prepared By
+                  </div>
+                  <input
+                    type="text"
+                    value={preparedBy}
+                    onChange={(e) => setPreparedBy(e.target.value)}
+                    readOnly={!!id} // 🔥 DISABLED IN VIEW MODE
+                    placeholder="Enter name"
+                    style={{
+                      width: 220,
+                      padding: "8px 12px",
+                      fontSize: 13,
+                      background: id ? "#f9f9f7" : C.inputBg,
+                      color: id ? C.textMid : C.text,
+                      cursor: id ? "not-allowed" : "text",
+                      border: `1.5px solid ${C.border}`,
+                      borderRadius: 6,
+                      outline: "none",
+                    }}
+                  />
+                </div>
+
+                <div className="flex gap-4">
+                  {id ? (
+                    // 🔥 SHOW APPROVE BUTTON IN VIEW MODE
+                    <button
+                      type="button"
+                      onClick={() => alert("Report Approved Successfully!")}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        background: C.green,
+                        border: "none",
+                        color: "#fff",
+                        padding: "11px 28px",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        letterSpacing: ".1em",
+                        textTransform: "uppercase",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        transition: "background .15s",
+                        boxShadow: "0 2px 8px rgba(22,163,74,.35)",
+                      }}
+                    >
+                      <Check size={14} strokeWidth={2.5} /> APPROVE REPORT
+                    </button>
                   ) : (
-                    <Send className="h-4 w-4" />
+                    // SHOW RESET & SUBMIT BUTTONS IN CREATE MODE
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleReset}
+                        disabled={isLoading}
+                        className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white text-slate-700 px-6 py-3 hover:bg-slate-50 transition-all font-bold tracking-widest border-2 border-slate-300 text-sm disabled:opacity-50 rounded-none uppercase"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                        Reset Form
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-[#e03131] text-white px-8 py-3 hover:bg-[#c92a2a] transition-all shadow-sm font-bold tracking-widest text-sm disabled:opacity-70 disabled:cursor-not-allowed rounded-none uppercase"
+                      >
+                        {isLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+                        {isLoading ? "Submitting..." : "Submit Board"}
+                      </button>
+                    </>
                   )}
-                  {isLoading ? "Submitting..." : "Submit Board"}
-                </button>
+                </div>
               </div>
             </div>
           </div>
