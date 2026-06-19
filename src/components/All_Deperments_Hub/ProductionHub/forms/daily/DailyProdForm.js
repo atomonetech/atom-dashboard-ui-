@@ -62,7 +62,6 @@ const DailyProdForm = () => {
   const [isSavingOperator, setIsSavingOperator] = useState(false);
   const [preparedBy, setPreparedBy] = useState("");
 
-  // Form states
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     plant: "",
@@ -150,7 +149,6 @@ const DailyProdForm = () => {
       .catch((err) => console.error("Error fetching parts:", err));
   }, []);
 
-  // 2. Fetch Operators & Machines based on Plant
   useEffect(() => {
     const selectedPlant = formData.plant;
 
@@ -427,7 +425,6 @@ const DailyProdForm = () => {
                 </select>
               </div>
 
-              {/* Shift */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <ListFilter size={14} className="inline mr-1 text-blue-500" /> Shift *
@@ -468,7 +465,6 @@ const DailyProdForm = () => {
                 </select>
               </div>
 
-              {/* Operator Name */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <User size={14} className="inline mr-1 text-blue-500" /> Operator Name *
@@ -506,7 +502,6 @@ const DailyProdForm = () => {
                 )}
               </div>
 
-              {/* Part Name */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Package size={14} className="inline mr-1 text-blue-500" /> Part Name *
@@ -529,7 +524,6 @@ const DailyProdForm = () => {
                 </select>
               </div>
 
-              {/* Part No */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Hash size={14} className="inline mr-1 text-blue-500" /> Part No *
@@ -544,7 +538,6 @@ const DailyProdForm = () => {
                 />
               </div>
 
-              {/* Operation Name */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Settings size={14} className="inline mr-1 text-blue-500" /> Operation Name *
@@ -566,7 +559,6 @@ const DailyProdForm = () => {
                 </select>
               </div>
 
-              {/* Planned Quantity */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Target size={14} className="inline mr-1 text-blue-500" /> Planned Qty *
@@ -581,7 +573,6 @@ const DailyProdForm = () => {
                 />
               </div>
 
-              {/* Achieved Quantity */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <CheckCircle size={14} className="inline mr-1 text-green-500" /> Achieved Qty.
@@ -596,7 +587,6 @@ const DailyProdForm = () => {
                 />
               </div>
 
-              {/* Production Start Time */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Clock size={14} className="inline mr-1 text-blue-500" /> Start Time
@@ -611,7 +601,6 @@ const DailyProdForm = () => {
                 />
               </div>
 
-              {/* Production End Time */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Clock size={14} className="inline mr-1 text-blue-500" /> End Time
@@ -641,7 +630,6 @@ const DailyProdForm = () => {
                 />
               </div>
 
-              {/* Tool Setup Time */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Wrench size={14} className="inline mr-1 text-orange-500" /> Tool Set-up Time
@@ -656,7 +644,6 @@ const DailyProdForm = () => {
                 />
               </div>
 
-              {/* Machine B/D Time */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <AlertTriangle size={14} className="inline mr-1 text-red-500" /> Machine B/D Time
@@ -671,7 +658,6 @@ const DailyProdForm = () => {
                 />
               </div>
 
-              {/* Tool B/D Time */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <AlertTriangle size={14} className="inline mr-1 text-red-500" /> Tool B/D Time
@@ -686,7 +672,6 @@ const DailyProdForm = () => {
                 />
               </div>
 
-              {/* RM Coil / Lot No */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Layers size={14} className="inline mr-1 text-indigo-500" /> RM Coil / Lot No.
@@ -701,7 +686,6 @@ const DailyProdForm = () => {
                 />
               </div>
 
-              {/* Qty Remark */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <MessageSquare size={14} className="inline mr-1 text-blue-500" /> Qty. Remark
