@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import ProductionUpdateModal from './ProductionUpdateModal'; 
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
-// Configuration mapped exactly to your Daily Category formKeys
 const FORM_CONFIG = {
     'daily-prod-plan':   { label: 'Daily Production Plan / Report', color: '#3b82f6', bg: '#eff6ff', icon: 'bi-graph-up-arrow',     formNo: 'AOT-F-PROD-03' },
     'five-s-view':       { label: 'Operator 5S Checklist',          color: '#f59e0b', bg: '#fef3c7', icon: 'bi-stars',              formNo: 'AOT-F-PROD-13A' },
@@ -15,9 +15,8 @@ const FORM_CONFIG = {
     'four-m-display':    { label: '4M Change display board',        color: '#ef4444', bg: '#fef2f2', icon: 'bi-easel2',             formNo: 'ATO-F-4M-08' },
 };
 
-// Generic master columns (Update these to match your exact backend response keys)
 const MASTER_COLS_CONFIG = {
-    'daily-prod-plan':   ['Date', 'Shift', 'Machine No',],
+    'daily-prod-plan':   ['Date', 'Shift', 'Machine No','Operator Name','Part Name',],
     'five-s-view':       ['Date','Area','Zone Leader'],
     'bin-trolley':       ['Date', 'Week','Month'],
     'tip-change':        ['Date',  'Machine Name','Machine No'],
@@ -28,7 +27,7 @@ const MASTER_COLS_CONFIG = {
 };
 
 const MODAL_HEADER_COLS_CONFIG = {
-    'daily-prod-plan':   ['Date', 'Plant','Shift', 'Machine No','Operator Name','Part Name','Part No','Operation',,'RM Coil No'],
+    'daily-prod-plan':   ['Date', 'Plant','Shift', 'Machine No','Operator Name','Part Name','Part No','Operation','RM Coil No'],
     'five-s-view':       ['Date','Area','Zone Leader','OK Count','NG Count'],
     'bin-trolley':       ['Date', 'Week','Month' ],
     'tip-change':        ['Date', 'Machine Name','Machine No'],
@@ -49,9 +48,17 @@ function groupRows(rows, masterCols, headerCols, detailCols) {
             const headerRow = {};
             headerCols.forEach(c => { headerRow[c] = row[c] || '—'; });
             
-            seen.set(key, { masterRow, headerRow, details: [] });
+            seen.set(key, { 
+                id: row.id || row.ID || row.record_id,
+                created_at: row.created_at || null,   // ✅ Raw timestamp
+                updated_at: row.updated_at || null,   // ✅ Raw timestamp
+                masterRow, 
+                headerRow, 
+                details: [] 
+            });
         }
-        const detailRow = {};
+        
+        const detailRow = { id: row.id || row.ID || row.record_id }; // 🔥 FIX: Inserted ID inside details as well
         detailCols.forEach(c => { detailRow[c] = row[c] || '—'; });
         seen.get(key).details.push(detailRow);
     });
@@ -76,14 +83,27 @@ const ProductionView = () => {
     const [modalHeaderColumns, setModalHeaderColumns] = useState([]); 
     const [detailColumns, setDetailColumns]           = useState([]);
     const [groupedReports, setGroupedReports]         = useState([]);
+    
     const [selectedReport, setSelectedReport]         = useState(null);
     const [detailOpen, setDetailOpen]                 = useState(false);
+
+    const [updateModalOpen, setUpdateModalOpen]       = useState(false);
+    const [recordToUpdate, setRecordToUpdate]         = useState(null);
+    const [refreshTrigger, setRefreshTrigger]         = useState(0); 
 
     const config = FORM_CONFIG[formKey] || {
         label: formKey, color: '#3b82f6', bg: '#eff6ff', icon: 'bi-file-earmark-text', formNo: 'N/A'
     };
 
-    const flatColumns = rows.length > 0 ? Object.keys(rows[0]) : [];
+    // 🔥 FIX: Hide 'id', 'created_at', 'updated_at' from flat columns
+    const flatColumns = rows.length > 0 
+        ? Object.keys(rows[0]).filter(k => 
+            k.toLowerCase() !== 'id' && 
+            k.toLowerCase() !== 'record_id' &&
+            k !== 'created_at' &&
+            k !== 'updated_at'
+        ) 
+        : [];
 
     useEffect(() => {
         const currentDate = new Date();
@@ -126,7 +146,6 @@ const ProductionView = () => {
             .then(json => {
                 let rawData = json.data || [];
                 
-                // DATE FORMATTER (YYYY-MM-DD -> DD-MM-YYYY)
                 const formatDisplayDate = (val) => {
                     if (!val || typeof val !== 'string') return val;
                     const regex = /^(\d{4})-(\d{2})-(\d{2})(.*)$/;
@@ -139,6 +158,8 @@ const ProductionView = () => {
                 const data = rawData.map(row => {
                     const newRow = { ...row };
                     Object.keys(newRow).forEach(key => {
+                        //  Do not convert created_at and updated_at — these are ISO timestamps
+                        if (key === 'created_at' || key === 'updated_at') return;
                         if (typeof newRow[key] === 'string' && /^\d{4}-\d{2}-\d{2}/.test(newRow[key])) {
                             newRow[key] = formatDisplayDate(newRow[key]);
                         }
@@ -157,22 +178,26 @@ const ProductionView = () => {
                     const allKeys = Array.from(allKeysSet);
                     const normalizeStr = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-                    // Map Master Columns
                     const actualMasterCols = [];
                     definedMasterCols.forEach(configCol => {
                         const match = allKeys.find(k => normalizeStr(k) === normalizeStr(configCol));
                         actualMasterCols.push(match || configCol); 
                     });
 
-                    // Map Modal Header Columns
                     const actualModalHeaderCols = [];
                     definedModalHeaderCols.forEach(configCol => {
                         const match = allKeys.find(k => normalizeStr(k) === normalizeStr(configCol));
                         actualModalHeaderCols.push(match || configCol);
                     });
 
-                    // Detail Columns (remaining keys)
-                    let dynDetailCols = allKeys.filter(k => !actualModalHeaderCols.includes(k));
+                    // 🔥 FIX: Remove 'id', 'created_at', 'updated_at' from detail columns
+                    let dynDetailCols = allKeys.filter(k => 
+                        !actualModalHeaderCols.includes(k) && 
+                        k.toLowerCase() !== 'id' && 
+                        k.toLowerCase() !== 'record_id' &&
+                        k !== 'created_at' &&
+                        k !== 'updated_at'
+                    );
                     
                     const normalCols = dynDetailCols.filter(col => !col.includes('VAL 1') && !col.includes('VAL 2'));
                     const valueCols = dynDetailCols.filter(col => col.includes('VAL 1') || col.includes('VAL 2'));
@@ -208,7 +233,7 @@ const ProductionView = () => {
                 setError('Failed to load data. Please check the backend connection.');
                 setLoading(false);
             });
-    }, [formKey, dateFilter, specificDate]);
+    }, [formKey, dateFilter, specificDate, refreshTrigger]); 
 
     const handleExport = () => {
         if (!rows.length) return;
@@ -237,6 +262,24 @@ const ProductionView = () => {
     const handleCloseDetail = () => {
         setDetailOpen(false);
         setSelectedReport(null);
+    };
+
+    const handleUpdateClick = (e, record) => {
+        e.stopPropagation();
+        setRecordToUpdate(record);
+        setUpdateModalOpen(true);
+    };
+
+    const isRecordUpdated = (record) => {
+       const createdAt = record?.created_at;
+       const updatedAt = record?.updated_at;
+
+    if (!createdAt || !updatedAt) {
+        return false;
+    }
+
+    const diff = new Date(updatedAt) - new Date(createdAt);
+         return diff > 30000; 
     };
 
     const recordLabel = isGroupedView
@@ -288,6 +331,13 @@ const ProductionView = () => {
                 .master-row:hover td { background: #e0f2fe !important; }
                 .view-detail-btn { display: inline-flex; align-items: center; gap: 5px; background: #06b6d4; color: #fff; border: none; border-radius: 6px; padding: 4px 10px; font-size: 0.73rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
                 .view-detail-btn:hover { background: #0891b2; }
+                
+                .update-btn { display: inline-flex; align-items: center; gap: 5px; background: #f59e0b; color: #fff; border: none; border-radius: 6px; padding: 4px 10px; font-size: 0.73rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+                .update-btn:hover { background: #d97706; }
+
+                .updated-badge { display: inline-flex; align-items: center; gap: 5px; background: #dcfce7; color: #15803d; border: 1.5px solid #86efac; border-radius: 6px; padding: 4px 10px; font-size: 0.73rem; font-weight: 700; white-space: nowrap; cursor: default; }
+                .row-updated td { background: #f0fdf4 !important; }
+                .row-updated:hover td { background: #dcfce7 !important; }
 
                 .detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 24px; animation: fadeIn 0.15s ease; }
                 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -403,7 +453,7 @@ const ProductionView = () => {
                             </thead>
                             <tbody>
                                 {groupedReports.map((group, i) => (
-                                    <tr key={i} className="master-row" onClick={() => handleRowClick(group)}>
+                                    <tr key={i} className={`master-row${isRecordUpdated(group) ? ' row-updated' : ''}`} onClick={() => handleRowClick(group)}>
                                         <td className="sr-td">{i + 1}</td>
                                         {masterColumns.map(col => (
                                             <td key={col} title={String(group.masterRow[col] ?? '')}>
@@ -413,9 +463,18 @@ const ProductionView = () => {
                                             </td>
                                         ))}
                                         <td>
-                                            <button className="view-detail-btn" onClick={(e) => { e.stopPropagation(); handleRowClick(group); }}>
-                                                <i className="bi bi-eye"></i> View
-                                            </button>
+                                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                                <button className="view-detail-btn" onClick={(e) => { e.stopPropagation(); handleRowClick(group); }}>
+                                                    <i className="bi bi-eye"></i> View
+                                                </button>
+                                                {formKey === 'daily-prod-plan' && (
+                                                    isRecordUpdated(group)
+                                                        ? <span className="updated-badge"><i className="bi bi-lock-fill"></i> Updated</span>
+                                                        : <button className="update-btn" onClick={(e) => handleUpdateClick(e, group)}>
+                                                            <i className="bi bi-pencil-square"></i> Update
+                                                          </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -431,11 +490,12 @@ const ProductionView = () => {
                                     {flatColumns.map(col => (
                                         <th key={col}>{col.replace(/_/g, ' ')}</th>
                                     ))}
+                                    {formKey === 'daily-prod-plan' && <th className="action-col">Action</th>}
                                 </tr>
                             </thead>
                             <tbody>
                                 {rows.map((row, i) => (
-                                    <tr key={i}>
+                                    <tr key={i} className={isRecordUpdated(row) ? 'row-updated' : ''}>
                                         <td className="sr-td">{i + 1}</td>
                                         {flatColumns.map(col => (
                                             <td key={col} title={String(row[col] ?? '')}>
@@ -444,6 +504,16 @@ const ProductionView = () => {
                                                     : String(row[col])}
                                             </td>
                                         ))}
+                                        {formKey === 'daily-prod-plan' && (
+                                            <td>
+                                                {isRecordUpdated(row)
+                                                    ? <span className="updated-badge"><i className="bi bi-lock-fill"></i> Updated</span>
+                                                    : <button className="update-btn" onClick={(e) => handleUpdateClick(e, row)}>
+                                                        <i className="bi bi-pencil-square"></i> Update
+                                                      </button>
+                                                }
+                                            </td>
+                                        )}
                                     </tr>
                                 ))}
                             </tbody>
@@ -452,7 +522,6 @@ const ProductionView = () => {
                 )}
             </div>
 
-            {/* DYNAMIC DETAIL MODAL WITH HIDDEN EMPTY COLUMNS */}
             {detailOpen && selectedReport && (() => {
                 const activeDetailCols = detailColumns.filter(col => 
                     selectedReport.details.some(detail => detail[col] !== null && detail[col] !== undefined && detail[col] !== '' && detail[col] !== '—')
@@ -521,6 +590,15 @@ const ProductionView = () => {
                     </div>
                 );
             })()}
+
+            <ProductionUpdateModal 
+                isOpen={updateModalOpen} 
+                onClose={() => { setUpdateModalOpen(false); setRecordToUpdate(null); }} 
+                formKey={formKey} 
+                recordData={recordToUpdate}
+                onRefresh={() => setRefreshTrigger(prev => prev + 1)} 
+            />
+
         </div>
     );
 };
