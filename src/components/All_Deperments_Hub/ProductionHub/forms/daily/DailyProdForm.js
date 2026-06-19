@@ -34,6 +34,9 @@ const PLANT_MAP = {
   "Plant 2": "plant_2",
 };
 
+// Hardcoded machines list for Plant 2
+const PLANT2_MACHINES = Array.from({ length: 48 }, (_, i) => i + 1);
+
 const DailyProdForm = () => {
   // API states
   const [operatorNames, setOperatorNames] = useState([]);
@@ -115,18 +118,23 @@ const DailyProdForm = () => {
       .catch((err) => console.error("Error fetching operators:", err))
       .finally(() => setOperatorsLoading(false));
 
-    setMachinesLoading(true);
-    fetch(`${BASE_URL}/api/machines/list/?plant=${plantKey}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setMachineList(data.machines);
-        } else {
-          setMachineList([]);
-        }
-      })
-      .catch((err) => console.error("Error fetching machines:", err))
-      .finally(() => setMachinesLoading(false));
+    // For Plant 2, set hardcoded machines. For other plants (Plant 1), fetch from backend API.
+    if (selectedPlant === "Plant 2") {
+      setMachineList(PLANT2_MACHINES);
+    } else {
+      setMachinesLoading(true);
+      fetch(`${BASE_URL}/api/machines/list/?plant=${plantKey}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setMachineList(data.machines);
+          } else {
+            setMachineList([]);
+          }
+        })
+        .catch((err) => console.error("Error fetching machines:", err))
+        .finally(() => setMachinesLoading(false));
+    }
   }, [formData.plant]);
 
   // Helper: Calculate total working time from start and end
@@ -241,7 +249,7 @@ const DailyProdForm = () => {
         try {
           await axios.post(API_LOG, {
             username: currentUser,
-            report_name: "Daily Prod Form", // Yahan hardcode kar diya form ka naam
+            report_name: "Daily Prod Form",
           });
           console.log("Activity log successfully saved!");
         } catch (logError) {
@@ -310,8 +318,11 @@ const DailyProdForm = () => {
       return;
     }
 
+    // 🔥 FIX 1: Current date nikal kar set kar di
+    const todayDate = new Date().toISOString().split('T')[0];
+
     const payload = {
-      production_date: "2026-04-27",
+      production_date: todayDate,
       plant: PLANT_MAP[formData.plant],
       shift: formData.shift,
       machine_no: formData.machineNo,
@@ -358,9 +369,10 @@ const DailyProdForm = () => {
         try {
           await axios.post(API_LOG, {
             username: currentUser,
-            report_name: "Daily prod Form", // Yahan hardcode kar diya form ka naam
+            report_name: "Daily prod Form",
+            record_id: result.record_id // 🔥 FIX 2: Backend se aayi record_id pass kar di
           });
-          console.log("Activity log successfully saved!");
+          console.log("Activity log successfully saved with Record ID:", result.record_id);
         } catch (logError) {
           console.error("Activity log save karne mein error aayi:", logError);
         }
@@ -417,7 +429,7 @@ const DailyProdForm = () => {
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-blue-500 rounded-lg shadow-sm">
                   <Calendar size={14} className="text-blue-700" />
                   <span className="text-sm font-medium text-slate-600 whitespace-nowrap">
-                    27 Apr 2026
+                    {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </span>
                 </div>
               </div>
@@ -465,7 +477,7 @@ const DailyProdForm = () => {
                 </select>
               </div>
 
-              {/* Machine No */}
+              {/* Machine No - Handles loading for Plant 1, and static display for Plant 2 */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Cpu size={14} className="inline mr-1 text-blue-500" />{" "}
