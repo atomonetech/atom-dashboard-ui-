@@ -793,7 +793,7 @@ const MChangeTrackForm = () => {
                     </div>
                   </div>
 
-                  /* Block B: Containment Action Panel */
+                  {/* Block B: Containment Action Panel */}
                   <div className={`p-5 rounded-lg border transition-all ${activeAction === 'containment' ? 'bg-white border-red-500 ring-1 ring-red-500 shadow-md' : 'bg-gray-50/50 border-gray-200 opacity-70'}`}>
                     <div className="flex items-center gap-3 mb-4 pb-2 border-b border-gray-100">
                       <input 
