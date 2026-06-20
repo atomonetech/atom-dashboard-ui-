@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom"; // 🔥 IMPORT useParams
 import axios from "axios";
 import {
   ArrowLeft,
@@ -13,11 +13,11 @@ import {
   UserCheck,
   PenTool,
   Hash,
+  Check, // 🔥 Import Check for Approve button
 } from "lucide-react";
 
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
- const API_LOG = `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/log-report/`;
-
+const API_LOG = `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/log-report/`;
 
 /* ─── design tokens (matches red-white theme) ────────────────── */
 const C = {
@@ -88,10 +88,10 @@ const SS = ({ disabled, style = {}, focBorder, children, ...props }) => (
     disabled={disabled}
     style={{
       ...inputBase,
-      background:   disabled ? "#f9f9f7" : C.inputBg,
-      color:        disabled ? C.textLight : C.text,
-      cursor:       disabled ? "not-allowed" : "pointer",
-      borderColor:  disabled ? C.border : C.border,
+      background:    disabled ? "#f9f9f7" : C.inputBg,
+      color:         disabled ? C.textLight : C.text,
+      cursor:        disabled ? "not-allowed" : "pointer",
+      borderColor:   disabled ? C.border : C.border,
       ...style,
     }}
     {...(disabled ? {} : focusHandlers(focBorder))}
@@ -141,6 +141,7 @@ const EMPTY_ROW = {
 /* ─── main component ─────────────────────────────────────────── */
 const FourMSummarySheet = () => {
   const navigate = useNavigate();
+  const { id } = useParams(); // 🔥 GET ID FROM URL
 
   const [rows, setRows]               = useState([{ id: 1, ...EMPTY_ROW }]);
   const [preparedBy, setPreparedBy]   = useState("");
@@ -148,6 +149,49 @@ const FourMSummarySheet = () => {
   const [isLoading, setIsLoading]     = useState(false);
   const [customersData, setCustomersData] = useState([]);
   const [partsCache, setPartsCache]   = useState({});
+
+  // 🔥 FETCH REPORT DATA IF ID EXISTS (VIEW/APPROVE MODE)
+  useEffect(() => {
+    if (id) {
+      setIsLoading(true);
+      axios.get(`${BASE_URL}/api/get-single-production-report/four-m-summary/${id}/`)
+        .then(res => {
+          if (res.data.success) {
+            const d = res.data.data;
+            setRows([{
+              id: 1,
+              date: d.date || "",
+              customer: d.customer || "",
+              partNameNo: d.part_name_no || "",
+              typeOfChange: d.type_of_change || "",
+              changeDetail: d.change_detail || "",
+              retroTotalQty: d.retro_total_qty ?? "",
+              retroOkQty: d.retro_ok_qty ?? "",
+              retroRejQty: d.retro_rej_qty ?? "",
+              statusAfterFinal: d.status_after_final || "",
+              actionForNG: d.action_for_ng || "",
+              supSignature: d.sup_signature || "",
+              signProdHead: d.sign_prod_head || "",
+              signQAHead: d.sign_qa_head || "",
+              remarks: d.remarks || ""
+            }]);
+            
+            setPreparedBy(d.submitted_by || d.prepared_by || "");
+            setApprovedBy(d.approved_by || "");
+            
+            // 🔥 Inject partNameNo into partsCache so dropdown shows it in view mode
+            if (d.customer && d.part_name_no) {
+              setPartsCache(prev => ({
+                ...prev,
+                [d.customer]: [{ part_name: d.part_name_no, part_no: "" }]
+              }));
+            }
+          }
+        })
+        .catch(err => console.error("Error fetching single report:", err))
+        .finally(() => setIsLoading(false));
+    }
+  }, [id]);
 
   useEffect(() => {
     fetch(`${BASE_URL}/api/master-dropdown/?filter=customer`)
@@ -171,21 +215,26 @@ const FourMSummarySheet = () => {
   }, []);
 
   const handleAddRow = () => {
+    if (id) return; // Prevent in view mode
     const nextId = rows.length > 0 ? Math.max(...rows.map(r => r.id)) + 1 : 1;
     setRows(prev => [...prev, { id: nextId, ...EMPTY_ROW }]);
   };
 
-  const handleDeleteRow = id => {
+  const handleDeleteRow = rowId => {
+    if (id) return; // Prevent in view mode
     if (rows.length === 1) return;
-    setRows(prev => prev.filter(r => r.id !== id));
+    setRows(prev => prev.filter(r => r.id !== rowId));
   };
 
-  const handleChange = (id, field, value) =>
-    setRows(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
+  const handleChange = (rowId, field, value) => {
+    if (id) return; // Prevent in view mode
+    setRows(prev => prev.map(r => r.id === rowId ? { ...r, [field]: value } : r));
+  };
 
-  const handleCustomerChange = async (id, customerName) => {
-    handleChange(id, "customer", customerName);
-    handleChange(id, "partNameNo", "");
+  const handleCustomerChange = async (rowId, customerName) => {
+    if (id) return; // Prevent in view mode
+    handleChange(rowId, "customer", customerName);
+    handleChange(rowId, "partNameNo", "");
     if (!customerName) return;
     if (!partsCache[customerName]) {
       try {
@@ -205,24 +254,35 @@ const FourMSummarySheet = () => {
     }
   };
 
-  const handleReset = () => { setRows([{ id: 1, ...EMPTY_ROW }]); setPreparedBy(""); setApprovedBy(""); };
+  const handleReset = () => { 
+    if (id) return;
+    setRows([{ id: 1, ...EMPTY_ROW }]); 
+    setPreparedBy(""); 
+    setApprovedBy(""); 
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
+    if (id) return; // Disallow save if in view mode
+
     const filled = rows.filter(r => r.partNameNo || r.date || r.changeDetail);
     if (!filled.length) { alert("Please fill at least one entry before submitting."); return; }
+    
     const payload = {
       prepared_by: preparedBy, approved_by: approvedBy,
       entries: filled.map((r, i) => ({
         s_no: i + 1, date: r.date, customer: r.customer,
         part_name_no: r.partNameNo, type_of_change: r.typeOfChange,
         change_detail: r.changeDetail,
-        retro_total_qty: r.retroTotalQty, retro_ok_qty: r.retroOkQty, retro_rej_qty: r.retroRejQty,
+        retro_total_qty: r.retroTotalQty ? parseInt(r.retroTotalQty) : null, 
+        retro_ok_qty: r.retroOkQty ? parseInt(r.retroOkQty) : null, 
+        retro_rej_qty: r.retroRejQty ? parseInt(r.retroRejQty) : null,
         status_after_final: r.statusAfterFinal, action_for_ng: r.actionForNG,
         sup_signature: r.supSignature, sign_prod_head: r.signProdHead,
         sign_qa_head: r.signQAHead, remarks: r.remarks,
       })),
     };
+
     setIsLoading(true);
     try {
       const response  = await fetch(`${BASE_URL}/api/save-4m-summary/`, {
@@ -236,11 +296,9 @@ const FourMSummarySheet = () => {
         try {
           await axios.post(API_LOG, {
             username: currentUser,
-            report_name: '4M Summary sheet  Form', // Yahan hardcode kar diya form ka naam
-            record_id: result.record_id // 🔥 FIX 2: Backend se aayi record_id pass kar di
+            report_name: '4M Summary sheet Form',
+            record_id: result.record_id // 🔥 Activity log update
           });
-          console.log("Activity log successfully saved with Record ID:", result.record_id);
-          console.log("Activity log successfully saved!");
         } catch (logError) {
           console.error('Activity log save karne mein error aayi:', logError);
         }
@@ -262,7 +320,7 @@ const FourMSummarySheet = () => {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <button
             type="button"
-            onClick={() => navigate("/production-hub")}
+            onClick={() => navigate(-1)} // 🔥 Sends user back safely
             style={{
               display: "inline-flex", alignItems: "center", gap: 7,
               background: C.white, border: `1.5px solid ${C.redBorder}`,
@@ -273,7 +331,7 @@ const FourMSummarySheet = () => {
             onMouseEnter={e => e.currentTarget.style.background = C.redLight}
             onMouseLeave={e => e.currentTarget.style.background = C.white}
           >
-            <ArrowLeft size={13} /> Back to Production Hub
+            <ArrowLeft size={13} /> Back
           </button>
         </div>
 
@@ -296,7 +354,7 @@ const FourMSummarySheet = () => {
                   <h1 style={{
                     margin: 0, fontSize: 18, fontWeight: 700,
                     color: "#fff", letterSpacing: ".18em", textTransform: "uppercase",
-                  }}>4M Summary Sheet</h1>
+                  }}>{id ? "4M Summary Sheet (REVIEW)" : "4M Summary Sheet"}</h1>
                 </div>
               </div>
 
@@ -358,24 +416,26 @@ const FourMSummarySheet = () => {
                             Entry {idx + 1}
                           </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteRow(row.id)}
-                          disabled={rows.length === 1}
-                          style={{
-                            display: "inline-flex", alignItems: "center", gap: 5,
-                            background: C.white, border: `1.5px solid ${C.redBorder}`,
-                            color: C.red, padding: "5px 12px", borderRadius: 4,
-                            fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase",
-                            cursor: rows.length === 1 ? "not-allowed" : "pointer",
-                            opacity: rows.length === 1 ? .3 : 1,
-                            fontFamily: "inherit", transition: "background .15s",
-                          }}
-                          onMouseEnter={e => { if (rows.length > 1) e.currentTarget.style.background = C.redLight; }}
-                          onMouseLeave={e => e.currentTarget.style.background = C.white}
-                        >
-                          <Trash2 size={11} /> Remove
-                        </button>
+                        {!id && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRow(row.id)}
+                            disabled={rows.length === 1}
+                            style={{
+                              display: "inline-flex", alignItems: "center", gap: 5,
+                              background: C.white, border: `1.5px solid ${C.redBorder}`,
+                              color: C.red, padding: "5px 12px", borderRadius: 4,
+                              fontSize: 11, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase",
+                              cursor: rows.length === 1 ? "not-allowed" : "pointer",
+                              opacity: rows.length === 1 ? .3 : 1,
+                              fontFamily: "inherit", transition: "background .15s",
+                            }}
+                            onMouseEnter={e => { if (rows.length > 1) e.currentTarget.style.background = C.redLight; }}
+                            onMouseLeave={e => e.currentTarget.style.background = C.white}
+                          >
+                            <Trash2 size={11} /> Remove
+                          </button>
+                        )}
                       </div>
 
                       {/* row card body */}
@@ -388,7 +448,7 @@ const FourMSummarySheet = () => {
 
                             <div>
                               <FL>Date</FL>
-                              <SI type="date" value={row.date} onChange={e => handleChange(row.id, "date", e.target.value)} />
+                              <SI type="date" value={row.date} onChange={e => handleChange(row.id, "date", e.target.value)} readOnly={!!id} />
                             </div>
 
                             <div>
@@ -396,9 +456,13 @@ const FourMSummarySheet = () => {
                               <SS
                                 value={row.customer}
                                 onChange={e => handleCustomerChange(row.id, e.target.value)}
+                                disabled={!!id}
                               >
                                 <option value="">Select Customer</option>
                                 {customersData.map((c, i) => <option key={i} value={c}>{c}</option>)}
+                                {id && row.customer && !customersData.includes(row.customer) && (
+                                   <option value={row.customer}>{row.customer}</option>
+                                )}
                               </SS>
                             </div>
 
@@ -407,7 +471,7 @@ const FourMSummarySheet = () => {
                               <SS
                                 value={row.partNameNo}
                                 onChange={e => handleChange(row.id, "partNameNo", e.target.value)}
-                                disabled={!row.customer}
+                                disabled={!!id || !row.customer}
                               >
                                 <option value="">{row.customer ? "Select Part" : "Select Customer First"}</option>
                                 {rowParts.map((p, i) => {
@@ -423,6 +487,7 @@ const FourMSummarySheet = () => {
                                 type="text" value={row.typeOfChange}
                                 onChange={e => handleChange(row.id, "typeOfChange", e.target.value)}
                                 placeholder="Man / Machine / Material"
+                                readOnly={!!id}
                               />
                             </div>
 
@@ -432,6 +497,7 @@ const FourMSummarySheet = () => {
                                 type="text" value={row.changeDetail}
                                 onChange={e => handleChange(row.id, "changeDetail", e.target.value)}
                                 placeholder="Describe change"
+                                readOnly={!!id}
                               />
                             </div>
                           </div>
@@ -466,11 +532,12 @@ const FourMSummarySheet = () => {
                                     <SI
                                       type="number" value={row[field]}
                                       onChange={e => handleChange(row.id, field, e.target.value)}
+                                      readOnly={!!id}
                                       focBorder={green ? C.green : undefined}
                                       focBg={green ? C.greenLight : red ? C.redLight : undefined}
                                       style={
-                                        green ? { borderColor: C.greenBorder, background: C.greenLight } :
-                                        red   ? { borderColor: C.redBorder,   background: C.redLight   } : {}
+                                        green ? { borderColor: C.greenBorder, background: id ? "#f9f9f7" : C.greenLight } :
+                                        red   ? { borderColor: C.redBorder,   background: id ? "#f9f9f7" : C.redLight   } : {}
                                       }
                                     />
                                   </div>
@@ -484,6 +551,7 @@ const FourMSummarySheet = () => {
                                 type="text" value={row.statusAfterFinal}
                                 onChange={e => handleChange(row.id, "statusAfterFinal", e.target.value)}
                                 style={{ height: "calc(100% - 22px)" }}
+                                readOnly={!!id}
                               />
                             </div>
 
@@ -493,6 +561,7 @@ const FourMSummarySheet = () => {
                                 type="text" value={row.actionForNG}
                                 onChange={e => handleChange(row.id, "actionForNG", e.target.value)}
                                 style={{ height: "calc(100% - 22px)" }}
+                                readOnly={!!id}
                               />
                             </div>
                           </div>
@@ -503,7 +572,7 @@ const FourMSummarySheet = () => {
                           <SecHead n="3" label="Approvals & Remarks" />
                           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 14 }}>
                             {[
-                              { field: "supSignature",  label: "Sup. Signature",      Icon: PenTool    },
+                              { field: "supSignature",  label: "Sup. Signature",     Icon: PenTool   },
                               { field: "signProdHead",  label: "Sign Production Head", Icon: UserCheck  },
                               { field: "signQAHead",    label: "Sign QA Head",         Icon: UserCheck  },
                               { field: "remarks",       label: "Remarks",              Icon: FileText   },
@@ -513,6 +582,7 @@ const FourMSummarySheet = () => {
                                 <SI
                                   type="text" value={row[field]}
                                   onChange={e => handleChange(row.id, field, e.target.value)}
+                                  readOnly={!!id}
                                 />
                               </div>
                             ))}
@@ -526,27 +596,29 @@ const FourMSummarySheet = () => {
               </div>
 
               {/* ── add row button ── */}
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 16 }}>
-                <button
-                  type="button"
-                  onClick={handleAddRow}
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: 7,
-                    background: C.white, border: `1.5px solid ${C.redBorder}`,
-                    color: C.red, padding: "9px 18px", borderRadius: 4,
-                    fontSize: 12, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase",
-                    cursor: "pointer", fontFamily: "inherit", transition: "background .15s",
-                    boxShadow: "0 1px 3px rgba(0,0,0,.05)",
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = C.redLight}
-                  onMouseLeave={e => e.currentTarget.style.background = C.white}
-                >
-                  <Plus size={14} /> Add Another Entry
-                </button>
-                <span style={{ fontSize: 12, color: C.textMid, fontWeight: 600 }}>
-                  {rows.length} entr{rows.length !== 1 ? "ies" : "y"} added
-                </span>
-              </div>
+              {!id && (
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 16 }}>
+                  <button
+                    type="button"
+                    onClick={handleAddRow}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 7,
+                      background: C.white, border: `1.5px solid ${C.redBorder}`,
+                      color: C.red, padding: "9px 18px", borderRadius: 4,
+                      fontSize: 12, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase",
+                      cursor: "pointer", fontFamily: "inherit", transition: "background .15s",
+                      boxShadow: "0 1px 3px rgba(0,0,0,.05)",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = C.redLight}
+                    onMouseLeave={e => e.currentTarget.style.background = C.white}
+                  >
+                    <Plus size={14} /> Add Another Entry
+                  </button>
+                  <span style={{ fontSize: 12, color: C.textMid, fontWeight: 600 }}>
+                    {rows.length} entr{rows.length !== 1 ? "ies" : "y"} added
+                  </span>
+                </div>
+              )}
 
               {/* ── prepared / approved ── */}
               <div style={{
@@ -565,6 +637,7 @@ const FourMSummarySheet = () => {
                       type="text" value={value}
                       onChange={e => set(e.target.value)}
                       placeholder="Name / Signature"
+                      readOnly={!!id}
                       style={{ maxWidth: 320 }}
                     />
                   </div>
@@ -576,48 +649,65 @@ const FourMSummarySheet = () => {
                 display: "flex", justifyContent: "flex-end", gap: 12, flexWrap: "wrap",
                 borderTop: `1px solid ${C.border}`, marginTop: 24, paddingTop: 22,
               }}>
+                {id ? (
+                  <button
+                    type="button"
+                    onClick={() => alert("Report Approved Successfully!")}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 8,
+                      background: C.green, border: "none",
+                      color: "#fff", padding: "11px 28px", borderRadius: 6,
+                      fontSize: 12, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase",
+                      cursor: "pointer", fontFamily: "inherit", transition: "background .15s",
+                      boxShadow: "0 2px 8px rgba(22,163,74,.35)",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#15803d"}
+                    onMouseLeave={e => e.currentTarget.style.background = C.green}
+                  >
+                    <Check size={14} strokeWidth={2.5} /> APPROVE REPORT
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleReset}
+                      disabled={isLoading}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 8,
+                        background: C.white, border: `2px solid #d1d5db`,
+                        color: "#374151", padding: "11px 24px", borderRadius: 6,
+                        fontSize: 12, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase",
+                        cursor: isLoading ? "not-allowed" : "pointer",
+                        opacity: isLoading ? .5 : 1, fontFamily: "inherit", transition: "all .15s",
+                      }}
+                      onMouseEnter={e => { if (!isLoading) { e.currentTarget.style.background = "#f9fafb"; e.currentTarget.style.borderColor = "#9ca3af"; } }}
+                      onMouseLeave={e => { e.currentTarget.style.background = C.white; e.currentTarget.style.borderColor = "#d1d5db"; }}
+                    >
+                      <RotateCcw size={14} /> Reset Form
+                    </button>
 
-                {/* Reset */}
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  disabled={isLoading}
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: 8,
-                    background: C.white, border: `2px solid #d1d5db`,
-                    color: "#374151", padding: "11px 24px", borderRadius: 6,
-                    fontSize: 12, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase",
-                    cursor: isLoading ? "not-allowed" : "pointer",
-                    opacity: isLoading ? .5 : 1, fontFamily: "inherit", transition: "all .15s",
-                  }}
-                  onMouseEnter={e => { if (!isLoading) { e.currentTarget.style.background = "#f9fafb"; e.currentTarget.style.borderColor = "#9ca3af"; } }}
-                  onMouseLeave={e => { e.currentTarget.style.background = C.white; e.currentTarget.style.borderColor = "#d1d5db"; }}
-                >
-                  <RotateCcw size={14} /> Reset Form
-                </button>
-
-                {/* Submit */}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: 8,
-                    background: isLoading ? C.redDark : C.red,
-                    border: "none", color: "#fff", padding: "11px 28px", borderRadius: 6,
-                    fontSize: 12, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase",
-                    cursor: isLoading ? "not-allowed" : "pointer",
-                    fontFamily: "inherit", transition: "background .15s",
-                    boxShadow: "0 2px 8px rgba(185,28,28,.35)",
-                  }}
-                  onMouseEnter={e => { if (!isLoading) e.currentTarget.style.background = C.redDark; }}
-                  onMouseLeave={e => { if (!isLoading) e.currentTarget.style.background = C.red; }}
-                >
-                  {isLoading
-                    ? <><Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> Submitting…</>
-                    : <><Send size={14} /> Submit Sheet</>
-                  }
-                </button>
-
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 8,
+                        background: isLoading ? C.redDark : C.red,
+                        border: "none", color: "#fff", padding: "11px 28px", borderRadius: 6,
+                        fontSize: 12, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase",
+                        cursor: isLoading ? "not-allowed" : "pointer",
+                        fontFamily: "inherit", transition: "background .15s",
+                        boxShadow: "0 2px 8px rgba(185,28,28,.35)",
+                      }}
+                      onMouseEnter={e => { if (!isLoading) e.currentTarget.style.background = C.redDark; }}
+                      onMouseLeave={e => { if (!isLoading) e.currentTarget.style.background = C.red; }}
+                    >
+                      {isLoading
+                        ? <><Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> Submitting…</>
+                        : <><Send size={14} /> Submit Sheet</>
+                      }
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
