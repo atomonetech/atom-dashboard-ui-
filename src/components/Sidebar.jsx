@@ -25,6 +25,7 @@ import {
   History,
   ArrowRight,
   Lock,
+  BarChart3
 } from "lucide-react";
 import { useRef } from "react";
 import { toast } from "react-toastify";
@@ -272,6 +273,13 @@ export default function Sidebar({ onLogout }) {
       icon: History,
       path: "/Production-history",
       color: "indigo",
+      badge: null,
+    },
+    {
+      label: "Analysis Hub",
+      icon: BarChart3,
+      path: "/analysis-hub",
+      color: "cyan", 
       badge: null,
     },
   ];
