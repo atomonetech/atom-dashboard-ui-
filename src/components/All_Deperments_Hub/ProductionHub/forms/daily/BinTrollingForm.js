@@ -335,9 +335,10 @@ const BinTrollingForm = () => {
         try {
           await axios.post(API_LOG, {
             username: currentUser,
-            report_name: "bin trolling  Form",
-            record_id: result.record_id // 🔥 Activity log update
+            report_name: "bin trolling  Form", // Yahan hardcode kar diya form ka naam
+             record_id: result.record_id ,
           });
+          console.log("Activity log successfully saved with Record ID:", result.record_id);
           console.log("Activity log successfully saved!");
         } catch (logError) {
           console.error("Activity log save karne mein error aayi:", logError);

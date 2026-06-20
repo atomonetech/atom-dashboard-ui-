@@ -82,6 +82,20 @@ const DailyProdForm = () => {
     toolBdTime: "",
     rmCoilNo: "",
   });
+  const getItemText = (item) => {
+    if (!item) return "";
+    return typeof item === 'string' ? item : (item.name || item.operation || item.part_name || "");
+};
+
+  const sortArrayAlphabetically = (arr) => {
+    const cleanArray = Array.isArray(arr) ? arr : [];
+    return [...cleanArray].sort((a, b) => {
+        const strA = getItemText(a).toLowerCase().trim();
+        const strB = getItemText(b).toLowerCase().trim();
+        return strA.localeCompare(strB);
+    });
+};
+
 
   // 🔥 FETCH REPORT DATA IF ID EXISTS (VIEW/APPROVE MODE)
   useEffect(() => {
@@ -141,7 +155,7 @@ const DailyProdForm = () => {
             part_name: item[0],
             part_no: item[1],
           }));
-          setPartsData(formattedParts);
+          setPartsData(sortArrayAlphabetically(formattedParts));
         } else {
           setPartsData([]);
         }
@@ -233,7 +247,7 @@ const DailyProdForm = () => {
       if (value) {
         fetch(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(value)}`)
           .then((res) => res.json())
-          .then((data) => setOperationNames(data))
+          .then((data) => setOperationNames(sortArrayAlphabetically(data)))
           .catch((err) => console.error("Error fetching operations:", err));
       } else {
         setOperationNames([]);

@@ -129,6 +129,9 @@ const sColors = [
   { bg: "#ede9fe", border: "#8b5cf6", badge: "#8b5cf6" },
 ];
 
+
+
+
 const Operator5S = () => {
   const navigate = useNavigate();
   const { id } = useParams(); // 🔥 GET ID FROM URL
@@ -152,7 +155,20 @@ const Operator5S = () => {
     ),
   );
 
-  // 🔥 FETCH REPORT DATA IF ID EXISTS (VIEW/APPROVE MODE)
+    const getItemText = (item) => {
+    if (!item) return "";
+    return typeof item === 'string' ? item : (item.name || item.operation || item.part_name || "");
+};
+
+  const sortArrayAlphabetically = (arr) => {
+    const cleanArray = Array.isArray(arr) ? arr : [];
+    return [...cleanArray].sort((a, b) => {
+        const strA = getItemText(a).toLowerCase().trim();
+        const strB = getItemText(b).toLowerCase().trim();
+        return strA.localeCompare(strB);
+    });
+};
+
   useEffect(() => {
     if (id) {
       const fetchReportData = async () => {
@@ -316,9 +332,11 @@ const Operator5S = () => {
         try {
           await axios.post(API_LOG, {
             username: currentUser,
-            report_name: "operator 5s Form",
-            record_id: data.record_id // 🔥 Attach Record ID
+            report_name: "operator 5s  Form", // Yahan hardcode kar diya form ka naam
+           record_id: data.record_id // 🔥 FIX 2: Backend se aayi record_id pass kar di
           });
+          console.log("Activity log successfully saved with Record ID:", data.record_id);
+          console.log("Activity log successfully saved!");
         } catch (logError) {
           console.error("Activity log save error:", logError);
         }
@@ -452,8 +470,8 @@ const Operator5S = () => {
               <select
                 value={area}
                 onChange={(e) => {
-                  setArea(e.target.value);
-                  if(!id) resetForm();
+                  setArea(sortArrayAlphabetically(e.target.value));
+                  resetForm();
                 }}
                 disabled={isAlreadyFilled || !!id}
                 className="w-full border-2 rounded-lg p-2.5 sm:p-3 text-sm font-semibold outline-none transition-all bg-slate-50 border-slate-200 text-slate-700 focus:border-amber-500 disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed"
