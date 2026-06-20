@@ -29,6 +29,7 @@ import Notifications from "./components/Notifications";
 import Profile from "./components/Profile";
 import Support from "./components/Support";
 import ProductionHistory from "./components/ProductionHistory";
+import AnalysisDashboard from './components/AnalysisDashboard';
 
 // ========== MODULAR ROUTE IMPORTS ==========
 import QaRoutes from "./routes/QaRoutes";
@@ -595,6 +596,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+           <Route
+            path="/analysis-hub"
+            element={
+              <ProtectedRoute adminOnly={true}>
+                <AnalysisDashboard />
+              </ProtectedRoute>
+            }
+          />
+          
 
           <Route
             path="*"
