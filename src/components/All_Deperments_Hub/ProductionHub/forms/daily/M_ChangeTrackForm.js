@@ -17,9 +17,9 @@ const API_LOG = `${
 }/api/log-report/`;
 
 const C = {
-  pageBg: "#f1f5f9", // Smoother slate background
+  pageBg: "#f1f5f9", 
   white: "#ffffff",
-  red: "#dc2626", // Refined modern red
+  red: "#dc2626", 
   redLight: "#fef2f2",
   redBorder: "#fee2e2",
   redDark: "#991b1b",
@@ -37,11 +37,7 @@ const MChangeTrackForm = () => {
   const navigate = useNavigate();
 
   const today = new Date().toISOString().split("T")[0];
-  const currentDate = new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const [headerDate, setHeaderDate] = useState(today);
 
   const [formData, setFormData] = useState({
     time: "",
@@ -72,6 +68,7 @@ const MChangeTrackForm = () => {
     dispatchDetail: {
       customer: "",
       date: today,
+      invoiceNo: "", 
     },
     remark: "",
   });
@@ -82,10 +79,10 @@ const MChangeTrackForm = () => {
   const [activeAction, setActiveAction] = useState(""); 
 
   const [currentDayData, setCurrentDayData] = useState({
-    man: "",
-    machine: "",
-    material: "",
-    method: "",
+    man: "NOT_SET",
+    machine: "NOT_SET",
+    material: "NOT_SET",
+    method: "NOT_SET",
     submittedAt: null,
   });
 
@@ -96,6 +93,7 @@ const MChangeTrackForm = () => {
   const [showPartDropdown, setShowPartDropdown] = useState(false);
   const [partSearch, setPartSearch] = useState("");
 
+  // FETCH RECORDS (VIEW MODE)
   useEffect(() => {
     if (id) {
       const fetchReportData = async () => {
@@ -131,10 +129,14 @@ const MChangeTrackForm = () => {
               dispatchDetail: {
                 customer: d.customer || "",
                 date: d.dispatch_date || today,
+                invoiceNo: d.invoice_no || "",
               },
               remark: d.remark || "",
             });
             setPreparedBy(d.submitted_by || d.prepared_by || "");
+            if (d.submission_date) {
+              setHeaderDate(d.submission_date);
+            }
 
             if (d.retro_qty_checked !== null || d.retro_qty_ok !== null || d.retro_entry_qty !== null) {
               setActiveAction("retroactive");
@@ -144,14 +146,28 @@ const MChangeTrackForm = () => {
               setActiveAction("");
             }
 
+            // Reverse map the backend status codes back to UI state context
             if (d.daily_tracking_data) {
               let trackingObj = typeof d.daily_tracking_data === 'string' ? JSON.parse(d.daily_tracking_data) : d.daily_tracking_data;
+              setDailyTrackingData(trackingObj);
               const keys = Object.keys(trackingObj);
               if (keys.length > 0) {
                 setCurrentDayData(trackingObj[keys[keys.length - 1]] || {
-                  man: "", machine: "", material: "", method: "", submittedAt: null
+                  man: d.status_man || "NOT_SET", 
+                  machine: d.status_machine || "NOT_SET", 
+                  material: d.status_material || "NOT_SET", 
+                  method: d.status_method || "NOT_SET", 
+                  submittedAt: null
                 });
               }
+            } else {
+              setCurrentDayData({
+                man: d.status_man || "NOT_SET",
+                machine: d.status_machine || "NOT_SET",
+                material: d.status_material || "NOT_SET",
+                method: d.status_method || "NOT_SET",
+                submittedAt: null,
+              });
             }
 
             if (d.part_info) {
@@ -169,15 +185,16 @@ const MChangeTrackForm = () => {
     }
   }, [id, today]);
 
+  // INITIAL MASTER DATA LOADING
   useEffect(() => {
     if (!id) {
       localStorage.removeItem("mChangeTrackingData");
       setDailyTrackingData({});
       setCurrentDayData({
-        man: "",
-        machine: "",
-        material: "",
-        method: "",
+        man: "NOT_SET",
+        machine: "NOT_SET",
+        material: "NOT_SET",
+        method: "NOT_SET",
         submittedAt: null,
       });
     }
@@ -205,23 +222,39 @@ const MChangeTrackForm = () => {
       .catch((err) => console.error("Error fetching customers:", err));
   }, [id]);
 
+  // ON CALENDAR DATE SHIFT ONLY
+  useEffect(() => {
+    if (dailyTrackingData && dailyTrackingData[headerDate]) {
+      setCurrentDayData(dailyTrackingData[headerDate]);
+    } else {
+      setCurrentDayData({
+        man: "NOT_SET",
+        machine: "NOT_SET",
+        material: "NOT_SET",
+        method: "NOT_SET",
+        submittedAt: null,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [headerDate]);
+
   const getNextStatus = (currentStatus) => {
-    if (currentStatus === "") return "CHANGE";
-    if (currentStatus === "CHANGE") return "NO CHANGE";
-    if (currentStatus === "NO CHANGE") return "";
-    return "";
+    // If empty or explicitly NOT_SET, cycle to CHANGE
+    if (!currentStatus || currentStatus === "NOT_SET" || currentStatus === "") return "CHANGE";
+    if (currentStatus === "CHANGE") return "OK"; // Maps perfectly to choice tuple 'OK'
+    if (currentStatus === "OK") return "CHANGE";
+    return "NOT_SET"; 
   };
 
   const getStatusDot = (status) => {
     const disableClass = id ? "cursor-not-allowed opacity-80" : "cursor-pointer hover:scale-110";
-    switch (status) {
-      case "CHANGE":
-        return <span className={`inline-block w-7 h-7 rounded-full bg-rose-500 transition-all shadow-sm ${disableClass}`} title="Change"></span>;
-      case "NO CHANGE":
-        return <span className={`inline-block w-7 h-7 rounded-full bg-emerald-500 transition-all shadow-sm ${disableClass}`} title="No Change"></span>;
-      default:
-        return <span className={`inline-block w-7 h-7 rounded-full bg-slate-200 transition-all shadow-sm ${disableClass}`} title="Not Set"></span>;
+    if (status === "CHANGE") {
+      return <span className={`inline-block w-7 h-7 rounded-full bg-rose-500 transition-all shadow-sm ${disableClass}`} title="Change Implemented"></span>;
     }
+    if (status === "OK" || status === "NO_CHANGE" || status === "NO CHANGE") {
+      return <span className={`inline-block w-7 h-7 rounded-full bg-emerald-500 transition-all shadow-sm ${disableClass}`} title="No Change"></span>;
+    }
+    return <span className={`inline-block w-7 h-7 rounded-full bg-slate-200 transition-all shadow-sm ${disableClass}`} title="Not Set"></span>;
   };
 
   const handleDailyChange = (field, value) => {
@@ -229,14 +262,12 @@ const MChangeTrackForm = () => {
     const newData = { ...currentDayData };
     newData[field] = value;
     newData.submittedAt = new Date().toISOString();
+    
     setCurrentDayData(newData);
-
-    const today_date = new Date();
-    const dateKey = `${today_date.getFullYear()}-${String(today_date.getMonth() + 1).padStart(2, "0")}-${String(today_date.getDate()).padStart(2, "0")}`;
 
     setDailyTrackingData((prev) => ({
       ...prev,
-      [dateKey]: newData,
+      [headerDate]: newData,
     }));
   };
 
@@ -285,12 +316,18 @@ const MChangeTrackForm = () => {
     }
 
     setIsSubmitting(true);
-    const today_date = new Date();
-    const dateKey = `${today_date.getFullYear()}-${String(today_date.getMonth() + 1).padStart(2, "0")}-${String(today_date.getDate()).padStart(2, "0")}`;
+
+    const finalized4MData = {
+      man: !currentDayData.man || currentDayData.man === "" ? "NOT_SET" : currentDayData.man,
+      machine: !currentDayData.machine || currentDayData.machine === "" ? "NOT_SET" : currentDayData.machine,
+      material: !currentDayData.material || currentDayData.material === "" ? "NOT_SET" : currentDayData.material,
+      method: !currentDayData.method || currentDayData.method === "" ? "NOT_SET" : currentDayData.method,
+      submittedAt: currentDayData.submittedAt || new Date().toISOString()
+    };
 
     const finalDailyTrackingData = {
       ...dailyTrackingData,
-      [dateKey]: currentDayData,
+      [headerDate]: finalized4MData,
     };
 
     const parseNumOrNull = (val) => {
@@ -299,6 +336,7 @@ const MChangeTrackForm = () => {
       return isNaN(parsed) ? null : parsed;
     };
 
+    // Compiled exact payload keys mapping directly to your Django model fields
     const payload = {
       time: formData.time,
       machine_no: formData.mcNo,
@@ -309,6 +347,12 @@ const MChangeTrackForm = () => {
       operation_no: formData.operationNo,
       training_provided: formData.trainingProvided,
       setup_approval: formData.setupApproval.status,
+
+      // 🔥 MATCHED FIELD NAMES TO YOUR MODEL EXPECTED FIELDS EXACTLY
+      status_man: finalized4MData.man,
+      status_machine: finalized4MData.machine,
+      status_material: finalized4MData.material,
+      status_method: finalized4MData.method,
 
       retro_qty_checked: activeAction === "retroactive" ? parseNumOrNull(formData.retroactive.qtyChecked) : null,
       retro_entry_qty: activeAction === "retroactive" ? parseNumOrNull(formData.retroactive.entryQty) : null,
@@ -324,16 +368,15 @@ const MChangeTrackForm = () => {
 
       customer: formData.dispatchDetail.customer,
       dispatch_date: formData.dispatchDetail.date,
+      invoice_no: formData.dispatchDetail.invoiceNo,
 
       remark: formData.remark,
       prepared_by: preparedBy,
 
       daily_tracking_data: finalDailyTrackingData,
-      submission_date: dateKey,
+      submission_date: headerDate,
       submitted_at: new Date().toISOString(),
     };
-
-    setDailyTrackingData(finalDailyTrackingData);
 
     try {
       const response = await fetch(`${BASE_URL}/api/save-4m-record/`, {
@@ -375,11 +418,12 @@ const MChangeTrackForm = () => {
       partNameNo: "", operationNo: "", trainingProvided: "", setupApproval: { status: "" },
       retroactive: { qtyChecked: "", entryQty: "", qtyOk: "", rw: "", scrap: "" },
       containmentSuspected: { qtyChecked: "", entryQty: "", qtyOk: "", rw: "", scrap: "" },
-      dispatchDetail: { customer: "", date: today }, remark: "",
+      dispatchDetail: { customer: "", date: today, invoiceNo: "" }, remark: "",
     });
     setPreparedBy("");
     setActiveAction(""); 
-    setCurrentDayData({ man: "", machine: "", material: "", method: "", submittedAt: null });
+    setHeaderDate(today);
+    setCurrentDayData({ man: "NOT_SET", machine: "NOT_SET", material: "NOT_SET", method: "NOT_SET", submittedAt: null });
     setOperationList([]);
   };
 
@@ -388,7 +432,7 @@ const MChangeTrackForm = () => {
   };
 
   const getFormattedDate = () => {
-    return new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return new Date(headerDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   };
 
   const categories = [
@@ -400,17 +444,14 @@ const MChangeTrackForm = () => {
 
   const statusOptions = ["OK", "NOT OK", "PENDING", "NA"];
 
-  // Reusable classes for cleaner code and unified aesthetic
   const inputStyle = "w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed";
   const labelStyle = "block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider";
 
   return (
     <>
       <div style={{ minHeight: "100vh", background: C.pageBg, padding: "32px 16px", fontFamily: "'Inter', system-ui, sans-serif" }}>
-        {/* Maximum Constrained Width Main Container */}
         <div className="max-w-5xl mx-auto">
           
-          {/* Aligned Nav Header Row */}
           <div className="flex justify-between items-center mb-6">
             <button 
               onClick={handleBack}
@@ -420,33 +461,32 @@ const MChangeTrackForm = () => {
             </button>
           </div>
 
-          {/* Core Structured Panel Container */}
           <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.border}`, overflow: "hidden", boxShadow: C.shadow }}>
             
-            {/* Elegant Context Banner Header */}
             <div style={{ background: C.red, padding: "24px 32px" }}>
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <h1 className="text-xl sm:text-2xl font-bold text-white uppercase tracking-wider">
                   {id ? "4M Change Record Sheet (REVIEW)" : "4M Change Record Sheet"}
                 </h1>
                 <div className="flex items-center">
-                  <div className="inline-flex items-center bg-white/15 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20 shadow-sm">
+                  <div className="inline-flex items-center bg-white/15 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/20 shadow-sm transition-all focus-within:ring-2 focus-within:ring-white/40">
                     <Calendar className="w-4 h-4 text-white mr-2" />
-                    <span className="text-sm font-bold text-white uppercase tracking-wide">
-                      {currentDate}
-                    </span>
+                    <input 
+                      type="date"
+                      value={headerDate}
+                      disabled={!!id}
+                      onChange={(e) => setHeaderDate(e.target.value)}
+                      className="bg-transparent text-sm font-bold text-white uppercase tracking-wide focus:outline-none cursor-pointer [color-scheme:dark]"
+                    />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Layout Space Container */}
             <div className="p-6 md:p-10">
               
-              {/* Top Status & Legend Layout Section */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 
-                {/* Left Engine Legend Box */}
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col justify-center gap-3">
                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
                     Status Reference Legend
@@ -474,7 +514,6 @@ const MChangeTrackForm = () => {
                   </div>
                 </div>
 
-                {/* Right Engine Status Tracker (Spans 2 columns) */}
                 <div className="md:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                   <div className="bg-slate-50 px-5 py-3 border-b border-slate-200">
                     <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
@@ -498,10 +537,11 @@ const MChangeTrackForm = () => {
                             type="button"
                             onClick={() => {
                               if (id) return;
-                              const nextValue = getNextStatus(currentDayData[category.id]);
+                              const currentVal = currentDayData[category.id];
+                              const nextValue = getNextStatus(currentVal);
                               handleDailyChange(category.id, nextValue);
                             }}
-                            className={`focus:outline-none transition-transform duration-200`}
+                            className="focus:outline-none transition-transform duration-200"
                           >
                             {getStatusDot(currentDayData[category.id])}
                           </button>
@@ -513,7 +553,6 @@ const MChangeTrackForm = () => {
 
               </div>
 
-              {/* Core Details Structural Segments */}
               <div className="border-t border-slate-100 pt-8">
                 <h2 className="text-sm font-bold text-slate-800 mb-6 uppercase tracking-wider flex items-center gap-2">
                   <span className="w-1.5 h-4 bg-red-600 rounded-sm"></span> Change Details
@@ -583,7 +622,6 @@ const MChangeTrackForm = () => {
                   </div>
                 </div>
 
-                {/* Dropdowns Selection Panel Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
                   <div className="relative">
                     <label className={labelStyle}>
@@ -605,7 +643,7 @@ const MChangeTrackForm = () => {
                     </div>
 
                     {showPartDropdown && !id && (
-                      <div className="absolute z-50 w-full mt-1.5 bg-white border border-slate-200 rounded-lg shadow-xl max-h-[320px] flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                      <div className="absolute z-50 w-full mt-1.5 bg-white border border-slate-200 rounded-lg shadow-xl max-h-[320px] flex flex-col overflow-hidden">
                         <div className="p-2 border-b border-slate-100 bg-slate-50 sticky top-0">
                           <input
                             type="text"
@@ -666,7 +704,6 @@ const MChangeTrackForm = () => {
                   </div>
                 </div>
 
-                {/* Validation Workflow Engine Segment */}
                 <div className="border-t border-slate-100 pt-8">
                   <h2 className="text-sm font-bold text-slate-800 mb-6 uppercase tracking-wider flex items-center gap-2">
                     <span className="w-1.5 h-4 bg-red-600 rounded-sm"></span> Validation Status Workflow
@@ -704,10 +741,8 @@ const MChangeTrackForm = () => {
                     </div>
                   </div>
 
-                  {/* Responsive Tri-Column Action Block */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
                     
-                    {/* Panel A: Retroactive Engine Box */}
                     <div className={`p-5 rounded-xl border transition-all duration-200 ${activeAction === 'retroactive' ? 'bg-white border-red-500 ring-4 ring-red-500/10 shadow-sm' : 'bg-slate-50/60 border-slate-100 opacity-60'}`}>
                       <div className="flex items-center gap-2.5 mb-4 pb-2 border-b border-slate-100">
                         <input 
@@ -726,7 +761,6 @@ const MChangeTrackForm = () => {
                       <div className="space-y-3">
                         {[
                           { label: "Qty Checked", key: "qtyChecked" },
-                          { label: "Entry Quantity", key: "entryQty" },
                           { label: "Qty OK", key: "qtyOk" },
                           { label: "R/W", key: "rw" },
                           { label: "Scrap", key: "scrap" },
@@ -746,7 +780,6 @@ const MChangeTrackForm = () => {
                       </div>
                     </div>
 
-                    {/* Panel B: Containment Action Box */}
                     <div className={`p-5 rounded-xl border transition-all duration-200 ${activeAction === 'containment' ? 'bg-white border-red-500 ring-4 ring-red-500/10 shadow-sm' : 'bg-slate-50/60 border-slate-100 opacity-60'}`}>
                       <div className="flex items-center gap-2.5 mb-4 pb-2 border-b border-slate-100">
                         <input 
@@ -765,7 +798,6 @@ const MChangeTrackForm = () => {
                       <div className="space-y-3">
                         {[
                           { label: "Qty Checked", key: "qtyChecked" },
-                          { label: "Entry Quantity", key: "entryQty" },
                           { label: "Qty OK", key: "qtyOk" },
                           { label: "R/W", key: "rw" },
                           { label: "Scrap", key: "scrap" },
@@ -785,19 +817,18 @@ const MChangeTrackForm = () => {
                       </div>
                     </div>
 
-                    {/* Panel C: Logistics Dispatch Details Box */}
                     <div className="p-5 rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col justify-start">
                       <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider mb-4 pb-2 border-b border-slate-100">
                         Dispatch Logistics
                       </h4>
-                      <div className="space-y-4">
+                      <div className="space-y-3">
                         <div>
                           <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Customer</label>
                           <select
                             value={formData.dispatchDetail.customer}
                             disabled={!!id}
                             onChange={(e) => handleNestedChange("dispatchDetail", "customer", e.target.value)}
-                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white text-slate-800"
+                            className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white text-slate-800"
                           >
                             <option value="">Select Customer</option>
                             {customerList.map((cust, idx) => {
@@ -817,6 +848,19 @@ const MChangeTrackForm = () => {
                             })}
                           </select>
                         </div>
+                        
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Invoice No</label>
+                          <input
+                            type="text"
+                            disabled={!!id}
+                            value={formData.dispatchDetail.invoiceNo}
+                            onChange={(e) => handleNestedChange("dispatchDetail", "invoiceNo", e.target.value)}
+                            className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white text-slate-800"
+                            placeholder="e.g. INV-2026-001"
+                          />
+                        </div>
+
                         <div>
                           <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Date</label>
                           <input
@@ -824,7 +868,7 @@ const MChangeTrackForm = () => {
                             disabled={!!id}
                             value={formData.dispatchDetail.date}
                             onChange={(e) => handleNestedChange("dispatchDetail", "date", e.target.value)}
-                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white text-slate-800"
+                            className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white text-slate-800"
                           />
                         </div>
                       </div>
@@ -844,7 +888,6 @@ const MChangeTrackForm = () => {
                     />
                   </div>
 
-                  {/* Submission and Workflow Signatures Footer row */}
                   <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div className="flex flex-col">
                       <label className="text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">
