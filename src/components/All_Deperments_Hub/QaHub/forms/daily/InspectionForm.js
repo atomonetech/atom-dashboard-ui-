@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom'; // 🔥 useParams added
+import React, { useState, useEffect,  } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 
 // Example SOP Content
@@ -23,13 +23,44 @@ const sopDatabase = {
     }
 };
 
-const InspectionForm = () => {
-    // ==========================================
-    //  1. STATE MANAGEMENT
-    // ==========================================
-    const navigate = useNavigate();
+// Global filter definition for simple reuse
+const excludedKeywords = [
+    "storage",
+    "dispatch",
+    "despatch",
+    "washing",
+    "final inspection",
+    "packaging",
+    "reciept of raw",
+    "incoming inspection",
+];
+
+const getItemText = (item) => {
+    if (!item) return "";
+    return typeof item === 'string' ? item : (item.name || item.operation || "");
+};
+
+// Helper function to thoroughly filter out unwanted operations and sort alphabetically
+const filterAndSortArray = (arr, isOperation = false) => {
+    const cleanArray = Array.isArray(arr) ? arr : [];
     
-    // 🔥 View Mode Logic
+    return cleanArray
+        .filter(item => {
+            const cleanText = getItemText(item).toLowerCase().trim();
+            if (!cleanText) return false;
+
+            if (isOperation) {
+                // If it's the operations list, drop items matching excluded keywords
+                const shouldExclude = excludedKeywords.some(keyword => cleanText.includes(keyword));
+                return !shouldExclude;
+            }
+            return true;
+        })
+        .sort((a, b) => getItemText(a).localeCompare(getItemText(b)));
+};
+
+const InspectionForm = () => {
+    const navigate = useNavigate();
     const { id } = useParams();
     const isViewMode = Boolean(id);
     const currentUser = localStorage.getItem('username') || 'Unknown User';
@@ -49,8 +80,8 @@ const InspectionForm = () => {
 
     const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
     const API_URL = `${API_BASE_URL}/api`;
-    const API_LOG = `${API_URL}/log-report/`; // 🔥
-    const API_APPROVE = `${API_URL}/approve-report/`; // 🔥
+    const API_LOG = `${API_URL}/log-report/`;
+    const API_APPROVE = `${API_URL}/approve-report/`;
 
     const [specList, setSpecList] = useState([]); 
 
@@ -72,9 +103,14 @@ const InspectionForm = () => {
     //  2. FETCH DATA & LOAD FORM
     // ==========================================
     useEffect(() => {
+        // Fetch Customers on Mount
         fetch(`${API_URL}/master-dropdown/?filter=customer`)
-            .then(res => res.json()).then(data => setCustomers(data)).catch(()=> {
-                setCustomers(['FIG', 'MARUTI', 'TATA']);
+            .then(res => res.json())
+            .then(data => {
+                setCustomers(filterAndSortArray(data, false));
+            })
+            .catch(() => {
+                setCustomers(filterAndSortArray(['FIG', 'MARUTI', 'TATA'], false));
             });
 
         // 🔥 VIEW MODE: FETCH SPECIFIC REPORT DATA
@@ -91,7 +127,7 @@ const InspectionForm = () => {
 
                         setSpecList(d.inspection_data?.parameters || []);
                         setLogColumns(d.inspection_data?.logs || []);
-                        setUserAction('VIEW'); // Custom mode to show full table instantly
+                        setUserAction('VIEW'); 
                         
                         const fullName = d.submitted_by || 'Unknown User';
                         setPreparedBy(fullName.split('@')[0]);
@@ -102,7 +138,7 @@ const InspectionForm = () => {
     }, [id, isViewMode, API_URL]);
 
     const loadDataForGates = async (cust, part, op, dateStr) => {
-        if (!cust || !part || !op || !dateStr || isViewMode) return; // 🔥 Skip in view mode
+        if (!cust || !part || !op || !dateStr || isViewMode) return;
         try {
             const masterRes = await fetch(`${API_URL}/master-parameters/?customer=${encodeURIComponent(cust)}&part=${encodeURIComponent(part)}&operation=${encodeURIComponent(op)}`);
             const masterData = await masterRes.json();
@@ -143,13 +179,45 @@ const InspectionForm = () => {
 
     const handleCustomerChange = (e) => {
         if(isViewMode) return;
-        const cust = e.target.value; setSelectedCustomer(cust); setSelectedPart(''); setSelectedTool(''); setSpecList([]); setDbLogs([]); setUserAction('');
-        if (cust) fetch(`${API_URL}/master-dropdown/?filter=part&cust=${encodeURIComponent(cust)}`).then(res => res.json()).then(data => setParts(data)).catch(()=>setParts(['INLET PIPE', 'OUTLET PIPE']));
+        const cust = e.target.value; 
+        setSelectedCustomer(cust); 
+        setSelectedPart(''); 
+        setSelectedTool(''); 
+        setSpecList([]); 
+        setDbLogs([]); 
+        setUserAction('');
+        
+        if (cust) {
+            fetch(`${API_URL}/master-dropdown/?filter=part&cust=${encodeURIComponent(cust)}`)
+                .then(res => res.json())
+                .then(data => setParts(filterAndSortArray(data, false)))
+                .catch(() => setParts(filterAndSortArray(['INLET PIPE', 'OUTLET PIPE'], false)));
+        }
     };
+
     const handlePartChange = (e) => {
         if(isViewMode) return;
-        const part = e.target.value; setSelectedPart(part); setSelectedTool(''); setSpecList([]); setDbLogs([]); setUserAction('');
-        if (part) fetch(`${API_URL}/master-dropdown/?filter=operation&cust=${encodeURIComponent(selectedCustomer)}&part=${encodeURIComponent(part)}`).then(res => res.json()).then(data => setTools(data)).catch(()=>setTools(['BLANKING', 'BENDING']));
+        const part = e.target.value; 
+        setSelectedPart(part); 
+        setSelectedTool(''); 
+        setSpecList([]); 
+        setDbLogs([]); 
+        setUserAction('');
+        
+        if (part) {
+            fetch(`${API_URL}/master-dropdown/?filter=operation&cust=${encodeURIComponent(selectedCustomer)}&part=${encodeURIComponent(part)}`)
+                .then(res => res.json())
+                .then(data => {
+                    // 🔥 Cleaning logic running inside the actual operation fetch trigger
+                    const cleanOps = filterAndSortArray(data, true);
+                    setTools(cleanOps);
+                })
+                .catch(() => {
+                    // Fallback array filtered & sorted
+                    const fallbackOps = filterAndSortArray(['BLANKING', 'BENDING'], true);
+                    setTools(fallbackOps);
+                });
+        }
     };
 
     // ==========================================
@@ -270,10 +338,8 @@ const InspectionForm = () => {
         alert(`🎥 Initializing tutorial video for: ${paramName}`); 
     };
 
-    // 🔥 SAVE / APPROVE LOGIC
     const handleSaveData = async () => {
         if (isViewMode) {
-            // ==== APPROVE LOGIC ====
             try {
                 const response = await axios.post(API_APPROVE, {
                     log_id: id,
@@ -288,7 +354,6 @@ const InspectionForm = () => {
                 alert('Failed to approve report.');
             }
         } else {
-            // ==== SAVE LOGIC ====
             if (!activeColumn?.plant || !activeColumn?.operator || !activeColumn?.machine) {
                 alert("⛔ Validation Error: Please select Plant Location, Operator ID, and Machine Node.");
                 return;
@@ -342,7 +407,6 @@ const InspectionForm = () => {
                 if (response.ok) {
                     const resData = await response.json();
                     
-                    // 🔥 Save Activity Log
                     try {
                         await axios.post(API_LOG, {
                             username: currentUser,
@@ -360,261 +424,89 @@ const InspectionForm = () => {
             }
 
             setDbLogs(newLogs);       
-            setLogColumns([]);        
+            setLogColumns([]);         
             setActiveColId('');       
             setSelectedStage('');     
             setUserAction('FILL');    
         }
     };
 
-    // ==========================================
-    //  5. RENDER HELPERS
-    // ==========================================
     const renderCell = (col, rowSr, paramName, instr) => {
-    const readObj = col.readings[rowSr] || {
-        val1: '',
-        val2: '',
-        val3: '',
-        val4: '',
-        status: ''
-    };
+        const readObj = col.readings[rowSr] || { val1: '', val2: '', val3: '', val4: '', status: '' };
+        const isActive = col.id === activeColId && !col.isLocked && !isViewMode;
+        const isOkayNotOkay = instr === 'VISUAL' || instr?.toUpperCase().includes('VISUAL');
 
-    const isActive =
-        col.id === activeColId &&
-        !col.isLocked &&
-        !isViewMode;
+        if (isActive) {
+            return (
+                <td className="table-active p-2" style={{ minWidth: showExtraReadings ? '520px' : '280px', borderLeft: '2px solid var(--accent-primary)', borderRight: '2px solid var(--accent-primary)' }}>
+                    <div className="d-flex align-items-center gap-2">
+                        <div style={{ display: 'grid', gridTemplateColumns: showExtraReadings ? 'repeat(4, 1fr)' : 'repeat(2, 1fr)', gap: '8px', flexGrow: 1 }}>
+                            {isOkayNotOkay ? (
+                                <>
+                                    <select className="form-input-light text-center fw-bold" value={readObj.val1 || ''} onChange={(e) => handleCellChange(col.id, rowSr, 'val1', e.target.value)}>
+                                        <option value="">Reading 1</option>
+                                        <option value="OK">✓ OK</option>
+                                        <option value="NOT_OK">✗ NOT OK</option>
+                                    </select>
+                                    <select className="form-input-light text-center fw-bold" value={readObj.val2 || ''} onChange={(e) => handleCellChange(col.id, rowSr, 'val2', e.target.value)}>
+                                        <option value="">Reading 2</option>
+                                        <option value="OK">✓ OK</option>
+                                        <option value="NOT_OK">✗ NOT OK</option>
+                                    </select>
+                                    {showExtraReadings && (
+                                        <>
+                                            <select className="form-input-light text-center fw-bold" value={readObj.val3 || ''} onChange={(e) => handleCellChange(col.id, rowSr, 'val3', e.target.value)}>
+                                                <option value="">Reading 3</option>
+                                                <option value="OK">✓ OK</option>
+                                                <option value="NOT_OK">✗ NOT OK</option>
+                                            </select>
+                                            <select className="form-input-light text-center fw-bold" value={readObj.val4 || ''} onChange={(e) => handleCellChange(col.id, rowSr, 'val4', e.target.value)}>
+                                                <option value="">Reading 4</option>
+                                                <option value="OK">✓ OK</option>
+                                                <option value="NOT_OK">✗ NOT OK</option>
+                                            </select>
+                                        </>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <input type="text" className="form-input-light text-center fw-bold" placeholder="Reading 1" value={readObj.val1} onChange={(e) => handleCellChange(col.id, rowSr, 'val1', e.target.value)} />
+                                    <input type="text" className="form-input-light text-center fw-bold" placeholder="Reading 2" value={readObj.val2} onChange={(e) => handleCellChange(col.id, rowSr, 'val2', e.target.value)} />
+                                    {showExtraReadings && (
+                                        <>
+                                            <input type="text" className="form-input-light text-center fw-bold" placeholder="Reading 3" value={readObj.val3 || ''} onChange={(e) => handleCellChange(col.id, rowSr, 'val3', e.target.value)} />
+                                            <input type="text" className="form-input-light text-center fw-bold" placeholder="Reading 4" value={readObj.val4 || ''} onChange={(e) => handleCellChange(col.id, rowSr, 'val4', e.target.value)} />
+                                        </>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                        <div className="d-flex flex-column gap-1">
+                            <button className="btn-icon-simple" title="View Info" onClick={() => handleEyeClick(paramName)}>
+                                <img src="https://img.icons8.com/ios/50/000000/visible--v1.png" alt="Eye" style={{ width: '15px', height: '15px', opacity: 0.8 }} />
+                            </button>
+                            <button className="btn-icon-simple text-danger" title="Watch Video" onClick={() => handleVideoClick(paramName)}>
+                                <i className="bi bi-camera-video"></i>
+                            </button>
+                        </div>
+                    </div>
+                </td>
+            );
+        }
 
-    const isOkayNotOkay =
-        instr === 'VISUAL' ||
-        instr?.toUpperCase().includes('VISUAL');
+        const hasData = readObj.val1 || readObj.val2 || readObj.val3 || readObj.val4;
+        if (!hasData) return <td className="text-center text-muted fw-bold bg-light">--</td>;
 
-    if (isActive) {
         return (
-            <td
-                className="table-active p-2"
-                style={{
-                    minWidth: showExtraReadings ? '520px' : '280px',
-                    borderLeft: '2px solid var(--accent-primary)',
-                    borderRight: '2px solid var(--accent-primary)'
-                }}
-            >
-                <div className="d-flex align-items-center gap-2">
-
-                    <div
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: showExtraReadings
-                                ? 'repeat(4, 1fr)'
-                                : 'repeat(2, 1fr)',
-                            gap: '8px',
-                            flexGrow: 1
-                        }}
-                    >
-
-                        {isOkayNotOkay ? (
-                            <>
-                                <select
-                                    className="form-input-light text-center fw-bold"
-                                    value={readObj.val1 || ''}
-                                    onChange={(e) =>
-                                        handleCellChange(
-                                            col.id,
-                                            rowSr,
-                                            'val1',
-                                            e.target.value
-                                        )
-                                    }
-                                >
-                                    <option value="">Reading 1</option>
-                                    <option value="OK">✓ OK</option>
-                                    <option value="NOT_OK">✗ NOT OK</option>
-                                </select>
-
-                                <select
-                                    className="form-input-light text-center fw-bold"
-                                    value={readObj.val2 || ''}
-                                    onChange={(e) =>
-                                        handleCellChange(
-                                            col.id,
-                                            rowSr,
-                                            'val2',
-                                            e.target.value
-                                        )
-                                    }
-                                >
-                                    <option value="">Reading 2</option>
-                                    <option value="OK">✓ OK</option>
-                                    <option value="NOT_OK">✗ NOT OK</option>
-                                </select>
-
-                                {showExtraReadings && (
-                                    <>
-                                        <select
-                                            className="form-input-light text-center fw-bold"
-                                            value={readObj.val3 || ''}
-                                            onChange={(e) =>
-                                                handleCellChange(
-                                                    col.id,
-                                                    rowSr,
-                                                    'val3',
-                                                    e.target.value
-                                                )
-                                            }
-                                        >
-                                            <option value="">Reading 3</option>
-                                            <option value="OK">✓ OK</option>
-                                            <option value="NOT_OK">✗ NOT OK</option>
-                                        </select>
-
-                                        <select
-                                            className="form-input-light text-center fw-bold"
-                                            value={readObj.val4 || ''}
-                                            onChange={(e) =>
-                                                handleCellChange(
-                                                    col.id,
-                                                    rowSr,
-                                                    'val4',
-                                                    e.target.value
-                                                )
-                                            }
-                                        >
-                                            <option value="">Reading 4</option>
-                                            <option value="OK">✓ OK</option>
-                                            <option value="NOT_OK">✗ NOT OK</option>
-                                        </select>
-                                    </>
-                                )}
-                            </>
-                        ) : (
-                            <>
-                                <input
-                                    type="text"
-                                    className="form-input-light text-center fw-bold"
-                                    placeholder="Reading 1"
-                                    value={readObj.val1}
-                                    onChange={(e) =>
-                                        handleCellChange(
-                                            col.id,
-                                            rowSr,
-                                            'val1',
-                                            e.target.value
-                                        )
-                                    }
-                                />
-
-                                <input
-                                    type="text"
-                                    className="form-input-light text-center fw-bold"
-                                    placeholder="Reading 2"
-                                    value={readObj.val2}
-                                    onChange={(e) =>
-                                        handleCellChange(
-                                            col.id,
-                                            rowSr,
-                                            'val2',
-                                            e.target.value
-                                        )
-                                    }
-                                />
-
-                                {showExtraReadings && (
-                                    <>
-                                        <input
-                                            type="text"
-                                            className="form-input-light text-center fw-bold"
-                                            placeholder="Reading 3"
-                                            value={readObj.val3 || ''}
-                                            onChange={(e) =>
-                                                handleCellChange(
-                                                    col.id,
-                                                    rowSr,
-                                                    'val3',
-                                                    e.target.value
-                                                )
-                                            }
-                                        />
-
-                                        <input
-                                            type="text"
-                                            className="form-input-light text-center fw-bold"
-                                            placeholder="Reading 4"
-                                            value={readObj.val4 || ''}
-                                            onChange={(e) =>
-                                                handleCellChange(
-                                                    col.id,
-                                                    rowSr,
-                                                    'val4',
-                                                    e.target.value
-                                                )
-                                            }
-                                        />
-                                    </>
-                                )}
-                            </>
-                        )}
-                    </div>
-
-                    <div className="d-flex flex-column gap-1">
-                        <button
-                            className="btn-icon-simple"
-                            title="View Info"
-                            onClick={() => handleEyeClick(paramName)}
-                        >
-                            <img
-                                src="https://img.icons8.com/ios/50/000000/visible--v1.png"
-                                alt="Eye"
-                                style={{
-                                    width: '15px',
-                                    height: '15px',
-                                    opacity: 0.8
-                                }}
-                            />
-                        </button>
-
-                        <button
-                            className="btn-icon-simple text-danger"
-                            title="Watch Video"
-                            onClick={() => handleVideoClick(paramName)}
-                        >
-                            <i className="bi bi-camera-video"></i>
-                        </button>
-                    </div>
+            <td className="bg-light text-center">
+                <div className="d-flex gap-1 justify-content-center flex-wrap">
+                    {[readObj.val1, readObj.val2, readObj.val3, readObj.val4].filter(Boolean).map((val, i) => (
+                        <span key={i} className="read-only-light">{val}</span>
+                    ))}
                 </div>
             </td>
         );
-    }
-
-    const hasData =
-        readObj.val1 ||
-        readObj.val2 ||
-        readObj.val3 ||
-        readObj.val4;
-
-    if (!hasData) {
-        return (
-            <td className="text-center text-muted fw-bold bg-light">
-                --
-            </td>
-        );
-    }
-
-    return (
-        <td className="bg-light text-center">
-            <div className="d-flex gap-1 justify-content-center flex-wrap">
-                {[readObj.val1, readObj.val2, readObj.val3, readObj.val4]
-                    .filter(Boolean)
-                    .map((val, i) => (
-                        <span
-                            key={i}
-                            className="read-only-light"
-                        >
-                            {val}
-                        </span>
-                    ))}
-            </div>
-        </td>
-    );
-};
+    };
 
     return (
         <>
@@ -622,7 +514,6 @@ const InspectionForm = () => {
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
             
             <style>{`
-                /* ====== PREMIUM LIGHT THEME ====== */
                 :root {
                     --bg-main: #f8fafc;        
                     --bg-card: #ffffff;        
@@ -636,106 +527,54 @@ const InspectionForm = () => {
                     --danger: #ef4444;
                     --success: #10b981;
                 }
-
                 * { background-color: inherit; }
                 html { background-color: #f8fafc; }
                 body { background-color: #f8fafc; font-family: 'Inter', 'Segoe UI', sans-serif; color: var(--text-main); }
                 .container, .container-fluid { background-color: transparent; }
-                
                 @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
                 .animate-pop { animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-                
-                .navbar-light-custom { position: fixed; top: 0; width: 100%; height: 70px; background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-subtle); z-index: 1000; box-shadow: 0 1px 3px rgba(0,0,0,0.02);}
-                .brand-logo { font-weight: 900; color: var(--accent-primary); font-size: 1.4rem; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px;}
-                
                 .card-custom { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 24px; transition: 0.3s; }
                 .card-header-custom { background-color: #ffffff; border-bottom: 1px solid var(--border-subtle); padding: 1.2rem 1.5rem; display: flex; align-items: center; justify-content: space-between; border-radius: 12px 12px 0 0;}
                 .card-title-custom { color: var(--text-main); font-weight: 800; margin: 0; font-size: 1.05rem; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px;}
                 .card-body-custom { padding: 1.5rem; }
-
                 label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block;}
                 .form-control-light { background-color: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 8px; padding: 0.7rem 1rem; font-size: 0.9rem; font-weight: 600; transition: all 0.2s ease; width: 100%; outline: none;}
                 .form-control-light:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--accent-glow); background-color: #fff;}
                 .form-control-light:disabled, .form-control-light[readonly] { background-color: #f1f5f9; color: #475569; cursor: not-allowed; font-weight: bold;}
-                select.form-control-light { cursor: pointer; }
-                .form-control-light::placeholder { color: #94a3b8; opacity: 0.7;}
-
-                .gate-card-light { background: #ffffff; border: 1px solid var(--border-subtle); border-radius: 16px; padding: 2rem 1.5rem; text-align: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.02);}
-                .gate-card-light::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: transparent; transition: 0.3s;}
+                .gate-card-light { background: #ffffff; border: 1px solid var(--border-subtle); border-radius: 16px; padding: 2rem 1.5rem; text-align: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
                 .gate-card-light:hover { transform: translateY(-6px); box-shadow: 0 15px 30px -5px rgba(0,0,0,0.08); border-color: var(--accent-primary); }
-                .gate-card-light:hover::before { background: var(--accent-primary); }
                 .gate-icon-light { font-size: 3rem; margin-bottom: 0.8rem; display: inline-block; transition: 0.3s; color: var(--accent-primary);}
-                .gate-card-light:hover .gate-icon-light { transform: scale(1.1); }
                 .gate-title-light { font-weight: 800; color: var(--text-main); font-size: 1.15rem; margin-bottom: 0.2rem; }
                 .gate-desc-light { font-size: 0.85rem; color: var(--text-muted); margin: 0; font-weight: 500;}
-
-                /* DONE STAGE GATE */
                 .gate-done-light { border-color: #34d399 !important; background-color: #f0fdf4 !important; cursor: not-allowed !important; opacity: 0.9; }
-                .gate-done-light:hover { transform: none !important; box-shadow: 0 2px 5px rgba(0,0,0,0.02) !important; border-color: #34d399 !important;}
-                .gate-done-light::before { background: var(--success) !important; }
-                
                 .stepper-light { display: flex; justify-content: space-between; position: relative; max-width: 550px; margin: 0 auto 2.5rem auto; }
                 .stepper-light::before { content: ''; position: absolute; top: 18px; left: 0; right: 0; height: 3px; background: var(--border-subtle); z-index: 1; }
                 .step-item-light { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; color: var(--text-muted); }
-                .step-icon-light { width: 38px; height: 38px; border-radius: 50%; background: #ffffff; border: 3px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; transition: all 0.4s ease; color: var(--text-muted);}
-                .step-text-light { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; margin-top: 0.6rem; letter-spacing: 0.5px; transition: 0.3s;}
-                
+                .step-icon-light { width: 38px; height: 38px; border-radius: 50%; background: #ffffff; border: 3px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; color: var(--text-muted);}
                 .step-item-light.active .step-icon-light { border-color: var(--accent-primary); color: var(--accent-primary); box-shadow: 0 0 0 4px var(--accent-glow); }
-                .step-item-light.active .step-text-light { color: var(--accent-primary); }
                 .step-item-light.completed .step-icon-light { background-color: var(--success); border-color: var(--success); color: #fff; }
-                .step-item-light.completed .step-text-light { color: var(--success); }
-
                 .meta-strip-light { background-color: #f8fafc; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 1.2rem; margin-bottom: 1.5rem; border-left: 5px solid var(--accent-primary); }
-                
                 .table-responsive-light { border-radius: 10px; overflow-x: auto; background-color: #ffffff; border: 1px solid var(--border-subtle);}
                 .table-light-custom { width: 100%; border-collapse: collapse; margin-bottom: 0; }
-                .table-light-custom thead th { background-color: #f8fafc; color: var(--text-muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; padding: 1.2rem 1rem; border-bottom: 1px solid var(--border-subtle); border-right: none; }
-                .table-light-custom tbody td { vertical-align: middle; font-size: 0.9rem; padding: 0.8rem 1rem; border-bottom: 1px solid #f1f5f9; border-right: none; }
-                .table-light-custom tbody tr:last-child td { border-bottom: none; }
-                
-                .th-active { color: var(--accent-primary) !important; font-weight: 900 !important; background-color: transparent !important; }
-                
+                .table-light-custom thead th { background-color: #f8fafc; color: var(--text-muted); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; padding: 1.2rem 1rem; border-bottom: 1px solid var(--border-subtle); }
+                .table-light-custom tbody td { vertical-align: middle; font-size: 0.9rem; padding: 0.8rem 1rem; border-bottom: 1px solid #f1f5f9; }
+                .th-active { color: var(--accent-primary) !important; font-weight: 900 !important; }
                 .badge-pill-modern { padding: 0.4em 0.8em; border-radius: 99px; font-size: 70%; font-weight: 800; letter-spacing: 0.5px; border: 1px solid transparent;}
                 .bg-prod-light { background-color: #eff6ff; color: #2563eb; border-color: #dbeafe; }
                 .bg-proc-light { background-color: #ecfdf5; color: #059669; border-color: #d1fae5; }
                 .badge-instr-light { background-color: #f8fafc; color: #64748b; border-color: #e2e8f0; }
-
-                .form-input-light { background-color: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 6px; padding: 0.5rem; width: 100%; transition: 0.2s; outline: none; font-size: 0.85rem; font-weight: 600;}
-                .form-input-light:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--accent-glow); background-color: #ffffff;}
-                .form-input-light::placeholder { color: #94a3b8; opacity: 0.7;}
+                .form-input-light { background-color: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 6px; padding: 0.5rem; width: 100%; font-size: 0.85rem; font-weight: 600; outline: none;}
                 .read-only-light { display: block; padding: 0.5rem; color: #94a3b8; text-align: center; font-weight: 600;}
-
-                .btn-icon-simple { background: transparent; border: none; color: #94a3b8; padding: 6px; cursor: pointer; transition: 0.2s; border-radius: 6px; display: flex; align-items: center; justify-content: center;}
+                .btn-icon-simple { background: transparent; border: none; color: #94a3b8; padding: 6px; cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center;}
                 .btn-icon-simple:hover { color: var(--accent-primary); background: #f1f5f9;}
-
                 .btn-primary-glow { background: var(--text-main); color: #fff; border: none; border-radius: 8px; font-weight: 800; padding: 0.9rem 2.5rem; transition: all 0.3s; font-size: 0.95rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
-                .btn-primary-glow:hover { background: #000; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
-                
-                .btn-edit-light { background: #ffffff; border: 1px solid #cbd5e1; color: #475569; border-radius: 6px; padding: 4px 14px; font-size: 0.75rem; font-weight: 800; transition: 0.2s; text-transform: uppercase;}
-                .btn-edit-light:hover { background: #f1f5f9; color: var(--text-main);}
-                .btn-outline-custom { background: #ffffff; border: 1px solid #cbd5e1; color: var(--text-main); font-weight: 700; padding: 0.4rem 1rem; border-radius: 8px; transition: 0.2s; font-size: 0.85rem;}
-                .btn-outline-custom:hover { background: #f8fafc; }
-
+                .btn-primary-glow:hover { background: #000; transform: translateY(-2px); }
+                .btn-edit-light { background: #ffffff; border: 1px solid #cbd5e1; color: #475569; border-radius: 6px; padding: 4px 14px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase;}
+                .btn-outline-custom { background: #ffffff; border: 1px solid #cbd5e1; color: var(--text-main); font-weight: 700; padding: 0.4rem 1rem; border-radius: 8px; font-size: 0.85rem;}
                 .modal-light-custom .modal-content { background-color: #ffffff; border: none; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
-                .modal-light-custom .modal-header { border-bottom: 1px solid var(--border-subtle); padding: 1.5rem; }
-                .modal-light-custom .modal-body { padding: 2rem; }
-                
-                .lang-title-light { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; color: var(--accent-primary); letter-spacing: 0.5px; margin-bottom: 1rem; border-bottom: 2px solid var(--accent-primary); display: inline-block; padding-bottom: 4px;}
                 .sop-list-light { list-style: none; padding-left: 0; color: #1e293b; font-size: 0.95rem; font-weight: 600;} 
-                .sop-list-light li { margin-bottom: 0.8rem; display: flex; align-items: flex-start; gap: 10px; line-height: 1.5;}
-                .sop-list-light li::before { content: '\\F26A'; font-family: 'bootstrap-icons'; color: var(--success); margin-top: 2px;}
-
+                .sop-list-light li { margin-bottom: 0.8rem; display: flex; align-items: flex-start; gap: 10px;}
                 .main-container { padding: 40px 24px 60px 24px; max-width: 1600px; margin: 0 auto; }
-
-                @media (max-width: 992px) { .col-responsive { flex: 0 0 50% !important; max-width: 50% !important; } }
-                @media (max-width: 768px) {
-                    .main-container { padding: 40px 12px 40px 12px; }
-                    .col-responsive { flex: 0 0 100% !important; max-width: 100% !important; }
-                    .card-body-custom { padding: 1rem; }
-                    .gate-card-light { padding: 1.5rem 1rem; }
-                    .table-light-custom thead th { font-size: 0.65rem; padding: 0.75rem 0.5rem; }
-                    .table-light-custom tbody td { font-size: 0.75rem; padding: 0.75rem 0.5rem; }
-                }
             `}</style>
 
             {/* SOP MODAL */}
@@ -772,7 +611,6 @@ const InspectionForm = () => {
             )}
 
             <div className="main-container">
-                {/* 🌟 STEP 1: CONTEXT */}
                 <div className="card-custom animate-pop" style={{animationDelay: '0.1s'}}>
                     <div className="card-header-custom">
                         <button
@@ -784,7 +622,7 @@ const InspectionForm = () => {
                         </button>
                         <h6 className="card-title-custom">
                           <i className={`bi bi-sliders text-${isViewMode ? 'success' : 'primary'}`}></i> 
-                          Setup & Petrol Inspectioon {isViewMode && <span className="text-success">(REVIEW)</span>}
+                          Setup & Petrol Inspection {isViewMode && <span className="text-success">(REVIEW)</span>}
                         </h6>
                         <input type="text" className="form-control-light w-auto fw-bold text-center" style={{padding: '0.4rem 0.8rem', color: 'var(--accent-primary)', cursor: 'not-allowed', backgroundColor: '#f1f5f9'}} value={selectedDate} readOnly />
                     </div>
@@ -804,7 +642,6 @@ const InspectionForm = () => {
                     </div>
                 </div>
 
-                {/* 🌟 GATES & FORM */}
                 {specList.length > 0 && (
                     <div className="card-custom animate-pop" style={{animationDelay: '0.2s'}}>
                         <div className="card-header-custom">
@@ -820,8 +657,6 @@ const InspectionForm = () => {
                         </div>
                         
                         <div className="card-body-custom">
-                            
-                            {/* GATE 1: SELECT ACTION (Hidden in View Mode) */}
                             {userAction === '' && !isViewMode && (
                                 <div className="animate-pop">
                                     <div className="row justify-content-center g-4">
@@ -850,7 +685,6 @@ const InspectionForm = () => {
                                 </div>
                             )}
 
-                            {/* GATE 2: SELECT STAGE (Hidden in View Mode) */}
                             {userAction === 'FILL' && selectedStage === '' && !isViewMode && (
                                 <div className="animate-pop">
                                     <div className="row justify-content-center g-4">
@@ -885,10 +719,8 @@ const InspectionForm = () => {
                                 </div>
                             )}
 
-                            {/* GATE 3: FORM */}
                             {(selectedStage !== '' || isViewMode) && (
                                 <div className="animate-pop">
-                                    {/* STEPPER (Hide in View Mode) */}
                                     {!isViewMode && (
                                       <div className="stepper-light">
                                           <div className={`step-item-light ${currentStage > 1 ? 'completed' : 'active'}`}><div className="step-icon-light">{currentStage > 1 ? <i className="bi bi-check-lg"></i> : '1'}</div><div className="step-text-light">Setup</div></div>
@@ -897,7 +729,6 @@ const InspectionForm = () => {
                                       </div>
                                     )}
 
-                                    {/* META STRIP (Visible only while filling a new col) */}
                                     {activeColId && activeColumn && !isViewMode && (
                                         <div className="meta-strip-light">
                                             <div className="row g-3 align-items-center">
@@ -925,7 +756,6 @@ const InspectionForm = () => {
                                         </div>
                                     )}
 
-                                    {/* TABLE */}
                                     <div className="table-responsive-light shadow-sm mt-3">
                                         <table className="table-light-custom">
                                             <thead>
@@ -939,31 +769,20 @@ const InspectionForm = () => {
                                                     {logColumns.map((col) => (
                                                         <th key={col.id} className={`${col.id === activeColId ? 'th-active' : ''} text-center`} style={{minWidth: '160px'}}>
                                                            <div className="d-flex justify-content-center align-items-center gap-2">
-
-  <span>{col.displayStage}</span>
-
-  {col.displayStage === "SETUP" && (
-    <button
-      type="button"
-      className="btn btn-sm btn-outline-primary"
-      onClick={() => setShowExtraReadings(prev => !prev)}
-      style={{
-        padding: "0px 6px",
-        fontSize: "12px",
-        lineHeight: "1"
-      }}
-    >
-      {showExtraReadings ? "−" : "+"}
-    </button>
-  )}
-
-  {(col.isLocked || isViewMode) && (
-    <i className="bi bi-lock-fill text-muted"></i>
-  )}
-
-</div>
+                                                              <span>{col.displayStage}</span>
+                                                              {col.displayStage === "SETUP" && (
+                                                                <button
+                                                                  type="button"
+                                                                  className="btn btn-sm btn-outline-primary"
+                                                                  onClick={() => setShowExtraReadings(prev => !prev)}
+                                                                  style={{ padding: "0px 6px", fontSize: "12px", lineHeight: "1" }}
+                                                                >
+                                                                  {showExtraReadings ? "−" : "+"}
+                                                                </button>
+                                                              )}
+                                                              {(col.isLocked || isViewMode) && <i className="bi bi-lock-fill text-muted"></i>}
+                                                            </div>
                                                             {col.time && <div style={{fontSize: '0.65rem', color: 'var(--text-muted)', marginTop:'4px', textTransform:'none'}}>Logged: {col.time}</div>}
-                                                            {/* 🔥 Remove edit button in view mode */}
                                                             {col.isLocked && !isViewMode && <button className="btn-edit-light mt-2 d-block mx-auto" onClick={() => unlockColumn(col.id)}>Edit</button>}
                                                         </th>
                                                     ))}
@@ -985,9 +804,7 @@ const InspectionForm = () => {
                                         </table>
                                     </div>
 
-                                    {/* BUTTONS (Approve or Save) */}
                                     <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-top pt-4">
-                                        
                                         <div className="flex flex-col">
                                           {isViewMode ? (
                                             <>
@@ -1018,10 +835,8 @@ const InspectionForm = () => {
                                             </button>
                                         )}
                                     </div>
-
                                 </div>
                             )}
-
                         </div>
                     </div>
                 )}
@@ -1031,4 +846,3 @@ const InspectionForm = () => {
 };
 
 export default InspectionForm;
-

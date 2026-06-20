@@ -23,11 +23,26 @@ const TipChangeMonitorForm = () => {
     tipChange: "",
   });
 
+
   const [machineList, setMachineList] = useState([]);
   const [machinesLoading, setMachinesLoading] = useState(false);
   const [partsData, setPartsData] = useState([]);
   const [operationsData, setOperationsData] = useState([]);
   const [preparedBy, setPreparedBy] = useState("");
+
+   const getItemText = (item) => {
+    if (!item) return "";
+    return typeof item === 'string' ? item : (item.name || item.operation || item.part_name || "");
+};
+
+  const sortArrayAlphabetically = (arr) => {
+    const cleanArray = Array.isArray(arr) ? arr : [];
+    return [...cleanArray].sort((a, b) => {
+        const strA = getItemText(a).toLowerCase().trim();
+        const strB = getItemText(b).toLowerCase().trim();
+        return strA.localeCompare(strB);
+    });
+};
 
   // 1. Component load hote hi Part Names fetch karna
   useEffect(() => {
@@ -36,7 +51,7 @@ const TipChangeMonitorForm = () => {
       .then((data) => {
         if (Array.isArray(data)) {
           const uniquePartNames = [...new Set(data.map((item) => item[0]))];
-          setPartsData(uniquePartNames);
+          setPartsData(sortArrayAlphabetically(uniquePartNames));
         }
       })
       .catch((err) => console.error("Error fetching parts:", err));
@@ -177,6 +192,7 @@ const TipChangeMonitorForm = () => {
         },
         body: JSON.stringify(payloadData),
       });
+      const result = await response.json();
 
       if (response.ok) {
         const currentUser = localStorage.getItem("username") || "Unknown User";
@@ -185,7 +201,9 @@ const TipChangeMonitorForm = () => {
           await axios.post(API_LOG, {
             username: currentUser,
             report_name: "Tip Chage Monitor sheet  Form", // Yahan hardcode kar diya form ka naam
+           record_id: result.record_id // 🔥 FIX 2: Backend se aayi record_id pass kar di
           });
+          console.log("Activity log successfully saved with Record ID:", result.record_id);
           console.log("Activity log successfully saved!");
         } catch (logError) {
           console.error("Activity log save karne mein error aayi:", logError);

@@ -281,7 +281,9 @@ const For_M_Change_Ins_Form = () => {
           await axios.post(API_LOG, {
             username: currentUser,
             report_name: "4M Change Inspection  Form", // Yahan hardcode kar diya form ka naam
+           record_id: result.record_id // 🔥 FIX 2: Backend se aayi record_id pass kar di
           });
+          console.log("Activity log successfully saved with Record ID:", result.record_id);
           console.log("Activity log successfully saved!");
         } catch (logError) {
           console.error("Activity log save karne mein error aayi:", logError);

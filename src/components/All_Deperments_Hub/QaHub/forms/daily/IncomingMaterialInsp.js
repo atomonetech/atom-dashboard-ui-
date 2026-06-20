@@ -1,14 +1,10 @@
 import { useState, useEffect } from "react";
 import { GoPackageDependencies } from "react-icons/go";
 import { IoIosArrowDown } from "react-icons/io";
-import { useParams, useNavigate } from "react-router-dom"; // 🔥 NAYA IMPORT
-import axios from "axios"; // 🔥 NAYA IMPORT
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBinoculars } from "@fortawesome/free-solid-svg-icons";
-<link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-/>;
 
 let _id = 0;
 const nextId = () => ++_id;
@@ -29,7 +25,7 @@ const GRADES = [
   "HCHCr",
   "SAILMA350",
   "IS2062",
-];
+].sort((a, b) => a.localeCompare(b)); // Alphabetically sorted initial grades array
 
 const emptyRow = () => ({
   id: nextId(),
@@ -43,8 +39,6 @@ const emptyRow = () => ({
 
 /* ============================================================
    DESIGN TOKENS — "Calibration Certificate" theme
-   Document-style sheet, numbered section rail, deep teal +
-   single brass hairline signature. No dark mode.
    ============================================================ */
 const T = {
   paper: "#F7F5F1",
@@ -139,7 +133,6 @@ function selStyle(v, disabled = false) {
 }
 
 function rkStyle(v, disabled = false) {
-  // 🔥 Added disabled support
   return {
     width: "100%",
     padding: disabled ? "9px 10px" : "9px 30px 9px 10px",
@@ -173,7 +166,6 @@ function rkStyle(v, disabled = false) {
 }
 
 function obsStyle(v, disabled = false) {
-  // 🔥 Added disabled support
   return {
     width: "100%",
     padding: "9px 4px",
@@ -207,13 +199,27 @@ const TD = ({ children, style = {} }) => (
   </td>
 );
 
+const getItemText = (item) => {
+    if (!item) return "";
+    return typeof item === 'string' ? item : (item.name || item.operation || item.part_name || "");
+};
+
+// 🔥 PURE SORTING FUNCTION WITHOUT REMOVING KEYWORDS
+const sortArrayAlphabetically = (arr) => {
+    const cleanArray = Array.isArray(arr) ? arr : [];
+    return [...cleanArray].sort((a, b) => {
+        const strA = getItemText(a).toLowerCase().trim();
+        const strB = getItemText(b).toLowerCase().trim();
+        return strA.localeCompare(strB);
+    });
+};
+
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8000";
 const API_URL = `${API_BASE}/api`;
 const API_LOG = `${API_URL}/log-report/`;
 const API_APPROVE = `${API_URL}/approve-report/`;
 
 export default function IncomingMaterialInsp() {
-  // 🔥 ROUTING HOOKS
   const { id } = useParams();
   const navigate = useNavigate();
   const isViewMode = Boolean(id);
@@ -249,14 +255,15 @@ export default function IncomingMaterialInsp() {
   const mtcList = ["YES", "NO", "N/A"];
   const gaNgaList = ["GA", "NGA", "N/A"];
 
-  // 🔥 FETCH DATA EFFECT (View Mode OR Create Mode)
+  // 🔥 FETCH DATA EFFECT
   useEffect(() => {
     const fetchMasterData = async () => {
       try {
         const custRes = await fetch(`${API_URL}/customers/`);
         if (custRes.ok) {
           const data = await custRes.json();
-          setCustomersList(data.customers);
+          // Sort Customers A-Z
+          setCustomersList(sortArrayAlphabetically(data.customers));
         }
 
         const [specRes, methodRes, paramRes] = await Promise.all([
@@ -264,9 +271,11 @@ export default function IncomingMaterialInsp() {
           fetch(`${API_URL}/master-dropdown/?filter=method`),
           fetch(`${API_URL}/master-dropdown/?filter=parameter`),
         ]);
-        if (specRes.ok) setSpecsList(await specRes.json());
-        if (methodRes.ok) setMethodsList(await methodRes.json());
-        if (paramRes.ok) setParamsList(await paramRes.json());
+        
+        // Sort Parameter Dropdowns A-Z
+        if (specRes.ok) setSpecsList(sortArrayAlphabetically(await specRes.json()));
+        if (methodRes.ok) setMethodsList(sortArrayAlphabetically(await methodRes.json()));
+        if (paramRes.ok) setParamsList(sortArrayAlphabetically(await paramRes.json()));
       } catch (error) {
         console.error("Error fetching master data:", error);
       }
@@ -284,9 +293,6 @@ export default function IncomingMaterialInsp() {
             const data = res.data.data;
             setSupplier(data.supplier || "");
             setCustomer(data.customer || "");
-            // Note: Since we need part ID for dropdown, but backend might just return name,
-            // we're displaying partName in a text format or matching it.
-            // For pure view mode, selectedPartId isn't crucial as fields are locked
             setPartNo(data.part_no || "");
 
             if (data.date) {
@@ -308,11 +314,8 @@ export default function IncomingMaterialInsp() {
             setApprovedBy(data.approved_by || "");
 
             if (data.inspection_data && data.inspection_data.length > 0) {
-              // Map backend row structure to UI row structure
-              const formattedRows = data.inspection_data.map((r, i) => {
+              const formattedRows = data.inspection_data.map((r) => {
                 const obs = Array(5).fill("");
-                // In backend, observations might be stored differently depending on your model.
-                // Assuming 'observations' array exists, otherwise we'll leave it empty.
                 if (r.observations && Array.isArray(r.observations)) {
                   for (let k = 0; k < 5; k++) obs[k] = r.observations[k] || "";
                 }
@@ -344,11 +347,11 @@ export default function IncomingMaterialInsp() {
 
   useEffect(() => {
     if (customer && !isViewMode) {
-      // Skip auto-fetch in view mode
       fetch(`${API_URL}/parts/${encodeURIComponent(customer)}/`)
         .then((r) => r.json())
         .then((data) => {
-          setPartsList(data.parts || []);
+          // Sort Parts List alphabetically A-Z
+          setPartsList(sortArrayAlphabetically(data.parts || []));
         })
         .catch((err) => console.error(err));
     } else if (!isViewMode) {
@@ -369,14 +372,18 @@ export default function IncomingMaterialInsp() {
     setRows([emptyRow()]);
   };
 
-  const handlePartChange = (e) => {
+ const handlePartChange = (e) => {
     if (isViewMode) return;
     const partId = e.target.value;
     setSelectedPartId(partId);
 
-    const partData = partsList.find((p) => String(p.id) === String(partId));
+    // 🔥 FIX: Looks for match by ID OR by Part Name to guarantee a secure lookup
+    const partData = partsList.find(
+      (p) => String(p.id) === String(partId) || String(p.part_name) === String(partId)
+    );
 
     if (partData) {
+      // Auto-fill Part Number
       setPartNo(partData.part_no || "");
 
       let inspData = partData.inspection_data || [];
@@ -414,9 +421,11 @@ export default function IncomingMaterialInsp() {
         });
       }
 
+      // Auto-fill chemical grade and map specifications matrix rows
       setGrade(foundGrade);
       setRows(newRows.length > 0 ? newRows : [emptyRow()]);
     } else {
+      // Fallback fallback if no match found
       setPartNo("");
       setGrade("");
       setRows([emptyRow()]);
@@ -444,10 +453,8 @@ export default function IncomingMaterialInsp() {
   const removeRow = (i) =>
     !isViewMode && setRows((prev) => prev.filter((_, idx) => idx !== i));
 
-  // 🔥 UPDATED SUBMIT HANDLER (SAVE OR APPROVE)
   const handleSave = async () => {
     if (isViewMode) {
-      // ==== APPROVE LOGIC ====
       try {
         const res = await axios.post(API_APPROVE, {
           log_id: id,
@@ -462,7 +469,6 @@ export default function IncomingMaterialInsp() {
         alert("Failed to approve report.");
       }
     } else {
-      // ==== SAVE LOGIC ====
       const selectedPartName =
         partsList.find((p) => String(p.id) === String(selectedPartId))
           ?.part_name || "";
@@ -502,7 +508,6 @@ export default function IncomingMaterialInsp() {
           const resultData = await response.json();
           const savedRecordId = resultData.record_id;
 
-          // Log Activity
           try {
             await axios.post(API_LOG, {
               username: currentUser,
@@ -552,11 +557,7 @@ export default function IncomingMaterialInsp() {
     }
   };
 
-  // 🔥 BYPASS HEADER CHECK IN VIEW MODE SO TABLE ALWAYS SHOWS
-  const headerFilled =
-    isViewMode || !!(supplier && customer && selectedPartId && qty);
-  const okCount = rows.filter((r) => r.remark === "OK").length;
-  const notOkCount = rows.filter((r) => r.remark === "NOT OK").length;
+  const headerFilled = isViewMode || !!(supplier && customer && selectedPartId && qty);
 
   const grid3Top = {
     display: "grid",
@@ -589,36 +590,18 @@ export default function IncomingMaterialInsp() {
     >
       <style>{`
         * { box-sizing: border-box; }
-        input:focus, select:focus { outline: none !important; border-color: ${
-          T.teal
-        } !important; box-shadow: 0 0 0 3px ${T.tealSoft} !important; }
-        select option { background: #ffffff !important; color: ${
-          T.ink
-        } !important; font-weight: 400; }
+        input:focus, select:focus { outline: none !important; border-color: ${T.teal} !important; box-shadow: 0 0 0 3px ${T.tealSoft} !important; }
+        select option { background: #ffffff !important; color: ${T.ink} !important; font-weight: 400; }
         @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
         .save-toast { animation: fadeIn 0.3s ease; }
-        .imi-save-btn { height: 46px; padding: 0 28px; border-radius: 11px; background: ${
-          isViewMode ? T.ok : T.teal
-        }; color: #fff; border: none; font-weight: 700; font-size: 13.5px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 8px 18px ${
-        isViewMode ? "rgba(31,138,87,0.25)" : "rgba(11,94,84,0.25)"
-      }; letter-spacing: 0.01em; font-family: ${T.font}; }
+        .imi-save-btn { height: 46px; padding: 0 28px; border-radius: 11px; background: ${isViewMode ? T.ok : T.teal}; color: #fff; border: none; font-weight: 700; font-size: 13.5px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 8px 18px ${isViewMode ? "rgba(31,138,87,0.25)" : "rgba(11,94,84,0.25)"}; letter-spacing: 0.01em; font-family: ${T.font}; }
         .imi-save-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
         .imi-save-btn:active { transform: translateY(0); filter: brightness(0.97); }
-        .imi-reset-btn { height: 46px; padding: 0 24px; border-radius: 11px; background: ${
-          T.card
-        }; color: ${T.muted}; border: 1.5px solid ${
-        T.lineStrong
-      }; font-weight: 600; font-size: 13.5px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; font-family: ${
-        T.font
-      }; }
-        .imi-reset-btn:hover { background: ${T.rail}; border-color: ${
-        T.muted
-      }; color: ${T.ink}; }
+        .imi-reset-btn { height: 46px; padding: 0 24px; border-radius: 11px; background: ${T.card}; color: ${T.muted}; border: 1.5px solid ${T.lineStrong}; font-weight: 600; font-size: 13.5px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; font-family: ${T.font}; }
+        .imi-reset-btn:hover { background: ${T.rail}; border-color: ${T.muted}; color: ${T.ink}; }
         .imi-back-btn:hover { background: ${T.tealSoftLine} !important; }
         .imi-row:hover { background: ${T.rail} !important; }
-        .imi-del-btn:hover { background: ${
-          T.bad
-        } !important; color: #fff !important; }
+        .imi-del-btn:hover { background: ${T.bad} !important; color: #fff !important; }
         .imi-section:last-child { border-bottom: none !important; }
       `}</style>
       <link
@@ -699,7 +682,6 @@ export default function IncomingMaterialInsp() {
                   </span>
                 )}
               </span>
-              {/* <span style={{ fontSize: 11.5, color: T.muted, fontWeight: 600, letterSpacing: "0.02em", fontFamily: T.mono }}>FORM AOT/F/QA/01 · REV 00 · QUALITY ENGINEER</span> */}
             </div>
           </div>
           <div
@@ -1189,513 +1171,434 @@ export default function IncomingMaterialInsp() {
                       color: T.ink,
                       letterSpacing: "-0.01em",
                       lineHeight: 1.3,
-                    }}
-                  >
-                    Inspection
-                  </div>
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: T.muted,
-                      marginTop: 6,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    Measured values against spec, five samples per parameter.
-                  </div>
+                  }}
+                >
+                  Inspection
                 </div>
-              )}
-              <div style={{ padding: isMobile ? "20px 18px" : "32px 36px" }}>
                 <div
                   style={{
-                    marginBottom: 22,
+                    fontSize: 12,
+                    color: T.muted,
+                    marginTop: 6,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Measured values against spec, five samples per parameter.
+                </div>
+              </div>
+            )}
+            <div style={{ padding: isMobile ? "20px 18px" : "32px 36px" }}>
+              <div
+                style={{
+                  marginBottom: 22,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 12,
+                }}
+              >
+                <span
+                  style={{
+                    fontWeight: 800,
+                    fontSize: isMobile ? 14 : 15,
+                    color: T.ink,
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "space-between",
-                    flexWrap: "wrap",
-                    gap: 12,
+                    gap: 10,
+                    letterSpacing: "-0.01em",
                   }}
                 >
-                  <span
-                    style={{
-                      fontWeight: 800,
-                      fontSize: isMobile ? 14 : 15,
-                      color: T.ink,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      letterSpacing: "-0.01em",
-                    }}
-                  >
-                    <span style={{ fontSize: 16, color: T.teal }}>
-                      <FontAwesomeIcon icon={faBinoculars} />
-                    </span>{" "}
-                    Inspection Parameters
-                  </span>
-                  {/* <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, background: "#f1f5f9", color: "#475569", padding: "4px 12px", borderRadius: 20 }}>{rows.length} Rows</span>
-                    <span style={{ fontSize: 12, fontWeight: 700, background: "#ecfdf5", color: "#059669", padding: "4px 12px", borderRadius: 20 }}>✓ OK: {okCount}</span>
-                    <span style={{ fontSize: 12, fontWeight: 700, background: "#fef2f2", color: "#dc2626", padding: "4px 12px", borderRadius: 20 }}>✗ NOT OK: {notOkCount}</span>
-                  </div> */}
-                </div>
-
-                <div
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    overflowX: "auto",
-                    WebkitOverflowScrolling: "touch",
-                    borderRadius: 12,
-                    border: `1px solid ${T.lineStrong}`,
-                  }}
-                >
-                  <table
-                    style={{
-                      width: "100%",
-                      borderCollapse: "collapse",
-                      minWidth: 900,
-                    }}
-                  >
-                    <thead>
-                      <tr>
-                        <th
-                          rowSpan={2}
-                          style={{
-                            width: 38,
-                            padding: "14px 8px",
-                            background: T.tealSoft,
-                            color: T.tealDeep,
-                            fontSize: 10.5,
-                            fontWeight: 800,
-                            letterSpacing: "0.06em",
-                            textTransform: "uppercase",
-                            textAlign: "center",
-                            borderBottom: `1.5px solid ${T.tealSoftLine}`,
-                          }}
-                        >
-                          SR
-                        </th>
-                        <th
-                          rowSpan={2}
-                          style={{
-                            width: 160,
-                            padding: "14px 8px",
-                            background: T.tealSoft,
-                            color: T.tealDeep,
-                            fontSize: 10.5,
-                            fontWeight: 800,
-                            letterSpacing: "0.06em",
-                            textTransform: "uppercase",
-                            textAlign: "center",
-                            borderBottom: `1.5px solid ${T.tealSoftLine}`,
-                          }}
-                        >
-                          PARAMETER
-                        </th>
-                        <th
-                          rowSpan={2}
-                          style={{
-                            width: 180,
-                            padding: "14px 8px",
-                            background: T.tealSoft,
-                            color: T.tealDeep,
-                            fontSize: 10.5,
-                            fontWeight: 800,
-                            letterSpacing: "0.06em",
-                            textTransform: "uppercase",
-                            textAlign: "center",
-                            borderBottom: `1.5px solid ${T.tealSoftLine}`,
-                          }}
-                        >
-                          SPECIFICATION
-                        </th>
-                        <th
-                          rowSpan={2}
-                          style={{
-                            width: 150,
-                            padding: "14px 8px",
-                            background: T.tealSoft,
-                            color: T.tealDeep,
-                            fontSize: 10.5,
-                            fontWeight: 800,
-                            letterSpacing: "0.06em",
-                            textTransform: "uppercase",
-                            textAlign: "center",
-                            borderBottom: `1.5px solid ${T.tealSoftLine}`,
-                          }}
-                        >
-                          INSPECTION
-                          <br />
-                          METHOD
-                        </th>
-                        <th
-                          colSpan={5}
-                          style={{
-                            padding: "10px 8px",
-                            background: T.card,
-                            color: T.tealDeep,
-                            fontSize: 10.5,
-                            fontWeight: 800,
-                            letterSpacing: "0.06em",
-                            textTransform: "uppercase",
-                            textAlign: "center",
-                            borderBottom: `1px solid ${T.line}`,
-                          }}
-                        >
-                          Observation
-                        </th>
-                        <th
-                          rowSpan={2}
-                          style={{
-                            width: 100,
-                            padding: "14px 8px",
-                            background: T.tealSoft,
-                            color: T.tealDeep,
-                            fontSize: 10.5,
-                            fontWeight: 800,
-                            letterSpacing: "0.06em",
-                            textTransform: "uppercase",
-                            textAlign: "center",
-                            borderBottom: `1.5px solid ${T.tealSoftLine}`,
-                          }}
-                        >
-                          REMARK
-                        </th>
-                      </tr>
-                      <tr>
-                        {[1, 2, 3, 4, 5].map((n) => (
-                          <th
-                            key={n}
-                            style={{
-                              padding: "8px",
-                              fontWeight: 700,
-                              fontSize: 12,
-                              color: T.tealDeep,
-                              textAlign: "center",
-                              background: T.tealSoft,
-                              borderLeft: `1px solid ${T.tealSoftLine}`,
-                              borderBottom: `1.5px solid ${T.tealSoftLine}`,
-                              width: 60,
-                              fontFamily: T.mono,
-                            }}
-                          >
-                            {n}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((row, i) => (
-                        <tr
-                          key={row.id}
-                          className="imi-row"
-                          style={{
-                            background: T.card,
-                            transition: "background 0.15s",
-                          }}
-                        >
-                          <TD>
-                            <span
-                              style={{
-                                fontWeight: 700,
-                                color: T.muted,
-                                fontFamily: T.mono,
-                              }}
-                            >
-                              {i + 1}
-                            </span>
-                          </TD>
-                          <TD>
-                            {isViewMode ? (
-                              <input
-                                value={row.parameter}
-                                disabled
-                                style={selStyle(true, true)}
-                              />
-                            ) : (
-                              <SelectWrapper
-                                color={row.parameter ? T.ink : T.faint}
-                                disabled={row.isReadOnly}
-                              >
-                                <select
-                                  value={row.parameter}
-                                  onChange={(e) =>
-                                    updateRow(i, "parameter", e.target.value)
-                                  }
-                                  disabled={row.isReadOnly}
-                                  style={selStyle(
-                                    row.parameter,
-                                    row.isReadOnly,
-                                  )}
-                                >
-                                  <option value="">Select...</option>
-                                  {row.parameter &&
-                                    !paramsList.includes(row.parameter) && (
-                                      <option value={row.parameter}>
-                                        {row.parameter}
-                                      </option>
-                                    )}
-                                  {paramsList.map((p, idx) => (
-                                    <option key={idx} value={p}>
-                                      {p}
-                                    </option>
-                                  ))}
-                                </select>
-                              </SelectWrapper>
-                            )}
-                          </TD>
-                          <TD>
-                            {isViewMode ? (
-                              <input
-                                value={row.specification}
-                                disabled
-                                style={selStyle(true, true)}
-                              />
-                            ) : (
-                              <SelectWrapper
-                                color={row.specification ? T.ink : T.faint}
-                                disabled={row.isReadOnly}
-                              >
-                                <select
-                                  value={row.specification}
-                                  onChange={(e) =>
-                                    updateRow(
-                                      i,
-                                      "specification",
-                                      e.target.value,
-                                    )
-                                  }
-                                  disabled={row.isReadOnly}
-                                  style={selStyle(
-                                    row.specification,
-                                    row.isReadOnly,
-                                  )}
-                                >
-                                  <option value="">Select...</option>
-                                  {row.specification &&
-                                    !specsList.includes(row.specification) && (
-                                      <option value={row.specification}>
-                                        {row.specification}
-                                      </option>
-                                    )}
-                                  {specsList.map((s, idx) => (
-                                    <option key={idx} value={s}>
-                                      {s}
-                                    </option>
-                                  ))}
-                                </select>
-                              </SelectWrapper>
-                            )}
-                          </TD>
-                          <TD>
-                            {isViewMode ? (
-                              <input
-                                value={row.inspMethod}
-                                disabled
-                                style={selStyle(true, true)}
-                              />
-                            ) : (
-                              <SelectWrapper
-                                color={row.inspMethod ? T.ink : T.faint}
-                                disabled={row.isReadOnly}
-                              >
-                                <select
-                                  value={row.inspMethod}
-                                  onChange={(e) =>
-                                    updateRow(i, "inspMethod", e.target.value)
-                                  }
-                                  disabled={row.isReadOnly}
-                                  style={selStyle(
-                                    row.inspMethod,
-                                    row.isReadOnly,
-                                  )}
-                                >
-                                  <option value="">Select...</option>
-                                  {row.inspMethod &&
-                                    !methodsList.includes(row.inspMethod) && (
-                                      <option value={row.inspMethod}>
-                                        {row.inspMethod}
-                                      </option>
-                                    )}
-                                  {methodsList.map((m, idx) => (
-                                    <option key={idx} value={m}>
-                                      {m}
-                                    </option>
-                                  ))}
-                                </select>
-                              </SelectWrapper>
-                            )}
-                          </TD>
-                          {row.observations.map((v, j) => (
-                            <TD key={j}>
-                              <input
-                                value={v}
-                                disabled={isViewMode}
-                                onChange={(e) =>
-                                  updateObs(i, j, e.target.value)
-                                }
-                                style={obsStyle(v, isViewMode)}
-                              />
-                            </TD>
-                          ))}
-                          <TD>
-                            {isViewMode ? (
-                              <div style={rkStyle(row.remark, true)}>
-                                {row.remark || "—"}
-                              </div>
-                            ) : (
-                              <SelectWrapper
-                                color={
-                                  row.remark === "OK"
-                                    ? T.ok
-                                    : row.remark === "NOT OK"
-                                    ? T.bad
-                                    : T.faint
-                                }
-                              >
-                                <select
-                                  value={row.remark}
-                                  onChange={(e) =>
-                                    updateRow(i, "remark", e.target.value)
-                                  }
-                                  style={rkStyle(row.remark, false)}
-                                >
-                                  <option value="">—</option>
-                                  <option value="OK">OK</option>
-                                  <option value="NOT OK">NOT OK</option>
-                                </select>
-                              </SelectWrapper>
-                            )}
-                          </TD>
-                          {!isViewMode && (
-                            <TD>
-                              {rows.length > 1 && !row.isReadOnly && (
-                                <button
-                                  className="imi-del-btn"
-                                  onClick={() => removeRow(i)}
-                                  style={{
-                                    width: 27,
-                                    height: 27,
-                                    borderRadius: 6,
-                                    border: `1px solid ${T.badLine}`,
-                                    background: T.badBg,
-                                    color: T.bad,
-                                    cursor: "pointer",
-                                    fontWeight: 700,
-                                    fontSize: 14,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    margin: "0 auto",
-                                    transition: "all 0.2s",
-                                  }}
-                                >
-                                  ×
-                                </button>
-                              )}
-                            </TD>
-                          )}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* {!isViewMode && (
-                   <button onClick={addRow} style={{ width: "100%", padding: "12px", borderRadius: 8, border: "1.5px dashed #94a3b8", background: "#f8fafc", color: "#2563eb", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", marginTop: 20, transition: "all 0.2s" }}>
-                     ＋ Add Manual Parameter Row
-                   </button>
-                )} */}
+                  <span style={{ fontSize: 16, color: T.teal }}>
+                    <FontAwesomeIcon icon={faBinoculars} />
+                  </span>{" "}
+                  Inspection Parameters
+                </span>
               </div>
-            </div>
-          )}
 
-          {/* SECTION 04 — SIGN-OFF */}
-          {headerFilled && (
+              <div
+                style={{
+                  display: "block",
+                  width: "100%",
+                  overflowX: "auto",
+                  WebkitOverflowScrolling: "touch",
+                  borderRadius: 12,
+                  border: `1px solid ${T.lineStrong}`,
+                }}
+              >
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    minWidth: 900,
+                  }}
+                >
+                  <thead>
+                    <tr>
+                      <th
+                        rowSpan={2}
+                        style={{
+                          width: 38,
+                          padding: "14px 8px",
+                          background: T.tealSoft,
+                          color: T.tealDeep,
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          textAlign: "center",
+                          borderBottom: `1.5px solid ${T.tealSoftLine}`,
+                        }}
+                      >
+                        SR
+                      </th>
+                      <th
+                        rowSpan={2}
+                        style={{
+                          width: 160,
+                          padding: "14px 8px",
+                          background: T.tealSoft,
+                          color: T.tealDeep,
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          textAlign: "center",
+                          borderBottom: `1.5px solid ${T.tealSoftLine}`,
+                        }}
+                      >
+                        PARAMETER
+                      </th>
+                      <th
+                        rowSpan={2}
+                        style={{
+                          width: 180,
+                          padding: "14px 8px",
+                          background: T.tealSoft,
+                          color: T.tealDeep,
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          textAlign: "center",
+                          borderBottom: `1.5px solid ${T.tealSoftLine}`,
+                        }}
+                      >
+                        SPECIFICATION
+                      </th>
+                      <th
+                        rowSpan={2}
+                        style={{
+                          width: 150,
+                          padding: "14px 8px",
+                          background: T.tealSoft,
+                          color: T.tealDeep,
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          textAlign: "center",
+                          borderBottom: `1.5px solid ${T.tealSoftLine}`,
+                        }}
+                      >
+                        INSPECTION
+                        <br />
+                        METHOD
+                      </th>
+                      <th
+                        colSpan={5}
+                        style={{
+                          padding: "10px 8px",
+                          background: T.card,
+                          color: T.tealDeep,
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          textAlign: "center",
+                          borderBottom: `1px solid ${T.line}`,
+                        }}
+                      >
+                        Observation
+                      </th>
+                      <th
+                        rowSpan={2}
+                        style={{
+                          width: 100,
+                          padding: "14px 8px",
+                          background: T.tealSoft,
+                          color: T.tealDeep,
+                          fontSize: 10.5,
+                          fontWeight: 800,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          textAlign: "center",
+                          borderBottom: `1.5px solid ${T.tealSoftLine}`,
+                        }}
+                      >
+                        REMARK
+                      </th>
+                    </tr>
+                    <tr>
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <th
+                          key={n}
+                          style={{
+                            padding: "8px",
+                            fontWeight: 700,
+                            fontSize: 12,
+                            color: T.tealDeep,
+                            textAlign: "center",
+                            background: T.tealSoft,
+                            borderLeft: `1px solid ${T.tealSoftLine}`,
+                            borderBottom: `1.5px solid ${T.tealSoftLine}`,
+                            width: 60,
+                            fontFamily: T.mono,
+                          }}
+                        >
+                          {n}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row, i) => (
+                      <tr
+                        key={row.id}
+                        className="imi-row"
+                        style={{
+                          background: T.card,
+                          transition: "background 0.15s",
+                        }}
+                      >
+                        <td style={{ padding: "14px 10px", fontSize: 12.5, textAlign: "center", color: T.ink, borderBottom: "1px solid #EFEDE6" }}>
+                          <span style={{ fontWeight: 700, color: T.muted, fontFamily: T.mono }}>
+                            {i + 1}
+                          </span>
+                        </td>
+                        <td style={{ padding: "14px 10px", fontSize: 12.5, textAlign: "center", color: T.ink, borderBottom: "1px solid #EFEDE6" }}>
+                          {isViewMode ? (
+                            <input value={row.parameter} disabled style={selStyle(true, true)} />
+                          ) : (
+                            <SelectWrapper color={row.parameter ? T.ink : T.faint} disabled={row.isReadOnly}>
+                              <select
+                                value={row.parameter}
+                                onChange={(e) => updateRow(i, "parameter", e.target.value)}
+                                disabled={row.isReadOnly}
+                                style={selStyle(row.parameter, row.isReadOnly)}
+                              >
+                                <option value="">Select...</option>
+                                {row.parameter && !paramsList.includes(row.parameter) && (
+                                  <option value={row.parameter}>{row.parameter}</option>
+                                )}
+                                {paramsList.map((p, idx) => (
+                                  <option key={idx} value={p}>
+                                    {p}
+                                  </option>
+                                ))}
+                              </select>
+                            </SelectWrapper>
+                          )}
+                        </td>
+                        <td style={{ padding: "14px 10px", fontSize: 12.5, textAlign: "center", color: T.ink, borderBottom: "1px solid #EFEDE6" }}>
+                          {isViewMode ? (
+                            <input value={row.specification} disabled style={selStyle(true, true)} />
+                          ) : (
+                            <SelectWrapper color={row.specification ? T.ink : T.faint} disabled={row.isReadOnly}>
+                              <select
+                                value={row.specification}
+                                onChange={(e) => updateRow(i, "specification", e.target.value)}
+                                disabled={row.isReadOnly}
+                                style={selStyle(row.specification, row.isReadOnly)}
+                              >
+                                <option value="">Select...</option>
+                                {row.specification && !specsList.includes(row.specification) && (
+                                  <option value={row.specification}>{row.specification}</option>
+                                )}
+                                {specsList.map((s, idx) => (
+                                  <option key={idx} value={s}>
+                                    {s}
+                                  </option>
+                                ))}
+                              </select>
+                            </SelectWrapper>
+                          )}
+                        </td>
+                        <td style={{ padding: "14px 10px", fontSize: 12.5, textAlign: "center", color: T.ink, borderBottom: "1px solid #EFEDE6" }}>
+                          {isViewMode ? (
+                            <input value={row.inspMethod} disabled style={selStyle(true, true)} />
+                          ) : (
+                            <SelectWrapper color={row.inspMethod ? T.ink : T.faint} disabled={row.isReadOnly}>
+                              <select
+                                value={row.inspMethod}
+                                onChange={(e) => updateRow(i, "inspMethod", e.target.value)}
+                                disabled={row.isReadOnly}
+                                style={selStyle(row.inspMethod, row.isReadOnly)}
+                              >
+                                <option value="">Select...</option>
+                                {row.inspMethod && !methodsList.includes(row.inspMethod) && (
+                                  <option value={row.inspMethod}>{row.inspMethod}</option>
+                                )}
+                                {methodsList.map((m, idx) => (
+                                  <option key={idx} value={m}>
+                                    {m}
+                                  </option>
+                                ))}
+                              </select>
+                            </SelectWrapper>
+                          )}
+                        </td>
+                        {row.observations.map((v, j) => (
+                          <td key={j} style={{ padding: "14px 10px", fontSize: 12.5, textAlign: "center", color: T.ink, borderBottom: "1px solid #EFEDE6" }}>
+                            <input
+                              value={v}
+                              disabled={isViewMode}
+                              onChange={(e) => updateObs(i, j, e.target.value)}
+                              style={obsStyle(v, isViewMode)}
+                            />
+                          </td>
+                        ))}
+                        <td style={{ padding: "14px 10px", fontSize: 12.5, textAlign: "center", color: T.ink, borderBottom: "1px solid #EFEDE6" }}>
+                          {isViewMode ? (
+                            <div style={rkStyle(row.remark, true)}>{row.remark || "—"}</div>
+                          ) : (
+                            <SelectWrapper
+                              color={
+                                row.remark === "OK" ? T.ok : row.remark === "NOT OK" ? T.bad : T.faint
+                              }
+                            >
+                              <select
+                                value={row.remark}
+                                onChange={(e) => updateRow(i, "remark", e.target.value)}
+                                style={rkStyle(row.remark, false)}
+                              >
+                                <option value="">—</option>
+                                <option value="OK">OK</option>
+                                <option value="NOT OK">NOT OK</option>
+                              </select>
+                            </SelectWrapper>
+                          )}
+                        </td>
+                        {!isViewMode && (
+                          <td style={{ padding: "14px 10px", fontSize: 12.5, textAlign: "center", color: T.ink, borderBottom: "1px solid #EFEDE6" }}>
+                            {rows.length > 1 && !row.isReadOnly && (
+                              <button
+                                className="imi-del-btn"
+                                onClick={() => removeRow(i)}
+                                style={{
+                                  width: 27,
+                                  height: 27,
+                                  borderRadius: 6,
+                                  border: `1px solid ${T.badLine}`,
+                                  background: T.badBg,
+                                  color: T.bad,
+                                  cursor: "pointer",
+                                  fontWeight: 700,
+                                  fontSize: 14,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  margin: "0 auto",
+                                  transition: "all 0.2s",
+                                }}
+                              >
+                                ×
+                              </button>
+                            )}
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {!isViewMode && (
+                 <button onClick={addRow} style={{ width: "100%", padding: "12px", borderRadius: 8, border: "1.5px dashed #94a3b8", background: "#f8fafc", color: "#2563eb", fontWeight: 600, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", marginTop: 20, transition: "all 0.2s" }}>
+                    ＋ Add Manual Parameter Row
+                 </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* SECTION 04 — SIGN-OFF */}
+        {headerFilled && (
+          <div
+            style={{
+              background: T.rail,
+              padding: isMobile ? "22px 18px" : "32px 36px",
+            }}
+          >
             <div
               style={{
-                background: T.rail,
-                padding: isMobile ? "22px 18px" : "32px 36px",
+                display: "flex",
+                alignItems: "flex-end",
+                justifyContent: "space-between",
+                gap: 24,
+                flexWrap: "wrap",
               }}
             >
+              <div style={{ flex: 1, minWidth: isMobile ? "100%" : 220 }}>
+                <label style={LBL}>Prepared By</label>
+                <input
+                  value={preparedBy}
+                  onChange={(e) => setPreparedBy(e.target.value)}
+                  disabled={isViewMode}
+                  placeholder="Name / Sign"
+                  style={fldStyle(preparedBy, isViewMode)}
+                />
+              </div>
               <div
                 style={{
                   display: "flex",
-                  alignItems: "flex-end",
-                  justifyContent: "space-between",
-                  gap: 24,
+                  gap: 12,
                   flexWrap: "wrap",
+                  alignItems: "center",
                 }}
               >
-                <div style={{ flex: 1, minWidth: isMobile ? "100%" : 220 }}>
-                  <label style={LBL}>Prepared By</label>
-                  <input
-                    value={preparedBy}
-                    onChange={(e) => setPreparedBy(e.target.value)}
-                    disabled={isViewMode}
-                    placeholder="Name / Sign"
-                    style={fldStyle(preparedBy, isViewMode)}
-                  />
-                </div>
-                {/* <div style={{ flex: 1, minWidth: 220 }}>
-                  <label style={LBL}>Checked By</label>
-                  <input value={checkedBy} onChange={e => setCheckedBy(e.target.value)} disabled={isViewMode} placeholder="Name / Sign" style={fldStyle(checkedBy, isViewMode)} />
-                </div>
-                <div style={{ flex: 1, minWidth: 220 }}>
-                  <label style={LBL}>Approved By</label>
-                  <input value={approvedBy} onChange={e => setApprovedBy(e.target.value)} disabled={isViewMode} placeholder="Name / Sign" style={fldStyle(approvedBy, isViewMode)} />
-                </div> */}
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 12,
-                    flexWrap: "wrap",
-                    alignItems: "center",
-                  }}
-                >
-                  {saveMsg && (
-                    <span
-                      className="save-toast"
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: T.ok,
-                        background: T.okBg,
-                        border: `1px solid ${T.okLine}`,
-                        borderRadius: 8,
-                        padding: "9px 17px",
-                      }}
-                    >
-                      {saveMsg}
-                    </span>
-                  )}
-                  {!isViewMode && (
-                    <button className="imi-reset-btn" onClick={handleReset}>
-                      Reset Form
-                    </button>
-                  )}
-                  <button className="imi-save-btn" onClick={handleSave}>
-                    {isViewMode ? "✓ Approve Report" : "Save Report"}
+                {saveMsg && (
+                  <span
+                    className="save-toast"
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: T.ok,
+                      background: T.okBg,
+                      border: `1px solid ${T.okLine}`,
+                      borderRadius: 8,
+                      padding: "9px 17px",
+                    }}
+                  >
+                    {saveMsg}
+                  </span>
+                )}
+                {!isViewMode && (
+                  <button className="imi-reset-btn" onClick={handleReset}>
+                    Reset Form
                   </button>
-                </div>
+                )}
+                <button className="imi-save-btn" onClick={handleSave}>
+                  {isViewMode ? "✓ Approve Report" : "Save Report"}
+                </button>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
 
-        <div
-          style={{
-            textAlign: "center",
-            marginTop: 18,
-            fontSize: 11,
-            color: T.faint,
-            fontFamily: T.mono,
-            letterSpacing: "0.03em",
-          }}
-        >
-          incoming material inspection · quality assurance · calibrated record
-        </div>
+      <div
+        style={{
+          textAlign: "center",
+          marginTop: 18,
+          fontSize: 11,
+          color: T.faint,
+          fontFamily: T.mono,
+          letterSpacing: "0.03em",
+        }}
+      >
+        incoming material inspection · quality assurance · calibrated record
       </div>
     </div>
+  </div>
   );
 }

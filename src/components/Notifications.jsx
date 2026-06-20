@@ -1,10 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion'; 
-import { Bell, Check, X, AlertCircle, CheckCircle2, Clock, Settings, FileText } from 'lucide-react';
-import Sidebar from './Sidebar';
-import { Card } from './ui/card';
-import { Button } from './ui/button';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Bell,
+  Check,
+  X,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Settings,
+  FileText,
+} from "lucide-react";
+import Sidebar from "./Sidebar";
+import { Card } from "./ui/card";
+import { Button } from "./ui/button";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
@@ -65,7 +74,7 @@ export default function Notifications() {
     const fullUser = match?.[1] || "Unknown User";
 
     return {
-        submittedBy: fullUser.split("@")[0],
+      submittedBy: fullUser.split("@")[0],
       reportType: match?.[2] || "QA Report",
     };
   };
@@ -199,12 +208,10 @@ export default function Notifications() {
                             {submittedBy}
                           </span>
                         </p>
-                         <p className="mt-1 text-sm text-slate-500">
-          Awaiting approval from{" "}
-          <span className="text-cyan-400">
-            {currentUser}
-          </span>
-        </p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Awaiting approval from{" "}
+                          <span className="text-cyan-400">{currentUser}</span>
+                        </p>
 
                         {/* Footer */}
                         <div className="mt-3 flex items-center justify-between">
@@ -260,17 +267,7 @@ export default function Notifications() {
                               );
                             }}
                             size="sm"
-                            className="
-          h-8
-          rounded-lg
-          bg-cyan-500/10
-          text-cyan-300
-          border
-          border-cyan-500/20
-          hover:bg-cyan-500/20
-          hover:border-cyan-500/40
-          transition-all
-        "
+                            className="h-8 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/20  hover:bg-cyan-500/20 hover:border-cyan-500/40 transition-all"
                           >
                             View Report →
                           </Button>

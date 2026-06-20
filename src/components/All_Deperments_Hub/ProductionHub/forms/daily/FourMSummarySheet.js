@@ -225,19 +225,21 @@ const FourMSummarySheet = () => {
     };
     setIsLoading(true);
     try {
-      const res    = await fetch(`${BASE_URL}/api/save-4m-summary/`, {
+      const response  = await fetch(`${BASE_URL}/api/save-4m-summary/`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const result = await res.json();
-      if (res.ok && result.success) { 
+      const result = await response.json();
+      if (response.ok && result.success) { 
          const currentUser = localStorage.getItem('username') || 'Unknown User';
         
         try {
           await axios.post(API_LOG, {
             username: currentUser,
-            report_name: '4M Summary sheet  Form' // Yahan hardcode kar diya form ka naam
+            report_name: '4M Summary sheet  Form', // Yahan hardcode kar diya form ka naam
+            record_id: result.record_id // 🔥 FIX 2: Backend se aayi record_id pass kar di
           });
+          console.log("Activity log successfully saved with Record ID:", result.record_id);
           console.log("Activity log successfully saved!");
         } catch (logError) {
           console.error('Activity log save karne mein error aayi:', logError);
@@ -299,7 +301,7 @@ const FourMSummarySheet = () => {
               </div>
 
               {/* doc meta box */}
-              <div style={{
+              {/* <div style={{
                 display: "grid", gridTemplateColumns: "auto auto",
                 background: "rgba(0,0,0,.2)", border: "1px solid rgba(255,255,255,.25)",
                 borderRadius: 4, overflow: "hidden", fontSize: 11,
@@ -321,7 +323,7 @@ const FourMSummarySheet = () => {
                     }}>{v}</div>
                   </React.Fragment>
                 ))}
-              </div>
+              </div> */}
             </div>
 
             {/* ── form body ── */}
