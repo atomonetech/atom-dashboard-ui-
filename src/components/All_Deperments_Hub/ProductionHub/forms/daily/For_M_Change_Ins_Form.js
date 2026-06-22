@@ -211,29 +211,46 @@ const For_M_Change_Ins_Form = () => {
           if (response.data.success) {
             const data = response.data.data;
             
+            // 🔥 FIXED: Mapped exact backend fields to formData keys
             setFormData({
-              partName: data.part_name || "",
-              partNo: data.part_no || "",
+              partName: data.partName || data.part_name || "",
+              partNo: data.partNo || data.part_no || "",
               operation: data.operation || "",
-              lotQty: data.lot_qty || "",
-              okQty: data.ok_qty || "",
-              rejQty: data.rej_qty || "",
-              paramSpec: data.parameter_specs || "",
-              before: [data.before_1 || "", data.before_2 || "", data.before_3 || "", data.before_4 || "", data.before_5 || ""],
-              after: [data.after_1 || "", data.after_2 || "", data.after_3 || "", data.after_4 || "", data.after_5 || ""],
-              inspBy: data.inspected_by || "",
+              lotQty: data.lotQty || data.lot_qty || "",
+              okQty: data.okQty || data.ok_qty || "",
+              rejQty: data.rejQty || data.rej_qty || "",
+              paramSpec: data.parameterSpecs || data.parameter_specs || "",
+              before: [
+                data.before_1 || "", 
+                data.before_2 || "", 
+                data.before_3 || "", 
+                data.before_4 || "", 
+                data.before_5 || ""
+              ],
+              after: [
+                data.after_1 || "", 
+                data.after_2 || "", 
+                data.after_3 || "", 
+                data.after_4 || "", 
+                data.after_5 || ""
+              ],
+              inspBy: data.inspectedBy || data.inspected_by || "",
               remarks: data.remarks || "",
             });
-            setPreparedBy(data.submitted_by || "");
-            if (data.inspection_date) {
-               // convert YYYY-MM-DD back to DD.MM.YYYY
-               const parts = data.inspection_date.split("-");
+            
+            setPreparedBy(data.submitted_by || data.prepared_by || "");
+            
+            const dateStr = data.date || data.inspection_date;
+            if (dateStr) {
+               // convert YYYY-MM-DD back to DD.MM.YYYY for UI
+               const parts = dateStr.split("-");
                if(parts.length === 3) setFormDate(`${parts[2]}.${parts[1]}.${parts[0]}`);
             }
 
             // Pre-fetch operations
-            if (data.part_name) {
-              axios.get(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(data.part_name)}`)
+            const pName = data.partName || data.part_name;
+            if (pName) {
+              axios.get(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(pName)}`)
                 .then(res => setOperationList(res.data))
                 .catch(err => console.error(err));
             }
@@ -299,6 +316,29 @@ const For_M_Change_Ins_Form = () => {
     setOperationList([]);
   };
 
+  // 🔥 NAYA FUNCTION: API call to actually approve the report in DB
+  const handleApprove = async () => {
+    if (!id) return;
+    const currentUser = localStorage.getItem("username") || "Approver";
+    
+    setIsLoading(true);
+    try {
+        const response = await axios.post(`${BASE_URL}/api/approve-report/`, {
+            log_id: id,
+            approver_username: currentUser
+        });
+        if(response.status === 200) {
+            alert(response.data.message || "Report Approved Successfully!");
+            navigate(-1); // Automatically go back after approval
+        }
+    } catch (error) {
+        console.error("Error approving report:", error);
+        alert("Failed to approve report. Please try again.");
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (id) return; // Prevent saving if in view mode
@@ -343,7 +383,7 @@ const For_M_Change_Ins_Form = () => {
           await axios.post(API_LOG, {
             username: currentUser,
             report_name: "4M Change Inspection Form",
-            record_id: result.record_id // 🔥 Pass ID to log
+            record_id: result.record_id 
           });
         } catch (logError) {
           console.error("Activity log error:", logError);
@@ -393,7 +433,7 @@ const For_M_Change_Ins_Form = () => {
         >
           <button
             type="button"
-            onClick={() => navigate(-1)} // 🔥 Sends user back to previous page (Hub or Notifications)
+            onClick={() => navigate(-1)} // 🔥 Sends user back safely
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -541,7 +581,7 @@ const For_M_Change_Ins_Form = () => {
                   name="operation"
                   value={formData.operation}
                   onChange={handleChange}
-                  disabled={!!id || !formData.partName}
+                  disabled={!!id || (!id && !formData.partName)}
                 >
                   <option value="">Select Operation</option>
                   {operationList.map((op, i) => (
@@ -588,7 +628,7 @@ const For_M_Change_Ins_Form = () => {
                     placeholder="e.g. 95"
                     style={{
                       borderColor: C.greenBorder,
-                      background: C.greenLight,
+                      background: id ? "#f9f9f7" : C.greenLight,
                     }}
                   />
                 </div>
@@ -601,7 +641,10 @@ const For_M_Change_Ins_Form = () => {
                     onChange={handleChange}
                     readOnly={!!id}
                     placeholder="e.g. 5"
-                    style={{ borderColor: C.redBorder, background: C.redLight }}
+                    style={{ 
+                      borderColor: C.redBorder, 
+                      background: id ? "#f9f9f7" : C.redLight 
+                    }}
                   />
                 </div>
                 <div>
@@ -779,12 +822,13 @@ const For_M_Change_Ins_Form = () => {
                   {id ? (
                     <button
                       type="button"
-                      onClick={() => alert("Report Approved Successfully!")}
+                      disabled={isLoading}
+                      onClick={handleApprove} // 🔥 NEW LOGIC FOR APPROVE
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
                         gap: 8,
-                        background: C.green,
+                        background: isLoading ? "#15803d" : C.green,
                         border: "none",
                         color: "#fff",
                         padding: "11px 28px",
@@ -793,15 +837,19 @@ const For_M_Change_Ins_Form = () => {
                         letterSpacing: ".1em",
                         textTransform: "uppercase",
                         borderRadius: 6,
-                        cursor: "pointer",
+                        cursor: isLoading ? "not-allowed" : "pointer",
                         fontFamily: "inherit",
                         transition: "background .15s",
                         boxShadow: "0 2px 8px rgba(22,163,74,.35)",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#15803d")}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = C.green)}
+                      onMouseEnter={(e) => !isLoading && (e.currentTarget.style.background = "#15803d")}
+                      onMouseLeave={(e) => !isLoading && (e.currentTarget.style.background = C.green)}
                     >
-                      <Check size={14} strokeWidth={2.5} /> APPROVE REPORT
+                      {isLoading ? (
+                         <><Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> Approving...</>
+                      ) : (
+                         <><Check size={14} strokeWidth={2.5} /> APPROVE REPORT</>
+                      )}
                     </button>
                   ) : (
                     <>
@@ -851,7 +899,7 @@ const For_M_Change_Ins_Form = () => {
                           display: "inline-flex",
                           alignItems: "center",
                           gap: 8,
-                          background: isLoading ? "#9b1c1c" : C.red,
+                          background: isLoading ? C.redDark : C.red,
                           border: "none",
                           color: "#fff",
                           padding: "11px 28px",
@@ -867,7 +915,7 @@ const For_M_Change_Ins_Form = () => {
                         }}
                         onMouseEnter={(e) => {
                           if (!isLoading)
-                            e.currentTarget.style.background = "#991b1b";
+                            e.currentTarget.style.background = C.redDark;
                         }}
                         onMouseLeave={(e) => {
                           if (!isLoading) e.currentTarget.style.background = C.red;

@@ -13,7 +13,7 @@ import {
   UserCheck,
   PenTool,
   Hash,
-  Check, // 🔥 Import Check for Approve button
+  Check, 
 } from "lucide-react";
 
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -154,7 +154,8 @@ const FourMSummarySheet = () => {
   useEffect(() => {
     if (id) {
       setIsLoading(true);
-      axios.get(`${BASE_URL}/api/get-single-production-report/four-m-summary/${id}/`)
+      // 🔥 FIX: Correct API endpoint URL
+      axios.get(`${BASE_URL}/api/get-single-report/four-m-summary/${id}/`)
         .then(res => {
           if (res.data.success) {
             const d = res.data.data;
@@ -357,31 +358,6 @@ const FourMSummarySheet = () => {
                   }}>{id ? "4M Summary Sheet (REVIEW)" : "4M Summary Sheet"}</h1>
                 </div>
               </div>
-
-              {/* doc meta box */}
-              {/* <div style={{
-                display: "grid", gridTemplateColumns: "auto auto",
-                background: "rgba(0,0,0,.2)", border: "1px solid rgba(255,255,255,.25)",
-                borderRadius: 4, overflow: "hidden", fontSize: 11,
-              }}>
-                {[
-                  ["DOC. NO.", "AOT-F-4M-05A"],
-                  ["REVISION NO.", "00"],
-                  ["DATE", "01.01.2019"],
-                ].map(([k, v], i, arr) => (
-                  <React.Fragment key={k}>
-                    <div style={{
-                      padding: "5px 12px", fontWeight: 700, color: "rgba(255,255,255,.8)",
-                      borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,.2)" : "none",
-                      borderRight: "1px solid rgba(255,255,255,.2)",
-                    }}>{k}</div>
-                    <div style={{
-                      padding: "5px 14px", fontWeight: 600, color: "#fff",
-                      borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,.2)" : "none",
-                    }}>{v}</div>
-                  </React.Fragment>
-                ))}
-              </div> */}
             </div>
 
             {/* ── form body ── */}

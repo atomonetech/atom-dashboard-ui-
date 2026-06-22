@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom"; // 🔥 IMPORT useParams
+import { useParams, useNavigate } from "react-router-dom"; // 🔥 IMPORT useNavigate and useParams
 import {
   ArrowLeft,
   Save,
@@ -46,6 +46,7 @@ const PLANT2_MACHINES = Array.from({ length: 48 }, (_, i) => i + 1);
 
 const DailyProdForm = () => {
   const { id } = useParams(); // 🔥 GET ID FROM URL
+  const navigate = useNavigate(); // 🔥 Added for back navigation after approval
 
   // API states
   const [operatorNames, setOperatorNames] = useState([]);
@@ -62,7 +63,9 @@ const DailyProdForm = () => {
   const [isSavingOperator, setIsSavingOperator] = useState(false);
   const [preparedBy, setPreparedBy] = useState("");
 
+  // Form states
   const [isLoading, setIsLoading] = useState(false);
+  const [isApproving, setIsApproving] = useState(false); // 🔥 State for approve button loader
   const [formData, setFormData] = useState({
     plant: "",
     shift: "",
@@ -82,20 +85,6 @@ const DailyProdForm = () => {
     toolBdTime: "",
     rmCoilNo: "",
   });
-  const getItemText = (item) => {
-    if (!item) return "";
-    return typeof item === 'string' ? item : (item.name || item.operation || item.part_name || "");
-};
-
-  const sortArrayAlphabetically = (arr) => {
-    const cleanArray = Array.isArray(arr) ? arr : [];
-    return [...cleanArray].sort((a, b) => {
-        const strA = getItemText(a).toLowerCase().trim();
-        const strB = getItemText(b).toLowerCase().trim();
-        return strA.localeCompare(strB);
-    });
-};
-
 
   // 🔥 FETCH REPORT DATA IF ID EXISTS (VIEW/APPROVE MODE)
   useEffect(() => {
@@ -112,27 +101,28 @@ const DailyProdForm = () => {
             setFormData({
               plant: actualPlant || "",
               shift: data.shift || "",
-              machineNo: data.machine_no || "",
-              operatorName: data.operator_name || "",
-              partName: data.part_name || "",
-              partNo: data.part_no || "",
-              operationName: data.operation_name || "",
-              plannedQuantity: data.planned_quantity || "",
-              achievedQuantity: data.achieved_quantity || "",
-              qtyRemark: data.qty_remark || "",
-              productionStartTime: data.production_start_time ? data.production_start_time.substring(0, 5) : "",
-              productionEndTime: data.production_end_time ? data.production_end_time.substring(0, 5) : "",
-              totalWorkingTime: data.total_working_time || "",
-              toolSetupTime: data.tool_setup_time || "",
-              machineBdTime: data.machine_bd_time || "",
-              toolBdTime: data.tool_bd_time || "",
-              rmCoilNo: data.rm_coil_no || "",
+              machineNo: data.machine_no || data.machineNo || "",
+              operatorName: data.operator_name || data.operatorName || "",
+              partName: data.part_name || data.partName || "",
+              partNo: data.part_no || data.partNo || "",
+              operationName: data.operation_name || data.operation || "",
+              plannedQuantity: data.planned_quantity || data.plannedQuantity || "",
+              achievedQuantity: data.achieved_quantity || data.achievedQuantity || "",
+              qtyRemark: data.qty_remark || data.qtyRemark || "",
+              productionStartTime: data.production_start_time || data.productionStartTime ? (data.production_start_time || data.productionStartTime).substring(0, 5) : "",
+              productionEndTime: data.production_end_time || data.productionEndTime ? (data.production_end_time || data.productionEndTime).substring(0, 5) : "",
+              totalWorkingTime: data.total_working_time || data.totalWorkingTime || "",
+              toolSetupTime: data.tool_setup_time || data.toolSetupTime || "",
+              machineBdTime: data.machine_bd_time || data.machineBdTime || "",
+              toolBdTime: data.tool_bd_time || data.toolBdTime || "",
+              rmCoilNo: data.rm_coil_no || data.rmCoilNo || "",
             });
             setPreparedBy(data.submitted_by || "");
 
             // Pre-fetch operations for this part so dropdown isn't empty
-            if (data.part_name) {
-              axios.get(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(data.part_name)}`)
+            const partNameVal = data.part_name || data.partName;
+            if (partNameVal) {
+              axios.get(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(partNameVal)}`)
                 .then(res => setOperationNames(res.data))
                 .catch(err => console.error(err));
             }
@@ -155,7 +145,7 @@ const DailyProdForm = () => {
             part_name: item[0],
             part_no: item[1],
           }));
-          setPartsData(sortArrayAlphabetically(formattedParts));
+          setPartsData(formattedParts);
         } else {
           setPartsData([]);
         }
@@ -163,6 +153,7 @@ const DailyProdForm = () => {
       .catch((err) => console.error("Error fetching parts:", err));
   }, []);
 
+  // 2. Fetch Operators & Machines based on Plant
   useEffect(() => {
     const selectedPlant = formData.plant;
 
@@ -247,7 +238,7 @@ const DailyProdForm = () => {
       if (value) {
         fetch(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(value)}`)
           .then((res) => res.json())
-          .then((data) => setOperationNames(sortArrayAlphabetically(data)))
+          .then((data) => setOperationNames(data))
           .catch((err) => console.error("Error fetching operations:", err));
       } else {
         setOperationNames([]);
@@ -300,6 +291,34 @@ const DailyProdForm = () => {
     setIsAddingNewOperator(false);
   };
 
+  // 🔥 NEW: APPROVE REPORT API FUNCTION
+  const handleApprove = async () => {
+    if (!id) return;
+    const currentUser = localStorage.getItem("username") || "Approver";
+    
+    setIsApproving(true);
+    try {
+        const response = await axios.post(`${BASE_URL}/api/approve-report/`, {
+            log_id: id,
+            approver_username: currentUser
+        });
+        
+        if(response.status === 200) {
+            alert("✅ Report Approved Successfully!");
+            navigate(-1); // Automatically go back to previous page
+        }
+    } catch (error) {
+        console.error("Error approving report:", error);
+        if (error.response) {
+            alert(`❌ Backend Error: ${error.response.data.error || "Route Not Found"}`);
+        } else {
+            alert("❌ Network Error: Failed to connect to server.");
+        }
+    } finally {
+        setIsApproving(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (id) return; // Disallow save if in view mode
@@ -349,7 +368,7 @@ const DailyProdForm = () => {
         try {
           await axios.post(API_LOG, {
             username: currentUser,
-            report_name: "Daily prod Form",
+            report_name: "Daily Prod Form",
             record_id: result.record_id
           });
         } catch (logError) {
@@ -368,11 +387,11 @@ const DailyProdForm = () => {
   };
 
   const handleBack = () => {
-    window.history.back(); // Go back directly to notification or previous page
+    navigate(-1); // Safely go back to previous page
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 text-slate-900  py-6 px-4 flex justify-center">
+    <div className="min-h-screen text-slate-900 bg-gray-100 py-6 px-4 flex justify-center">
       <div className="w-full max-w-7xl">
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
           <div className="px-4 sm:px-6 pt-4 sm:pt-6 flex justify-between items-center">
@@ -385,7 +404,7 @@ const DailyProdForm = () => {
             </button>
             {/* 🔥 SHOW RED DELETE/REVIEW ICON IF IN VIEW MODE */}
             {id && (
-              <div className="flex items-center gap-2 text-red-500 font-bold bg-red-50 px-4 py-2 rounded-lg">
+              <div className="flex items-center gap-2 text-red-500 font-bold bg-red-50 px-4 py-2 rounded-lg border border-red-100">
                 DAILY PRODUCTION PLAN (REVIEW)
               </div>
             )}
@@ -430,15 +449,19 @@ const DailyProdForm = () => {
                   value={formData.plant}
                   onChange={handleChange}
                   disabled={!!id} // 🔥 DISABLED IN VIEW MODE
-                  className="w-full px-3 py-2 text-sm text-slate-900 bg-white border border-slate-300 rounded-lg disabled:bg-slate-100 disabled:text-slate-700"
+                  className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg disabled:bg-slate-100 disabled:text-slate-500"
                 >
                   <option value="">Select Plant</option>
                   {Object.keys(PLANT_MAP).map((p) => (
                     <option key={p} value={p}>{p}</option>
                   ))}
+                  {id && formData.plant && !Object.keys(PLANT_MAP).includes(formData.plant) && (
+                    <option value={formData.plant}>{formData.plant}</option>
+                  )}
                 </select>
               </div>
 
+              {/* Shift */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <ListFilter size={14} className="inline mr-1 text-blue-500" /> Shift *
@@ -448,11 +471,15 @@ const DailyProdForm = () => {
                   value={formData.shift}
                   onChange={handleChange}
                   disabled={!!id}
-                  className="w-full px-3 py-2 text-sm text-slate-900 bg-white border border-slate-300 rounded-lg disabled:bg-slate-100 disabled:text-slate-500"
+                  className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg disabled:bg-slate-100 disabled:text-slate-500"
                 >
                   <option value="">Select Shift</option>
                   <option value="A">Shift A</option>
                   <option value="B">Shift B</option>
+                  <option value="C">Shift C</option>
+                  {id && formData.shift && !["A","B","C"].includes(formData.shift) && (
+                    <option value={formData.shift}>{formData.shift}</option>
+                  )}
                 </select>
               </div>
 
@@ -466,19 +493,20 @@ const DailyProdForm = () => {
                   value={formData.machineNo}
                   onChange={handleChange}
                   disabled={!!id || !formData.plant || machinesLoading}
-                  className="w-full px-3 py-2 text-sm text-slate-900 bg-white border border-slate-300 rounded-lg disabled:bg-slate-100 disabled:text-slate-500"
+                  className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg disabled:bg-slate-100 disabled:text-slate-500"
                 >
                   <option value="">{machinesLoading ? "Loading..." : "Select Machine"}</option>
                   {machineList.map((m) => (
                     <option key={m} value={m}>Machine {m}</option>
                   ))}
                   {/* Append static value if in view mode and list hasn't loaded properly */}
-                  {id && formData.machineNo && !machineList.includes(Number(formData.machineNo)) && (
+                  {id && formData.machineNo && !machineList.includes(Number(formData.machineNo)) && !machineList.includes(String(formData.machineNo)) && (
                     <option value={formData.machineNo}>Machine {formData.machineNo}</option>
                   )}
                 </select>
               </div>
 
+              {/* Operator Name */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <User size={14} className="inline mr-1 text-blue-500" /> Operator Name *
@@ -503,7 +531,7 @@ const DailyProdForm = () => {
                     value={formData.operatorName}
                     onChange={handleChange}
                     disabled={!!id || !formData.plant || operatorsLoading}
-                    className="w-full px-3 py-2 text-sm text-slate-900  bg-white border border-slate-300 rounded-lg disabled:bg-slate-100 disabled:text-slate-500"
+                    className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg disabled:bg-slate-100 disabled:text-slate-500"
                   >
                     <option value="">{operatorsLoading ? "Loading..." : "Select Operator"}</option>
                     {operatorNames.map((op, index) => (
@@ -512,10 +540,15 @@ const DailyProdForm = () => {
                     {formData.plant && !operatorsLoading && !id && (
                       <option value="ADD_NEW" className="font-semibold text-blue-600 bg-blue-50">+ Add New Operator</option>
                     )}
+                    {/* Append static value if in view mode and list hasn't loaded properly */}
+                    {id && formData.operatorName && !operatorNames.some(op => op.name === formData.operatorName) && (
+                      <option value={formData.operatorName}>{formData.operatorName}</option>
+                    )}
                   </select>
                 )}
               </div>
 
+              {/* Part Name */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Package size={14} className="inline mr-1 text-blue-500" /> Part Name *
@@ -538,6 +571,7 @@ const DailyProdForm = () => {
                 </select>
               </div>
 
+              {/* Part No */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Hash size={14} className="inline mr-1 text-blue-500" /> Part No *
@@ -552,6 +586,7 @@ const DailyProdForm = () => {
                 />
               </div>
 
+              {/* Operation Name */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Settings size={14} className="inline mr-1 text-blue-500" /> Operation Name *
@@ -573,6 +608,7 @@ const DailyProdForm = () => {
                 </select>
               </div>
 
+              {/* Planned Quantity */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Target size={14} className="inline mr-1 text-blue-500" /> Planned Qty *
@@ -587,6 +623,7 @@ const DailyProdForm = () => {
                 />
               </div>
 
+              {/* Achieved Quantity */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <CheckCircle size={14} className="inline mr-1 text-green-500" /> Achieved Qty.
@@ -601,6 +638,7 @@ const DailyProdForm = () => {
                 />
               </div>
 
+              {/* Production Start Time */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Clock size={14} className="inline mr-1 text-blue-500" /> Start Time
@@ -615,6 +653,7 @@ const DailyProdForm = () => {
                 />
               </div>
 
+              {/* Production End Time */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Clock size={14} className="inline mr-1 text-blue-500" /> End Time
@@ -644,6 +683,7 @@ const DailyProdForm = () => {
                 />
               </div>
 
+              {/* Tool Setup Time */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Wrench size={14} className="inline mr-1 text-orange-500" /> Tool Set-up Time
@@ -658,6 +698,7 @@ const DailyProdForm = () => {
                 />
               </div>
 
+              {/* Machine B/D Time */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <AlertTriangle size={14} className="inline mr-1 text-red-500" /> Machine B/D Time
@@ -672,6 +713,7 @@ const DailyProdForm = () => {
                 />
               </div>
 
+              {/* Tool B/D Time */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <AlertTriangle size={14} className="inline mr-1 text-red-500" /> Tool B/D Time
@@ -686,6 +728,7 @@ const DailyProdForm = () => {
                 />
               </div>
 
+              {/* RM Coil / Lot No */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <Layers size={14} className="inline mr-1 text-indigo-500" /> RM Coil / Lot No.
@@ -700,6 +743,7 @@ const DailyProdForm = () => {
                 />
               </div>
 
+              {/* Qty Remark */}
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wide">
                   <MessageSquare size={14} className="inline mr-1 text-blue-500" /> Qty. Remark
@@ -733,10 +777,12 @@ const DailyProdForm = () => {
               {id ? (
                 <button
                   type="button"
-                  onClick={() => alert("Report Approved Successfully! (Implement API here)")}
-                  className="w-full sm:w-auto px-6 py-2 text-sm bg-[#10b981] text-white rounded-lg hover:bg-[#059669] transition-colors flex items-center justify-center gap-2 font-bold shadow-md"
+                  onClick={handleApprove}
+                  disabled={isApproving}
+                  className="w-full sm:w-auto px-8 py-3 bg-[#10b981] hover:bg-[#059669] shadow-md text-white font-bold tracking-wide rounded-lg transition-all text-sm flex items-center justify-center gap-2"
                 >
-                  <Check size={16} /> APPROVE REPORT
+                  {isApproving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />} 
+                  {isApproving ? "APPROVING..." : "APPROVE REPORT"}
                 </button>
               ) : (
                 <div className="flex gap-4">

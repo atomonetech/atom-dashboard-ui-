@@ -8,6 +8,7 @@ import {
   BookOpen,
   ArrowLeft,
   Check,
+  Loader2 // 🔥 IMPORT Loader2 for loading state
 } from "lucide-react";
 import axios from "axios";
 
@@ -75,6 +76,7 @@ const MChangeTrackForm = () => {
 
   const [dailyTrackingData, setDailyTrackingData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isApproving, setIsApproving] = useState(false); // 🔥 STATE FOR APPROVE LOADING
   const [preparedBy, setPreparedBy] = useState("");
   const [activeAction, setActiveAction] = useState(""); 
 
@@ -93,7 +95,7 @@ const MChangeTrackForm = () => {
   const [showPartDropdown, setShowPartDropdown] = useState(false);
   const [partSearch, setPartSearch] = useState("");
 
-  // FETCH RECORDS (VIEW MODE)
+  // 🔥 FETCH RECORDS (VIEW MODE)
   useEffect(() => {
     if (id) {
       const fetchReportData = async () => {
@@ -104,14 +106,14 @@ const MChangeTrackForm = () => {
             
             setFormData({
               time: d.time ? d.time.substring(0, 5) : "",
-              mcNo: d.machine_no || "",
-              changeDesc: d.description || "",
-              natureOfChange: d.nature_of_change || "Planned",
-              actionTaken: d.action_taken || "",
-              partNameNo: d.part_info || "",
-              operationNo: d.operation_no || "",
-              trainingProvided: d.training_provided || "",
-              setupApproval: { status: d.setup_approval || "" },
+              mcNo: d.machineNo || d.machine_no || "",
+              changeDesc: d.changeInfo?.description || d.description || "",
+              natureOfChange: d.natureOfChange || d.nature_of_change || "Planned",
+              actionTaken: d.actionTaken || d.action_taken || "",
+              partNameNo: d.partInfo || d.part_info || "",
+              operationNo: d.operationNo || d.operation_no || "",
+              trainingProvided: d.approvalTraining?.trainingProvided || d.training_provided || "",
+              setupApproval: { status: d.approvalTraining?.setupApproval || d.setup_approval || "" },
               retroactive: {
                 qtyChecked: d.retro_qty_checked ?? "",
                 entryQty: d.retro_entry_qty ?? "",
@@ -127,15 +129,17 @@ const MChangeTrackForm = () => {
                 scrap: d.cont_scrap ?? "",
               },
               dispatchDetail: {
-                customer: d.customer || "",
-                date: d.dispatch_date || today,
-                invoiceNo: d.invoice_no || "",
+                customer: d.customer || d.dispatchDetail?.customer || "",
+                date: d.dispatch_date || d.dispatchDetail?.date || today,
+                invoiceNo: d.invoice_no || d.dispatchDetail?.invoiceNo || "",
               },
-              remark: d.remark || "",
+              remark: d.remark || d.footer?.remark || "",
             });
+            
             setPreparedBy(d.submitted_by || d.prepared_by || "");
-            if (d.submission_date) {
-              setHeaderDate(d.submission_date);
+            
+            if (d.submission_date || d.created_at) {
+              setHeaderDate(d.submission_date || d.created_at.split('T')[0]);
             }
 
             if (d.retro_qty_checked !== null || d.retro_qty_ok !== null || d.retro_entry_qty !== null) {
@@ -146,19 +150,13 @@ const MChangeTrackForm = () => {
               setActiveAction("");
             }
 
-            // Reverse map the backend status codes back to UI state context
-            if (d.daily_tracking_data) {
-              let trackingObj = typeof d.daily_tracking_data === 'string' ? JSON.parse(d.daily_tracking_data) : d.daily_tracking_data;
+            let trackingObj = d.daily_tracking_data;
+            if (trackingObj) {
+              if (typeof trackingObj === 'string') trackingObj = JSON.parse(trackingObj);
               setDailyTrackingData(trackingObj);
               const keys = Object.keys(trackingObj);
               if (keys.length > 0) {
-                setCurrentDayData(trackingObj[keys[keys.length - 1]] || {
-                  man: d.status_man || "NOT_SET", 
-                  machine: d.status_machine || "NOT_SET", 
-                  material: d.status_material || "NOT_SET", 
-                  method: d.status_method || "NOT_SET", 
-                  submittedAt: null
-                });
+                setCurrentDayData(trackingObj[keys[keys.length - 1]]);
               }
             } else {
               setCurrentDayData({
@@ -224,24 +222,24 @@ const MChangeTrackForm = () => {
 
   // ON CALENDAR DATE SHIFT ONLY
   useEffect(() => {
-    if (dailyTrackingData && dailyTrackingData[headerDate]) {
-      setCurrentDayData(dailyTrackingData[headerDate]);
-    } else {
-      setCurrentDayData({
-        man: "NOT_SET",
-        machine: "NOT_SET",
-        material: "NOT_SET",
-        method: "NOT_SET",
-        submittedAt: null,
-      });
+    if (!id) {
+        if (dailyTrackingData && dailyTrackingData[headerDate]) {
+          setCurrentDayData(dailyTrackingData[headerDate]);
+        } else {
+          setCurrentDayData({
+            man: "NOT_SET",
+            machine: "NOT_SET",
+            material: "NOT_SET",
+            method: "NOT_SET",
+            submittedAt: null,
+          });
+        }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [headerDate]);
+  }, [headerDate, id, dailyTrackingData]);
 
   const getNextStatus = (currentStatus) => {
-    // If empty or explicitly NOT_SET, cycle to CHANGE
     if (!currentStatus || currentStatus === "NOT_SET" || currentStatus === "") return "CHANGE";
-    if (currentStatus === "CHANGE") return "OK"; // Maps perfectly to choice tuple 'OK'
+    if (currentStatus === "CHANGE") return "OK"; 
     if (currentStatus === "OK") return "CHANGE";
     return "NOT_SET"; 
   };
@@ -307,6 +305,34 @@ const MChangeTrackForm = () => {
     }));
   };
 
+  // 🔥 NEW: APPROVE FUNCTION FOR VIEW MODE
+  const handleApprove = async () => {
+    if (!id) return;
+    const currentUser = localStorage.getItem("username") || "Approver";
+    
+    setIsApproving(true);
+    try {
+        const response = await axios.post(`${BASE_URL}/api/approve-report/`, {
+            log_id: id,
+            approver_username: currentUser
+        });
+        
+        if(response.status === 200) {
+            alert("✅ Report Approved Successfully!");
+            navigate(-1); // Automatically go back after approval
+        }
+    } catch (error) {
+        console.error("Error approving report:", error);
+        if (error.response) {
+            alert(`❌ Backend Error: ${error.response.data.error || "Failed to process"}`);
+        } else {
+            alert("❌ Network Error: Could not connect to the server.");
+        }
+    } finally {
+        setIsApproving(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (id) return;
 
@@ -336,7 +362,6 @@ const MChangeTrackForm = () => {
       return isNaN(parsed) ? null : parsed;
     };
 
-    // Compiled exact payload keys mapping directly to your Django model fields
     const payload = {
       time: formData.time,
       machine_no: formData.mcNo,
@@ -348,7 +373,6 @@ const MChangeTrackForm = () => {
       training_provided: formData.trainingProvided,
       setup_approval: formData.setupApproval.status,
 
-      // 🔥 MATCHED FIELD NAMES TO YOUR MODEL EXPECTED FIELDS EXACTLY
       status_man: finalized4MData.man,
       status_machine: finalized4MData.machine,
       status_material: finalized4MData.material,
@@ -476,7 +500,7 @@ const MChangeTrackForm = () => {
                       value={headerDate}
                       disabled={!!id}
                       onChange={(e) => setHeaderDate(e.target.value)}
-                      className="bg-transparent text-sm font-bold text-white uppercase tracking-wide focus:outline-none cursor-pointer [color-scheme:dark]"
+                      className="bg-transparent text-sm font-bold text-white uppercase tracking-wide focus:outline-none cursor-pointer [color-scheme:dark] disabled:opacity-80 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -633,10 +657,10 @@ const MChangeTrackForm = () => {
                     )}
 
                     <div
-                      className={`w-full border ${showPartDropdown ? 'border-red-500 ring-2 ring-red-500/20' : 'border-slate-200'} rounded-lg px-3 py-2 text-sm ${id ? 'bg-slate-50 cursor-not-allowed' : 'bg-white cursor-pointer'} text-slate-800 flex justify-between items-center transition-all`}
+                      className={`w-full border ${showPartDropdown ? 'border-red-500 ring-2 ring-red-500/20' : 'border-slate-200'} rounded-lg px-3 py-2 text-sm ${id ? 'bg-slate-50 cursor-not-allowed text-slate-500' : 'bg-white cursor-pointer'} text-slate-800 flex justify-between items-center transition-all`}
                       onClick={() => { if (!id) setShowPartDropdown(!showPartDropdown) }}
                     >
-                      <span className={formData.partNameNo ? "text-slate-800" : "text-slate-400"}>
+                      <span className={formData.partNameNo ? (id ? "text-slate-500" : "text-slate-800") : "text-slate-400"}>
                         {formData.partNameNo || "Select Part Name / Number"}
                       </span>
                       <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -752,9 +776,9 @@ const MChangeTrackForm = () => {
                           checked={activeAction === "retroactive"} 
                           disabled={!!id}
                           onChange={() => setActiveAction("retroactive")}
-                          className="w-4 h-4 text-red-600 focus:ring-red-500 border-slate-300 cursor-pointer"
+                          className="w-4 h-4 text-red-600 focus:ring-red-500 border-slate-300 cursor-pointer disabled:cursor-not-allowed"
                         />
-                        <label htmlFor="radio-retro" className="font-bold text-slate-800 text-xs uppercase tracking-wider cursor-pointer w-full">
+                        <label htmlFor="radio-retro" className={`font-bold text-xs uppercase tracking-wider w-full ${id ? 'text-slate-500' : 'text-slate-800 cursor-pointer'}`}>
                           Retroactive Actions
                         </label>
                       </div>
@@ -772,7 +796,7 @@ const MChangeTrackForm = () => {
                               disabled={activeAction !== "retroactive" || !!id}
                               value={formData.retroactive[f.key]}
                               onChange={(e) => handleNestedChange("retroactive", f.key, e.target.value)}
-                              className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white text-slate-800 disabled:bg-slate-100/50 disabled:cursor-not-allowed"
+                              className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white text-slate-800 disabled:bg-slate-100/50 disabled:cursor-not-allowed disabled:text-slate-500"
                               placeholder="Fill quantity"
                             />
                           </div>
@@ -789,9 +813,9 @@ const MChangeTrackForm = () => {
                           checked={activeAction === "containment"} 
                           disabled={!!id}
                           onChange={() => setActiveAction("containment")}
-                          className="w-4 h-4 text-red-600 focus:ring-red-500 border-slate-300 cursor-pointer"
+                          className="w-4 h-4 text-red-600 focus:ring-red-500 border-slate-300 cursor-pointer disabled:cursor-not-allowed"
                         />
-                        <label htmlFor="radio-contain" className="font-bold text-slate-800 text-xs uppercase tracking-wider cursor-pointer w-full">
+                        <label htmlFor="radio-contain" className={`font-bold text-xs uppercase tracking-wider w-full ${id ? 'text-slate-500' : 'text-slate-800 cursor-pointer'}`}>
                           Containment Suspected
                         </label>
                       </div>
@@ -809,7 +833,7 @@ const MChangeTrackForm = () => {
                               disabled={activeAction !== "containment" || !!id}
                               value={formData.containmentSuspected[f.key]}
                               onChange={(e) => handleNestedChange("containmentSuspected", f.key, e.target.value)}
-                              className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white text-slate-800 disabled:bg-slate-100/50 disabled:cursor-not-allowed"
+                              className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white text-slate-800 disabled:bg-slate-100/50 disabled:cursor-not-allowed disabled:text-slate-500"
                               placeholder="Fill quantity"
                             />
                           </div>
@@ -828,7 +852,7 @@ const MChangeTrackForm = () => {
                             value={formData.dispatchDetail.customer}
                             disabled={!!id}
                             onChange={(e) => handleNestedChange("dispatchDetail", "customer", e.target.value)}
-                            className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white text-slate-800"
+                            className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white text-slate-800 disabled:bg-slate-100/50 disabled:text-slate-500"
                           >
                             <option value="">Select Customer</option>
                             {customerList.map((cust, idx) => {
@@ -846,6 +870,9 @@ const MChangeTrackForm = () => {
                                 </option>
                               );
                             })}
+                            {id && formData.dispatchDetail.customer && !customerList.includes(formData.dispatchDetail.customer) && (
+                              <option value={formData.dispatchDetail.customer}>{formData.dispatchDetail.customer}</option>
+                            )}
                           </select>
                         </div>
                         
@@ -856,7 +883,7 @@ const MChangeTrackForm = () => {
                             disabled={!!id}
                             value={formData.dispatchDetail.invoiceNo}
                             onChange={(e) => handleNestedChange("dispatchDetail", "invoiceNo", e.target.value)}
-                            className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white text-slate-800"
+                            className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white text-slate-800 disabled:bg-slate-100/50 disabled:text-slate-500"
                             placeholder="e.g. INV-2026-001"
                           />
                         </div>
@@ -868,7 +895,7 @@ const MChangeTrackForm = () => {
                             disabled={!!id}
                             value={formData.dispatchDetail.date}
                             onChange={(e) => handleNestedChange("dispatchDetail", "date", e.target.value)}
-                            className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white text-slate-800"
+                            className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 bg-white text-slate-800 disabled:bg-slate-100/50 disabled:text-slate-500"
                           />
                         </div>
                       </div>
@@ -899,7 +926,7 @@ const MChangeTrackForm = () => {
                         readOnly={!!id}
                         onChange={(e) => setPreparedBy(e.target.value)}
                         placeholder="Enter inspector identity"
-                        className="px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 text-sm w-full sm:w-64 bg-white text-slate-800 disabled:bg-slate-50"
+                        className="px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 text-sm w-full sm:w-64 bg-white text-slate-800 disabled:bg-slate-50 disabled:text-slate-500"
                       />
                     </div>
                     
@@ -907,10 +934,12 @@ const MChangeTrackForm = () => {
                       {id ? (
                         <button
                           type="button"
-                          onClick={() => alert("Report Approved Successfully!")}
+                          disabled={isApproving}
+                          onClick={handleApprove}
                           className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold tracking-wider uppercase transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
                         >
-                          <Check size={16} /> Approve Report
+                          {isApproving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                          {isApproving ? "APPROVING..." : "APPROVE REPORT"}
                         </button>
                       ) : (
                         <>

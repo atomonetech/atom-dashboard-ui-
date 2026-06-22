@@ -25,7 +25,7 @@ import {
   History,
   ArrowRight,
   Lock,
-  BarChart3
+  BarChart3,
 } from "lucide-react";
 import { useRef } from "react";
 import { toast } from "react-toastify";
@@ -76,11 +76,11 @@ export default function Sidebar({ onLogout }) {
             currentCount > previousCount.current
           ) {
             setHasNewNotification(true);
-             setNotificationAlert(true);
+            setNotificationAlert(true);
 
-  setTimeout(() => {
-    setNotificationAlert(false);
-  }, 10000);
+            setTimeout(() => {
+              setNotificationAlert(false);
+            }, 10000);
             const latest = data.notifications[0];
 
             toast.info(latest.message || "📄 New report submitted", {
@@ -155,6 +155,8 @@ export default function Sidebar({ onLogout }) {
   const smallLogo = "/bhai.jpg";
   const userRole = localStorage.getItem("user_role");
   const userName = localStorage.getItem("username");
+  const fullName = localStorage.getItem("full_name");
+  const profileImage = localStorage.getItem("profile_image");
   const hasAccess = (path) => {
     // Admin can access everything
     if (userRole === "Admin") {
@@ -279,7 +281,7 @@ export default function Sidebar({ onLogout }) {
       label: "Analysis Hub",
       icon: BarChart3,
       path: "/analysis-hub",
-      color: "cyan", 
+      color: "cyan",
       badge: null,
     },
   ];
@@ -777,7 +779,6 @@ export default function Sidebar({ onLogout }) {
             const itemPadding = getItemPadding();
 
             return (
-              
               <motion.button
                 key={item.label}
                 onClick={() => {
@@ -789,9 +790,9 @@ export default function Sidebar({ onLogout }) {
                   scale: isCentered ? 1.02 : 1,
                 }}
                 whileTap={{ scale: 0.98 }}
-              className={`w-full flex items-center ${
-  isCentered ? "justify-center" : gap
-} ${itemPadding} rounded-lg text-slate-400 hover:text-slate-200 transition-all relative group
+                className={`w-full flex items-center ${
+                  isCentered ? "justify-center" : gap
+                } ${itemPadding} rounded-lg text-slate-400 hover:text-slate-200 transition-all relative group
 ${
   item.path === "/notifications" && notificationAlert
     ? "notification-glow border border-red-400"
@@ -842,20 +843,15 @@ ${
                   <AnimatePresence>
                     {showLabel ? (
                       <motion.span
-  className={`
+                        className={`
     relative z-10 px-1.5 py-0.5 rounded-full text-[10px]
     ${colorClasses.badge}
     border font-semibold
-    ${
-      item.path === "/notifications" &&
-      hasNewNotification
-        ? "bell-alert"
-        : ""
-    }
+    ${item.path === "/notifications" && hasNewNotification ? "bell-alert" : ""}
   `}
->
-  {item.badge}
-</motion.span>
+                      >
+                        {item.badge}
+                      </motion.span>
                     ) : (
                       isCentered && (
                         <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-[#1e293b] animate-pulse shadow-lg shadow-red-500/50" />
@@ -864,7 +860,6 @@ ${
                   </AnimatePresence>
                 )}
               </motion.button>
-              
             );
           })}
         </div>
@@ -895,23 +890,22 @@ ${
               <div className="relative flex-shrink-0">
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-yellow-500 rounded-full blur-md opacity-50 group-hover:opacity-75 transition-opacity" />
                 <div
-                  className={`relative rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg ${
-                    screenInfo.isIPadMini ? "w-6 h-6" : "w-7 h-7"
+                  className={`relative rounded-full overflow-hidden shadow-lg ${
+                    screenInfo.isIPadMini ? "w-8 h-8" : "w-10 h-10"
                   }`}
                 >
-                  <User
-                    className={`${
-                      screenInfo.isIPadMini ? "w-3 h-3" : "w-3.5 h-3.5"
-                    } text-white`}
+                  <img
+                    src={profileImage || "/default-avatar.png"}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
                   />
                 </div>
               </div>
 
-              <div className="flex-1 min-w-0 relative z-10">
-                <p className="text-slate-200 text-sm truncate font-medium">
-                  `{userRole}`
+              <div className="flex-1 min-w-0 relative z-10 pt-3 pl-5">
+                <p className="text-slate-200 text-base truncate font-medium">
+                  {fullName || userName}{" "}
                 </p>
-                <p className="text-slate-500 text-xs truncate">`{userName}`</p>
               </div>
 
               <motion.button
@@ -938,14 +932,14 @@ ${
             >
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/40 to-yellow-500/40 rounded-full blur-lg opacity-50 group-hover:opacity-100 transition-opacity" />
               <div
-                className={`relative rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-xl shadow-indigo-500/40 border-2 border-indigo-400/30 ${
-                  screenInfo.isIPadMini ? "w-8 h-8" : "w-9 h-9"
+                className={`relative rounded-full overflow-hidden border-2 border-indigo-400/30 shadow-xl shadow-indigo-500/40 ${
+                  screenInfo.isIPadMini ? "w-10 h-10" : "w-12 h-12"
                 }`}
               >
-                <User
-                  className={`${
-                    screenInfo.isIPadMini ? "w-4 h-4" : "w-4.5 h-4.5"
-                  } text-white filter drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]`}
+                <img
+                  src={profileImage || "/default-avatar.png"}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
                 />
               </div>
               <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full border-2 border-[#1e293b] animate-pulse shadow-lg shadow-red-500/50" />
@@ -983,34 +977,40 @@ ${
             width: 4px;
           }
         }
-        
+
         @keyframes notificationGlow {
-  0% {
-    background: rgba(248, 113, 113, 0.15);
-  }
+          0% {
+            background: rgba(248, 113, 113, 0.15);
+          }
 
-  50% {
-    background: rgba(248, 113, 113, 0.35);
-  }
+          50% {
+            background: rgba(248, 113, 113, 0.35);
+          }
 
-  100% {
-    background: rgba(248, 113, 113, 0.15);
-  }
-}
+          100% {
+            background: rgba(248, 113, 113, 0.15);
+          }
+        }
 
-.notification-glow {
-  animation: notificationGlow 1s infinite;
-}
+        .notification-glow {
+          animation: notificationGlow 1s infinite;
+        }
 
-          @keyframes bellAlert {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.4); }
-  100% { transform: scale(1); }
-}
+        @keyframes bellAlert {
+          0% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.4);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
 
-.bell-alert {
-  animation: bellAlert 0.8s infinite;
-}
+        .bell-alert {
+          animation: bellAlert 0.8s infinite;
+        }
       `}</style>
     </>
   );
