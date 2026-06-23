@@ -1,17 +1,17 @@
 
 export const dailyReports = [
-    { id: 1, title: 'Incoming Material Insp.', formNo: 'AOT/F/QA/01', resp: 'Quality Engineer', icon: 'bi-box-seam', color: '#3b82f6', bg: '#eff6ff', fillRoute: 'Incoming-Material', printKey: 'incomingmaterial-report', viewKey: 'incoming-inspection-view', isLive: true },
-    { id: 2, title: 'Red Bin Analysis - NC Reg.', formNo: 'AOT/F/QC/02', resp: 'CFT', icon: 'bi-trash3', color: '#ef4444', bg: '#fef2f2', fillRoute: 'RedBin-Form', printKey: 'redbin-analysis-report', viewKey: 'redbin-view', isLive: true },
+    { id: 1, title: 'Incoming Material Inspection Report', formNo: 'AOT/F/QA/01', resp: 'Quality Engineer', icon: 'bi-box-seam', color: '#3b82f6', bg: '#eff6ff', fillRoute: 'Incoming-Material', printKey: 'incomingmaterial-report', viewKey: 'incoming-inspection-view', isLive: true },
+    { id: 2, title: 'Red Bin Analysis Report', formNo: 'AOT/F/QC/02', resp: 'CFT', icon: 'bi-trash3', color: '#ef4444', bg: '#fef2f2', fillRoute: 'RedBin-Form', printKey: 'redbin-analysis-report', viewKey: 'redbin-view', isLive: true },
     { id: 3, title: 'Scrap Note', formNo: 'AOT/F/QC/04', resp: 'Quality Engineer', icon: 'bi-file-earmark-x', color: '#ef4444', bg: '#fef2f2', fillRoute: 'Scrap-Note', printKey: 'scrap-note-report', viewKey: 'scrap-note-view', isLive: true },
     { id: 4, title: 'Red Bin Attendance Sheet', formNo: 'AOT/F/QC/05', resp: 'Quality Engineer', icon: 'bi-person-x', color: '#f59e0b', bg: '#fef3c7', fillRoute: 'Redbin-Attendance', printKey: 'redbin-attendance-report', viewKey: 'redbin-attendance-view', isLive: true },
     
-    { id: 7, title: 'Set up & Patrol Insp. (FPIR)', formNo: 'AOT/F/QA/15', resp: 'Quality Engineer', icon: 'bi-clipboard-check', color: '#06b6d4', bg: '#cffafe', fillRoute: 'inspection-form', printKey: 'inspection-report', viewKey: 'inspection-view', isLive: true },
-    { id: 8, title: 'Rework / Repair Report', formNo: 'AOT/F/QA/20', resp: 'Rework Operator', icon: 'bi-tools', color: '#f59e0b', bg: '#fef3c7', fillRoute: 'Rework', printKey: 'rework-report', viewKey: 'rework-view', isLive: true },
+    { id: 7, title: 'Set up & Patrol Inspection Sheet', formNo: 'AOT/F/QA/15', resp: 'Quality Engineer', icon: 'bi-clipboard-check', color: '#06b6d4', bg: '#cffafe', fillRoute: 'inspection-form', printKey: 'inspection-report', viewKey: 'inspection-view', isLive: true },
+    { id: 8, title: 'Rework Inspection Report', formNo: 'AOT/F/QA/20', resp: 'Rework Operator', icon: 'bi-tools', color: '#f59e0b', bg: '#fef3c7', fillRoute: 'Rework', printKey: 'rework-report', viewKey: 'rework-view', isLive: true },
     { id: 9, title: 'Sample Inspection Report', formNo: 'AOT/F/QA/21', resp: 'Quality Engineer', icon: 'bi-search', color: '#3b82f6', bg: '#eff6ff', fillRoute: 'sample-inspection', printKey: 'sample-inspection-report', viewKey: 'sample-inspection-view', isLive: false },
-    { id: 10, title: 'Deviation Approval Form', formNo: 'AOT/F/PROD/04', resp: 'Production Engineer', icon: 'bi-file-earmark-check', color: '#8b5cf6', bg: '#ede9fe', fillRoute: 'Deviation-Approval-Form', printKey: 'Deviation-report', viewKey: 'deviation-view', isLive: true },
+    { id: 10, title: 'Production Deviation Slip', formNo: 'AOT/F/PROD/04', resp: 'Production Engineer', icon: 'bi-file-earmark-check', color: '#8b5cf6', bg: '#ede9fe', fillRoute: 'Deviation-Approval-Form', printKey: 'Deviation-report', viewKey: 'deviation-view', isLive: true },
      { id: 11, title: 'RM Quality Plan',            formNo: 'AOT/F/QA/25',   resp: 'Quality Engineer',  icon: 'bi-diagram-3',          color: '#10b981', bg: '#d1fae5', fillRoute: 'RM-Quality-Plan',  printKey: null, viewKey: null, isLive: false },
     { id: 12, title: 'Goods Receipt Note (GRN)', formNo: 'Not Reqd.', resp: 'Store Incharge', icon: 'bi-receipt', color: '#06b6d4', bg: '#cffafe', fillRoute: 'Good-Receipt', printKey: null, viewKey: 'good-receipt', isLive: true },
-    { id: 13, title: 'Pre Dispatch Insp. (PDIR)', formNo: 'AOT/F/QA/40', resp: 'Quality Engineer', icon: 'bi-truck', color: '#10b981', bg: '#d1fae5', fillRoute: 'pdi-report-form', printKey: 'pdiprint-report', viewKey: 'pdi-view', isLive: false },
+    { id: 13, title: 'Pre Dispatch Inspection Report', formNo: 'AOT/F/QA/40', resp: 'Quality Engineer', icon: 'bi-truck', color: '#10b981', bg: '#d1fae5', fillRoute: 'pdi-report-form', printKey: 'pdiprint-report', viewKey: 'pdi-view', isLive: false },
 ];
 
 export const monthlyReports = [
