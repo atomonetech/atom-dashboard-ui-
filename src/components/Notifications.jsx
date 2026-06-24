@@ -371,6 +371,7 @@ export default function Notifications() {
     try {
       const res = await fetch(`${API_BASE}/api/qa-notifications/${currentUser}/`);
       const data = await res.json();
+      console.log(data);
       if (res.ok && data.notifications) {
         setNotifications(data.notifications); 
       }

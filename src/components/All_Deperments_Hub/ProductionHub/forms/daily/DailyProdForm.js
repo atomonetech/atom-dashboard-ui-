@@ -40,6 +40,20 @@ const REVERSE_PLANT_MAP = {
   "plant_1": "Plant 1",
   "plant_2": "Plant 2",
 };
+const getItemText = (item) => {
+    if (!item) return "";
+    return typeof item === 'string' ? item : (item.name || item.operation || item.part_name || "");
+};
+
+// 🔥 PURE SORTING FUNCTION WITHOUT REMOVING KEYWORDS
+const sortArrayAlphabetically = (arr) => {
+    const cleanArray = Array.isArray(arr) ? arr : [];
+    return [...cleanArray].sort((a, b) => {
+        const strA = getItemText(a).toLowerCase().trim();
+        const strB = getItemText(b).toLowerCase().trim();
+        return strA.localeCompare(strB);
+    });
+};
 
 // Hardcoded machines list for Plant 2
 const PLANT2_MACHINES = Array.from({ length: 48 }, (_, i) => i + 1);
@@ -123,7 +137,7 @@ const DailyProdForm = () => {
             const partNameVal = data.part_name || data.partName;
             if (partNameVal) {
               axios.get(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(partNameVal)}`)
-                .then(res => setOperationNames(res.data))
+                .then(res => setOperationNames(sortArrayAlphabetically(res.data)))
                 .catch(err => console.error(err));
             }
           }
@@ -145,7 +159,7 @@ const DailyProdForm = () => {
             part_name: item[0],
             part_no: item[1],
           }));
-          setPartsData(formattedParts);
+          setPartsData(sortArrayAlphabetically(formattedParts));
         } else {
           setPartsData([]);
         }
@@ -190,7 +204,7 @@ const DailyProdForm = () => {
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
-            setMachineList(data.machines);
+            setMachineList(sortArrayAlphabetically(data.machines));
           } else {
             setMachineList([]);
           }
@@ -238,7 +252,7 @@ const DailyProdForm = () => {
       if (value) {
         fetch(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(value)}`)
           .then((res) => res.json())
-          .then((data) => setOperationNames(data))
+          .then((data) => setOperationNames(sortArrayAlphabetically(data)))
           .catch((err) => console.error("Error fetching operations:", err));
       } else {
         setOperationNames([]);
@@ -477,7 +491,7 @@ const DailyProdForm = () => {
                   <option value="A">Shift A</option>
                   <option value="B">Shift B</option>
                   <option value="C">Shift C</option>
-                  {id && formData.shift && !["A","B","C"].includes(formData.shift) && (
+                  {id && formData.shift && !["A","B"].includes(formData.shift) && (
                     <option value={formData.shift}>{formData.shift}</option>
                   )}
                 </select>

@@ -42,7 +42,7 @@
 
 .App {
   text-align: left;              /* sab kuch left align */
-  background-color: #f8f1f2;     /* dark background */
+      /* dark background */
   min-height: 100vh;
   color: #f1f5f9;
 }

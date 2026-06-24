@@ -6,6 +6,20 @@ import axios from 'axios';
 const API_LOG = `${
   process.env.REACT_APP_API_URL || "http://localhost:8000"
 }/api/log-report/`;
+const getItemText = (item) => {
+    if (!item) return "";
+    return typeof item === 'string' ? item : (item.name || item.operation || item.part_name || "");
+};
+
+// 🔥 PURE SORTING FUNCTION WITHOUT REMOVING KEYWORDS
+const sortArrayAlphabetically = (arr) => {
+    const cleanArray = Array.isArray(arr) ? arr : [];
+    return [...cleanArray].sort((a, b) => {
+        const strA = getItemText(a).toLowerCase().trim();
+        const strB = getItemText(b).toLowerCase().trim();
+        return strA.localeCompare(strB);
+    });
+};
 
 const OperatorObservanceCheckSheet = () => {
     const navigate = useNavigate();
@@ -35,14 +49,14 @@ const OperatorObservanceCheckSheet = () => {
                 const response = await fetch(getApiUrl('/api/master-dropdown/?filter=all_parts'));
                 if (response.ok) {
                     const data = await response.json();
-                    setPartsList(data); 
+                    setPartsList(sortArrayAlphabetically(data)); 
                 }
             } catch (error) {
                 console.error("Error fetching parts:", error);
             }
         };
 
-        fetchParts();
+        sortArrayAlphabetically(fetchParts());
     }, []);
 
     // Handle Part Selection (Autofill Model AND Fetch Operations)
@@ -68,7 +82,7 @@ const OperatorObservanceCheckSheet = () => {
             const response = await fetch(getApiUrl(`/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(partName)}`));
             if (response.ok) {
                 const data = await response.json();
-                setOperationsList(data || []); 
+                setOperationsList(sortArrayAlphabetically(data || [])); 
             }
         } catch (error) {
             console.error("Error fetching operations:", error);

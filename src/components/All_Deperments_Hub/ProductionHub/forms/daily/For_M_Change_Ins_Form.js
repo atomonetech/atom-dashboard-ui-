@@ -164,6 +164,20 @@ const SectionHead = ({
     </span>
   </div>
 );
+const getItemText = (item) => {
+    if (!item) return "";
+    return typeof item === 'string' ? item : (item.name || item.operation || item.part_name || "");
+};
+
+// 🔥 PURE SORTING FUNCTION WITHOUT REMOVING KEYWORDS
+const sortArrayAlphabetically = (arr) => {
+    const cleanArray = Array.isArray(arr) ? arr : [];
+    return [...cleanArray].sort((a, b) => {
+        const strA = getItemText(a).toLowerCase().trim();
+        const strB = getItemText(b).toLowerCase().trim();
+        return strA.localeCompare(strB);
+    });
+};
 
 /* ─── main component ─────────────────────────────────────────── */
 const For_M_Change_Ins_Form = () => {
@@ -251,7 +265,7 @@ const For_M_Change_Ins_Form = () => {
             const pName = data.partName || data.part_name;
             if (pName) {
               axios.get(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(pName)}`)
-                .then(res => setOperationList(res.data))
+                .then(res => setOperationList(sortArrayAlphabetically(res.data)))
                 .catch(err => console.error(err));
             }
           }
@@ -270,7 +284,7 @@ const For_M_Change_Ins_Form = () => {
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data))
-          setPartsList(data.map((i) => ({ part_name: i[0], part_no: i[1] })));
+          setPartsList(sortArrayAlphabetically(data.map((i) => ({ part_name: i[0], part_no: i[1] }))));
       })
       .catch((err) => console.error("Error fetching parts:", err));
   }, []);
@@ -298,7 +312,7 @@ const For_M_Change_Ins_Form = () => {
           .catch((err) => console.error("Error fetching operations:", err));
       } else setOperationList([]);
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      setFormData(sortArrayAlphabetically((prev) => ({ ...prev, [name]: value })));
     }
   };
 

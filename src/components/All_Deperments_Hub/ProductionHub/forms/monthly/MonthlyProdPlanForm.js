@@ -8,6 +8,20 @@ const API_LOG = `${
   process.env.REACT_APP_API_URL || "http://localhost:8000"
 }/api/log-report/`;
 
+const getItemText = (item) => {
+    if (!item) return "";
+    return typeof item === 'string' ? item : (item.name || item.operation || item.part_name || "");
+};
+
+// 🔥 PURE SORTING FUNCTION WITHOUT REMOVING KEYWORDS
+const sortArrayAlphabetically = (arr) => {
+    const cleanArray = Array.isArray(arr) ? arr : [];
+    return [...cleanArray].sort((a, b) => {
+        const strA = getItemText(a).toLowerCase().trim();
+        const strB = getItemText(b).toLowerCase().trim();
+        return strA.localeCompare(strB);
+    });
+};
 const MonthlyProdPlanForm = () => {
     const navigate = useNavigate();
     
@@ -34,7 +48,7 @@ const MonthlyProdPlanForm = () => {
                 const response = await fetch(getApiUrl('/api/master-dropdown/?filter=all_parts')); 
                 if (response.ok) {
                     const data = await response.json();
-                    setPartsList(data);
+                    setPartsList(sortArrayAlphabetically(data));
                 }
             } catch (error) {
                 console.error("Error fetching parts list:", error);
@@ -47,7 +61,7 @@ const MonthlyProdPlanForm = () => {
                 const response = await fetch(getApiUrl('/api/master-dropdown/?filter=customer')); 
                 if (response.ok) {
                     const data = await response.json();
-                    setCustomersList(data);
+                    setCustomersList(sortArrayAlphabetically(data));
                 }
             } catch (error) {
                 console.error("Error fetching customers list:", error);
