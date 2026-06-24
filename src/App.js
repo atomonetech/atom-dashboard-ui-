@@ -29,7 +29,8 @@ import Notifications from "./components/Notifications";
 import Profile from "./components/Profile";
 import Support from "./components/Support";
 import ProductionHistory from "./components/ProductionHistory";
-import AnalysisDashboard from './components/AnalysisDashboard';
+import AnalysisDashboard from "./components/AnalysisDashboard";
+import AnalysisHubV2 from "./pages/AnalysisHubV2";
 
 // ========== MODULAR ROUTE IMPORTS ==========
 import QaRoutes from "./routes/QaRoutes";
@@ -138,8 +139,8 @@ const AccessDeniedScreen = () => {
             marginBottom: 24,
           }}
         >
-          You currently do not have permission to access this department.
-          Please contact your administrator if access is required.
+          You currently do not have permission to access this department. Please
+          contact your administrator if access is required.
         </p>
 
         <button
@@ -148,8 +149,7 @@ const AccessDeniedScreen = () => {
             border: "none",
             borderRadius: 12,
             padding: "12px 24px",
-            background:
-              "linear-gradient(135deg,#3b82f6,#2563eb)",
+            background: "linear-gradient(135deg,#3b82f6,#2563eb)",
             color: "#fff",
             fontWeight: 700,
             cursor: "pointer",
@@ -204,20 +204,16 @@ function App() {
         .then((res) => res.json())
         .then((data) => console.log("Saved in Django Database:", data))
         .catch((err) => console.log("API Fetch Error:", err));
-    }
-    
-    catch (err) {
+    } catch (err) {
       console.log("Failed to subscribe user:", err);
     }
   };
-  
 
   useEffect(() => {
     localStorage.setItem("isAuthenticated", isAuthenticated);
   }, [isAuthenticated]);
 
   const handleLogin = () => setIsAuthenticated(true);
-  
 
   const handleLogout = () => {
     setIsAuthenticated(false);
@@ -597,15 +593,18 @@ function App() {
             }
           />
 
-           <Route
+          <Route
             path="/analysis-hub"
             element={
               <ProtectedRoute adminOnly={true}>
-                <AnalysisDashboard />
+                <AnalysisHubV2 />
               </ProtectedRoute>
             }
           />
-          
+          {/* <Route
+  path="/analysis-hub-v2"
+  element={<AnalysisHubV2 />}
+/> */}
 
           <Route
             path="*"

@@ -86,7 +86,7 @@ const TipChangeMonitorForm = () => {
             const pName = data.partName || data.part_name;
             if (pName) {
               axios.get(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(pName)}`)
-                .then(res => setOperationsData(res.data))
+                .then(res => setOperationsData(sortArrayAlphabetically(res.data)))
                 .catch(err => console.error(err));
             }
           }
@@ -126,9 +126,9 @@ const TipChangeMonitorForm = () => {
           .then((res) => res.json())
           .then((data) => {
             if (data.success && data.machines) {
-              setMachineList(data.machines);
+              setMachineList(sortArrayAlphabetically(data.machines));
             } else if (Array.isArray(data)) {
-              setMachineList(data);
+              setMachineList(sortArrayAlphabetically(data));
             } else {
               setMachineList([]);
             }
@@ -182,7 +182,7 @@ const TipChangeMonitorForm = () => {
           );
           const data = await response.json();
           if (Array.isArray(data)) {
-            setOperationsData(data);
+            setOperationsData(sortArrayAlphabetically(data));
           }
         } catch (error) {
           console.error("Error fetching operations:", error);
