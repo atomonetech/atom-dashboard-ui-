@@ -117,7 +117,8 @@ const DeviationApprovalForm = () => {
         duration: formData.duration,
         prod_incharge: formData.prodIncharge,
         qa_incharge: formData.qaIncharge,
-        remarks: formData.remarks
+        remarks: formData.remarks,
+        submitted_by: currentUser,
       };
 
       try {
@@ -131,7 +132,10 @@ const DeviationApprovalForm = () => {
             await axios.post(API_LOG, {
               username: currentUser,
               report_name: 'Deviation Approval Form',
-              record_id: savedRecordId // 🔥 Aur us ID ko Notification table mein bhej diya!
+              record_id: savedRecordId, // 🔥 Aur us ID ko Notification table mein bhej diya!
+              form_key: "deviation",
+              hub: "qa-hub",
+              target_group: "Quality_Approvers",
             });
           } catch (logError) {
             console.error('Activity log error:', logError);

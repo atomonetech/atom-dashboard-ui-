@@ -93,7 +93,8 @@ const ProductionRoutes = () => {
       <Route path="view-report/four-m-record/:id" element={<MChangeTrackForm />} />
       <Route path="view-report/four-m-display/:id" element={<FourMChangeDisplay />} />
       <Route path="view-report/four-m-summary/:id" element={<FourMSummarySheet />} />
-      
+      <Route path="view-report/four-m-information/:id" element={<FourMInformatinSheet />}/>
+      <Route path="view-report/information-sheet/:id" element={<FourMInformatinSheet />} />
       {/* Monthly View Routes */}
       <Route path="view-report/monthly-prod-plan/:id" element={<MonthlyProdPlanForm />} />
       <Route path="view-report/process-validation/:id" element={<ProcessValidationForm />} />

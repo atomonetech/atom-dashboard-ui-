@@ -22,10 +22,6 @@ import {
 
 // Backend URL
 const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
-
 /* ─── tokens ─────────────────────────────────────────────────── */
 const C = {
   pageBg: "#f5f5f0",
@@ -308,11 +304,11 @@ const For_M_Change_Ins_Form = () => {
           )}`,
         )
           .then((r) => r.json())
-          .then(setOperationList)
+          .then((data) => setOperationList(sortArrayAlphabetically(data)))
           .catch((err) => console.error("Error fetching operations:", err));
       } else setOperationList([]);
     } else {
-      setFormData(sortArrayAlphabetically((prev) => ({ ...prev, [name]: value })));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
@@ -381,6 +377,9 @@ const For_M_Change_Ins_Form = () => {
       after_5: formData.after[4],
       inspected_by: formData.inspBy,
       remarks: formData.remarks,
+
+      // ✅ Backend auto_log_report ke liye username
+      submitted_by: localStorage.getItem("username") || preparedBy || "Unknown User",
     };
     setIsLoading(true);
     try {
@@ -391,17 +390,6 @@ const For_M_Change_Ins_Form = () => {
       });
       const result = await res.json();
       if (res.ok && result.success) {
-        const currentUser = localStorage.getItem("username") || "Unknown User";
-
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "4M Change Inspection Form",
-            record_id: result.record_id 
-          });
-        } catch (logError) {
-          console.error("Activity log error:", logError);
-        }
         alert(result.message || "Saved successfully!");
         handleReset();
       } else {

@@ -4,9 +4,6 @@ import axios from "axios";
 import { Check } from "lucide-react"; // 🔥 Check icon import for Approve button
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
 
 const BinTrollingForm = () => {
   const { id } = useParams(); // 🔥 GET ID FROM URL
@@ -318,6 +315,12 @@ const BinTrollingForm = () => {
       maintenanceDetails: maintenanceData,
       currentWeek,
       currentDate,
+
+      // ✅ Backend auto_log_report ke liye username
+      submitted_by: localStorage.getItem("username") || preparedBy || "Unknown User",
+
+      // ✅ Report data ke liye prepared by bhi bhej rahe hain
+      prepared_by: preparedBy || localStorage.getItem("username") || "Unknown User",
     };
 
     try {
@@ -330,19 +333,6 @@ const BinTrollingForm = () => {
       const result = await response.json();
 
       if (result.success) {
-        const currentUser = localStorage.getItem("username") || "Unknown User";
-
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "bin trolling  Form", // Yahan hardcode kar diya form ka naam
-             record_id: result.record_id ,
-          });
-          console.log("Activity log successfully saved with Record ID:", result.record_id);
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
         alert(
           `✅ Data saved for ${currentWeek} (${currentMonth} ${new Date().getFullYear()})`,
         );

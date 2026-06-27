@@ -247,6 +247,7 @@ export default function ReworkRepair() {
       const payload = {
         date: dbDate,
         remark: remark,
+        submitted_by: currentUser,
         items: rows.map(r => ({
           part_name: r.partDesc,
           part_no: r.partNo,
@@ -274,8 +275,11 @@ export default function ReworkRepair() {
           try {
             await axios.post(API_LOG, {
               username: currentUser,
-              report_name: 'Rework Report', 
-              record_id: savedRecordId
+              report_name: 'QA Rework Report', 
+              record_id: savedRecordId,
+              form_key: "rework",
+              hub: "qa-hub",
+              target_group: "Quality_Approvers",
             });
           } catch (logError) {
             console.error('Activity log error:', logError);

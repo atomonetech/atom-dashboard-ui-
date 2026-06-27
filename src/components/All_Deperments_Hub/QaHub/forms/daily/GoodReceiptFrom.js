@@ -76,6 +76,7 @@ const GoodReceiptForm = () => {
     remark: formData.remark,
     receivedBy: formData.receivedBy,
     receivedDate: today,
+    submitted_by: currentUser,
     };
     
     if (isViewMode) {
@@ -97,7 +98,7 @@ const GoodReceiptForm = () => {
     } else {
       // 🔥 SAVE NEW REPORT LOGIC
       try {
-        const response = await axios.post(API_SAVE, formData);
+        const response = await axios.post(API_SAVE, dataToSave);
 
         if (response.status === 200 || response.status === 201) {
           const savedRecordId = response.data.record_id; // Get the generated ID
@@ -107,7 +108,10 @@ const GoodReceiptForm = () => {
             await axios.post(API_LOG, {
               username: currentUser,
               report_name: 'Material Requisition Slip', // Used in Notification
-              record_id: savedRecordId
+              record_id: savedRecordId,
+              form_key: "good-receipt",
+              hub: "qa-hub",
+              target_group: "Quality_Approvers",
             });
           } catch (logError) {
             console.error('Activity log error:', logError);

@@ -267,7 +267,8 @@ const filteredOperators = operatorRows.filter((op) => {
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
                           {targetLogsList.map((report, idx) => {
-                            const actionableId =  report.record_id;
+                        
+                            const actionableId = report.activity_log_id || report.id;
                             const currentStatus = report.status || "Pending";
 
                             return (

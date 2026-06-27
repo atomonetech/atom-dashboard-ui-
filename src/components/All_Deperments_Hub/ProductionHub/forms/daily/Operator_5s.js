@@ -13,10 +13,6 @@ import {
 import axios from "axios";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
-
 const areaOptions = [
   "Weld Shop",
   "Back Yard",
@@ -295,6 +291,7 @@ const Operator5S = () => {
       zoneLeader: zoneLeader,
       date: dbDate,
       language: lang,
+      submitted_by: localStorage.getItem("username") || "Unknown User",
       checks: fiveSData.map((s, si) => ({
         s: s.s,
         points: s.points.map((pt, pi) => {
@@ -327,19 +324,6 @@ const Operator5S = () => {
       const data = await response.json();
 
       if (data.success) {
-        const currentUser = localStorage.getItem("username") || "Unknown User";
-
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "operator 5s  Form", // Yahan hardcode kar diya form ka naam
-           record_id: data.record_id // 🔥 FIX 2: Backend se aayi record_id pass kar di
-          });
-          console.log("Activity log successfully saved with Record ID:", data.record_id);
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save error:", logError);
-        }
         alert("✅ 5S Checksheet saved successfully to the database!");
         setIsAlreadyFilled(true);
       } else {

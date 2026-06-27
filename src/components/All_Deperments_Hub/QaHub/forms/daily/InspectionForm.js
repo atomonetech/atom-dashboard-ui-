@@ -411,7 +411,10 @@ const InspectionForm = () => {
                         await axios.post(API_LOG, {
                             username: currentUser,
                             report_name: 'Inspection Report',
-                            record_id: resData.record_id || resData.report_id
+                            record_id: resData.record_id || resData.report_id,
+                            form_key: "inspection",
+                            hub: "qa-hub",
+                            target_group: "Quality_Approvers",
                         });
                     } catch (logErr) {}
 

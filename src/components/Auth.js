@@ -476,10 +476,9 @@
 //   );
 // }
 
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Factory, Zap, Mail, Lock, Eye, EyeOff, Cpu, TrendingUp, User } from 'lucide-react';
+import { Factory, Zap, Mail, Lock, Eye, EyeOff, Cpu, TrendingUp, User, Key } from 'lucide-react'; // 🔥 Naya icon 'Key' add kiya
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
@@ -498,49 +497,38 @@ export default function Auth({ onLogin }) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   
-  // 🔥 FORGOT PASSWORD WALI NAYI STATES
+  // 🔥 FORGOT PASSWORD STATES (UPDATED FOR OTP)
   const [isForgotView, setIsForgotView] = useState(false);
+  const [otpSent, setOtpSent] = useState(false); // Track karna ki OTP bheja ja chuka hai ya nahi
   const [resetUsername, setResetUsername] = useState('');
+  const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
 
-  // 🔥 NAYA FUNCTION: Direct Password Reset (No Email)
-  const handleDirectPasswordReset = async (e) => {
+  // 🚀 STEP 1: REQUEST OTP (Head ko OTP bhejega)
+  const handleRequestOTP = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage('');
 
-    // Pehle check karo dono password match kar rahe hain kya
-    if (newPassword !== confirmPassword) {
-      setErrorMessage("New Password aur Confirm Password match nahi ho rahe!");
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/api/reset-password-direct/`, {
+      const response = await fetch(`${apiUrl}/api/request-reset-otp/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          username: resetUsername, 
-          new_password: newPassword 
-        }) 
+        body: JSON.stringify({ username: resetUsername }) 
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        toast.success("Password updated successfully! Ab aap naye password se login kar sakte hain 🚀");
-        setIsForgotView(false); // Wapas login screen par bhej do
-        setResetUsername('');
-        setNewPassword('');
-        setConfirmPassword('');
+        toast.success(data.message || "OTP sent to your Department Head!");
+        setOtpSent(true); // OTP chala gaya, ab next step ka form dikhao
       } else {
-        setErrorMessage(data.error || "Kuch galat ho gaya, phir se try karein.");
+        setErrorMessage(data.error || "Username nahi mila ya Head configure nahi hai.");
       }
     } catch (error) {
       setErrorMessage("Backend unreachable. Please check your connection.");
@@ -549,7 +537,54 @@ export default function Auth({ onLogin }) {
     }
   };
 
-  // 🔥 PURANA LOGIN FUNCTION (Same rakha hai)
+  // 🚀 STEP 2: VERIFY OTP & SET NEW PASSWORD
+  const handleVerifyAndReset = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrorMessage('');
+
+    if (newPassword !== confirmPassword) {
+      setErrorMessage("New Password aur Confirm Password match nahi ho rahe!");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/verify-reset-otp/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          username: resetUsername, 
+          otp: otp,
+          new_password: newPassword 
+        }) 
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success("Password updated successfully! Ab aap naye password se login kar sakte hain 🚀");
+        // Reset sab kuch wapas normal kar do
+        setIsForgotView(false);
+        setOtpSent(false);
+        setResetUsername('');
+        setOtp('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        setErrorMessage(data.error || "Galat OTP ya kuch error aayi.");
+      }
+    } catch (error) {
+      setErrorMessage("Backend unreachable. Please check your connection.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 🔥 NORMAL LOGIN FUNCTION
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -695,7 +730,7 @@ export default function Auth({ onLogin }) {
         </div>
       </div>
 
-      {/* Right Panel - Login Form */}
+      {/* Right Panel - Form Area */}
       <div className="w-full lg:w-1/2 relative flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="w-full max-w-md">
           <div className="backdrop-blur-xl bg-[#1e293b]/60 rounded-3xl p-6 sm:p-8 border border-cyan-500/30 shadow-2xl">
@@ -708,10 +743,14 @@ export default function Auth({ onLogin }) {
             {/* Title */}
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-yellow-400 bg-clip-text text-transparent">
-                {isForgotView ? 'Create New Password' : 'Welcome Back'}
+                {isForgotView 
+                  ? (otpSent ? 'Reset Password' : 'Request Password Reset') 
+                  : 'Welcome Back'}
               </h2>
               <p className="text-slate-400 text-sm sm:text-base">
-                {isForgotView ? 'Set a new password for your account directly' : 'Login to access your dashboard'}
+                {isForgotView 
+                  ? (otpSent ? 'Enter the OTP received by your Department Head' : 'Enter your username to request an OTP') 
+                  : 'Login to access your dashboard'}
               </p>
             </div>
 
@@ -723,69 +762,104 @@ export default function Auth({ onLogin }) {
               </div>
             )}
 
-            {/* 🔥 DIRECT RESET PASSWORD FORM */}
+            {/* 🔥 CONDITIONAL RENDERING (Login / Request OTP / Verify OTP) */}
             {isForgotView ? (
-              <form onSubmit={handleDirectPasswordReset} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-slate-300 text-sm font-medium block">Username</label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
-                    <input
-                      type="text"
-                      placeholder="Enter your registered username"
-                      value={resetUsername}
-                      onChange={(e) => setResetUsername(e.target.value)}
-                      className="w-full pl-11 pr-4 py-2.5 bg-[#0f172a]/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
-                      required
-                    />
+              // FORGOT PASSWORD SECTION
+              !otpSent ? (
+                // 📝 STEP 1: REQUEST OTP FORM
+                <form onSubmit={handleRequestOTP} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-slate-300 text-sm font-medium block">Username</label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
+                      <input
+                        type="text"
+                        placeholder="Enter your registered username"
+                        value={resetUsername}
+                        onChange={(e) => setResetUsername(e.target.value)}
+                        className="w-full pl-11 pr-4 py-2.5 bg-[#0f172a]/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-slate-300 text-sm font-medium block">New Password</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
-                    <input
-                      type={showNewPassword ? 'text' : 'password'}
-                      placeholder="Enter new password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full pl-11 pr-11 py-2.5 bg-[#0f172a]/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
-                      required
-                    />
-                    <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition-colors">
-                      {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  <Button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-bold h-12 rounded-lg mt-2" size="lg">
+                    {isLoading ? 'Requesting OTP...' : 'Get OTP from Head'}
+                  </Button>
+                  
+                  <div className="text-center text-sm mt-4">
+                    <button type="button" onClick={() => { setIsForgotView(false); setErrorMessage(''); }} className="text-slate-400 hover:text-cyan-400 transition-colors">
+                      ← Back to Login
                     </button>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-slate-300 text-sm font-medium block">Confirm New Password</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
-                    <input
-                      type="password"
-                      placeholder="Confirm new password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full pl-11 pr-4 py-2.5 bg-[#0f172a]/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
-                      required
-                    />
+                </form>
+              ) : (
+                // 📝 STEP 2: VERIFY OTP & RESET PASSWORD FORM
+                <form onSubmit={handleVerifyAndReset} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-slate-300 text-sm font-medium block">Enter 6-Digit OTP</label>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
+                      <input
+                        type="text"
+                        placeholder="Get OTP from your Head"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        className="w-full pl-11 pr-4 py-2.5 bg-[#0f172a]/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors tracking-widest"
+                        required
+                        maxLength={6}
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <Button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-bold h-12 rounded-lg mt-2" size="lg">
-                  {isLoading ? 'Updating...' : 'Save Password'}
-                </Button>
+                  <div className="space-y-2">
+                    <label className="text-slate-300 text-sm font-medium block">New Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        placeholder="Enter new password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full pl-11 pr-11 py-2.5 bg-[#0f172a]/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+                        required
+                      />
+                      <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition-colors">
+                        {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
 
-                <div className="text-center text-sm mt-4">
-                  <button type="button" onClick={() => { setIsForgotView(false); setErrorMessage(''); }} className="text-slate-400 hover:text-cyan-400 transition-colors">
-                    ← Back to Login
-                  </button>
-                </div>
-              </form>
+                  <div className="space-y-2">
+                    <label className="text-slate-300 text-sm font-medium block">Confirm New Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
+                      <input
+                        type="password"
+                        placeholder="Confirm new password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full pl-11 pr-4 py-2.5 bg-[#0f172a]/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <Button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-bold h-12 rounded-lg mt-2" size="lg">
+                    {isLoading ? 'Verifying & Updating...' : 'Reset Password'}
+                  </Button>
+
+                  <div className="flex justify-between items-center text-sm mt-4">
+                    <button type="button" onClick={() => { setOtpSent(false); setErrorMessage(''); }} className="text-slate-400 hover:text-cyan-400 transition-colors">
+                      ← Go Back
+                    </button>
+                    <button type="button" onClick={() => { setIsForgotView(false); setOtpSent(false); setErrorMessage(''); }} className="text-slate-400 hover:text-cyan-400 transition-colors">
+                      Cancel Reset
+                    </button>
+                  </div>
+                </form>
+              )
             ) : (
-              /* LOGIN FORM */
+              // 📝 LOGIN FORM (Unchanged, bas onClick handler reset values karta hai)
               <form onSubmit={handleLogin} className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-slate-300 text-sm font-medium block">Username</label>
@@ -825,7 +899,7 @@ export default function Auth({ onLogin }) {
                     <Checkbox id="remember" className="border-slate-600" />
                     <label htmlFor="remember" className="text-sm text-slate-400 cursor-pointer">Remember me</label>
                   </div>
-                  <button type="button" onClick={() => { setIsForgotView(true); setErrorMessage(''); }} className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors">
+                  <button type="button" onClick={() => { setIsForgotView(true); setOtpSent(false); setErrorMessage(''); }} className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors">
                     Forgot Password?
                   </button>
                 </div>

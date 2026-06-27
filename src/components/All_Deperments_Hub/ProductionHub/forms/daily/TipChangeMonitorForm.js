@@ -4,10 +4,6 @@ import { ArrowLeft, Check, Loader2 } from "lucide-react"; // 🔥 Import added i
 import axios from "axios";
 
 const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
-
 const PLANT_MAP = {
   "Plant 1": "plant_1",
   "Plant 2": "plant_2",
@@ -254,6 +250,9 @@ const TipChangeMonitorForm = () => {
       operation: formData.operation,
       prd_qty: parseInt(formData.prdQty),
       tip_change: formData.tipChange,
+
+      // ✅ Backend auto_log_report ke liye username
+      submitted_by: localStorage.getItem("username") || preparedBy || "Unknown User",
     };
 
     setIsLoading(true);
@@ -268,16 +267,6 @@ const TipChangeMonitorForm = () => {
       const result = await response.json();
 
       if (response.ok) {
-        const currentUser = localStorage.getItem("username") || "Unknown User";
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "Tip Change Monitor Form", 
-            record_id: result.record_id 
-          });
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
         alert("Data saved successfully!");
         handleReset();
       } else {

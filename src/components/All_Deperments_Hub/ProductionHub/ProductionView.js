@@ -35,7 +35,7 @@ const MODAL_HEADER_COLS_CONFIG = {
     'tip-change':        ['Date', 'Machine Name','Machine No'],
     'four-m-inspection': ['Date', 'Part Name', 'Part No','Operation','Lot Qty','OK Qty','Rej. Qty','Parameter/Specs','Insp. By'],
     'four-m-summary':    ['Date', 'Customer', 'Part Name & No','Prepared By','Approved By'],
-    'four-m-record':     ['Time','Machine No','Part Info','Operation No','Nature of Change','Action Taken'],
+    'four-m-record':     ['Time','Machine No','Part Info','Operation No','Nature of Change','Action Taken','Created At'],
     'four-m-display':    ['Date', ],
     'four-m-information': ['Date', 'Time', 'Machine No', 'Operator Name', 'Prepared By'],
 };

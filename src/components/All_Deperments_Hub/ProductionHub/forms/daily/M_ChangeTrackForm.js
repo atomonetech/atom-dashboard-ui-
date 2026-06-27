@@ -13,9 +13,6 @@ import {
 import axios from "axios";
 
 const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
 
 const C = {
   pageBg: "#f1f5f9", 
@@ -396,6 +393,7 @@ const MChangeTrackForm = () => {
 
       remark: formData.remark,
       prepared_by: preparedBy,
+      submitted_by: localStorage.getItem("username") || preparedBy || "Unknown User",
 
       daily_tracking_data: finalDailyTrackingData,
       submission_date: headerDate,
@@ -410,17 +408,6 @@ const MChangeTrackForm = () => {
       });
 
       if (response.ok) {
-        const currentUser = localStorage.getItem("username") || "Unknown User";
-        try {
-          const data = await response.json();
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "4M Tracking Summary Form",
-            record_id: data.record_id
-          });
-        } catch (logError) {
-          console.error("Activity log error:", logError);
-        }
         alert("Form submitted successfully to the backend!");
         handleReset();
       } else {

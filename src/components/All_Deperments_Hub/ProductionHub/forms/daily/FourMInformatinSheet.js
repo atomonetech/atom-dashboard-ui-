@@ -22,9 +22,6 @@ import {
 } from "lucide-react";
 
 const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
 
 const C = {
   pageBg: "#f5f5f0",
@@ -84,7 +81,7 @@ const FourMInformatinSheet = () => {
       const fetchReportData = async () => {
         setIsLoading(true);
         try {
-          const response = await axios.get(`${BASE_URL}/api/get-single-production-report/information-sheet/${id}/`);
+          const response = await axios.get(`${BASE_URL}/api/get-single-production-report/four-m-information/${id}/`);
           
           if (response.data.success) {
             const data = response.data.data;
@@ -168,21 +165,14 @@ const FourMInformatinSheet = () => {
       const response = await fetch(`${BASE_URL}/api/save-4m-information-sheet/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entries: payload ,prepared_by: preparedBy}),
+        body: JSON.stringify({
+          entries: payload,
+          prepared_by: preparedBy,
+          submitted_by: localStorage.getItem("username") || preparedBy || "Unknown User",
+        }),
       });
       const result = await response.json();
       if (response.ok && result.success) {
-        const currentUser = localStorage.getItem("username") || "Unknown User";
-
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "Information Sheet",
-            record_id: result.record_id
-          });
-        } catch (logError) {
-          console.error("Activity log error:", logError);
-        }
         alert(result.message || "Information Sheet saved successfully!");
         handleReset();
       } else {

@@ -308,7 +308,7 @@ export default function IncomingMaterialInsp() {
             setInvoiceNo(data.invoice_no || "");
             setQty(data.qty || "");
             setPreparedBy(
-              data.prepared_by || data.submitted_by.split("@")[0] || "",
+              data.prepared_by || data.submitted_by?.split("@")[0] || "",
             );
             setCheckedBy(data.checked_by || "");
             setApprovedBy(data.approved_by || "");
@@ -492,6 +492,7 @@ export default function IncomingMaterialInsp() {
         checked_by: checkedBy,
         approved_by: approvedBy,
         inspection_data: rows,
+        submitted_by: currentUser,
       };
 
       try {
@@ -511,7 +512,7 @@ export default function IncomingMaterialInsp() {
           try {
             await axios.post(API_LOG, {
               username: currentUser,
-              report_name: "Incoming Material Inspection",
+              report_name: "Incoming Inspection",
               record_id: savedRecordId,
             });
           } catch (logErr) {

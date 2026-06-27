@@ -113,41 +113,47 @@ const RedBinForm = () => {
         }
      } else {
          // ==== SAVE NEW LOGIC ====
-         const dataToSave = {
-           entry_date: formData.entry_date,
-           part_name_model: formData.part_name_model,
-           defect_detail: formData.defect_detail,
-           operation: formData.operation,
-           total_rej_qty: formData.total_rej_qty,
-           root_cause_reason: formData.root_cause_reason, 
-           action_taken: formData.action_taken,
-           responsible_person: formData.responsible_person,
-           target_date: formData.target_date,
-           completion_date: formData.completion_date,
-         };
-     
-         try {
-           const response = await axios.post(API_SAVE, dataToSave);
-           if (response.status === 201 || response.status === 200) {
-             const savedRecordId = response.data.record_id; // 🔥 Asli ID nikal li
-             
-             try {
-               await axios.post(API_LOG, {
-                 username: currentUser,
-                 report_name: 'Redbin Approval Form',
-                 record_id: savedRecordId // 🔥 Save as log
-               });
-             } catch (logError) {
-               console.error('Activity log save karne mein error aayi:', logError);
-             }
-     
-             alert('Redbin Form Saved to Database Successfully!');
-             navigate(-1); // Wapas jao
-           }
-         } catch (error) {
-           console.error('Error saving data:', error);
-           alert('Failed to save data. Please check backend connection.');
-         }
+   const dataToSave = {
+   entry_date: formData.entry_date,
+   part_name_model: formData.part_name_model,
+   defect_detail: formData.defect_detail,
+   operation: formData.operation,
+   total_rej_qty: formData.total_rej_qty,
+   root_cause_reason: formData.root_cause_reason,
+   action_taken: formData.action_taken,
+   responsible_person: formData.responsible_person,
+   target_date: formData.target_date,
+   completion_date: formData.completion_date,
+   submitted_by: currentUser,
+};
+
+try {
+  const response = await axios.post(API_SAVE, dataToSave);
+
+  if (response.status === 201 || response.status === 200) {
+    const savedRecordId = response.data.record_id;
+
+    try {
+      await axios.post(API_LOG, {
+        username: currentUser,
+        report_name: "Red Bin Analysis",
+        record_id: savedRecordId,
+        form_key: "redbin",
+        hub: "qa-hub",
+        target_group: "Quality_Approvers",
+      });
+    } catch (logError) {
+      console.error("Activity log save karne mein error aayi:", logError);
+      alert("Form saved, but notification not created.");
+    }
+
+    alert("Red Bin Form Saved to Database Successfully!");
+    navigate(-1);
+  }
+} catch (error) {
+  console.error("Error saving data:", error);
+  alert("Failed to save data. Please check backend connection.");
+}
      }
   };
 
