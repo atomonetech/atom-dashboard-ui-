@@ -890,11 +890,19 @@ const DailyProdForm = () => {
   const [isAddingNewOperator, setIsAddingNewOperator] = useState(false);
   const [newOperatorName, setNewOperatorName] = useState("");
   const [isSavingOperator, setIsSavingOperator] = useState(false);
-  const [preparedBy, setPreparedBy] = useState("");
+  const [preparedBy, setPreparedBy] = useState(
+  localStorage.getItem("username") || ""
+  );
+
+  const [approvalStatus, setApprovalStatus] = useState("Pending");
+  const [approvedBy, setApprovedBy] = useState("");
+  const [rejectedBy, setRejectedBy] = useState("");
+  const [rejectRemark, setRejectRemark] = useState("");
 
   // Form states
   const [isLoading, setIsLoading] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
   const [formData, setFormData] = useState({
     plant: "",
     shift: "",
@@ -947,6 +955,10 @@ const DailyProdForm = () => {
               rmCoilNo: data.rm_coil_no || data.rmCoilNo || "",
             });
             setPreparedBy(data.submitted_by || "");
+            setApprovalStatus(data.approval_status || "Pending");
+            setApprovedBy(data.approved_by || "");
+            setRejectedBy(data.rejected_by || "");
+            setRejectRemark(data.remarks || data.rejection_remark || data.remark || "");
 
             // Pre-fetch operations for this part so dropdown isn't empty
             const partNameVal = data.part_name || data.partName;
@@ -1121,31 +1133,91 @@ const DailyProdForm = () => {
   };
 
   const handleApprove = async () => {
-    if (!id) return;
-    const currentUser = localStorage.getItem("username") || "Approver";
-    
-    setIsApproving(true);
-    try {
-        const response = await axios.post(`${BASE_URL}/api/approve-report/`, {
-            log_id: id,
-            approver_username: currentUser
-        });
-        
-        if(response.status === 200) {
-            alert("✅ Report Approved Successfully!");
-            navigate(-1); // Automatically go back to previous page
-        }
-    } catch (error) {
-        console.error("Error approving report:", error);
-        if (error.response) {
-            alert(`❌ Backend Error: ${error.response.data.error || "Route Not Found"}`);
-        } else {
-            alert("❌ Network Error: Failed to connect to server.");
-        }
-    } finally {
-        setIsApproving(false);
+  if (!id) return;
+
+  const currentUser = localStorage.getItem("username") || "Approver";
+
+  setIsApproving(true);
+
+  try {
+    const response = await axios.post(`${BASE_URL}/api/approve-report/`, {
+      log_id: id,
+      approver_username: currentUser,
+      approved_by: currentUser,
+      approval_status: "Approved",
+      remark: rejectRemark,
+      remarks: rejectRemark,
+    });
+
+    if (response.status === 200) {
+      alert("✅ Report Approved Successfully!");
+      navigate(-1);
     }
+  } catch (error) {
+    console.error("Error approving report:", error);
+
+    if (error.response) {
+      alert(
+        `❌ Backend Error: ${
+          error.response.data.error ||
+          error.response.data.message ||
+          "Route Not Found"
+        }`
+      );
+    } else {
+      alert("❌ Network Error: Failed to connect to server.");
+    }
+  } finally {
+    setIsApproving(false);
+  }
   };
+  
+  const handleReject = async () => {
+  if (!id) return;
+
+  if (!rejectRemark.trim()) {
+    alert("Please enter rejection remark");
+    return;
+  }
+
+  const currentUser = localStorage.getItem("username") || "Approver";
+
+  setIsRejecting(true);
+
+  try {
+    const response = await axios.post(`${BASE_URL}/api/reject-report/`, {
+      log_id: id,
+      approver_username: currentUser,
+      rejected_by: currentUser,
+      rejection_remark: rejectRemark,
+      remark: rejectRemark,
+      remarks: rejectRemark,
+      approval_status: "Rejected",
+    });
+
+    if (response.status === 200) {
+      alert("❌ Report Rejected Successfully!");
+      navigate(-1);
+    }
+  } catch (error) {
+    console.error("Error rejecting report:", error);
+
+    if (error.response) {
+      alert(
+        `❌ Backend Error: ${
+          error.response.data.error ||
+          error.response.data.message ||
+          "Route Not Found"
+        }`
+      );
+    } else {
+      alert("❌ Network Error: Failed to connect to server.");
+    }
+  } finally {
+    setIsRejecting(false);
+  }
+};
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1595,36 +1667,104 @@ const DailyProdForm = () => {
               </div>
               
               {/* 🔥 CONDITIONAL BUTTONS FOR VIEW VS CREATE MODE */}
-              {id ? (
-                <button
-                  type="button"
-                  onClick={handleApprove}
-                  disabled={isApproving}
-                  className="w-full sm:w-auto px-8 py-3 bg-[#10b981] hover:bg-[#059669] shadow-md text-white font-bold tracking-wide rounded-lg transition-all text-sm flex items-center justify-center gap-2"
-                >
-                  {isApproving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />} 
-                  {isApproving ? "APPROVING..." : "APPROVE REPORT"}
-                </button>
-              ) : (
-                <div className="flex gap-4">
-                  <button
-                    type="button"
-                    onClick={handleReset}
-                    disabled={isLoading}
-                    className="w-full sm:w-auto px-4 py-2 text-sm border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 font-medium"
-                  >
-                    <RotateCcw size={14} /> Reset
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full sm:w-auto px-4 py-2 text-sm bg-[#3b82f5] text-white rounded-lg hover:bg-[#2563eb] transition-colors flex items-center justify-center gap-2 font-medium shadow-sm"
-                  >
-                    {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                    {isLoading ? "Saving..." : "Save Production Plan"}
-                  </button>
-                </div>
-              )}
+             {id && (
+  <div className="w-full sm:w-80">
+    {approvedBy && (
+      <>
+        <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+          Approved By
+        </label>
+        <input
+          type="text"
+          value={approvedBy}
+          readOnly
+          className="w-full border border-gray-300 rounded-lg p-2 text-sm bg-slate-100 text-slate-600 mb-3"
+        />
+      </>
+    )}
+
+    {rejectedBy && (
+      <>
+        <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+          Rejected By
+        </label>
+        <input
+          type="text"
+          value={rejectedBy}
+          readOnly
+          className="w-full border border-gray-300 rounded-lg p-2 text-sm bg-slate-100 text-slate-600 mb-3"
+        />
+      </>
+    )}
+
+    <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+      Remark
+    </label>
+    <textarea
+      value={rejectRemark}
+      onChange={(e) => setRejectRemark(e.target.value)}
+      rows={3}
+      placeholder="Enter approval/rejection remark..."
+      className="w-full border border-gray-300 rounded-lg p-2 text-sm text-black bg-white placeholder-gray-400"
+    />
+  </div>
+)}
+
+{id ? (
+  <div className="flex gap-3">
+    <button
+      type="button"
+      onClick={handleApprove}
+      disabled={isApproving || approvalStatus === "Approved"}
+      className="px-8 py-3 bg-[#10b981] hover:bg-[#059669] text-white font-bold rounded-lg flex items-center gap-2 disabled:opacity-60"
+    >
+      {isApproving ? (
+        <Loader2 size={16} className="animate-spin" />
+      ) : (
+        <Check size={16} />
+      )}
+      {isApproving ? "APPROVING..." : "APPROVE REPORT"}
+    </button>
+
+    <button
+      type="button"
+      onClick={handleReject}
+      disabled={isRejecting || approvalStatus === "Rejected"}
+      className="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg flex items-center gap-2 disabled:opacity-60"
+    >
+      {isRejecting ? (
+        <Loader2 size={16} className="animate-spin" />
+      ) : (
+        <X size={16} />
+      )}
+      {isRejecting ? "REJECTING..." : "REJECT REPORT"}
+    </button>
+  </div>
+) : (
+  <div className="flex gap-4">
+    <button
+      type="button"
+      onClick={handleReset}
+      disabled={isLoading}
+      className="w-full sm:w-auto px-4 py-2 text-sm border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 font-medium"
+    >
+      <RotateCcw size={14} /> Reset
+    </button>
+
+    <button
+      type="submit"
+      disabled={isLoading}
+      className="w-full sm:w-auto px-4 py-2 text-sm bg-[#3b82f5] text-white rounded-lg hover:bg-[#2563eb] transition-colors flex items-center justify-center gap-2 font-medium shadow-sm"
+    >
+      {isLoading ? (
+        <Loader2 size={14} className="animate-spin" />
+      ) : (
+        <Save size={14} />
+      )}
+      {isLoading ? "Saving..." : "Save Production Plan"}
+    </button>
+  </div>
+)}
             </div>
           </form>
         </div>

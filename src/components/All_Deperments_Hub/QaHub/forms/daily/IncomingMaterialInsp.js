@@ -224,7 +224,7 @@ export default function IncomingMaterialInsp() {
   const navigate = useNavigate();
   const isViewMode = Boolean(id);
   const currentUser = localStorage.getItem("username") || "Unknown User";
-
+  const[unit,setUnit]=useState("kg");
   const [supplier, setSupplier] = useState("");
   const [customer, setCustomer] = useState("");
   const [selectedPartId, setSelectedPartId] = useState("");
@@ -1099,18 +1099,74 @@ export default function IncomingMaterialInsp() {
                     </SelectWrapper>
                   )}
                 </div>
-                <div>
-                  <label style={LBL}>WEIGHT/NO.</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={qty}
-                    onChange={(e) => setQty(e.target.value)}
-                    disabled={isViewMode}
-                    placeholder="Total Weight"
-                    style={fldStyle(qty, isViewMode)}
-                  />
-                </div>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+  <label style={LBL}>WEIGHT.</label>
+ 
+  {/* Flex container that merges the input and toggle seamlessly */}
+  <div style={{
+    display: 'flex',
+    alignItems: 'stretch', // Forces both input and toggle to be the exact same height
+    maxWidth: '320px',    // Adjust this width to match your form layout
+    width: '100%'
+  }}>
+   
+    {/* Input field with rounded corners only on the left side */}
+    <input
+      type="number"
+      min="1"
+      value={qty}
+      onChange={(e) => setQty(e.target.value)}
+      disabled={isViewMode}
+      placeholder="Total Weight"
+      style={{
+        flex: 1,
+        padding: '8px 12px',
+        fontSize: '14px',
+        border: '1px solid #ccc',
+        borderRight: 'none', // Removes the inner divider border line
+        borderRadius: '4px 0 0 4px', // Rounds only top-left and bottom-left corners
+        outline: 'none',
+        background: isViewMode ? '#f5f5f5' : '#ffffff',
+        color: '#333333',
+        height: '38px', // Explicit standard field height
+        boxSizing: 'border-box'
+      }}
+    />
+
+    {/* Elegant Attached Toggle Button */}
+    <button
+      type="button"
+      disabled={isViewMode}
+      onClick={() => setUnit(unit === "kg" ? "ton" : "kg")}
+      style={{
+        border: '1px solid #ccc',
+        background: isViewMode ? '#e0e0e0' : '#f8f9fa',
+        color: '#333333',
+        borderRadius: '0 4px 4px 0', // Rounds only top-right and bottom-right corners
+        padding: '0 16px',
+        fontSize: '12px',
+        fontWeight: '600',
+        letterSpacing: '0.5px',
+        cursor: isViewMode ? 'not-allowed' : 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '38px',
+        boxSizing: 'border-box',
+        transition: 'background-color 0.15s, color 0.15s',
+        minWidth: '65px',
+        userSelect: 'none'
+      }}
+      // Subtle hover effect using JavaScript events to avoid breaking custom theme css
+      onMouseEnter={(e) => { if(!isViewMode) e.currentTarget.style.background = '#e2e6ea'; }}
+      onMouseLeave={(e) => { if(!isViewMode) e.currentTarget.style.background = '#f8f9fa'; }}
+    >
+      {/* Dynamic text that changes based on active selection */}
+      {unit.toUpperCase()}
+    </button>
+
+  </div>
+</div>
               </div>
 
               {!headerFilled && (

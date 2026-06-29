@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom"; // 🔥 IMPORT useParams
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import {
   ArrowLeft,
@@ -17,16 +17,19 @@ import {
   Send,
   Hash,
   Loader2,
-  Check, // 🔥 Import Check for Approve button
+  Check,
+  X,
 } from "lucide-react";
 
 // Backend URL
 const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+
 /* ─── tokens ─────────────────────────────────────────────────── */
 const C = {
   pageBg: "#f5f5f0",
   white: "#ffffff",
   red: "#b91c1c",
+  redDark: "#991b1b",
   redHdr: "#b91c1c",
   redLight: "#fef2f2",
   redBorder: "#fca5a5",
@@ -160,32 +163,35 @@ const SectionHead = ({
     </span>
   </div>
 );
+
 const getItemText = (item) => {
-    if (!item) return "";
-    return typeof item === 'string' ? item : (item.name || item.operation || item.part_name || "");
+  if (!item) return "";
+  return typeof item === "string"
+    ? item
+    : item.name || item.operation || item.part_name || "";
 };
 
 // 🔥 PURE SORTING FUNCTION WITHOUT REMOVING KEYWORDS
 const sortArrayAlphabetically = (arr) => {
-    const cleanArray = Array.isArray(arr) ? arr : [];
-    return [...cleanArray].sort((a, b) => {
-        const strA = getItemText(a).toLowerCase().trim();
-        const strB = getItemText(b).toLowerCase().trim();
-        return strA.localeCompare(strB);
-    });
+  const cleanArray = Array.isArray(arr) ? arr : [];
+  return [...cleanArray].sort((a, b) => {
+    const strA = getItemText(a).toLowerCase().trim();
+    const strB = getItemText(b).toLowerCase().trim();
+    return strA.localeCompare(strB);
+  });
 };
 
 /* ─── main component ─────────────────────────────────────────── */
 const For_M_Change_Ins_Form = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // 🔥 GET ID FROM URL
+  const { id } = useParams();
 
   const [formDate, setFormDate] = useState("");
 
   useEffect(() => {
     const now = new Date();
     const formattedDate = `${String(now.getDate()).padStart(2, "0")}.${String(
-      now.getMonth() + 1,
+      now.getMonth() + 1
     ).padStart(2, "0")}.${now.getFullYear()}`;
     setFormDate(formattedDate);
   }, []);
@@ -206,22 +212,33 @@ const For_M_Change_Ins_Form = () => {
 
   const [formData, setFormData] = useState(initialFormState);
   const [isLoading, setIsLoading] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+
   const [partsList, setPartsList] = useState([]);
   const [operationList, setOperationList] = useState([]);
   const [preparedBy, setPreparedBy] = useState("");
+
+  const [approvalStatus, setApprovalStatus] = useState("Pending");
+  const [approvedBy, setApprovedBy] = useState("");
+  const [rejectedBy, setRejectedBy] = useState("");
+  const [reviewRemark, setReviewRemark] = useState("");
 
   // 🔥 FETCH REPORT DATA IF ID EXISTS (VIEW/APPROVE MODE)
   useEffect(() => {
     if (id) {
       const fetchReportData = async () => {
         setIsLoading(true);
+
         try {
-          const response = await axios.get(`${BASE_URL}/api/get-single-production-report/four-m-inspection/${id}/`);
-          
+          const response = await axios.get(
+            `${BASE_URL}/api/get-single-production-report/four-m-inspection/${id}/`
+          );
+
           if (response.data.success) {
             const data = response.data.data;
-            
-            // 🔥 FIXED: Mapped exact backend fields to formData keys
+            const statusText = data.status || "";
+
             setFormData({
               partName: data.partName || data.part_name || "",
               partNo: data.partNo || data.part_no || "",
@@ -231,38 +248,83 @@ const For_M_Change_Ins_Form = () => {
               rejQty: data.rejQty || data.rej_qty || "",
               paramSpec: data.parameterSpecs || data.parameter_specs || "",
               before: [
-                data.before_1 || "", 
-                data.before_2 || "", 
-                data.before_3 || "", 
-                data.before_4 || "", 
-                data.before_5 || ""
+                data.before_1 || "",
+                data.before_2 || "",
+                data.before_3 || "",
+                data.before_4 || "",
+                data.before_5 || "",
               ],
               after: [
-                data.after_1 || "", 
-                data.after_2 || "", 
-                data.after_3 || "", 
-                data.after_4 || "", 
-                data.after_5 || ""
+                data.after_1 || "",
+                data.after_2 || "",
+                data.after_3 || "",
+                data.after_4 || "",
+                data.after_5 || "",
               ],
               inspBy: data.inspectedBy || data.inspected_by || "",
-              remarks: data.remarks || "",
+              remarks:
+                data.form_remarks ||
+                data.inspection_remarks ||
+                data.report_remarks ||
+                data.remarks ||
+                "",
             });
-            
+
             setPreparedBy(data.submitted_by || data.prepared_by || "");
-            
+
+            setApprovalStatus(
+              data.approval_status ||
+                (statusText.startsWith("Approved by")
+                  ? "Approved"
+                  : statusText.startsWith("Rejected by")
+                  ? "Rejected"
+                  : "Pending")
+            );
+
+            setApprovedBy(
+              data.approved_by ||
+                (statusText.startsWith("Approved by")
+                  ? statusText.replace("Approved by", "").trim()
+                  : "")
+            );
+
+            setRejectedBy(
+              data.rejected_by ||
+                (statusText.startsWith("Rejected by")
+                  ? statusText.replace("Rejected by", "").trim()
+                  : "")
+            );
+
+            setReviewRemark(
+              data.review_remarks ||
+                data.approval_remarks ||
+                data.rejection_remark ||
+                data.remark ||
+                data.remarks ||
+                ""
+            );
+
             const dateStr = data.date || data.inspection_date;
             if (dateStr) {
-               // convert YYYY-MM-DD back to DD.MM.YYYY for UI
-               const parts = dateStr.split("-");
-               if(parts.length === 3) setFormDate(`${parts[2]}.${parts[1]}.${parts[0]}`);
+              const parts = dateStr.split("-");
+              if (parts.length === 3) {
+                setFormDate(`${parts[2]}.${parts[1]}.${parts[0]}`);
+              }
             }
 
             // Pre-fetch operations
             const pName = data.partName || data.part_name;
             if (pName) {
-              axios.get(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(pName)}`)
-                .then(res => setOperationList(sortArrayAlphabetically(res.data)))
-                .catch(err => console.error(err));
+              axios
+                .get(
+                  `${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(
+                    pName
+                  )}`
+                )
+                .then((res) =>
+                  setOperationList(sortArrayAlphabetically(res.data))
+                )
+                .catch((err) => console.error(err));
             }
           }
         } catch (error) {
@@ -271,6 +333,7 @@ const For_M_Change_Ins_Form = () => {
           setIsLoading(false);
         }
       };
+
       fetchReportData();
     }
   }, [id]);
@@ -279,41 +342,52 @@ const For_M_Change_Ins_Form = () => {
     fetch(`${BASE_URL}/api/master-dropdown/?filter=all_parts`)
       .then((r) => r.json())
       .then((data) => {
-        if (Array.isArray(data))
-          setPartsList(sortArrayAlphabetically(data.map((i) => ({ part_name: i[0], part_no: i[1] }))));
+        if (Array.isArray(data)) {
+          setPartsList(
+            sortArrayAlphabetically(
+              data.map((i) => ({ part_name: i[0], part_no: i[1] }))
+            )
+          );
+        }
       })
       .catch((err) => console.error("Error fetching parts:", err));
   }, []);
 
   const handleChange = (e) => {
-    if (id) return; // Disable changes in view mode
+    if (id) return;
 
     const { name, value } = e.target;
+
     if (name === "partName") {
       const sel = partsList.find((p) => p.part_name === value);
+
       setFormData((prev) => ({
         ...prev,
         partName: value,
         partNo: sel?.part_no || "",
         operation: "",
       }));
+
       if (value) {
         fetch(
           `${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(
-            value,
-          )}`,
+            value
+          )}`
         )
           .then((r) => r.json())
           .then((data) => setOperationList(sortArrayAlphabetically(data)))
           .catch((err) => console.error("Error fetching operations:", err));
-      } else setOperationList([]);
+      } else {
+        setOperationList([]);
+      }
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
   const handleArrayChange = (section, index, value) => {
-    if (id) return; // Disable changes in view mode
+    if (id) return;
+
     setFormData((prev) => ({
       ...prev,
       [section]: prev[section].map((it, i) => (i === index ? value : it)),
@@ -322,41 +396,107 @@ const For_M_Change_Ins_Form = () => {
 
   const handleReset = () => {
     if (id) return;
+
     setFormData(initialFormState);
     setOperationList([]);
   };
 
-  // 🔥 NAYA FUNCTION: API call to actually approve the report in DB
   const handleApprove = async () => {
     if (!id) return;
+
     const currentUser = localStorage.getItem("username") || "Approver";
-    
-    setIsLoading(true);
+
+    setIsApproving(true);
+
     try {
-        const response = await axios.post(`${BASE_URL}/api/approve-report/`, {
-            log_id: id,
-            approver_username: currentUser
-        });
-        if(response.status === 200) {
-            alert(response.data.message || "Report Approved Successfully!");
-            navigate(-1); // Automatically go back after approval
-        }
+      const response = await axios.post(`${BASE_URL}/api/approve-report/`, {
+        log_id: id,
+        approver_username: currentUser,
+        approved_by: currentUser,
+        approval_status: "Approved",
+        remark: reviewRemark,
+        remarks: reviewRemark,
+      });
+
+      if (response.status === 200) {
+        alert(response.data.message || "Report Approved Successfully!");
+        navigate(-1);
+      }
     } catch (error) {
-        console.error("Error approving report:", error);
-        alert("Failed to approve report. Please try again.");
+      console.error("Error approving report:", error);
+
+      if (error.response) {
+        alert(
+          `❌ Backend Error: ${
+            error.response.data.error ||
+            error.response.data.message ||
+            "Route Not Found"
+          }`
+        );
+      } else {
+        alert("❌ Network Error: Failed to connect to server.");
+      }
     } finally {
-        setIsLoading(false);
+      setIsApproving(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!id) return;
+
+    if (!reviewRemark.trim()) {
+      alert("Please enter rejection remark");
+      return;
+    }
+
+    const currentUser = localStorage.getItem("username") || "Approver";
+
+    setIsRejecting(true);
+
+    try {
+      const response = await axios.post(`${BASE_URL}/api/reject-report/`, {
+        log_id: id,
+        approver_username: currentUser,
+        rejected_by: currentUser,
+        rejection_remark: reviewRemark,
+        remark: reviewRemark,
+        remarks: reviewRemark,
+        approval_status: "Rejected",
+      });
+
+      if (response.status === 200) {
+        alert("Report Rejected Successfully!");
+        navigate(-1);
+      }
+    } catch (error) {
+      console.error("Error rejecting report:", error);
+
+      if (error.response) {
+        alert(
+          `❌ Backend Error: ${
+            error.response.data.error ||
+            error.response.data.message ||
+            "Route Not Found"
+          }`
+        );
+      } else {
+        alert("❌ Network Error: Failed to connect to server.");
+      }
+    } finally {
+      setIsRejecting(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (id) return; // Prevent saving if in view mode
+
+    if (id) return;
 
     if (!formData.partName || !formData.partNo || !formData.operation) {
       alert("Part Name, Part No, and Operation are required.");
       return;
     }
+
     const payload = {
       part_name: formData.partName,
       part_no: formData.partNo,
@@ -379,16 +519,21 @@ const For_M_Change_Ins_Form = () => {
       remarks: formData.remarks,
 
       // ✅ Backend auto_log_report ke liye username
-      submitted_by: localStorage.getItem("username") || preparedBy || "Unknown User",
+      submitted_by:
+        localStorage.getItem("username") || preparedBy || "Unknown User",
     };
+
     setIsLoading(true);
+
     try {
       const res = await fetch(`${BASE_URL}/api/save-4m-change/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
       const result = await res.json();
+
       if (res.ok && result.success) {
         alert(result.message || "Saved successfully!");
         handleReset();
@@ -435,7 +580,7 @@ const For_M_Change_Ins_Form = () => {
         >
           <button
             type="button"
-            onClick={() => navigate(-1)} // 🔥 Sends user back safely
+            onClick={() => navigate(-1)}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -461,6 +606,39 @@ const For_M_Change_Ins_Form = () => {
             <ArrowLeft size={13} />
             Back
           </button>
+
+          {id && (
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: ".1em",
+                textTransform: "uppercase",
+                color:
+                  approvalStatus === "Approved"
+                    ? C.green
+                    : approvalStatus === "Rejected"
+                    ? C.red
+                    : C.textMid,
+                background:
+                  approvalStatus === "Approved"
+                    ? C.greenLight
+                    : approvalStatus === "Rejected"
+                    ? C.redLight
+                    : "#f9fafb",
+                border:
+                  approvalStatus === "Approved"
+                    ? `1px solid ${C.greenBorder}`
+                    : approvalStatus === "Rejected"
+                    ? `1px solid ${C.redBorder}`
+                    : `1px solid ${C.border}`,
+                padding: "8px 14px",
+                borderRadius: 4,
+              }}
+            >
+              {approvalStatus}
+            </div>
+          )}
         </div>
 
         {/* ── main card ── */}
@@ -470,7 +648,8 @@ const For_M_Change_Ins_Form = () => {
             borderRadius: 8,
             border: `1px solid ${C.border}`,
             overflow: "hidden",
-            boxShadow: "0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04)",
+            boxShadow:
+              "0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04)",
           }}
         >
           {/* ── header ── */}
@@ -489,6 +668,7 @@ const For_M_Change_Ins_Form = () => {
                 color="rgba(255,255,255,.9)"
                 strokeWidth={2}
               />
+
               <h1
                 style={{
                   margin: 0,
@@ -499,9 +679,12 @@ const For_M_Change_Ins_Form = () => {
                   textTransform: "uppercase",
                 }}
               >
-                {id ? "4M Change Inspection Report (REVIEW)" : "4M Change Inspection Report"}
+                {id
+                  ? "4M Change Inspection Report (REVIEW)"
+                  : "4M Change Inspection Report"}
               </h1>
             </div>
+
             <div
               style={{
                 display: "flex",
@@ -543,27 +726,38 @@ const For_M_Change_Ins_Form = () => {
                   <FieldLabel icon={Package}>
                     Part Name <span style={{ color: C.red }}>*</span>
                   </FieldLabel>
+
                   <StyledSelect
                     name="partName"
                     value={formData.partName}
                     onChange={handleChange}
-                    disabled={!!id} // 🔥 DISABLED IN VIEW MODE
+                    disabled={!!id}
                   >
                     <option value="">Select Part Name</option>
+
                     {partsList.map((p, i) => (
                       <option key={i} value={p.part_name}>
                         {p.part_name}
                       </option>
                     ))}
-                    {id && formData.partName && !partsList.some(p => p.part_name === formData.partName) && (
-                      <option value={formData.partName}>{formData.partName}</option>
-                    )}
+
+                    {id &&
+                      formData.partName &&
+                      !partsList.some(
+                        (p) => p.part_name === formData.partName
+                      ) && (
+                        <option value={formData.partName}>
+                          {formData.partName}
+                        </option>
+                      )}
                   </StyledSelect>
                 </div>
+
                 <div>
                   <FieldLabel icon={Hash}>
                     Part No. <span style={{ color: C.red }}>*</span>
                   </FieldLabel>
+
                   <StyledInput
                     type="text"
                     name="partNo"
@@ -579,6 +773,7 @@ const For_M_Change_Ins_Form = () => {
                 <FieldLabel icon={Wrench}>
                   Operation <span style={{ color: C.red }}>*</span>
                 </FieldLabel>
+
                 <StyledSelect
                   name="operation"
                   value={formData.operation}
@@ -586,14 +781,20 @@ const For_M_Change_Ins_Form = () => {
                   disabled={!!id || (!id && !formData.partName)}
                 >
                   <option value="">Select Operation</option>
+
                   {operationList.map((op, i) => (
                     <option key={i} value={op}>
                       {op}
                     </option>
                   ))}
-                  {id && formData.operation && !operationList.includes(formData.operation) && (
-                    <option value={formData.operation}>{formData.operation}</option>
-                  )}
+
+                  {id &&
+                    formData.operation &&
+                    !operationList.includes(formData.operation) && (
+                      <option value={formData.operation}>
+                        {formData.operation}
+                      </option>
+                    )}
                 </StyledSelect>
               </div>
 
@@ -617,10 +818,12 @@ const For_M_Change_Ins_Form = () => {
                     placeholder="e.g. 100"
                   />
                 </div>
+
                 <div>
                   <FieldLabel icon={CheckCircle} iconColor={C.green}>
                     OK Qty
                   </FieldLabel>
+
                   <StyledInput
                     type="number"
                     name="okQty"
@@ -634,8 +837,10 @@ const For_M_Change_Ins_Form = () => {
                     }}
                   />
                 </div>
+
                 <div>
                   <FieldLabel icon={XCircle}>Rej. Qty</FieldLabel>
+
                   <StyledInput
                     type="number"
                     name="rejQty"
@@ -643,14 +848,16 @@ const For_M_Change_Ins_Form = () => {
                     onChange={handleChange}
                     readOnly={!!id}
                     placeholder="e.g. 5"
-                    style={{ 
-                      borderColor: C.redBorder, 
-                      background: id ? "#f9f9f7" : C.redLight 
+                    style={{
+                      borderColor: C.redBorder,
+                      background: id ? "#f9f9f7" : C.redLight,
                     }}
                   />
                 </div>
+
                 <div>
                   <FieldLabel icon={Gauge}>Parameter / Specs</FieldLabel>
+
                   <StyledInput
                     type="text"
                     name="paramSpec"
@@ -669,6 +876,7 @@ const For_M_Change_Ins_Form = () => {
                 color={C.red}
                 borderColor={C.redBorder}
               />
+
               <div
                 style={{
                   display: "grid",
@@ -689,6 +897,7 @@ const For_M_Change_Ins_Form = () => {
                     >
                       {i + 1}
                     </span>
+
                     <StyledInput
                       type="text"
                       value={formData.before[i]}
@@ -709,6 +918,7 @@ const For_M_Change_Ins_Form = () => {
                 color={C.green}
                 borderColor={C.greenBorder}
               />
+
               <div
                 style={{
                   display: "grid",
@@ -729,6 +939,7 @@ const For_M_Change_Ins_Form = () => {
                     >
                       {i + 1}
                     </span>
+
                     <StyledInput
                       type="text"
                       value={formData.after[i]}
@@ -754,6 +965,7 @@ const For_M_Change_Ins_Form = () => {
               >
                 <div>
                   <FieldLabel icon={User}>Insp. By</FieldLabel>
+
                   <StyledInput
                     type="text"
                     name="inspBy"
@@ -763,8 +975,10 @@ const For_M_Change_Ins_Form = () => {
                     placeholder="Inspector name"
                   />
                 </div>
+
                 <div>
                   <FieldLabel icon={MessageSquare}>Remarks</FieldLabel>
+
                   <StyledInput
                     type="text"
                     name="remarks"
@@ -789,70 +1003,243 @@ const For_M_Change_Ins_Form = () => {
               <div
                 style={{
                   display: "flex",
-                  flexWrap: "wrap",
-                  alignItems: "flex-end",
-                  justifyContent: "space-between",
-                  gap: 14,
+                  flexDirection: "column",
+                  gap: 18,
                 }}
               >
-                {/* Prepared by */}
-                <div style={{ minWidth: 200 }}>
-                  <div
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      letterSpacing: ".12em",
-                      textTransform: "uppercase",
-                      color: C.textMid,
-                      marginBottom: 6,
-                    }}
-                  >
-                    Prepared By
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: id ? "1fr 1fr" : "1fr",
+                    gap: 16,
+                  }}
+                >
+                  {/* Prepared by */}
+                  <div style={{ minWidth: 200 }}>
+                    <div
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: ".12em",
+                        textTransform: "uppercase",
+                        color: C.textMid,
+                        marginBottom: 6,
+                      }}
+                    >
+                      Prepared By
+                    </div>
+
+                    <StyledInput
+                      type="text"
+                      value={preparedBy}
+                      onChange={(e) => setPreparedBy(e.target.value)}
+                      readOnly={!!id}
+                      placeholder="Enter name"
+                    />
                   </div>
-                  <StyledInput
-                    type="text"
-                    value={preparedBy}
-                    onChange={(e) => setPreparedBy(e.target.value)}
-                    readOnly={!!id} // 🔥 DISABLED IN VIEW MODE
-                    placeholder="Enter name"
-                    style={{ width: 220 }}
-                  />
+
+                  {id && approvedBy && (
+                    <div style={{ minWidth: 200 }}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: ".12em",
+                          textTransform: "uppercase",
+                          color: C.textMid,
+                          marginBottom: 6,
+                        }}
+                      >
+                        Approved By
+                      </div>
+
+                      <StyledInput
+                        type="text"
+                        value={approvedBy}
+                        readOnly
+                        placeholder="Approved by"
+                      />
+                    </div>
+                  )}
+
+                  {id && rejectedBy && (
+                    <div style={{ minWidth: 200 }}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: ".12em",
+                          textTransform: "uppercase",
+                          color: C.textMid,
+                          marginBottom: 6,
+                        }}
+                      >
+                        Rejected By
+                      </div>
+
+                      <StyledInput
+                        type="text"
+                        value={rejectedBy}
+                        readOnly
+                        placeholder="Rejected by"
+                      />
+                    </div>
+                  )}
                 </div>
 
-                {/* Action buttons (CONDITIONAL FOR VIEW MODE) */}
-                <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
-                  {id ? (
-                    <button
-                      type="button"
-                      disabled={isLoading}
-                      onClick={handleApprove} // 🔥 NEW LOGIC FOR APPROVE
+                {id && (
+                  <div>
+                    <div
                       style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 8,
-                        background: isLoading ? "#15803d" : C.green,
-                        border: "none",
-                        color: "#fff",
-                        padding: "11px 28px",
-                        fontSize: 12,
+                        fontSize: 10,
                         fontWeight: 700,
-                        letterSpacing: ".1em",
+                        letterSpacing: ".12em",
                         textTransform: "uppercase",
-                        borderRadius: 6,
-                        cursor: isLoading ? "not-allowed" : "pointer",
-                        fontFamily: "inherit",
-                        transition: "background .15s",
-                        boxShadow: "0 2px 8px rgba(22,163,74,.35)",
+                        color: C.textMid,
+                        marginBottom: 6,
                       }}
-                      onMouseEnter={(e) => !isLoading && (e.currentTarget.style.background = "#15803d")}
-                      onMouseLeave={(e) => !isLoading && (e.currentTarget.style.background = C.green)}
                     >
-                      {isLoading ? (
-                         <><Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> Approving...</>
-                      ) : (
-                         <><Check size={14} strokeWidth={2.5} /> APPROVE REPORT</>
-                      )}
-                    </button>
+                      Approval / Rejection Remark
+                    </div>
+
+                    <textarea
+                      value={reviewRemark}
+                      onChange={(e) => setReviewRemark(e.target.value)}
+                      rows={3}
+                      placeholder="Enter approval/rejection remark..."
+                      style={{
+                        ...inputBase,
+                        resize: "vertical",
+                        minHeight: 86,
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Action buttons */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 12,
+                    flexShrink: 0,
+                    justifyContent: "flex-end",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  {id ? (
+                    <>
+                      <button
+                        type="button"
+                        disabled={isApproving || approvalStatus === "Approved"}
+                        onClick={handleApprove}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          background:
+                            isApproving || approvalStatus === "Approved"
+                              ? "#15803d"
+                              : C.green,
+                          border: "none",
+                          color: "#fff",
+                          padding: "11px 28px",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          letterSpacing: ".1em",
+                          textTransform: "uppercase",
+                          borderRadius: 6,
+                          cursor:
+                            isApproving || approvalStatus === "Approved"
+                              ? "not-allowed"
+                              : "pointer",
+                          fontFamily: "inherit",
+                          transition: "background .15s",
+                          boxShadow: "0 2px 8px rgba(22,163,74,.35)",
+                          opacity: approvalStatus === "Approved" ? 0.65 : 1,
+                        }}
+                        onMouseEnter={(e) =>
+                          !isApproving &&
+                          approvalStatus !== "Approved" &&
+                          (e.currentTarget.style.background = "#15803d")
+                        }
+                        onMouseLeave={(e) =>
+                          !isApproving &&
+                          approvalStatus !== "Approved" &&
+                          (e.currentTarget.style.background = C.green)
+                        }
+                      >
+                        {isApproving ? (
+                          <>
+                            <Loader2
+                              size={14}
+                              style={{ animation: "spin 1s linear infinite" }}
+                            />
+                            Approving...
+                          </>
+                        ) : (
+                          <>
+                            <Check size={14} strokeWidth={2.5} />
+                            Approve Report
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={isRejecting || approvalStatus === "Rejected"}
+                        onClick={handleReject}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          background:
+                            isRejecting || approvalStatus === "Rejected"
+                              ? C.redDark
+                              : C.red,
+                          border: "none",
+                          color: "#fff",
+                          padding: "11px 28px",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          letterSpacing: ".1em",
+                          textTransform: "uppercase",
+                          borderRadius: 6,
+                          cursor:
+                            isRejecting || approvalStatus === "Rejected"
+                              ? "not-allowed"
+                              : "pointer",
+                          fontFamily: "inherit",
+                          transition: "background .15s",
+                          boxShadow: "0 2px 8px rgba(185,28,28,.35)",
+                          opacity: approvalStatus === "Rejected" ? 0.65 : 1,
+                        }}
+                        onMouseEnter={(e) =>
+                          !isRejecting &&
+                          approvalStatus !== "Rejected" &&
+                          (e.currentTarget.style.background = C.redDark)
+                        }
+                        onMouseLeave={(e) =>
+                          !isRejecting &&
+                          approvalStatus !== "Rejected" &&
+                          (e.currentTarget.style.background = C.red)
+                        }
+                      >
+                        {isRejecting ? (
+                          <>
+                            <Loader2
+                              size={14}
+                              style={{ animation: "spin 1s linear infinite" }}
+                            />
+                            Rejecting...
+                          </>
+                        ) : (
+                          <>
+                            <X size={14} strokeWidth={2.5} />
+                            Reject Report
+                          </>
+                        )}
+                      </button>
+                    </>
                   ) : (
                     <>
                       {/* Reset */}
@@ -916,11 +1303,14 @@ const For_M_Change_Ins_Form = () => {
                           boxShadow: "0 2px 8px rgba(185,28,28,.35)",
                         }}
                         onMouseEnter={(e) => {
-                          if (!isLoading)
+                          if (!isLoading) {
                             e.currentTarget.style.background = C.redDark;
+                          }
                         }}
                         onMouseLeave={(e) => {
-                          if (!isLoading) e.currentTarget.style.background = C.red;
+                          if (!isLoading) {
+                            e.currentTarget.style.background = C.red;
+                          }
                         }}
                       >
                         {isLoading ? (
@@ -928,12 +1318,13 @@ const For_M_Change_Ins_Form = () => {
                             <Loader2
                               size={14}
                               style={{ animation: "spin 1s linear infinite" }}
-                            />{" "}
+                            />
                             Submitting…
                           </>
                         ) : (
                           <>
-                            <Send size={14} /> Submit Report
+                            <Send size={14} />
+                            Submit Report
                           </>
                         )}
                       </button>
