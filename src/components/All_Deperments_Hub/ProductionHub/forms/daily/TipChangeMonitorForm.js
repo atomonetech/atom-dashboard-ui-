@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom"; // 🔥 IMPORT useParams & useNavigate
-import { ArrowLeft, Check, Loader2 } from "lucide-react"; // 🔥 Import added icons
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Check, Loader2, X } from "lucide-react";
 import axios from "axios";
 
 const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+
 const PLANT_MAP = {
   "Plant 1": "plant_1",
   "Plant 2": "plant_2",
@@ -11,13 +12,13 @@ const PLANT_MAP = {
 
 // Reverse map for View Mode
 const REVERSE_PLANT_MAP = {
-  "plant_1": "Plant 1",
-  "plant_2": "Plant 2",
+  plant_1: "Plant 1",
+  plant_2: "Plant 2",
 };
 
 const TipChangeMonitorForm = () => {
-  const { id } = useParams(); // 🔥 GET ID FROM URL
-  const navigate = useNavigate(); // 🔥 Navigation hook
+  const { id } = useParams();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     plant: "",
@@ -34,21 +35,29 @@ const TipChangeMonitorForm = () => {
   const [partsData, setPartsData] = useState([]);
   const [operationsData, setOperationsData] = useState([]);
   const [preparedBy, setPreparedBy] = useState("");
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+
+  const [approvalStatus, setApprovalStatus] = useState("Pending");
+  const [approvedBy, setApprovedBy] = useState("");
+  const [rejectedBy, setRejectedBy] = useState("");
+  const [reviewRemark, setReviewRemark] = useState("");
 
   const getItemText = (item) => {
     if (!item) return "";
-    return typeof item === 'string' ? item : (item.name || item.operation || item.part_name || "");
+    return typeof item === "string"
+      ? item
+      : item.name || item.operation || item.part_name || "";
   };
 
   const sortArrayAlphabetically = (arr) => {
     const cleanArray = Array.isArray(arr) ? arr : [];
     return [...cleanArray].sort((a, b) => {
-        const strA = getItemText(a).toLowerCase().trim();
-        const strB = getItemText(b).toLowerCase().trim();
-        return strA.localeCompare(strB);
+      const strA = getItemText(a).toLowerCase().trim();
+      const strB = getItemText(b).toLowerCase().trim();
+      return strA.localeCompare(strB);
     });
   };
 
@@ -57,12 +66,16 @@ const TipChangeMonitorForm = () => {
     if (id) {
       const fetchReportData = async () => {
         setIsLoading(true);
+
         try {
-          const response = await axios.get(`${BASE_URL}/api/get-single-production-report/tip-change/${id}/`);
-          
+          const response = await axios.get(
+            `${BASE_URL}/api/get-single-production-report/tip-change/${id}/`
+          );
+
           if (response.data.success) {
             const data = response.data.data;
-            
+            const statusText = data.status || "";
+
             // Reverse map plant logic
             const actualPlant = REVERSE_PLANT_MAP[data.plant] || data.plant || "";
 
@@ -75,15 +88,50 @@ const TipChangeMonitorForm = () => {
               prdQty: data.prodQty || data.prd_qty || "",
               tipChange: data.tipChange || data.tip_change || "",
             });
-            
+
             setPreparedBy(data.submitted_by || data.prepared_by || "");
-            
+
+            setApprovalStatus(
+              data.approval_status ||
+                (statusText.startsWith("Approved by")
+                  ? "Approved"
+                  : statusText.startsWith("Rejected by")
+                  ? "Rejected"
+                  : "Pending")
+            );
+
+            setApprovedBy(
+              data.approved_by ||
+                (statusText.startsWith("Approved by")
+                  ? statusText.replace("Approved by", "").trim()
+                  : "")
+            );
+
+            setRejectedBy(
+              data.rejected_by ||
+                (statusText.startsWith("Rejected by")
+                  ? statusText.replace("Rejected by", "").trim()
+                  : "")
+            );
+
+            setReviewRemark(
+              data.remarks || data.rejection_remark || data.remark || ""
+            );
+
             // Fetch operations for the part so it shows up correctly
             const pName = data.partName || data.part_name;
+
             if (pName) {
-              axios.get(`${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(pName)}`)
-                .then(res => setOperationsData(sortArrayAlphabetically(res.data)))
-                .catch(err => console.error(err));
+              axios
+                .get(
+                  `${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(
+                    pName
+                  )}`
+                )
+                .then((res) =>
+                  setOperationsData(sortArrayAlphabetically(res.data))
+                )
+                .catch((err) => console.error(err));
             }
           }
         } catch (error) {
@@ -92,6 +140,7 @@ const TipChangeMonitorForm = () => {
           setIsLoading(false);
         }
       };
+
       fetchReportData();
     }
   }, [id]);
@@ -111,13 +160,13 @@ const TipChangeMonitorForm = () => {
 
   // 2. Machine Name change hone par Backend (Press) ya Frontend (CNC/VMC) se list banana
   useEffect(() => {
-    if (formData.plant && !id) { // Only fetch dynamic machines if NOT in view mode
+    if (formData.plant && !id) {
       if (formData.machineName === "Press") {
         setMachinesLoading(true);
         const plantKey = PLANT_MAP[formData.plant];
 
         fetch(
-          `${BASE_URL}/api/machines/list/?plant=${plantKey}&machine_name=Press`,
+          `${BASE_URL}/api/machines/list/?plant=${plantKey}&machine_name=Press`
         )
           .then((res) => res.json())
           .then((data) => {
@@ -134,14 +183,14 @@ const TipChangeMonitorForm = () => {
       } else if (formData.machineName === "CNC") {
         const cncMachines = Array.from(
           { length: 12 },
-          (_, i) => `CNC-${String(i + 1).padStart(2, "0")}`,
+          (_, i) => `CNC-${String(i + 1).padStart(2, "0")}`
         );
         setMachineList(cncMachines);
         setMachinesLoading(false);
       } else if (formData.machineName === "VMC") {
         const vmcMachines = Array.from(
           { length: 4 },
-          (_, i) => `VMC-${String(i + 1).padStart(2, "0")}`,
+          (_, i) => `VMC-${String(i + 1).padStart(2, "0")}`
         );
         setMachineList(vmcMachines);
         setMachinesLoading(false);
@@ -153,15 +202,17 @@ const TipChangeMonitorForm = () => {
 
   // 3. Handle Input Changes aur Dependent Dropdown logic
   const handleChange = async (e) => {
-    if (id) return; // 🔥 Disable changes in view mode
+    if (id) return;
 
     const { name, value } = e.target;
 
     setFormData((prev) => {
       const newData = { ...prev, [name]: value };
+
       if (name === "plant" || name === "machineName") {
         newData.machineNo = "";
       }
+
       return newData;
     });
 
@@ -173,10 +224,12 @@ const TipChangeMonitorForm = () => {
         try {
           const response = await fetch(
             `${BASE_URL}/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(
-              value,
-            )}`,
+              value
+            )}`
           );
+
           const data = await response.json();
+
           if (Array.isArray(data)) {
             setOperationsData(sortArrayAlphabetically(data));
           }
@@ -189,6 +242,7 @@ const TipChangeMonitorForm = () => {
 
   const handleReset = () => {
     if (id) return;
+
     setFormData({
       plant: "",
       machineName: "",
@@ -198,6 +252,7 @@ const TipChangeMonitorForm = () => {
       prdQty: "",
       tipChange: "",
     });
+
     setOperationsData([]);
     setMachineList([]);
     setPreparedBy("");
@@ -205,28 +260,93 @@ const TipChangeMonitorForm = () => {
 
   const handleApprove = async () => {
     if (!id) return;
+
     const currentUser = localStorage.getItem("username") || "Approver";
-    
+
     setIsApproving(true);
+
     try {
-        const response = await axios.post(`${BASE_URL}/api/approve-report/`, {
-            log_id: id,
-            approver_username: currentUser
-        });
-        if(response.status === 200) {
-            alert(response.data.message || "Report Approved Successfully!");
-            navigate(-1);
-        }
+      const response = await axios.post(`${BASE_URL}/api/approve-report/`, {
+        log_id: id,
+        approver_username: currentUser,
+        approved_by: currentUser,
+        approval_status: "Approved",
+        remark: reviewRemark,
+        remarks: reviewRemark,
+      });
+
+      if (response.status === 200) {
+        alert(response.data.message || "✅ Report Approved Successfully!");
+        navigate(-1);
+      }
     } catch (error) {
-        console.error("Error approving report:", error);
-        alert("Failed to approve report. Please try again.");
+      console.error("Error approving report:", error);
+
+      if (error.response) {
+        alert(
+          `❌ Backend Error: ${
+            error.response.data.error ||
+            error.response.data.message ||
+            "Route Not Found"
+          }`
+        );
+      } else {
+        alert("❌ Network Error: Failed to connect to server.");
+      }
     } finally {
-        setIsApproving(false);
+      setIsApproving(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!id) return;
+
+    if (!reviewRemark.trim()) {
+      alert("Please enter rejection remark");
+      return;
+    }
+
+    const currentUser = localStorage.getItem("username") || "Approver";
+
+    setIsRejecting(true);
+
+    try {
+      const response = await axios.post(`${BASE_URL}/api/reject-report/`, {
+        log_id: id,
+        approver_username: currentUser,
+        rejected_by: currentUser,
+        rejection_remark: reviewRemark,
+        remark: reviewRemark,
+        remarks: reviewRemark,
+        approval_status: "Rejected",
+      });
+
+      if (response.status === 200) {
+        alert("❌ Report Rejected Successfully!");
+        navigate(-1);
+      }
+    } catch (error) {
+      console.error("Error rejecting report:", error);
+
+      if (error.response) {
+        alert(
+          `❌ Backend Error: ${
+            error.response.data.error ||
+            error.response.data.message ||
+            "Route Not Found"
+          }`
+        );
+      } else {
+        alert("❌ Network Error: Failed to connect to server.");
+      }
+    } finally {
+      setIsRejecting(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (id) return;
 
     if (
@@ -252,10 +372,12 @@ const TipChangeMonitorForm = () => {
       tip_change: formData.tipChange,
 
       // ✅ Backend auto_log_report ke liye username
-      submitted_by: localStorage.getItem("username") || preparedBy || "Unknown User",
+      submitted_by:
+        localStorage.getItem("username") || preparedBy || "Unknown User",
     };
 
     setIsLoading(true);
+
     try {
       const response = await fetch(`${BASE_URL}/api/save-tip-data/`, {
         method: "POST",
@@ -264,13 +386,14 @@ const TipChangeMonitorForm = () => {
         },
         body: JSON.stringify(payloadData),
       });
+
       const result = await response.json();
 
       if (response.ok) {
         alert("Data saved successfully!");
         handleReset();
       } else {
-        alert("Failed to save data. Please check inputs.");
+        alert(result.error || "Failed to save data. Please check inputs.");
       }
     } catch (error) {
       alert("Error connecting to the server.");
@@ -280,7 +403,7 @@ const TipChangeMonitorForm = () => {
   };
 
   const handleBack = () => {
-    navigate(-1); // Safely go back
+    navigate(-1);
   };
 
   return (
@@ -299,30 +422,49 @@ const TipChangeMonitorForm = () => {
             <h2 className="text-base sm:text-lg font-semibold text-gray-800">
               {id ? "Tip Change Monitoring (REVIEW)" : "Tip Change Monitoring"}
             </h2>
+
             {id && (
-              <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded">
-                PENDING APPROVAL
+              <span
+                className={`text-xs font-bold px-2 py-1 rounded ${
+                  approvalStatus === "Approved"
+                    ? "bg-green-100 text-green-700"
+                    : approvalStatus === "Rejected"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-yellow-100 text-yellow-700"
+                }`}
+              >
+                {approvalStatus}
               </span>
             )}
           </div>
+
           <div className="flex items-center gap-2 bg-gray-50 px-3 sm:px-4 py-2 rounded-sm w-fit sm:w-auto border border-gray-200">
             <span className="text-xs sm:text-sm font-medium text-gray-500 whitespace-nowrap">
               Date:
             </span>
             <span className="text-xs sm:text-sm font-bold text-[#916cf6] whitespace-nowrap">
-              {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, "/")}
+              {new Date()
+                .toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })
+                .replace(/\//g, "/")}
             </span>
           </div>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            
             {/* 1. Plant Field */}
             <div className="flex flex-col min-w-0">
-              <label htmlFor="plant" className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="plant"
+                className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide"
+              >
                 Plant <span className="text-red-500">*</span>
               </label>
+
               <select
                 id="plant"
                 name="plant"
@@ -331,7 +473,9 @@ const TipChangeMonitorForm = () => {
                 disabled={!!id}
                 className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-[#916cf6] text-gray-700 text-sm disabled:bg-gray-100 disabled:text-gray-500"
               >
-                <option value="" className="text-gray-400">Select Plant</option>
+                <option value="" className="text-gray-400">
+                  Select Plant
+                </option>
                 <option value="Plant 1">Plant 1</option>
                 <option value="Plant 2">Plant 2</option>
               </select>
@@ -339,9 +483,13 @@ const TipChangeMonitorForm = () => {
 
             {/* 2. Machine Name Field */}
             <div className="flex flex-col min-w-0">
-              <label htmlFor="machineName" className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="machineName"
+                className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide"
+              >
                 Machine Name <span className="text-red-500">*</span>
               </label>
+
               <select
                 id="machineName"
                 name="machineName"
@@ -350,46 +498,74 @@ const TipChangeMonitorForm = () => {
                 disabled={!!id}
                 className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-[#916cf6] text-gray-700 text-sm disabled:bg-gray-100 disabled:text-gray-500"
               >
-                <option value="" className="text-gray-400">Select Machine</option>
+                <option value="" className="text-gray-400">
+                  Select Machine
+                </option>
                 <option value="Press">POWER PRESS</option>
                 <option value="CNC">CNC</option>
                 <option value="VMC">VMC</option>
-                {id && formData.machineName && !["Press", "CNC", "VMC"].includes(formData.machineName) && (
-                   <option value={formData.machineName}>{formData.machineName}</option>
-                )}
+
+                {id &&
+                  formData.machineName &&
+                  !["Press", "CNC", "VMC"].includes(formData.machineName) && (
+                    <option value={formData.machineName}>
+                      {formData.machineName}
+                    </option>
+                  )}
               </select>
             </div>
 
             {/* 3. Machine No Field */}
             <div className="flex flex-col min-w-0">
-              <label htmlFor="machineNo" className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="machineNo"
+                className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide"
+              >
                 Machine No <span className="text-red-500">*</span>
               </label>
+
               <select
                 id="machineNo"
                 name="machineNo"
                 value={formData.machineNo}
                 onChange={handleChange}
-                disabled={!!id || !formData.plant || !formData.machineName || machinesLoading}
+                disabled={
+                  !!id ||
+                  !formData.plant ||
+                  !formData.machineName ||
+                  machinesLoading
+                }
                 className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-[#916cf6] text-gray-700 text-sm disabled:bg-gray-100 disabled:text-gray-500"
               >
                 <option value="" className="text-gray-400">
                   {machinesLoading ? "Loading..." : "Select Machine No"}
                 </option>
+
                 {machineList.map((mc, index) => (
-                  <option key={index} value={mc}>{mc}</option>
+                  <option key={index} value={mc}>
+                    {mc}
+                  </option>
                 ))}
-                {id && formData.machineNo && !machineList.includes(formData.machineNo) && (
-                   <option value={formData.machineNo}>{formData.machineNo}</option>
-                )}
+
+                {id &&
+                  formData.machineNo &&
+                  !machineList.includes(formData.machineNo) && (
+                    <option value={formData.machineNo}>
+                      {formData.machineNo}
+                    </option>
+                  )}
               </select>
             </div>
 
             {/* 4. Part Name Field */}
             <div className="flex flex-col min-w-0">
-              <label htmlFor="partName" className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="partName"
+                className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide"
+              >
                 Part Name <span className="text-red-500">*</span>
               </label>
+
               <select
                 id="partName"
                 name="partName"
@@ -398,21 +574,35 @@ const TipChangeMonitorForm = () => {
                 disabled={!!id}
                 className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-[#916cf6] text-gray-700 text-sm disabled:bg-gray-100 disabled:text-gray-500"
               >
-                <option value="" className="text-gray-400">Select Part Name</option>
+                <option value="" className="text-gray-400">
+                  Select Part Name
+                </option>
+
                 {partsData.map((part, index) => (
-                  <option key={index} value={part}>{part}</option>
+                  <option key={index} value={part}>
+                    {part}
+                  </option>
                 ))}
-                {id && formData.partName && !partsData.includes(formData.partName) && (
-                   <option value={formData.partName}>{formData.partName}</option>
-                )}
+
+                {id &&
+                  formData.partName &&
+                  !partsData.includes(formData.partName) && (
+                    <option value={formData.partName}>
+                      {formData.partName}
+                    </option>
+                  )}
               </select>
             </div>
 
             {/* 5. Operation Field */}
             <div className="flex flex-col min-w-0">
-              <label htmlFor="operation" className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="operation"
+                className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide"
+              >
                 Operation <span className="text-red-500">*</span>
               </label>
+
               <select
                 id="operation"
                 name="operation"
@@ -421,21 +611,35 @@ const TipChangeMonitorForm = () => {
                 disabled={!!id || !formData.partName}
                 className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-[#916cf6] text-gray-700 text-sm disabled:bg-gray-100 disabled:text-gray-500"
               >
-                <option value="" className="text-gray-400">Select Operation</option>
+                <option value="" className="text-gray-400">
+                  Select Operation
+                </option>
+
                 {operationsData.map((op, index) => (
-                  <option key={index} value={op}>{op}</option>
+                  <option key={index} value={op}>
+                    {op}
+                  </option>
                 ))}
-                {id && formData.operation && !operationsData.includes(formData.operation) && (
-                   <option value={formData.operation}>{formData.operation}</option>
-                )}
+
+                {id &&
+                  formData.operation &&
+                  !operationsData.includes(formData.operation) && (
+                    <option value={formData.operation}>
+                      {formData.operation}
+                    </option>
+                  )}
               </select>
             </div>
 
             {/* 6. PRD QTY Field */}
             <div className="flex flex-col min-w-0">
-              <label htmlFor="prdQty" className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="prdQty"
+                className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide"
+              >
                 PRD QTY <span className="text-red-500">*</span>
               </label>
+
               <input
                 type="number"
                 id="prdQty"
@@ -450,9 +654,13 @@ const TipChangeMonitorForm = () => {
 
             {/* 7. Tip Change Field */}
             <div className="flex flex-col min-w-0">
-              <label htmlFor="tipChange" className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+              <label
+                htmlFor="tipChange"
+                className="text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 uppercase tracking-wide"
+              >
                 Tip Change <span className="text-red-500">*</span>
               </label>
+
               <select
                 id="tipChange"
                 name="tipChange"
@@ -461,39 +669,110 @@ const TipChangeMonitorForm = () => {
                 disabled={!!id}
                 className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-1 focus:ring-[#916cf6] text-gray-700 text-sm disabled:bg-gray-100 disabled:text-gray-500"
               >
-                <option value="" className="text-gray-400">Select option</option>
+                <option value="" className="text-gray-400">
+                  Select option
+                </option>
                 <option value="Yes">Yes</option>
                 <option value="No">No</option>
               </select>
             </div>
           </div>
-          
-          <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex flex-col">
-              <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-                Prepared By
-              </label>
-              <input
-                type="text"
-                value={preparedBy}
-                readOnly={!!id}
-                onChange={(e) => setPreparedBy(e.target.value)}
-                placeholder="Enter name"
-                className="px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#916cf6] text-sm text-[#916cf6] w-full sm:w-64 disabled:bg-gray-100 disabled:text-gray-500"
-              />
+
+          <div className="mt-8 pt-6 border-t border-gray-100 flex flex-col gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex flex-col">
+                <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+                  Prepared By
+                </label>
+
+                <input
+                  type="text"
+                  value={preparedBy}
+                  readOnly={!!id}
+                  onChange={(e) => setPreparedBy(e.target.value)}
+                  placeholder="Enter name"
+                  className="px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#916cf6] text-sm text-[#916cf6] w-full disabled:bg-gray-100 disabled:text-gray-500"
+                />
+              </div>
+
+              {id && approvedBy && (
+                <div className="flex flex-col">
+                  <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+                    Approved By
+                  </label>
+
+                  <input
+                    type="text"
+                    value={approvedBy}
+                    readOnly
+                    className="px-3 py-2 border border-gray-300 bg-gray-100 text-sm text-gray-600 w-full"
+                  />
+                </div>
+              )}
+
+              {id && rejectedBy && (
+                <div className="flex flex-col">
+                  <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+                    Rejected By
+                  </label>
+
+                  <input
+                    type="text"
+                    value={rejectedBy}
+                    readOnly
+                    className="px-3 py-2 border border-gray-300 bg-gray-100 text-sm text-gray-600 w-full"
+                  />
+                </div>
+              )}
+
+              {id && (
+                <div className="flex flex-col md:col-span-3">
+                  <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+                    Remark
+                  </label>
+
+                  <textarea
+                    value={reviewRemark}
+                    onChange={(e) => setReviewRemark(e.target.value)}
+                    rows={3}
+                    placeholder="Enter approval/rejection remark..."
+                    className="w-full border border-gray-300 px-3 py-2 text-sm text-black bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#916cf6]"
+                  />
+                </div>
+              )}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 justify-end">
               {id ? (
-                <button
-                  type="button"
-                  onClick={handleApprove}
-                  disabled={isApproving}
-                  className="w-full sm:w-auto px-8 py-3 bg-[#10b981] hover:bg-[#059669] shadow-md text-white font-bold tracking-wide rounded-none transition-all text-sm flex items-center justify-center gap-2"
-                >
-                  {isApproving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />} 
-                  {isApproving ? "APPROVING..." : "APPROVE REPORT"}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={handleApprove}
+                    disabled={isApproving || approvalStatus === "Approved"}
+                    className="w-full sm:w-auto px-8 py-3 bg-[#10b981] hover:bg-[#059669] shadow-md text-white font-bold tracking-wide rounded-none transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                  >
+                    {isApproving ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Check size={16} />
+                    )}
+                    {isApproving ? "APPROVING..." : "APPROVE REPORT"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleReject}
+                    disabled={isRejecting || approvalStatus === "Rejected"}
+                    className="w-full sm:w-auto px-8 py-3 bg-red-600 hover:bg-red-700 shadow-md text-white font-bold tracking-wide rounded-none transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                  >
+                    {isRejecting ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <X size={16} />
+                    )}
+                    {isRejecting ? "REJECTING..." : "REJECT REPORT"}
+                  </button>
+                </>
               ) : (
                 <>
                   <button
@@ -504,12 +783,16 @@ const TipChangeMonitorForm = () => {
                   >
                     RESET FORM
                   </button>
+
                   <button
                     type="submit"
                     disabled={isLoading}
                     className="w-full sm:w-auto px-8 py-3 bg-[#916cf6] hover:bg-[#7b55e0] shadow-md text-white font-bold tracking-wide rounded-none transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-70"
                   >
-                    {isLoading && <Loader2 size={16} className="animate-spin" />} SAVE ENTRY
+                    {isLoading && (
+                      <Loader2 size={16} className="animate-spin" />
+                    )}
+                    SAVE ENTRY
                   </button>
                 </>
               )}

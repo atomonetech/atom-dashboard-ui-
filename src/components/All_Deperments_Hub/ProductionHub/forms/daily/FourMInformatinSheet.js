@@ -17,6 +17,7 @@ import {
   Layers,
   Hash,
   Check,
+  X,
   Clock,
   FileText,
 } from "lucide-react";
@@ -43,7 +44,7 @@ const C = {
   green: "#16a34a",
 };
 
-// 櫨 Andar ka default data nikal diya gaya hai
+// Empty default row
 const EMPTY_ROW = {
   time: "",
   machineNo: "",
@@ -70,22 +71,31 @@ const FourMInformatinSheet = () => {
     setFormDate(`${day}.${month}.${year}`);
   }, []);
 
-  // 櫨 By default 3 ki jagah ab sirf 1 hi entry aayegi
-  const [rows, setRows] = useState([
-    { id: 1, ...EMPTY_ROW }
-  ]);
+  const [rows, setRows] = useState([{ id: 1, ...EMPTY_ROW }]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // ✅ Approval / rejection states
+  const [approvalStatus, setApprovalStatus] = useState("Pending");
+  const [approvedBy, setApprovedBy] = useState("");
+  const [rejectedBy, setRejectedBy] = useState("");
+  const [reviewRemark, setReviewRemark] = useState("");
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
 
   useEffect(() => {
     if (id) {
       const fetchReportData = async () => {
         setIsLoading(true);
+
         try {
-          const response = await axios.get(`${BASE_URL}/api/get-single-production-report/four-m-information/${id}/`);
-          
+          const response = await axios.get(
+            `${BASE_URL}/api/get-single-production-report/four-m-information/${id}/`
+          );
+
           if (response.data.success) {
             const data = response.data.data;
-            
+            const statusText = data.status || "";
+
             setRows([
               {
                 id: 1,
@@ -97,10 +107,42 @@ const FourMInformatinSheet = () => {
                 material: data.material || "",
                 method: data.method || "",
                 changeDescription: data.change_description || "",
-              }
+              },
             ]);
-            
-            setPreparedBy(data.prepared_by || "");
+
+            setPreparedBy(data.submitted_by || data.prepared_by || "");
+
+            setApprovalStatus(
+              data.approval_status ||
+                (statusText.startsWith("Approved by")
+                  ? "Approved"
+                  : statusText.startsWith("Rejected by")
+                  ? "Rejected"
+                  : "Pending")
+            );
+
+            setApprovedBy(
+              data.approved_by ||
+                (statusText.startsWith("Approved by")
+                  ? statusText.replace("Approved by", "").trim()
+                  : "")
+            );
+
+            setRejectedBy(
+              data.rejected_by ||
+                (statusText.startsWith("Rejected by")
+                  ? statusText.replace("Rejected by", "").trim()
+                  : "")
+            );
+
+            setReviewRemark(
+              data.review_remarks ||
+                data.approval_remarks ||
+                data.rejection_remark ||
+                data.remark ||
+                data.remarks ||
+                ""
+            );
           }
         } catch (error) {
           console.error("Error fetching report data:", error);
@@ -108,41 +150,137 @@ const FourMInformatinSheet = () => {
           setIsLoading(false);
         }
       };
+
       fetchReportData();
     }
   }, [id]);
 
   const handleAddRow = () => {
     if (id) return;
-    const nextId = rows.length > 0 ? Math.max(...rows.map((r) => r.id)) + 1 : 1;
+
+    const nextId =
+      rows.length > 0 ? Math.max(...rows.map((r) => r.id)) + 1 : 1;
+
     setRows((prev) => [...prev, { id: nextId, ...EMPTY_ROW }]);
   };
 
   const handleDeleteRow = (rowId) => {
     if (id) return;
     if (rows.length === 1) return;
+
     setRows((prev) => prev.filter((r) => r.id !== rowId));
   };
 
   const handleChange = (rowId, field, value) => {
     if (id) return;
+
     setRows((prev) =>
       prev.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
     );
   };
 
-  // 櫨 Reset karne par bhi ab sirf 1 hi entry dikhegi
   const handleReset = () => {
     if (id) return;
+
     setRows([{ id: 1, ...EMPTY_ROW }]);
+    setPreparedBy("");
+  };
+
+  const handleApprove = async () => {
+    if (!id) return;
+
+    const currentUser = localStorage.getItem("username") || "Approver";
+
+    setIsApproving(true);
+
+    try {
+      const response = await axios.post(`${BASE_URL}/api/approve-report/`, {
+        log_id: id,
+        approver_username: currentUser,
+        approved_by: currentUser,
+        approval_status: "Approved",
+        remark: reviewRemark,
+        remarks: reviewRemark,
+      });
+
+      if (response.status === 200) {
+        alert("✅ Report Approved Successfully!");
+        navigate(-1);
+      }
+    } catch (error) {
+      console.error("Error approving report:", error);
+
+      if (error.response) {
+        alert(
+          `❌ Backend Error: ${
+            error.response.data.error ||
+            error.response.data.message ||
+            "Failed to approve report"
+          }`
+        );
+      } else {
+        alert("❌ Network Error: Could not connect to the server.");
+      }
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!id) return;
+
+    if (!reviewRemark.trim()) {
+      alert("Please enter rejection remark");
+      return;
+    }
+
+    const currentUser = localStorage.getItem("username") || "Approver";
+
+    setIsRejecting(true);
+
+    try {
+      const response = await axios.post(`${BASE_URL}/api/reject-report/`, {
+        log_id: id,
+        approver_username: currentUser,
+        rejected_by: currentUser,
+        rejection_remark: reviewRemark,
+        remark: reviewRemark,
+        remarks: reviewRemark,
+        approval_status: "Rejected",
+      });
+
+      if (response.status === 200) {
+        alert("❌ Report Rejected Successfully!");
+        navigate(-1);
+      }
+    } catch (error) {
+      console.error("Error rejecting report:", error);
+
+      if (error.response) {
+        alert(
+          `❌ Backend Error: ${
+            error.response.data.error ||
+            error.response.data.message ||
+            "Failed to reject report"
+          }`
+        );
+      } else {
+        alert("❌ Network Error: Could not connect to the server.");
+      }
+    } finally {
+      setIsRejecting(false);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (id) return;
 
-    // Validation update: checked with 'time' instead of 'date'
-    const filledRows = rows.filter((r) => r.machineNo || r.operatorName || r.time);
+    const filledRows = rows.filter(
+      (r) => r.machineNo || r.operatorName || r.time
+    );
+
     if (filledRows.length === 0) {
       alert("Please fill at least one entry before submitting.");
       return;
@@ -161,6 +299,7 @@ const FourMInformatinSheet = () => {
     }));
 
     setIsLoading(true);
+
     try {
       const response = await fetch(`${BASE_URL}/api/save-4m-information-sheet/`, {
         method: "POST",
@@ -168,10 +307,13 @@ const FourMInformatinSheet = () => {
         body: JSON.stringify({
           entries: payload,
           prepared_by: preparedBy,
-          submitted_by: localStorage.getItem("username") || preparedBy || "Unknown User",
+          submitted_by:
+            localStorage.getItem("username") || preparedBy || "Unknown User",
         }),
       });
+
       const result = await response.json();
+
       if (response.ok && result.success) {
         alert(result.message || "Information Sheet saved successfully!");
         handleReset();
@@ -203,6 +345,20 @@ const FourMInformatinSheet = () => {
             <ArrowLeft className="h-4 w-4" />
             Back
           </button>
+
+          {id && (
+            <span
+              className={`text-xs font-bold px-3 py-2 rounded-none uppercase tracking-wider ${
+                approvalStatus === "Approved"
+                  ? "bg-green-100 text-green-700 border border-green-200"
+                  : approvalStatus === "Rejected"
+                  ? "bg-red-100 text-red-700 border border-red-200"
+                  : "bg-yellow-100 text-yellow-700 border border-yellow-200"
+              }`}
+            >
+              {approvalStatus}
+            </span>
+          )}
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -230,11 +386,13 @@ const FourMInformatinSheet = () => {
                     {id ? "Information Sheet (REVIEW)" : "Information Sheet"}
                   </h1>
                 </div>
+
                 <div className="flex items-center gap-2 text-white font-bold text-sm bg-red-700/40 px-4 py-2 rounded-none border border-white/30 shadow-sm">
                   <Calendar className="h-4 w-4" />
                   {formDate}
                 </div>
               </div>
+
               <div className="sm:hidden flex flex-col items-center gap-3">
                 <div className="flex items-center gap-2">
                   <ClipboardList className="h-5 w-5 text-white/90" />
@@ -242,6 +400,7 @@ const FourMInformatinSheet = () => {
                     {id ? "Information Sheet (REVIEW)" : "Information Sheet"}
                   </h1>
                 </div>
+
                 <div className="flex items-center gap-2 text-white font-bold text-sm bg-red-700/40 px-4 py-2 border border-white/30 shadow-sm rounded-none">
                   <Calendar className="h-4 w-4" />
                   {formDate}
@@ -278,6 +437,7 @@ const FourMInformatinSheet = () => {
                         Entry {idx + 1}
                       </span>
                     </div>
+
                     {!id && (
                       <button
                         type="button"
@@ -293,7 +453,6 @@ const FourMInformatinSheet = () => {
 
                   {/* Fields inside card */}
                   <div className="p-4 space-y-4">
-                    
                     {/* Row 1: Time Only */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div className="flex flex-col">
@@ -301,16 +460,25 @@ const FourMInformatinSheet = () => {
                           <Clock className="inline h-3.5 w-3.5 mr-1 text-red-500" />
                           Time
                         </label>
+
                         <input
                           type="time"
                           value={row.time}
-                          onChange={(e) => handleChange(row.id, "time", e.target.value)}
+                          onChange={(e) =>
+                            handleChange(row.id, "time", e.target.value)
+                          }
                           readOnly={!!id}
                           style={{
-                            width: "100%", padding: "10px 13px", fontSize: 13,
-                            background: id ? "#f9f9f7" : C.inputBg, color: id ? C.textMid : C.text,
-                            cursor: id ? "not-allowed" : "text", border: `1.5px solid ${C.border}`,
-                            borderRadius: 6, outline: "none", transition: "all .15s",
+                            width: "100%",
+                            padding: "10px 13px",
+                            fontSize: 13,
+                            background: id ? "#f9f9f7" : C.inputBg,
+                            color: id ? C.textMid : C.text,
+                            cursor: id ? "not-allowed" : "text",
+                            border: `1.5px solid ${C.border}`,
+                            borderRadius: 6,
+                            outline: "none",
+                            transition: "all .15s",
                           }}
                         />
                       </div>
@@ -323,172 +491,317 @@ const FourMInformatinSheet = () => {
                           <Monitor className="inline h-3.5 w-3.5 mr-1 text-red-500" />
                           Machine No.
                         </label>
+
                         <input
                           type="text"
                           value={row.machineNo}
-                          onChange={(e) => handleChange(row.id, "machineNo", e.target.value)}
+                          onChange={(e) =>
+                            handleChange(row.id, "machineNo", e.target.value)
+                          }
                           placeholder="e.g. MC-101"
                           readOnly={!!id}
                           style={{
-                            width: "100%", padding: "10px 13px", fontSize: 13,
-                            background: id ? "#f9f9f7" : C.inputBg, color: id ? C.textMid : C.text,
-                            cursor: id ? "not-allowed" : "text", border: `1.5px solid ${C.border}`,
-                            borderRadius: 6, outline: "none", transition: "all .15s",
+                            width: "100%",
+                            padding: "10px 13px",
+                            fontSize: 13,
+                            background: id ? "#f9f9f7" : C.inputBg,
+                            color: id ? C.textMid : C.text,
+                            cursor: id ? "not-allowed" : "text",
+                            border: `1.5px solid ${C.border}`,
+                            borderRadius: 6,
+                            outline: "none",
+                            transition: "all .15s",
                           }}
                         />
                       </div>
+
                       <div className="flex flex-col">
                         <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
                           <User className="inline h-3.5 w-3.5 mr-1 text-red-500" />
                           Operator Name
                         </label>
+
                         <input
                           type="text"
                           value={row.operatorName}
-                          onChange={(e) => handleChange(row.id, "operatorName", e.target.value)}
+                          onChange={(e) =>
+                            handleChange(
+                              row.id,
+                              "operatorName",
+                              e.target.value
+                            )
+                          }
                           placeholder="Enter operator name"
                           readOnly={!!id}
                           style={{
-                            width: "100%", padding: "10px 13px", fontSize: 13,
-                            background: id ? "#f9f9f7" : C.inputBg, color: id ? C.textMid : C.text,
-                            cursor: id ? "not-allowed" : "text", border: `1.5px solid ${C.border}`,
-                            borderRadius: 6, outline: "none", transition: "all .15s",
+                            width: "100%",
+                            padding: "10px 13px",
+                            fontSize: 13,
+                            background: id ? "#f9f9f7" : C.inputBg,
+                            color: id ? C.textMid : C.text,
+                            cursor: id ? "not-allowed" : "text",
+                            border: `1.5px solid ${C.border}`,
+                            borderRadius: 6,
+                            outline: "none",
+                            transition: "all .15s",
                           }}
                         />
                       </div>
                     </div>
 
-                    {/* Row 3: Man + Machine (RADIO BUTTONS) */}
+                    {/* Row 3: Man + Machine */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div className="flex flex-col">
                         <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
                           <User className="inline h-3.5 w-3.5 mr-1 text-red-500" />
                           Man
                         </label>
-                        <div 
-                          className="flex items-center gap-6 px-4" 
+
+                        <div
+                          className="flex items-center gap-6 px-4"
                           style={{
-                            height: "41px", background: id ? "#f9f9f7" : C.inputBg,
-                            border: `1.5px solid ${C.border}`, borderRadius: 6
+                            height: "41px",
+                            background: id ? "#f9f9f7" : C.inputBg,
+                            border: `1.5px solid ${C.border}`,
+                            borderRadius: 6,
                           }}
                         >
-                          <label className={`flex items-center gap-2 ${id ? 'opacity-70 pointer-events-none' : 'cursor-pointer'}`}>
-                            <input 
-                              type="radio" name={`man-${row.id}`} value="Change"
-                              checked={row.man === "Change"} 
-                              onChange={(e) => handleChange(row.id, "man", e.target.value)}
-                              disabled={!!id} className="accent-red-600 w-4 h-4"
+                          <label
+                            className={`flex items-center gap-2 ${
+                              id
+                                ? "opacity-70 pointer-events-none"
+                                : "cursor-pointer"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`man-${row.id}`}
+                              value="Change"
+                              checked={row.man === "Change"}
+                              onChange={(e) =>
+                                handleChange(row.id, "man", e.target.value)
+                              }
+                              disabled={!!id}
+                              className="accent-red-600 w-4 h-4"
                             />
-                            <span className="text-sm font-medium text-slate-700">Change</span>
+                            <span className="text-sm font-medium text-slate-700">
+                              Change
+                            </span>
                           </label>
-                          <label className={`flex items-center gap-2 ${id ? 'opacity-70 pointer-events-none' : 'cursor-pointer'}`}>
-                            <input 
-                              type="radio" name={`man-${row.id}`} value="No Change"
-                              checked={row.man === "No Change"} 
-                              onChange={(e) => handleChange(row.id, "man", e.target.value)}
-                              disabled={!!id} className="accent-red-600 w-4 h-4"
+
+                          <label
+                            className={`flex items-center gap-2 ${
+                              id
+                                ? "opacity-70 pointer-events-none"
+                                : "cursor-pointer"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`man-${row.id}`}
+                              value="No Change"
+                              checked={row.man === "No Change"}
+                              onChange={(e) =>
+                                handleChange(row.id, "man", e.target.value)
+                              }
+                              disabled={!!id}
+                              className="accent-red-600 w-4 h-4"
                             />
-                            <span className="text-sm font-medium text-slate-700">No Change</span>
+                            <span className="text-sm font-medium text-slate-700">
+                              No Change
+                            </span>
                           </label>
                         </div>
                       </div>
+
                       <div className="flex flex-col">
                         <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
                           <Settings className="inline h-3.5 w-3.5 mr-1 text-red-500" />
                           Machine
                         </label>
-                        <div 
-                          className="flex items-center gap-6 px-4" 
+
+                        <div
+                          className="flex items-center gap-6 px-4"
                           style={{
-                            height: "41px", background: id ? "#f9f9f7" : C.inputBg,
-                            border: `1.5px solid ${C.border}`, borderRadius: 6
+                            height: "41px",
+                            background: id ? "#f9f9f7" : C.inputBg,
+                            border: `1.5px solid ${C.border}`,
+                            borderRadius: 6,
                           }}
                         >
-                          <label className={`flex items-center gap-2 ${id ? 'opacity-70 pointer-events-none' : 'cursor-pointer'}`}>
-                            <input 
-                              type="radio" name={`machine-${row.id}`} value="Change"
-                              checked={row.machine === "Change"} 
-                              onChange={(e) => handleChange(row.id, "machine", e.target.value)}
-                              disabled={!!id} className="accent-red-600 w-4 h-4"
+                          <label
+                            className={`flex items-center gap-2 ${
+                              id
+                                ? "opacity-70 pointer-events-none"
+                                : "cursor-pointer"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`machine-${row.id}`}
+                              value="Change"
+                              checked={row.machine === "Change"}
+                              onChange={(e) =>
+                                handleChange(row.id, "machine", e.target.value)
+                              }
+                              disabled={!!id}
+                              className="accent-red-600 w-4 h-4"
                             />
-                            <span className="text-sm font-medium text-slate-700">Change</span>
+                            <span className="text-sm font-medium text-slate-700">
+                              Change
+                            </span>
                           </label>
-                          <label className={`flex items-center gap-2 ${id ? 'opacity-70 pointer-events-none' : 'cursor-pointer'}`}>
-                            <input 
-                              type="radio" name={`machine-${row.id}`} value="No Change"
-                              checked={row.machine === "No Change"} 
-                              onChange={(e) => handleChange(row.id, "machine", e.target.value)}
-                              disabled={!!id} className="accent-red-600 w-4 h-4"
+
+                          <label
+                            className={`flex items-center gap-2 ${
+                              id
+                                ? "opacity-70 pointer-events-none"
+                                : "cursor-pointer"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`machine-${row.id}`}
+                              value="No Change"
+                              checked={row.machine === "No Change"}
+                              onChange={(e) =>
+                                handleChange(row.id, "machine", e.target.value)
+                              }
+                              disabled={!!id}
+                              className="accent-red-600 w-4 h-4"
                             />
-                            <span className="text-sm font-medium text-slate-700">No Change</span>
+                            <span className="text-sm font-medium text-slate-700">
+                              No Change
+                            </span>
                           </label>
                         </div>
                       </div>
                     </div>
 
-                    {/* Row 4: Material + Method (RADIO BUTTONS) */}
+                    {/* Row 4: Material + Method */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div className="flex flex-col">
                         <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
                           <Package className="inline h-3.5 w-3.5 mr-1 text-red-500" />
                           Material
                         </label>
-                        <div 
-                          className="flex items-center gap-6 px-4" 
+
+                        <div
+                          className="flex items-center gap-6 px-4"
                           style={{
-                            height: "41px", background: id ? "#f9f9f7" : C.inputBg,
-                            border: `1.5px solid ${C.border}`, borderRadius: 6
+                            height: "41px",
+                            background: id ? "#f9f9f7" : C.inputBg,
+                            border: `1.5px solid ${C.border}`,
+                            borderRadius: 6,
                           }}
                         >
-                          <label className={`flex items-center gap-2 ${id ? 'opacity-70 pointer-events-none' : 'cursor-pointer'}`}>
-                            <input 
-                              type="radio" name={`material-${row.id}`} value="Change"
-                              checked={row.material === "Change"} 
-                              onChange={(e) => handleChange(row.id, "material", e.target.value)}
-                              disabled={!!id} className="accent-red-600 w-4 h-4"
+                          <label
+                            className={`flex items-center gap-2 ${
+                              id
+                                ? "opacity-70 pointer-events-none"
+                                : "cursor-pointer"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`material-${row.id}`}
+                              value="Change"
+                              checked={row.material === "Change"}
+                              onChange={(e) =>
+                                handleChange(row.id, "material", e.target.value)
+                              }
+                              disabled={!!id}
+                              className="accent-red-600 w-4 h-4"
                             />
-                            <span className="text-sm font-medium text-slate-700">Change</span>
+                            <span className="text-sm font-medium text-slate-700">
+                              Change
+                            </span>
                           </label>
-                          <label className={`flex items-center gap-2 ${id ? 'opacity-70 pointer-events-none' : 'cursor-pointer'}`}>
-                            <input 
-                              type="radio" name={`material-${row.id}`} value="No Change"
-                              checked={row.material === "No Change"} 
-                              onChange={(e) => handleChange(row.id, "material", e.target.value)}
-                              disabled={!!id} className="accent-red-600 w-4 h-4"
+
+                          <label
+                            className={`flex items-center gap-2 ${
+                              id
+                                ? "opacity-70 pointer-events-none"
+                                : "cursor-pointer"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`material-${row.id}`}
+                              value="No Change"
+                              checked={row.material === "No Change"}
+                              onChange={(e) =>
+                                handleChange(row.id, "material", e.target.value)
+                              }
+                              disabled={!!id}
+                              className="accent-red-600 w-4 h-4"
                             />
-                            <span className="text-sm font-medium text-slate-700">No Change</span>
+                            <span className="text-sm font-medium text-slate-700">
+                              No Change
+                            </span>
                           </label>
                         </div>
                       </div>
+
                       <div className="flex flex-col">
                         <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
                           <Layers className="inline h-3.5 w-3.5 mr-1 text-red-500" />
                           Method
                         </label>
-                        <div 
-                          className="flex items-center gap-6 px-4" 
+
+                        <div
+                          className="flex items-center gap-6 px-4"
                           style={{
-                            height: "41px", background: id ? "#f9f9f7" : C.inputBg,
-                            border: `1.5px solid ${C.border}`, borderRadius: 6
+                            height: "41px",
+                            background: id ? "#f9f9f7" : C.inputBg,
+                            border: `1.5px solid ${C.border}`,
+                            borderRadius: 6,
                           }}
                         >
-                          <label className={`flex items-center gap-2 ${id ? 'opacity-70 pointer-events-none' : 'cursor-pointer'}`}>
-                            <input 
-                              type="radio" name={`method-${row.id}`} value="Change"
-                              checked={row.method === "Change"} 
-                              onChange={(e) => handleChange(row.id, "method", e.target.value)}
-                              disabled={!!id} className="accent-red-600 w-4 h-4"
+                          <label
+                            className={`flex items-center gap-2 ${
+                              id
+                                ? "opacity-70 pointer-events-none"
+                                : "cursor-pointer"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`method-${row.id}`}
+                              value="Change"
+                              checked={row.method === "Change"}
+                              onChange={(e) =>
+                                handleChange(row.id, "method", e.target.value)
+                              }
+                              disabled={!!id}
+                              className="accent-red-600 w-4 h-4"
                             />
-                            <span className="text-sm font-medium text-slate-700">Change</span>
+                            <span className="text-sm font-medium text-slate-700">
+                              Change
+                            </span>
                           </label>
-                          <label className={`flex items-center gap-2 ${id ? 'opacity-70 pointer-events-none' : 'cursor-pointer'}`}>
-                            <input 
-                              type="radio" name={`method-${row.id}`} value="No Change"
-                              checked={row.method === "No Change"} 
-                              onChange={(e) => handleChange(row.id, "method", e.target.value)}
-                              disabled={!!id} className="accent-red-600 w-4 h-4"
+
+                          <label
+                            className={`flex items-center gap-2 ${
+                              id
+                                ? "opacity-70 pointer-events-none"
+                                : "cursor-pointer"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`method-${row.id}`}
+                              value="No Change"
+                              checked={row.method === "No Change"}
+                              onChange={(e) =>
+                                handleChange(row.id, "method", e.target.value)
+                              }
+                              disabled={!!id}
+                              className="accent-red-600 w-4 h-4"
                             />
-                            <span className="text-sm font-medium text-slate-700">No Change</span>
+                            <span className="text-sm font-medium text-slate-700">
+                              No Change
+                            </span>
                           </label>
                         </div>
                       </div>
@@ -501,22 +814,34 @@ const FourMInformatinSheet = () => {
                           <FileText className="inline h-3.5 w-3.5 mr-1 text-red-500" />
                           Change Description
                         </label>
+
                         <input
                           type="text"
                           value={row.changeDescription}
-                          onChange={(e) => handleChange(row.id, "changeDescription", e.target.value)}
+                          onChange={(e) =>
+                            handleChange(
+                              row.id,
+                              "changeDescription",
+                              e.target.value
+                            )
+                          }
                           placeholder="Enter change description"
                           readOnly={!!id}
                           style={{
-                            width: "100%", padding: "10px 13px", fontSize: 13,
-                            background: id ? "#f9f9f7" : C.inputBg, color: id ? C.textMid : C.text,
-                            cursor: id ? "not-allowed" : "text", border: `1.5px solid ${C.border}`,
-                            borderRadius: 6, outline: "none", transition: "all .15s",
+                            width: "100%",
+                            padding: "10px 13px",
+                            fontSize: 13,
+                            background: id ? "#f9f9f7" : C.inputBg,
+                            color: id ? C.textMid : C.text,
+                            cursor: id ? "not-allowed" : "text",
+                            border: `1.5px solid ${C.border}`,
+                            borderRadius: 6,
+                            outline: "none",
+                            transition: "all .15s",
                           }}
                         />
                       </div>
                     </div>
-
                   </div>
                 </div>
               ))}
@@ -531,57 +856,228 @@ const FourMInformatinSheet = () => {
                     <Plus className="h-4 w-4" />
                     Add Entry
                   </button>
+
                   <span className="ml-3 text-xs text-slate-400">
                     {rows.length} entr{rows.length !== 1 ? "ies" : "y"} total
                   </span>
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-slate-200">
-                <div style={{ minWidth: 200, alignSelf: 'flex-start' }}>
-                  <div
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      letterSpacing: ".12em",
-                      textTransform: "uppercase",
-                      color: C.textMid,
-                      marginBottom: 6,
-                    }}
-                  >
-                    Prepared By
-                  </div>
-                  <input
-                    type="text"
-                    value={preparedBy}
-                    onChange={(e) => setPreparedBy(e.target.value)}
-                    readOnly={!!id}
-                    placeholder="Enter name"
-                    style={{
-                      width: 220, padding: "8px 12px", fontSize: 13,
-                      background: id ? "#f9f9f7" : C.inputBg, color: id ? C.textMid : C.text,
-                      cursor: id ? "not-allowed" : "text", border: `1.5px solid ${C.border}`,
-                      borderRadius: 6, outline: "none",
-                    }}
-                  />
-                </div>
-
-                <div className="flex gap-4">
-                  {id ? (
-                    <button
-                      type="button"
-                      onClick={() => alert("Report Approved Successfully!")}
+              <div className="flex flex-col gap-4 pt-6 border-t border-slate-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div style={{ minWidth: 200, alignSelf: "flex-start" }}>
+                    <div
                       style={{
-                        display: "inline-flex", alignItems: "center", gap: 8,
-                        background: C.green, border: "none", color: "#fff",
-                        padding: "11px 28px", fontSize: 12, fontWeight: 700,
-                        letterSpacing: ".1em", textTransform: "uppercase",
-                        borderRadius: 6, cursor: "pointer", fontFamily: "inherit",
-                        transition: "background .15s", boxShadow: "0 2px 8px rgba(22,163,74,.35)",
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: ".12em",
+                        textTransform: "uppercase",
+                        color: C.textMid,
+                        marginBottom: 6,
                       }}
                     >
-                      <Check size={14} strokeWidth={2.5} /> APPROVE REPORT
-                    </button>
+                      Prepared By
+                    </div>
+
+                    <input
+                      type="text"
+                      value={preparedBy}
+                      onChange={(e) => setPreparedBy(e.target.value)}
+                      readOnly={!!id}
+                      placeholder="Enter name"
+                      style={{
+                        width: "100%",
+                        padding: "8px 12px",
+                        fontSize: 13,
+                        background: id ? "#f9f9f7" : C.inputBg,
+                        color: id ? C.textMid : C.text,
+                        cursor: id ? "not-allowed" : "text",
+                        border: `1.5px solid ${C.border}`,
+                        borderRadius: 6,
+                        outline: "none",
+                      }}
+                    />
+                  </div>
+
+                  {id && approvedBy && (
+                    <div style={{ minWidth: 200, alignSelf: "flex-start" }}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: ".12em",
+                          textTransform: "uppercase",
+                          color: C.textMid,
+                          marginBottom: 6,
+                        }}
+                      >
+                        Approved By
+                      </div>
+
+                      <input
+                        type="text"
+                        value={approvedBy}
+                        readOnly
+                        style={{
+                          width: "100%",
+                          padding: "8px 12px",
+                          fontSize: 13,
+                          background: "#f9f9f7",
+                          color: C.textMid,
+                          cursor: "not-allowed",
+                          border: `1.5px solid ${C.border}`,
+                          borderRadius: 6,
+                          outline: "none",
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {id && rejectedBy && (
+                    <div style={{ minWidth: 200, alignSelf: "flex-start" }}>
+                      <div
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: ".12em",
+                          textTransform: "uppercase",
+                          color: C.textMid,
+                          marginBottom: 6,
+                        }}
+                      >
+                        Rejected By
+                      </div>
+
+                      <input
+                        type="text"
+                        value={rejectedBy}
+                        readOnly
+                        style={{
+                          width: "100%",
+                          padding: "8px 12px",
+                          fontSize: 13,
+                          background: "#f9f9f7",
+                          color: C.textMid,
+                          cursor: "not-allowed",
+                          border: `1.5px solid ${C.border}`,
+                          borderRadius: 6,
+                          outline: "none",
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {id && (
+                    <div className="md:col-span-3">
+                      <div
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: ".12em",
+                          textTransform: "uppercase",
+                          color: C.textMid,
+                          marginBottom: 6,
+                        }}
+                      >
+                        Approval / Rejection Remark
+                      </div>
+
+                      <textarea
+                        value={reviewRemark}
+                        onChange={(e) => setReviewRemark(e.target.value)}
+                        rows={3}
+                        placeholder="Enter approval/rejection remark..."
+                        style={{
+                          width: "100%",
+                          padding: "10px 12px",
+                          fontSize: 13,
+                          background: C.inputBg,
+                          color: C.text,
+                          border: `1.5px solid ${C.border}`,
+                          borderRadius: 6,
+                          outline: "none",
+                          resize: "vertical",
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-end">
+                  {id ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleApprove}
+                        disabled={isApproving || approvalStatus === "Approved"}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 8,
+                          background: C.green,
+                          border: "none",
+                          color: "#fff",
+                          padding: "11px 28px",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          letterSpacing: ".1em",
+                          textTransform: "uppercase",
+                          borderRadius: 6,
+                          cursor:
+                            isApproving || approvalStatus === "Approved"
+                              ? "not-allowed"
+                              : "pointer",
+                          fontFamily: "inherit",
+                          transition: "background .15s",
+                          boxShadow: "0 2px 8px rgba(22,163,74,.35)",
+                          opacity: approvalStatus === "Approved" ? 0.6 : 1,
+                        }}
+                      >
+                        {isApproving ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Check size={14} strokeWidth={2.5} />
+                        )}
+                        {isApproving ? "APPROVING..." : "APPROVE REPORT"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleReject}
+                        disabled={isRejecting || approvalStatus === "Rejected"}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 8,
+                          background: C.red,
+                          border: "none",
+                          color: "#fff",
+                          padding: "11px 28px",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          letterSpacing: ".1em",
+                          textTransform: "uppercase",
+                          borderRadius: 6,
+                          cursor:
+                            isRejecting || approvalStatus === "Rejected"
+                              ? "not-allowed"
+                              : "pointer",
+                          fontFamily: "inherit",
+                          transition: "background .15s",
+                          boxShadow: "0 2px 8px rgba(185,28,28,.35)",
+                          opacity: approvalStatus === "Rejected" ? 0.6 : 1,
+                        }}
+                      >
+                        {isRejecting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <X size={14} strokeWidth={2.5} />
+                        )}
+                        {isRejecting ? "REJECTING..." : "REJECT REPORT"}
+                      </button>
+                    </>
                   ) : (
                     <>
                       <button
@@ -593,6 +1089,7 @@ const FourMInformatinSheet = () => {
                         <RotateCcw className="h-4 w-4" />
                         Reset Form
                       </button>
+
                       <button
                         type="submit"
                         disabled={isLoading}

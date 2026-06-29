@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom"; // 🔥 IMPORT useParams
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Calendar,
   User,
@@ -8,11 +8,14 @@ import {
   BookOpen,
   AlertCircle,
   ArrowLeft,
-  Check, // 🔥 Import Check for Approve button
+  Check,
+  X,
+  Loader2,
 } from "lucide-react";
 import axios from "axios";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+
 const areaOptions = [
   "Weld Shop",
   "Back Yard",
@@ -125,12 +128,9 @@ const sColors = [
   { bg: "#ede9fe", border: "#8b5cf6", badge: "#8b5cf6" },
 ];
 
-
-
-
 const Operator5S = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // 🔥 GET ID FROM URL
+  const { id } = useParams();
 
   const today = new Date().toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -138,95 +138,142 @@ const Operator5S = () => {
     year: "numeric",
   });
 
-  const [formDate, setFormDate] = useState(today); // To handle view mode date
+  const [formDate, setFormDate] = useState(today);
   const [lang, setLang] = useState("eng");
   const [area, setArea] = useState("");
   const [zoneLeader, setZoneLeader] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAlreadyFilled, setIsAlreadyFilled] = useState(false);
 
+  // ✅ Approval / rejection states
+  const [approvalStatus, setApprovalStatus] = useState("Pending");
+  const [approvedBy, setApprovedBy] = useState("");
+  const [rejectedBy, setRejectedBy] = useState("");
+  const [reviewRemark, setReviewRemark] = useState("");
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+
   const [checks, setChecks] = useState(
     fiveSData.flatMap((s, si) =>
-      s.points.map((_, pi) => ({ sIdx: si, pIdx: pi, status: "" })),
-    ),
+      s.points.map((_, pi) => ({ sIdx: si, pIdx: pi, status: "" }))
+    )
   );
 
-    const getItemText = (item) => {
+  const getItemText = (item) => {
     if (!item) return "";
-    return typeof item === 'string' ? item : (item.name || item.operation || item.part_name || "");
-};
+    return typeof item === "string"
+      ? item
+      : item.name || item.operation || item.part_name || "";
+  };
 
   const sortArrayAlphabetically = (arr) => {
     const cleanArray = Array.isArray(arr) ? arr : [];
     return [...cleanArray].sort((a, b) => {
-        const strA = getItemText(a).toLowerCase().trim();
-        const strB = getItemText(b).toLowerCase().trim();
-        return strA.localeCompare(strB);
+      const strA = getItemText(a).toLowerCase().trim();
+      const strB = getItemText(b).toLowerCase().trim();
+      return strA.localeCompare(strB);
     });
-};
+  };
 
   useEffect(() => {
     if (id) {
       const fetchReportData = async () => {
         try {
-          const response = await axios.get(`${API_BASE_URL}/api/get-single-production-report/five-s/${id}/`);
-          
+          const response = await axios.get(
+            `${API_BASE_URL}/api/get-single-production-report/five-s/${id}/`
+          );
+
           if (response.data.success) {
             const data = response.data.data;
-            
+            const statusText = data.status || "";
+
             setArea(data.area || "");
             setZoneLeader(data.zoneLeader || "");
+
             if (data.language) setLang(data.language);
+
             if (data.date) {
-               // Convert YYYY-MM-DD to DD/MM/YYYY
-               const parts = data.date.split('-');
-               if(parts.length === 3) setFormDate(`${parts[2]}/${parts[1]}/${parts[0]}`);
+              const parts = data.date.split("-");
+              if (parts.length === 3) {
+                setFormDate(`${parts[2]}/${parts[1]}/${parts[0]}`);
+              }
             }
 
-            // Map backend observations back to the checks state
             if (data.observations && data.observations.length > 0) {
               let flatIndex = 0;
+
               const newChecks = fiveSData.flatMap((s, si) =>
                 s.points.map((_, pi) => {
                   const obs = data.observations[flatIndex];
                   flatIndex++;
-                  
+
                   let mappedStatus = "";
                   if (obs && (obs.status === "OK" || obs.status === "NG")) {
                     mappedStatus = obs.status;
                   }
+
                   return { sIdx: si, pIdx: pi, status: mappedStatus };
                 })
               );
+
               setChecks(newChecks);
             }
-            
-            setIsAlreadyFilled(true); // Lock the form entirely
+
+            setApprovalStatus(
+              data.approval_status ||
+                (statusText.startsWith("Approved by")
+                  ? "Approved"
+                  : statusText.startsWith("Rejected by")
+                  ? "Rejected"
+                  : "Pending")
+            );
+
+            setApprovedBy(
+              data.approved_by ||
+                (statusText.startsWith("Approved by")
+                  ? statusText.replace("Approved by", "").trim()
+                  : "")
+            );
+
+            setRejectedBy(
+              data.rejected_by ||
+                (statusText.startsWith("Rejected by")
+                  ? statusText.replace("Rejected by", "").trim()
+                  : "")
+            );
+
+            setReviewRemark(
+              data.remarks || data.rejection_remark || data.remark || ""
+            );
+
+            setIsAlreadyFilled(true);
           }
         } catch (error) {
           console.error("Error fetching report data:", error);
         }
       };
+
       fetchReportData();
     }
   }, [id]);
 
-  // Check today's status only in CREATE mode
   useEffect(() => {
-    if (id) return; // Skip if in view mode
+    if (id) return;
     if (!area) return;
 
     const checkTodayStatus = async () => {
       try {
         const dbDate = new Date().toISOString().split("T")[0];
+
         const response = await fetch(
           `${API_BASE_URL}/api/check-5s-status/?date=${dbDate}&area=${encodeURIComponent(
-            area,
-          )}`,
+            area
+          )}`
         );
 
         if (response.ok) {
           const data = await response.json();
+
           if (data.isFilled) {
             setIsAlreadyFilled(true);
           } else {
@@ -245,26 +292,29 @@ const Operator5S = () => {
     checks.find((c) => c.sIdx === si && c.pIdx === pi);
 
   const setStatus = (si, pi, status) => {
-    if (isAlreadyFilled) return; // Prevent clicking in view/locked mode
+    if (isAlreadyFilled) return;
+
     setChecks((prev) =>
       prev.map((c) =>
         c.sIdx === si && c.pIdx === pi
           ? { ...c, status: c.status === status ? "" : status }
-          : c,
-      ),
+          : c
+      )
     );
   };
 
   const allDone = checks.every((c) => c.status !== "");
 
   const resetForm = () => {
-    if (id) return; // Disallow reset in view mode
+    if (id) return;
+
     setZoneLeader("");
     setIsAlreadyFilled(false);
+
     setChecks(
       fiveSData.flatMap((s, si) =>
-        s.points.map((_, pi) => ({ sIdx: si, pIdx: pi, status: "" })),
-      ),
+        s.points.map((_, pi) => ({ sIdx: si, pIdx: pi, status: "" }))
+      )
     );
   };
 
@@ -275,10 +325,12 @@ const Operator5S = () => {
       alert("⚠️ Please select an Area.");
       return;
     }
+
     if (!zoneLeader) {
       alert("⚠️ Please fill Zone Leader.");
       return;
     }
+
     if (!allDone) {
       alert("⚠️ Please complete all checks before saving.");
       return;
@@ -296,6 +348,7 @@ const Operator5S = () => {
         s: s.s,
         points: s.points.map((pt, pi) => {
           const check = getCheck(si, pi);
+
           return {
             point: lang === "eng" ? pt.eng : lang === "hin" ? pt.hin : pt.guj,
             status: check?.status || "Not Checked",
@@ -337,6 +390,92 @@ const Operator5S = () => {
     }
   };
 
+  const handleApprove = async () => {
+    if (!id) return;
+
+    const currentUser = localStorage.getItem("username") || "Approver";
+
+    setIsApproving(true);
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/approve-report/`, {
+        log_id: id,
+        approver_username: currentUser,
+        approved_by: currentUser,
+        approval_status: "Approved",
+        remark: reviewRemark,
+        remarks: reviewRemark,
+      });
+
+      if (response.status === 200) {
+        alert("✅ Report Approved Successfully!");
+        navigate(-1);
+      }
+    } catch (error) {
+      console.error("Error approving report:", error);
+
+      if (error.response) {
+        alert(
+          `❌ Backend Error: ${
+            error.response.data.error ||
+            error.response.data.message ||
+            "Route Not Found"
+          }`
+        );
+      } else {
+        alert("❌ Network Error: Failed to connect to server.");
+      }
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!id) return;
+
+    if (!reviewRemark.trim()) {
+      alert("Please enter rejection remark");
+      return;
+    }
+
+    const currentUser = localStorage.getItem("username") || "Approver";
+
+    setIsRejecting(true);
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/reject-report/`, {
+        log_id: id,
+        approver_username: currentUser,
+        rejected_by: currentUser,
+        rejection_remark: reviewRemark,
+        remark: reviewRemark,
+        remarks: reviewRemark,
+        approval_status: "Rejected",
+      });
+
+      if (response.status === 200) {
+        alert("❌ Report Rejected Successfully!");
+        navigate(-1);
+      }
+    } catch (error) {
+      console.error("Error rejecting report:", error);
+
+      if (error.response) {
+        alert(
+          `❌ Backend Error: ${
+            error.response.data.error ||
+            error.response.data.message ||
+            "Route Not Found"
+          }`
+        );
+      } else {
+        alert("❌ Network Error: Failed to connect to server.");
+      }
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Navbar */}
@@ -345,15 +484,17 @@ const Operator5S = () => {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-3">
               <button
-                onClick={() => navigate(-1)} // 🔥 Enhanced back navigation
+                onClick={() => navigate(-1)}
                 className="p-1.5 sm:p-2 hover:bg-slate-100 rounded-lg transition-colors"
               >
                 <ArrowLeft className="h-5 w-5 sm:h-6 sm:w-6 text-slate-600" />
               </button>
+
               <div className="flex items-center gap-2">
                 <div className="p-1.5 sm:p-2">
                   <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500" />
                 </div>
+
                 <span className="font-black text-slate-800 text-base sm:text-lg md:text-xl tracking-tight">
                   {id ? "5S Check Point (REVIEW)" : "5S Check Point"}
                 </span>
@@ -364,13 +505,16 @@ const Operator5S = () => {
               <select
                 value={lang}
                 onChange={(e) => setLang(e.target.value)}
-                disabled={!!id} // Disable changing language in view mode
-                className={`bg-amber-50 border-2 border-amber-300 text-amber-700 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-bold outline-none focus:border-amber-500 ${id ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}
+                disabled={!!id}
+                className={`bg-amber-50 border-2 border-amber-300 text-amber-700 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-bold outline-none focus:border-amber-500 ${
+                  id ? "cursor-not-allowed opacity-80" : "cursor-pointer"
+                }`}
               >
                 <option value="eng">🌐 English</option>
                 <option value="hin">🇮🇳 हिंदी</option>
                 <option value="guj">🇮🇳 ગુજરાતી</option>
               </select>
+
               <div className="hidden sm:flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg">
                 <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
                   DOC: AOT-F-PROD-13A
@@ -380,6 +524,7 @@ const Operator5S = () => {
                   Rev: 01
                 </span>
               </div>
+
               <div className="flex sm:hidden items-center gap-1 bg-slate-100 px-2 py-1 rounded-lg">
                 <span className="text-[8px] font-bold text-slate-600 uppercase">
                   AOT-F-PROD-13A
@@ -395,12 +540,12 @@ const Operator5S = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
-        
-        {/* Error Banner - HIDDEN in View Mode since being locked is expected */}
+        {/* Error Banner */}
         {isAlreadyFilled && !id && (
           <div className="bg-red-50 border-l-4 border-red-600 p-4 mb-6 rounded-r-lg shadow-sm">
             <div className="flex items-start gap-3">
               <span className="text-red-500 text-lg">⚠️</span>
+
               <div>
                 <h3 className="text-red-700 font-bold text-sm sm:text-base mb-1">
                   {lang === "eng"
@@ -409,6 +554,7 @@ const Operator5S = () => {
                     ? "डेटा पहले ही भरा जा चुका है!"
                     : "ડેટા પહેલેથી જ ભરાઈ ગયું છે!"}
                 </h3>
+
                 <p className="text-red-600 text-xs sm:text-sm font-medium mb-1">
                   {lang === "eng"
                     ? "This area's 5S checksheet has already been submitted for today."
@@ -416,6 +562,7 @@ const Operator5S = () => {
                     ? "इस एरिया का 5S डेटा आज के लिए पहले ही भरा जा चुका है।"
                     : "આ વિસ્તારનું 5S ડેટા આજ માટે પહેલેથી જ ભરાઈ ગયું છે."}
                 </p>
+
                 <p className="text-red-500 text-[10px] sm:text-xs">
                   {lang === "eng"
                     ? "You cannot submit again."
@@ -436,6 +583,7 @@ const Operator5S = () => {
         >
           <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-200">
             <AlertCircle className="h-5 w-5 text-amber-500" />
+
             <h2 className="text-sm sm:text-base md:text-lg font-black text-slate-800">
               {lang === "eng"
                 ? "5S Check Point (Work Instruction)"
@@ -444,24 +592,26 @@ const Operator5S = () => {
                 : "5S ચેક પ્વાઇન્ટ (કાર્ય નિર્દેશ)"}
             </h2>
           </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            
             {/* Area Dropdown */}
             <div>
               <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase mb-1">
                 Area
               </label>
+
               <select
                 value={area}
                 onChange={(e) => {
-                  setArea(sortArrayAlphabetically(e.target.value));
+                  setArea(e.target.value);
                   resetForm();
                 }}
                 disabled={isAlreadyFilled || !!id}
                 className="w-full border-2 rounded-lg p-2.5 sm:p-3 text-sm font-semibold outline-none transition-all bg-slate-50 border-slate-200 text-slate-700 focus:border-amber-500 disabled:bg-slate-200 disabled:text-slate-500 disabled:cursor-not-allowed"
               >
                 <option value="">-- Select Area --</option>
-                {areaOptions.map((opt) => (
+
+                {sortArrayAlphabetically(areaOptions).map((opt) => (
                   <option key={opt} value={opt}>
                     {opt}
                   </option>
@@ -474,6 +624,7 @@ const Operator5S = () => {
               <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase mb-1">
                 Zone Leader
               </label>
+
               <input
                 type="text"
                 className={`w-full border-2 rounded-lg p-2.5 sm:p-3 text-sm font-semibold outline-none transition-all ${
@@ -499,6 +650,7 @@ const Operator5S = () => {
               <label className="block text-[10px] sm:text-xs font-black text-slate-500 uppercase mb-1">
                 Date
               </label>
+
               <div
                 className={`border-2 rounded-lg p-2.5 sm:p-3 text-sm font-bold ${
                   isAlreadyFilled || !!id
@@ -522,7 +674,10 @@ const Operator5S = () => {
           {fiveSData.map((s, si) => {
             const col = sColors[si];
             let srNo = 0;
-            for (let i = 0; i < si; i++) srNo += fiveSData[i].points.length;
+
+            for (let i = 0; i < si; i++) {
+              srNo += fiveSData[i].points.length;
+            }
 
             return (
               <div
@@ -551,6 +706,7 @@ const Operator5S = () => {
                     {s.s}
                   </span>
                 </div>
+
                 <div className="overflow-x-auto">
                   <table className="w-full bg-white">
                     <thead className="bg-slate-100">
@@ -558,6 +714,7 @@ const Operator5S = () => {
                         <th className="px-2 sm:px-3 py-2 text-center text-[10px] sm:text-xs font-black text-slate-600 uppercase w-12">
                           S.No
                         </th>
+
                         <th className="px-2 sm:px-3 py-2 text-left text-[10px] sm:text-xs font-black text-slate-600 uppercase">
                           {lang === "eng"
                             ? "Check Point"
@@ -565,6 +722,7 @@ const Operator5S = () => {
                             ? "जांच बिंदु"
                             : "ચેક પ્વાઇન્ટ"}
                         </th>
+
                         <th className="px-2 sm:px-3 py-2 text-center text-[10px] sm:text-xs font-black text-slate-600 uppercase w-24 sm:w-32">
                           {lang === "eng"
                             ? "Check"
@@ -574,14 +732,17 @@ const Operator5S = () => {
                         </th>
                       </tr>
                     </thead>
+
                     <tbody>
                       {s.points.map((pt, pi) => {
                         const chk = getCheck(si, pi);
+
                         return (
                           <tr key={pi} className="border-b border-slate-200">
                             <td className="px-2 sm:px-3 py-2 text-center text-xs sm:text-sm font-bold text-slate-500">
                               {srNo + pi + 1}
                             </td>
+
                             <td className="px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 leading-relaxed">
                               {lang === "eng"
                                 ? pt.eng
@@ -589,13 +750,14 @@ const Operator5S = () => {
                                 ? pt.hin
                                 : pt.guj}
                             </td>
+
                             <td className="px-2 sm:px-3 py-2">
                               <div className="flex items-center justify-center gap-2 sm:gap-3">
                                 <button
                                   type="button"
                                   className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full font-bold text-base sm:text-lg transition-all flex items-center justify-center border-2 ${
                                     isAlreadyFilled
-                                      ? chk?.status === "OK" 
+                                      ? chk?.status === "OK"
                                         ? "border-green-500 bg-green-100 text-green-700 cursor-not-allowed scale-105"
                                         : "border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed"
                                       : chk?.status === "OK"
@@ -607,11 +769,12 @@ const Operator5S = () => {
                                 >
                                   ✓
                                 </button>
+
                                 <button
                                   type="button"
                                   className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full font-bold text-base sm:text-lg transition-all flex items-center justify-center border-2 ${
                                     isAlreadyFilled
-                                      ? chk?.status === "NG" 
+                                      ? chk?.status === "NG"
                                         ? "border-red-500 bg-red-100 text-red-700 cursor-not-allowed scale-105"
                                         : "border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed"
                                       : chk?.status === "NG"
@@ -638,8 +801,7 @@ const Operator5S = () => {
 
         {/* Submit Card */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-5 md:p-6 mt-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            
+          <div className="flex flex-col gap-4">
             {/* Context Text based on Mode */}
             {id ? (
               <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 font-bold uppercase tracking-wider">
@@ -659,40 +821,127 @@ const Operator5S = () => {
               </div>
             )}
 
-            {/* 🔥 Action Buttons (Approve vs Save) */}
-            {id ? (
-              <button
-                type="button"
-                onClick={() => alert("Report Approved Successfully!")}
-                className="px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2 bg-[#10b981] hover:bg-[#059669] text-white shadow-md hover:shadow-lg w-full sm:w-auto"
-              >
-                <Check size={16} /> APPROVE REPORT
-              </button>
-            ) : (
-              <button
-                className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide transition-all flex items-center gap-2 w-full sm:w-auto justify-center ${
-                  isAlreadyFilled || isSubmitting
-                    ? "bg-slate-300 text-slate-500 cursor-not-allowed border-transparent shadow-none"
-                    : "bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg"
-                }`}
-                onClick={handleSubmit}
-                disabled={isSubmitting || isAlreadyFilled}
-              >
-                {isSubmitting ? (
-                  "Saving..."
-                ) : isAlreadyFilled ? (
-                  "Locked"
-                ) : (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                    </svg>
-                    {lang === "eng" ? "Save Checksheet" : lang === "hin" ? "चेकशीट सहेजें" : "ચેકશીટ સહેજ કરો"}
-                  </>
+            {id && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {approvedBy && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 uppercase mb-1">
+                      Approved By
+                    </label>
+
+                    <input
+                      type="text"
+                      value={approvedBy}
+                      readOnly
+                      className="w-full border border-slate-300 rounded-lg p-2 text-sm bg-slate-100 text-slate-600"
+                    />
+                  </div>
                 )}
-              </button>
+
+                {rejectedBy && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 uppercase mb-1">
+                      Rejected By
+                    </label>
+
+                    <input
+                      type="text"
+                      value={rejectedBy}
+                      readOnly
+                      className="w-full border border-slate-300 rounded-lg p-2 text-sm bg-slate-100 text-slate-600"
+                    />
+                  </div>
+                )}
+
+                <div className="md:col-span-3">
+                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1">
+                    Remark
+                  </label>
+
+                  <textarea
+                    value={reviewRemark}
+                    onChange={(e) => setReviewRemark(e.target.value)}
+                    rows={3}
+                    placeholder="Enter approval/rejection remark..."
+                    className="w-full border border-slate-300 rounded-lg p-2 text-sm text-black bg-white placeholder-slate-400"
+                  />
+                </div>
+              </div>
             )}
-            
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-3">
+              {id ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleApprove}
+                    disabled={isApproving || approvalStatus === "Approved"}
+                    className="px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2 bg-[#10b981] hover:bg-[#059669] text-white shadow-md hover:shadow-lg w-full sm:w-auto disabled:opacity-60"
+                  >
+                    {isApproving ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Check size={16} />
+                    )}
+                    {isApproving ? "APPROVING..." : "APPROVE REPORT"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleReject}
+                    disabled={isRejecting || approvalStatus === "Rejected"}
+                    className="px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg w-full sm:w-auto disabled:opacity-60"
+                  >
+                    {isRejecting ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <X size={16} />
+                    )}
+                    {isRejecting ? "REJECTING..." : "REJECT REPORT"}
+                  </button>
+                </>
+              ) : (
+                <button
+                  className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide transition-all flex items-center gap-2 w-full sm:w-auto justify-center ${
+                    isAlreadyFilled || isSubmitting
+                      ? "bg-slate-300 text-slate-500 cursor-not-allowed border-transparent shadow-none"
+                      : "bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg"
+                  }`}
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || isAlreadyFilled}
+                >
+                  {isSubmitting ? (
+                    "Saving..."
+                  ) : isAlreadyFilled ? (
+                    "Locked"
+                  ) : (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                        />
+                      </svg>
+
+                      {lang === "eng"
+                        ? "Save Checksheet"
+                        : lang === "hin"
+                        ? "चेकशीट सहेजें"
+                        : "ચેકશીટ સહેજ કરો"}
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
