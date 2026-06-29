@@ -193,7 +193,7 @@ const DeviationApprovalForm = () => {
               <div className="flex items-center gap-2 sm:gap-3">
                 <AlertTriangle size={24} className="text-white sm:w-6 sm:h-6 md:w-7 md:h-7" />
                 <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white">
-                  DEVIATION APPROVAL FORM {isViewMode && "(REVIEW MODE)"}
+                  Production Deviation Slip {isViewMode && "(REVIEW MODE)"}
                 </h1>
               </div>
               <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg">

@@ -11,7 +11,7 @@ const FORM_CONFIG = {
     'tip-change':        { label: 'Tip Change monitoring sheet',    color: '#8b5cf6', bg: '#ede9fe', icon: 'bi-sliders',            formNo: 'AOT-F-QA-05B' },
     'four-m-inspection': { label: '4M Change inspection report',    color: '#ef4444', bg: '#fef2f2', icon: 'bi-file-earmark-diff',  formNo: 'AOT-F-4M-06' },
     // 'four-m-summary':    { label: '4M Change summary sheet',        color: '#ef4444', bg: '#fef2f2', icon: 'bi-table',              formNo: 'AOT-F-4M-05A' },
-    'four-m-record':     { label: '4M Change tracking sheet',       color: '#ef4444', bg: '#fef2f2', icon: 'bi-signpost-split',     formNo: 'AOT-F-4M-05' },
+    'four-m-record':     { label: '4M Change record sheet',       color: '#ef4444', bg: '#fef2f2', icon: 'bi-signpost-split',     formNo: 'AOT-F-4M-05' },
     // 'four-m-display':    { label: '4M Change display board',        color: '#ef4444', bg: '#fef2f2', icon: 'bi-easel2',             formNo: 'ATO-F-4M-08' },
     'four-m-information': { label: '4M Information Sheet', color: '#ef4444', bg: '#fef2f2', icon: 'bi-info-circle', formNo: 'AOT-F-4M-INFO' },
 };
@@ -23,20 +23,22 @@ const MASTER_COLS_CONFIG = {
     'tip-change':        ['Date',  'Machine Name','Machine No'],
     'four-m-inspection': ['Date', 'Part Name', 'Part No'],
     'four-m-summary':    ['Date', 'Customer', 'Part Name & No'],
-    'four-m-record':     ['Time','Machine No'],
+    'four-m-record':     [,'Date','Time','Machine No',],
     'four-m-display':    ['Date',],
     'four-m-information': ['Date', 'Machine No', 'Operator Name']
 };
 
 const MODAL_HEADER_COLS_CONFIG = {
-    'daily-prod-plan':   ['Date', 'Plant','Shift', 'Machine No','Operator Name','Part Name','Part No','Operation','RM Coil No'],
-    'five-s-view':       ['Date','Area','Zone Leader','OK Count','NG Count'],
-    'bin-trolley':       ['Date', 'Week','Month' ],
-    'tip-change':        ['Date', 'Machine Name','Machine No'],
-    'four-m-inspection': ['Date', 'Part Name', 'Part No','Operation','Lot Qty','OK Qty','Rej. Qty','Parameter/Specs','Insp. By'],
+    'daily-prod-plan':   ['Date', 'Plant','Shift', 'Machine No','Operator Name','Part Name','Part No','Operation','RM Coil No','Prepared By','Approved By'],
+    'five-s-view':       ['Date','Area','Zone Leader','OK Count','NG Count','Prepared By','Approved By'],
+    'bin-trolley':       ['Date', 'Week','Month','Prepared By','Approved By' ],
+    'tip-change':        ['Date', 'Machine Name','Machine No','Prepared By','Approved By'],
+    'four-m-inspection': ['Date', 'Part Name', 'Part No','Operation','Lot Qty','OK Qty','Rej. Qty','Parameter/Specs','Insp. By','Prepared By','Approved By'],
     'four-m-summary':    ['Date', 'Customer', 'Part Name & No','Prepared By','Approved By'],
     'four-m-record':     ['Time','Machine No','Part Info','Operation No','Nature of Change','Action Taken','Created At'],
     'four-m-display':    ['Date', ],
+    'four-m-record':     ['Date','Time','Machine No','Part Info','Operation No','Nature of Change','Action Taken','Prepared By','Approved By'],
+    'four-m-display':    ['Date',,'Prepared By','Approved By' ],
     'four-m-information': ['Date', 'Time', 'Machine No', 'Operator Name', 'Prepared By'],
 };
 

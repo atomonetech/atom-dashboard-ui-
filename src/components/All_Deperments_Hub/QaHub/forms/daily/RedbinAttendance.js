@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom"; // 🔥 Added useParams
+import { useNavigate, useParams } from "react-router-dom";
 import { ClipboardList } from "lucide-react";
 import { CiCalendarDate } from "react-icons/ci";
 import { IoMdArrowBack, IoIosArrowDown } from "react-icons/io";
 import axios from "axios";
-
 
 const today = new Date();
 const formattedDate = `${String(today.getDate()).padStart(2, "0")}-${String(
@@ -13,14 +12,13 @@ const formattedDate = `${String(today.getDate()).padStart(2, "0")}-${String(
 const currentMonth = today.toLocaleString("default", { month: "long" });
 const currentYear = today.getFullYear();
 
-
 // Backend API URLs
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 const API_SAVE = `${API_BASE}/api/redbin-attendance/save/`;
 const API_LOG = `${API_BASE}/api/log-report/`;
-const API_APPROVE = `${API_BASE}/api/approve-report/`; // 🔥 Added Approve API
+const API_APPROVE = `${API_BASE}/api/approve-report/`;
 
-// Default arrays (Agar localStorage me kuch nahi hoga to ye use honge)
+// Default arrays
 const DEFAULT_DESIGNATIONS = [
   "Quality Engineer",
   "Production Engineer",
@@ -91,25 +89,6 @@ export default function RedbinAttendance() {
   const [selectedDesignation, setSelectedDesignation] = useState("");
   const [rows, setRows] = useState([]);
   const [saveMsg, setSaveMsg] = useState("");
-
-
-  // 👇 ERUDA INTEGRATION
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/eruda";
-    script.async = true;
-    script.onload = () => {
-      if (window.eruda) {
-        window.eruda.init();
-      }
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      if (window.eruda) window.eruda.destroy();
-      document.body.removeChild(script);
-    };
-  }, []);
 
   // 👇 LISTS UPDATE HONE PAR LOCALSTORAGE ME SAVE KARNA
   useEffect(() => {
@@ -332,7 +311,7 @@ export default function RedbinAttendance() {
   });
 
   const attSel = (val, disabled = false) => ({
-    width: 60, // Slightly increased to fit word
+    width: 60,
     padding: "5px 4px",
     border: `1.5px solid ${
       val === "P" || val === "Present" ? "#f59e0b" : val === "A" || val === "Absent" ? "#fca5a5" : "#fde68a"
@@ -686,12 +665,12 @@ export default function RedbinAttendance() {
             <div
               style={{
                 display: "flex",
-                justifyContent: "space-between", // Changed to space-between for Prepared By
+                justifyContent: "space-between",
                 gap: 10,
                 flexWrap: "wrap",
                 alignItems: "center",
-                marginTop: 16, // Increased margin
-                borderTop: "1px solid #fef3c7", // Added separator
+                marginTop: 16,
+                borderTop: "1px solid #fef3c7",
                 paddingTop: 16
               }}
             >

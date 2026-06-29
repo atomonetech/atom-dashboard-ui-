@@ -184,12 +184,12 @@ const GoodReceiptForm = () => {
             {/* Heading and Date Row */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="w-full sm:w-auto">
-                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-cyan-700 uppercase tracking-tight">
-                  Material Requisition Slip {isViewMode && <span className="text-cyan-500 text-lg">(REVIEW)</span>}
+                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black text-cyan-700 tracking-tight">
+                  Goods Receipt Note {isViewMode && <span className="text-cyan-500 text-lg">(REVIEW)</span>}
                 </h1>
-                <p className="text-cyan-500 text-[9px] sm:text-[10px] md:text-xs font-extrabold mt-1 uppercase tracking-wider">
-                  Good Receipt Entry
-                </p>
+                {/* <p className="text-cyan-500 text-[9px] sm:text-[10px] md:text-xs font-extrabold mt-1 uppercase tracking-wider">
+                 Goods Receipt Note
+                </p> */}
               </div>
 
               {/* Date Box */}

@@ -181,7 +181,7 @@ const ScrapNoteForm = () => {
                 </div>
                 <div>
                   <h2 className="text-sm sm:text-base md:text-lg font-black text-slate-800 m-0 uppercase tracking-tight">
-                    Scrap Entry Form {isViewMode && <span style={{color: '#f04343'}}>(REVIEW)</span>}
+                    Scrap Note {isViewMode && <span style={{color: '#f04343'}}>(REVIEW)</span>}
                   </h2>
                   <p className="text-slate-500 text-[8px] sm:text-[9px] font-medium">Quality Assurance & Production Control</p>
                 </div>

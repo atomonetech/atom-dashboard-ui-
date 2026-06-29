@@ -123,6 +123,7 @@ const InspectionForm = () => {
                         setSelectedPart(d.part_name);
                         setSelectedTool(d.operation);
                         setPartNumber(d.part_number);
+                        setModelName(d.model_name || '');
                         if (d.date) setSelectedDate(d.date.split(' ')[0] || d.date);
 
                         setSpecList(d.inspection_data?.parameters || []);
@@ -131,6 +132,8 @@ const InspectionForm = () => {
                         
                         const fullName = d.submitted_by || 'Unknown User';
                         setPreparedBy(fullName.split('@')[0]);
+                        setParts([d.part_name]);
+                        setTools([d.operation]);
                     }
                 })
                 .catch(err => console.error("Error loading view data", err));
@@ -389,7 +392,8 @@ const InspectionForm = () => {
                     customer: selectedCustomer, 
                     part_name: selectedPart, 
                     operation: selectedTool, 
-                    part_number: partNumber, 
+                    part_number: partNumber,
+                    model_name: modelName , 
                     plant_location: activeColumn?.plant || '', 
                     date: selectedDate 
                 },
@@ -625,7 +629,7 @@ const InspectionForm = () => {
                         </button>
                         <h6 className="card-title-custom">
                           <i className={`bi bi-sliders text-${isViewMode ? 'success' : 'primary'}`}></i> 
-                          Setup & Petrol Inspection {isViewMode && <span className="text-success">(REVIEW)</span>}
+                          Set up & Patrol Inspection Sheet {isViewMode && <span className="text-success">(REVIEW)</span>}
                         </h6>
                         <input type="text" className="form-control-light w-auto fw-bold text-center" style={{padding: '0.4rem 0.8rem', color: 'var(--accent-primary)', cursor: 'not-allowed', backgroundColor: '#f1f5f9'}} value={selectedDate} readOnly />
                     </div>

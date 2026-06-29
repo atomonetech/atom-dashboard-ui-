@@ -17,30 +17,37 @@ const FORM_CONFIG = {
     'pdi-view':                 { label: 'Pre Dispatch Insp. (PDIR)',     color: '#10b981', bg: '#d1fae5', icon: 'bi-truck',               formNo: 'AOT/F/QA/40' },
 };
 
-
 const MASTER_COLS_CONFIG = {
-    'inspection-view':          ['Customer', 'Part Name', 'Operation', 'Part Number', 'Plant', 'Insp. Date', 'Operator', 'Machine No'],
     'incoming-inspection-view': ['Date', 'Supplier', 'Customer', 'Part Name', 'Part No'],
     'redbin-view':              ['Date', 'Part Name & Model', 'Operation'],
     'scrap-note-view':          ['Date', 'Part Name', 'Part No'],
     'redbin-attendance-view':   ['Date'],
-    'deviation-view':           ['Date',], //'Tool Name/No.', 'Location', 'Prod Incharge', 'QA Incharge'],
-    'good-receipt':             ['Date', ],//'Requested By', 'Item Name', 'Department'],
-    'rework-view':              ['Date', 'Part Name', 'Part No', 'Inspected By']
+    'pokayoke-view':            ['Date', 'Machine No', 'Part Name', 'Shift'],
+    'inspection-view':          ['Customer', 'Part Name', 'Operation', 'Part Number', 'Plant', 'Insp. Date', 'Operator', 'Machine No'],
+    'rework-view':              ['Date', 'Part Name', 'Part No'],
+    'sample-inspection-view':   ['Date', 'Customer', 'Part Name', 'Part No'],
+    'deviation-view':           ['Date', 'Tool Name/No.', 'Location'],
+    'good-receipt':             ['Date', 'Item Name', 'Department'],
+    'pdi-view':                 ['Date', 'Customer', 'Part Name', 'Invoice No']
 };
-
 
 const MODAL_HEADER_COLS_CONFIG = {
     'incoming-inspection-view': ['Date', 'Supplier', 'Customer', 'Part Name', 'Part No', 'Grade', 'MTC', 'GA/NGA', 'Coil No', 'Invoice No', 'QTY', 'Prepared By', 'Checked By', 'Approved By'],
-    'redbin-attendance-view':   ['Date','Month','Year']
+    'redbin-view':              ['Date', 'Part Name & Model', 'Operation', 'Prepared By', 'Approved By' ],
+    'scrap-note-view':          ['Date', 'Part Name', 'Part No', 'Scrap Qty', 'Reason', 'Authorized By', 'Prepared By', 'Approved By'],
+    'redbin-attendance-view':   ['Date', 'Month', 'Year', 'Prepared By', 'Approved By'],
+    'pokayoke-view':            ['Date', 'Machine No', 'Part Name', 'Shift', 'Operator', 'Verified By', 'Prepared By', 'Approved By'],
+    'inspection-view':          ['Customer', 'Part Name', 'Operation', 'Part Number', 'Plant', 'Insp. Date', 'Operator', 'Machine No', 'Prepared By', 'Approved By'],
+    'rework-view':              ['Date', 'Part Name', 'Part No', 'Rework Qty', 'Inspected By', 'Status', 'Prepared By', 'Approved By'],
+    'sample-inspection-view':   ['Date', 'Customer', 'Part Name', 'Part No', 'Sample Size', 'Result', 'Inspector', 'Prepared By', 'Approved By'],
+    'deviation-view':           ['Date', 'Tool Name/No.', 'Location', 'Prod Incharge', 'QA Incharge', 'Prepared By', 'Approved By'],
+    'good-receipt':             ['Date', 'Requested By', 'Item Name', 'Department', 'Prepared By', 'Approved By'],
+    'pdi-view':                 ['Date', 'Customer', 'Invoice No', 'Part Name', 'Dispatch Qty', 'Vehicle No', 'Inspected By', 'Final Status', 'Prepared By', 'Approved By']
 };
-
-
 
 function groupRows(rows, masterCols, headerCols, detailCols) {
     const seen = new Map();
     rows.forEach(row => {
-        
         const key = headerCols.map(c => row[c] ?? '').join('||');
         if (!seen.has(key)) {
             const masterRow = {};
@@ -254,10 +261,9 @@ const Qaview = () => {
             <style>{`
                 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
                 .vp-wrap { position: fixed; inset: 0; background: #f1f5f9; z-index: 9999; display: flex; flex-direction: column; font-family: 'Inter', sans-serif; overflow: hidden; }
-
-                .vp-nav { background: #fff; height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); flex-shrink: 0; }
-                .vp-nav-left { display: flex; align-items: center; gap: 12px; }
-                .back-btn { background: #f1f5f9; border: none; border-radius: 8px; padding: 7px 13px; font-size: 0.85rem; font-weight: 700; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s; }
+                .vp-nav { background: #fff; height: 68px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); flex-shrink: 0; }
+                .vp-nav-left { display: flex; align-items: center; gap: 14px; height: 100%; }
+                .back-btn { margin: 0; align-self: center; height: fit-content; line-height: 1; background: #f1f5f9; border: none; border-radius: 8px; padding: 9px 14px; font-size: 0.85rem; font-weight: 700; color: #475569; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.2s; }
                 .back-btn:hover { background: #e2e8f0; }
                 .vp-form-badge { display: flex; align-items: center; gap: 10px; }
                 .vp-icon-box { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }

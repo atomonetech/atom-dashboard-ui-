@@ -383,7 +383,7 @@ export default function ReworkRepair() {
               <FiScissors color="#2563eb" size={16} />
             </div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: isMobile ? 14 : 16, color: "#111827" }}>Rework / Repair Report {isViewMode && <span style={{color: '#2563eb'}}>(REVIEW)</span>}</div>
+              <div style={{ fontWeight: 800, fontSize: isMobile ? 14 : 16, color: "#111827" }}>Rework Inspection Report {isViewMode && <span style={{color: '#2563eb'}}>(REVIEW)</span>}</div>
               <div style={{ fontSize: 10, color: "#6b7280" }}>Form No: AOT/F/QA/20 · Rev: 00 · Resp: Rework Operator</div>
             </div>
           </div>
