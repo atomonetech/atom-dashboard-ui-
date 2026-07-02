@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom"; // 🔥 IMPORT useParams
 import axios from "axios";
+import { useReadOnlyMode } from "../../../../../hooks/useReadOnlyMode";
 import {
   ArrowLeft,
   Calendar,
@@ -17,6 +18,8 @@ import {
   Layers,
   Hash,
   Check, // 🔥 Import Check for Approve button
+  X,
+  MessageSquare,
 } from "lucide-react";
 
 const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
@@ -41,6 +44,7 @@ const C = {
   rowBorder: "#e8e4de",
   shadow: "0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04)",
   green: "#16a34a", // Add green color for button
+  greenDark: "#15803d",
 };
 
 const EMPTY_ROW = {
@@ -55,6 +59,7 @@ const EMPTY_ROW = {
 const FourMDisplayBoard = () => {
   const navigate = useNavigate();
   const { id } = useParams(); // 🔥 GET ID FROM URL
+  const isReadOnly = useReadOnlyMode();
 
   const [formDate, setFormDate] = useState("");
   const [preparedBy, setPreparedBy] = useState("");
@@ -71,6 +76,10 @@ const FourMDisplayBoard = () => {
     Array.from({ length: 3 }, (_, i) => ({ id: i + 1, ...EMPTY_ROW })),
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState("Pending");
+  const [reviewRemark, setReviewRemark] = useState("");
 
   // 🔥 FETCH REPORT DATA IF ID EXISTS (VIEW/APPROVE MODE)
   useEffect(() => {
@@ -97,6 +106,12 @@ const FourMDisplayBoard = () => {
             ]);
             
             setPreparedBy(data.submitted_by || "");
+            if (data.approval_status) {
+              setApprovalStatus(data.approval_status);
+            }
+            if (data.review_remarks || data.remarks) {
+              setReviewRemark(data.review_remarks || data.remarks || "");
+            }
           }
         } catch (error) {
           console.error("Error fetching report data:", error);
@@ -130,6 +145,61 @@ const FourMDisplayBoard = () => {
   const handleReset = () => {
     if (id) return; // Disable in view mode
     setRows(Array.from({ length: 3 }, (_, i) => ({ id: i + 1, ...EMPTY_ROW })));
+  };
+
+  const handleApprove = async () => {
+    if (!id) return;
+    const currentUser = localStorage.getItem("username") || "Approver";
+    setIsApproving(true);
+    try {
+      const response = await axios.post(`${BASE_URL}/api/approve-report/`, {
+        log_id: id,
+        approver_username: currentUser,
+        approved_by: currentUser,
+        approval_status: "Approved",
+        remark: reviewRemark,
+        remarks: reviewRemark,
+      });
+      if (response.status === 200) {
+        alert(response.data.message || "Report Approved Successfully!");
+        navigate(-1);
+      }
+    } catch (error) {
+      console.error("Error approving report:", error);
+      alert("Error approving report. Check console.");
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!id) return;
+    if (!reviewRemark.trim()) {
+      alert("Please enter a rejection remark");
+      return;
+    }
+    const currentUser = localStorage.getItem("username") || "Approver";
+    setIsRejecting(true);
+    try {
+      const response = await axios.post(`${BASE_URL}/api/reject-report/`, {
+        log_id: id,
+        approver_username: currentUser,
+        rejected_by: currentUser,
+        rejection_remark: reviewRemark,
+        remark: reviewRemark,
+        remarks: reviewRemark,
+        approval_status: "Rejected",
+      });
+      if (response.status === 200) {
+        alert("Report Rejected Successfully!");
+        navigate(-1);
+      }
+    } catch (error) {
+      console.error("Error rejecting report:", error);
+      alert("Error rejecting report. Check console.");
+    } finally {
+      setIsRejecting(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -182,6 +252,24 @@ const FourMDisplayBoard = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  /* ── blueprint layout styling for review buttons ── */
+  const compactActionBtn = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    border: "none",
+    color: "#fff",
+    padding: "8px 16px",
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: ".06em",
+    textTransform: "uppercase",
+    borderRadius: 5,
+    fontFamily: "inherit",
+    transition: "all .15s ease",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   };
 
   return (
@@ -537,97 +625,199 @@ const FourMDisplayBoard = () => {
                 </div>
               )}
 
-              {/* Form Actions */}
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-slate-200">
-                {/* Prepared By (Moved down here for consistency) */}
-                <div style={{ minWidth: 200, alignSelf: 'flex-start' }}>
-                  <div
-                    style={{
-                      fontSize: 10,
-                      fontWeight: 700,
-                      letterSpacing: ".12em",
-                      textTransform: "uppercase",
-                      color: C.textMid,
-                      marginBottom: 6,
-                    }}
-                  >
-                    Prepared By
-                  </div>
-                  <input
-                    type="text"
-                    value={preparedBy}
-                    onChange={(e) => setPreparedBy(e.target.value)}
-                    readOnly={!!id} // 🔥 DISABLED IN VIEW MODE
-                    placeholder="Enter name"
-                    style={{
-                      width: 220,
-                      padding: "8px 12px",
-                      fontSize: 13,
-                      background: id ? "#f9f9f7" : C.inputBg,
-                      color: id ? C.textMid : C.text,
-                      cursor: id ? "not-allowed" : "text",
-                      border: `1.5px solid ${C.border}`,
-                      borderRadius: 6,
-                      outline: "none",
-                    }}
-                  />
-                </div>
-
-                <div className="flex gap-4">
-                  {id ? (
-                    // 🔥 SHOW APPROVE BUTTON IN VIEW MODE
-                    <button
-                      type="button"
-                      onClick={() => alert("Report Approved Successfully!")}
+              {/* ─── Bottom Workflow Module (Review Panel Area) ─── */}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 20,
+                  background: "#fafaf8",
+                  padding: "20px",
+                  borderRadius: "6px",
+                  border: `1px solid ${C.border}`,
+                  marginTop: "24px",
+                }}
+              >
+                {/* 1. Large Remark Field Area for Review Mode */}
+                {id && (
+                  <div>
+                    <div
                       style={{
-                        display: "inline-flex",
+                        display: "flex",
                         alignItems: "center",
-                        gap: 8,
-                        background: C.green,
-                        border: "none",
-                        color: "#fff",
-                        padding: "11px 28px",
-                        fontSize: 12,
+                        gap: 6,
+                        fontSize: 11,
                         fontWeight: 700,
-                        letterSpacing: ".1em",
+                        letterSpacing: ".12em",
                         textTransform: "uppercase",
-                        borderRadius: 6,
-                        cursor: "pointer",
-                        fontFamily: "inherit",
-                        transition: "background .15s",
-                        boxShadow: "0 2px 8px rgba(22,163,74,.35)",
+                        color: C.text,
+                        marginBottom: 8,
                       }}
                     >
-                      <Check size={14} strokeWidth={2.5} /> APPROVE REPORT
-                    </button>
-                  ) : (
-                    // SHOW RESET & SUBMIT BUTTONS IN CREATE MODE
-                    <>
-                      <button
-                        type="button"
-                        onClick={handleReset}
-                        disabled={isLoading}
-                        className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white text-slate-700 px-6 py-3 hover:bg-slate-50 transition-all font-bold tracking-widest border-2 border-slate-300 text-sm disabled:opacity-50 rounded-none uppercase"
-                      >
-                        <RotateCcw className="h-4 w-4" />
-                        Reset Form
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-[#e03131] text-white px-8 py-3 hover:bg-[#c92a2a] transition-all shadow-sm font-bold tracking-widest text-sm disabled:opacity-70 disabled:cursor-not-allowed rounded-none uppercase"
-                      >
-                        {isLoading ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Send className="h-4 w-4" />
-                        )}
-                        {isLoading ? "Submitting..." : "Submit Board"}
-                      </button>
-                    </>
-                  )}
+                      <MessageSquare size={14} color={C.red} />
+                      Approval / Rejection Review Remark
+                    </div>
+
+                    <textarea
+                      value={reviewRemark}
+                      onChange={(e) => setReviewRemark(e.target.value)}
+                      readOnly={approvalStatus !== "Pending"}
+                      rows={4}
+                      placeholder="Enter workflow validation comments or context adjustments..."
+                      style={{
+                        width: "100%",
+                        padding: "12px",
+                        fontSize: 14,
+                        lineHeight: "1.5",
+                        color: C.text,
+                        border: `1.5px solid ${C.border}`,
+                        borderRadius: 6,
+                        outline: "none",
+                        fontFamily: "inherit",
+                        resize: "vertical",
+                        minHeight: 110,
+                        background: approvalStatus !== "Pending" ? "#f9f9f7" : C.white,
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* 2. Form Actions Execution Block */}
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-slate-200">
+                  {/* Prepared By Component Status */}
+                  <div style={{ minWidth: 200, alignSelf: 'flex-start' }}>
+                    <div
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: ".12em",
+                        textTransform: "uppercase",
+                        color: C.textMid,
+                        marginBottom: 6,
+                      }}
+                    >
+                      Prepared By
+                    </div>
+                    <input
+                      type="text"
+                      value={preparedBy}
+                      onChange={(e) => setPreparedBy(e.target.value)}
+                      readOnly={!!id} // 🔥 DISABLED IN VIEW MODE
+                      placeholder="Enter name"
+                      style={{
+                        width: 220,
+                        padding: "8px 12px",
+                        fontSize: 13,
+                        background: id ? "#f9f9f7" : C.inputBg,
+                        color: id ? C.textMid : C.text,
+                        cursor: id ? "not-allowed" : "text",
+                        border: `1.5px solid ${C.border}`,
+                        borderRadius: 6,
+                        outline: "none",
+                      }}
+                    />
+                  </div>
+
+                  {/* Operational Controls Block Layout */}
+                   {!isReadOnly && (
+                  <div className="flex gap-4">
+                    {id ? (
+                      <>
+                        {/* Compact Approve Button */}
+                        <button
+                          type="button"
+                          disabled={isApproving || approvalStatus !== "Pending"}
+                          onClick={handleApprove}
+                          style={{
+                            ...compactActionBtn,
+                            background: C.green,
+                            cursor: isApproving || approvalStatus !== "Pending" ? "not-allowed" : "pointer",
+                            opacity: approvalStatus !== "Pending" && approvalStatus !== "Approved" ? 0.4 : 1,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isApproving && approvalStatus === "Pending") {
+                              e.currentTarget.style.background = C.greenDark;
+                              e.currentTarget.style.transform = "translateY(-1px)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isApproving && approvalStatus === "Pending") {
+                              e.currentTarget.style.background = C.green;
+                              e.currentTarget.style.transform = "none";
+                            }
+                          }}
+                        >
+                          {isApproving ? (
+                            <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
+                          ) : (
+                            <Check size={13} strokeWidth={3} />
+                          )}
+                          Approve
+                        </button>
+
+                        {/* Compact Reject Button */}
+                        <button
+                          type="button"
+                          disabled={isRejecting || approvalStatus !== "Pending"}
+                          onClick={handleReject}
+                          style={{
+                            ...compactActionBtn,
+                            background: C.red,
+                            cursor: isRejecting || approvalStatus !== "Pending" ? "not-allowed" : "pointer",
+                            opacity: approvalStatus !== "Pending" && approvalStatus !== "Rejected" ? 0.4 : 1,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isRejecting && approvalStatus === "Pending") {
+                              e.currentTarget.style.background = C.redDark;
+                              e.currentTarget.style.transform = "translateY(-1px)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isRejecting && approvalStatus === "Pending") {
+                              e.currentTarget.style.background = C.red;
+                              e.currentTarget.style.transform = "none";
+                            }
+                          }}
+                        >
+                          {isRejecting ? (
+                            <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
+                          ) : (
+                            <X size={13} strokeWidth={3} />
+                          )}
+                          Reject
+                        </button>
+                      </>
+                    ) : (
+                      // SHOW RESET & SUBMIT BUTTONS IN CREATE MODE
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleReset}
+                          disabled={isLoading}
+                          className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white text-slate-700 px-6 py-3 hover:bg-slate-50 transition-all font-bold tracking-widest border-2 border-slate-300 text-sm disabled:opacity-50 rounded-none uppercase"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                          Reset Form
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isLoading}
+                          className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-[#e03131] text-white px-8 py-3 hover:bg-[#c92a2a] transition-all shadow-sm font-bold tracking-widest text-sm disabled:opacity-70 disabled:cursor-not-allowed rounded-none uppercase"
+                        >
+                          {isLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
+                          {isLoading ? "Submitting..." : "Submit Board"}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                   )}
                 </div>
               </div>
+
             </div>
           </div>
         </form>

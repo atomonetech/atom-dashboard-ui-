@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { Check, X, Loader2 } from "lucide-react";
+import { useReadOnlyMode } from "../../../../../hooks/useReadOnlyMode";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 const BinTrollingForm = () => {
   const { id } = useParams();
+  const isReadOnly = useReadOnlyMode();
 
   const [currentDate, setCurrentDate] = useState("");
   const [currentWeek, setCurrentWeek] = useState("W1");
@@ -996,9 +998,106 @@ const BinTrollingForm = () => {
             </div>
 
             {/* Form Actions */}
-            {id ? (
-              <div className="mt-6 border border-[#b2ebf2] rounded-xl p-5 bg-[#f8fdff]">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* ========================================================= */}
+            {/* ── UNIFIED FORM ACTION FOOTER SECTION ──                  */}
+            {/* ========================================================= */}
+            <div className="mt-8 pt-6 border-t border-slate-200 w-full">
+              {id ? (
+                /* 1. REVIEW / APPROVAL MODE (For Department Heads) */
+                <div className="flex flex-col gap-6 w-full">
+                  
+                  {/* Traceability Row: Shows who prepared, approved, or rejected */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                        Prepared By
+                      </label>
+                      <div className="text-sm font-semibold text-slate-700 bg-white border border-slate-200 px-3 py-2 rounded-lg shadow-sm">
+                        {preparedBy || "—"}
+                      </div>
+                    </div>
+
+                    {approvedBy && (
+                      <div>
+                        <label className="block text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">
+                          Approved By
+                        </label>
+                        <div className="text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg shadow-sm">
+                          {approvedBy}
+                        </div>
+                      </div>
+                    )}
+
+                    {rejectedBy && (
+                      <div>
+                        <label className="block text-xs font-bold text-red-600 uppercase tracking-wider mb-1">
+                          Rejected By
+                        </label>
+                        <div className="text-sm font-semibold text-red-700 bg-red-50 border border-red-200 px-3 py-2 rounded-lg shadow-sm">
+                          {rejectedBy}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Unified Remarks Textarea & Action Cluster Row */}
+                  <div className="flex flex-col lg:flex-row items-end gap-6 w-full">
+                    
+                    {/* Textarea grows flexibly */}
+                    <div className="flex flex-col gap-2 flex-1 w-full">
+                      <label className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                        Reviewer Remarks / Reason for Rejection
+                      </label>
+                      <textarea
+                        value={reviewRemark}
+                        onChange={(e) => setReviewRemark(e.target.value)}
+                        disabled={isApproving || isRejecting || approvalStatus === "Approved" || approvalStatus === "Rejected"}
+                        placeholder="Enter dynamic descriptions explaining the actual issue why this layout is rejected or approved..."
+                        className="w-full min-h-[95px] max-h-[220px] p-3 border border-slate-300 rounded-xl text-sm text-slate-800 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all font-sans placeholder-slate-400 shadow-sm"
+                      />
+                    </div>
+
+                    {/* Clean Action Buttons with Fixed Weights & Layout Sizing */}
+                    {!isReadOnly && (
+                    <div className="flex gap-3 shrink-0 w-full lg:w-auto justify-end">
+                      <button
+                        type="button"
+                        onClick={handleApprove}
+                        disabled={isApproving || approvalStatus === "Approved" || approvalStatus === "Rejected"}
+                        className="inline-flex items-center justify-center gap-2 px-6 h-12 bg-[#10b981] hover:bg-[#059669] text-white text-sm font-bold rounded-xl uppercase tracking-wider shadow-sm transition-all min-w-[170px] disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isApproving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                        {isApproving ? "Approving..." : "Approve Report"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleReject}
+                        disabled={isRejecting || approvalStatus === "Approved" || approvalStatus === "Rejected"}
+                        className="inline-flex items-center justify-center gap-2 px-6 h-12 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl uppercase tracking-wider shadow-sm transition-all min-w-[170px] disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isRejecting ? <Loader2 size={16} className="animate-spin" /> : <X size={16} />}
+                        {isRejecting ? "Rejecting..." : "Reject Report"}
+                      </button>
+                    </div>
+                    )}
+
+                  </div>
+                </div>
+              ) : isAlreadyFilled ? (
+                /* 2. ALREADY FILLED / HISTORY VIEW MODE */
+                <div className="flex justify-end pt-2 w-full">
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    className="px-6 py-2.5 bg-gradient-to-r from-[#b2ebf2] to-[#80deea] hover:from-[#80deea] hover:to-[#b2ebf2] text-[#036a7a] font-medium rounded-lg transition-all text-sm shadow-sm hover:shadow-md"
+                  >
+                    ← Back to Production Hub
+                  </button>
+                </div>
+              ) : (
+                /* 3. OPERATOR CREATION ENTRY MODE */
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between w-full">
                   <div className="flex flex-col">
                     <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
                       Prepared By
@@ -1006,124 +1105,31 @@ const BinTrollingForm = () => {
                     <input
                       type="text"
                       value={preparedBy}
-                      readOnly
-                      className="px-3 py-2 border border-[#b2ebf2] rounded-lg bg-[#f0fffe] text-sm text-slate-700 w-full cursor-not-allowed"
+                      onChange={(e) => setPreparedBy(e.target.value)}
+                      placeholder="Enter name"
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-blue-600 w-full sm:w-64"
                     />
                   </div>
 
-                  {approvedBy && (
-                    <div className="flex flex-col">
-                      <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-                        Approved By
-                      </label>
-                      <input
-                        type="text"
-                        value={approvedBy}
-                        readOnly
-                        className="px-3 py-2 border border-[#b2ebf2] rounded-lg bg-[#f0fffe] text-sm text-slate-700 w-full cursor-not-allowed"
-                      />
-                    </div>
-                  )}
+                  <div className="flex gap-4">
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-[#ffb2b2] to-[#ff8080] hover:from-[#ff8080] hover:to-[#ffb2b2] text-white font-medium rounded-lg transition-all text-sm shadow-sm hover:shadow-md transform hover:scale-[1.02]"
+                    >
+                      Reset Form
+                    </button>
 
-                  {rejectedBy && (
-                    <div className="flex flex-col">
-                      <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-                        Rejected By
-                      </label>
-                      <input
-                        type="text"
-                        value={rejectedBy}
-                        readOnly
-                        className="px-3 py-2 border border-[#b2ebf2] rounded-lg bg-[#f0fffe] text-sm text-slate-700 w-full cursor-not-allowed"
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex flex-col md:col-span-3">
-                    <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-                      Remark
-                    </label>
-                    <textarea
-                      value={reviewRemark}
-                      onChange={(e) => setReviewRemark(e.target.value)}
-                      rows={3}
-                      placeholder="Enter approval/rejection remark..."
-                      className="w-full border border-[#b2ebf2] rounded-lg px-3 py-2 text-sm text-black bg-white placeholder-slate-400 focus:outline-none focus:border-[#4fc3dc]"
-                    />
+                    <button
+                      type="submit"
+                      className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-[#b2ebf2] to-[#80deea] hover:from-[#80deea] hover:to-[#b2ebf2] text-[#036a7a] font-medium rounded-lg transition-all text-sm shadow-sm hover:shadow-md transform hover:scale-[1.02]"
+                    >
+                      Save Record for {currentWeek}
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex flex-col sm:flex-row justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={handleApprove}
-                    disabled={isApproving || approvalStatus === "Approved"}
-                    className="px-6 py-2.5 bg-[#10b981] hover:bg-[#059669] text-white font-bold rounded-lg transition-all text-sm shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
-                  >
-                    {isApproving ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <Check size={16} />
-                    )}
-                    {isApproving ? "APPROVING..." : "APPROVE REPORT"}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleReject}
-                    disabled={isRejecting || approvalStatus === "Rejected"}
-                    className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-all text-sm shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
-                  >
-                    {isRejecting ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <X size={16} />
-                    )}
-                    {isRejecting ? "REJECTING..." : "REJECT REPORT"}
-                  </button>
-                </div>
-              </div>
-            ) : isAlreadyFilled ? (
-              <div className="flex justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="px-6 py-2.5 bg-gradient-to-r from-[#b2ebf2] to-[#80deea] hover:from-[#80deea] hover:to-[#b2ebf2] text-[#036a7a] font-medium rounded-lg transition-all text-sm shadow-sm hover:shadow-md"
-                >
-                  ← Back to Production Hub
-                </button>
-              </div>
-            ) : (
-              <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div className="flex flex-col">
-                  <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-                    Prepared By
-                  </label>
-                  <input
-                    type="text"
-                    value={preparedBy}
-                    onChange={(e) => setPreparedBy(e.target.value)}
-                    placeholder="Enter name"
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-blue-600 w-full sm:w-64"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-[#ffb2b2] to-[#ff8080] hover:from-[#ff8080] hover:to-[#ffb2b2] text-white font-medium rounded-lg transition-all text-sm shadow-sm hover:shadow-md transform hover:scale-[1.02]"
-                >
-                  Reset Form
-                </button>
-
-                <button
-                  type="submit"
-                  className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-[#b2ebf2] to-[#80deea] hover:from-[#80deea] hover:to-[#b2ebf2] text-[#036a7a] font-medium rounded-lg transition-all text-sm shadow-sm hover:shadow-md transform hover:scale-[1.02]"
-                >
-                  Save Record for {currentWeek}
-                </button>
-              </div>
-            )}
+              )}
+            </div>
           </form>
         </div>
       </div>

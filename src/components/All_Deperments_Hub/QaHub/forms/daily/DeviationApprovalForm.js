@@ -1,18 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-  Calendar,
-  Clock,
-  FileText,
-  UserCheck,
-  Eye,
-  RotateCcw,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Calendar, Clock, FileText, UserCheck, Eye, RotateCcw, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { useReadOnlyMode } from "../../../../../hooks/useReadOnlyMode";
+import axios from 'axios';
 
 const DeviationApprovalForm = () => {
   const { id } = useParams();
@@ -20,6 +10,8 @@ const DeviationApprovalForm = () => {
   const isViewMode = Boolean(id);
 
   const currentUser = localStorage.getItem("username") || "Unknown User";
+  const isReadOnly = useReadOnlyMode();
+ // Agar ID hai toh form Read-Only (View) mode mein chala jayega
 
   const gradientColors = {
     start: "#4158D0",
@@ -652,7 +644,7 @@ const DeviationApprovalForm = () => {
                 </div>
               </div>
             )}
-
+            { !isReadOnly&&(
             <div className="px-4 sm:px-5 md:px-6 py-3 sm:py-4 bg-gray-50 border-t border-gray-200 flex flex-col-reverse sm:flex-row gap-3 justify-between items-stretch sm:items-center">
               <div className="w-full sm:w-auto"></div>
 
@@ -704,6 +696,7 @@ const DeviationApprovalForm = () => {
                 )}
               </div>
             </div>
+            )}
           </form>
         </div>
       </div>
