@@ -51,17 +51,28 @@ import { Pi } from "lucide-react";
 
 const MachineRoutes = () => {
   return (
-    
     <Routes>
       {/* --- FORMS ROUTES --- */}
       <Route path="history-card" element={<MachineHistoryCard />} />
-      <Route path="breakdown-form" element={<MachineBreakDownForm />} />
+      <Route
+        path="view-report/machine-history/:id"
+        element={<MachineHistoryCard />}
+      />
       <Route
         path="power-press-checksheet"
         element={<DailyPowerPressChecksheet />}
-      />{" "}
-      {/* This is Daily, so no weekly in path */}
-      { <Route path="breakdown-summary" element={<MachineBreakDownSummary />} /> }
+      />
+      <Route
+        path="view-report/power-press-checksheet/:id"
+        element={<DailyPowerPressChecksheet />}
+      />
+      <Route path="breakdown-form" element={<MachineBreakDownForm />} />
+      <Route
+        path="view-report/machine-breakdown/:id"
+        element={<MachineBreakDownForm />}
+      />
+
+      <Route path="breakdown-summary" element={<MachineBreakDownSummary />} />
       {/* FOOLPROOF POKA YOKE ROUTES */}
       <Route path="Poka-Yoke" element={<PokaYokeChecksheet />} />
       <Route path="poka_yoke_check" element={<PokaYokeChecksheet />} />
@@ -110,25 +121,19 @@ const MachineRoutes = () => {
         path="weekly/preventive-machine"
         element={<TappingMaintenanceForm />}
       />
-      
-      
-
       <Route
         path="weekly/preventive-cutting"
-        element={< PipeCuttingMaintenanceForm />}
+        element={<PipeCuttingMaintenanceForm />}
       />
       <Route
         path="weekly/preventive-vibra"
-        element={<VibraMaintenanceForm  />}
+        element={<VibraMaintenanceForm />}
       />
-
-     
       <Route
         path="weekly/preventive-molding"
-        element={<DipMoldingMaintenanceForm  />}
+        element={<DipMoldingMaintenanceForm />}
       />
-
-       <Route
+      <Route
         path="weekly/preventive-press"
         element={<ServoPressMaintenanceForm />}
       />
@@ -155,7 +160,6 @@ const MachineRoutes = () => {
       {/* <Route path="breakdown-summary" element={<MachineBreakdownSummary />} /> */}
       <Route path="why-why-analysis" element={<WhyAnalysisForm />} />
       <Route path="critical-spares" element={<CriticalSparesForm />} />
-      
       {/* --- YEARLY ROUTES --- */}
       <Route path="yearly" element={<MachineYearlyReport />} />
       <Route path="master-list-mc" element={<MasterMachineList />} />
