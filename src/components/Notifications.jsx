@@ -78,7 +78,7 @@ const ROUTE_MAP = {
     ["deviation", ["deviation report", "deviation"]],
     ["redbin-attendance", ["redbin attendance", "red bin attendance"]],
     ["redbin", ["redbin", "red bin", "red bin analysis"]],
-    ["incoming", ["incoming", "incoming inspection","incoming material inspection"]],
+    ["incoming", ["incoming", "incoming inspection", "incoming material inspection"]],
     ["scrap", ["scrap", "scrap note"]],
     ["poka-yoke", ["poka yoke"]],
     ["inspection", ["inspection"]],
@@ -98,11 +98,11 @@ const ROUTE_MAP = {
   ]),
 
   ...buildRoutes(MAINT_HUB, MAINT_TITLE, [
-    ["machine-breakdown", ["machine breakdown", "machine breakdown form"]],
-    [
-      "preventive-maintenance",
-      ["preventive maintenance", "machine preventive maintenance"],
-    ],
+    ["machine-history", ["machine history card", "machine history form"]],
+    ["power-press-checksheet", ["daily power press checksheet", "power press checksheet"]],
+    ["machine-breakdown", ["machine breakdown", "machine breakdown form", "machine breakdown slip"]],
+    ["poka-yoke", ["poka yoke monitoring", "poka yoke"]],
+    ["preventive-maintenance", ["preventive maintenance", "machine preventive maintenance"]],
     ["tool-breakdown", ["tool breakdown"]],
     ["tool-preventive-maintenance", ["tool preventive maintenance"]],
     ["tool-history", ["tool history"]],
@@ -399,8 +399,8 @@ export default function Notifications() {
                             <span className="text-sm font-medium text-slate-300">
                               {formatTimeAgo(
                                 notif.time ||
-                                  notif.created_at ||
-                                  notif.createdAt
+                                notif.created_at ||
+                                notif.createdAt
                               )}
                             </span>
                           </div>

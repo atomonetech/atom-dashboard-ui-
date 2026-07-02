@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-// import API_CONFIG from '../config/api';
+
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
 
 const checkData = [
     {
@@ -73,14 +70,80 @@ const PLANT_MAP = {
     'Plant 2': 'plant_2',
 };
 
+const normalizePlantForUI = (plantValue = '') => {
+    if (plantValue === 'plant_1') return 'Plant 1';
+    if (plantValue === 'plant_2') return 'Plant 2';
+    return plantValue;
+};
+
+const normalizeStatusForUI = (status = '') => {
+    const value = String(status || '').toLowerCase();
+
+    if (value === 'ok') return 'OK';
+    if (value === 'ng') return 'NG';
+    if (value === 'not ok' || value === 'not_ok' || value === 'false') return 'NG';
+
+    return '';
+};
+
 const buildChecks = () =>
     checkData.flatMap(item =>
-        item.subPoints.map((_, spi) => ({ sNo: item.sNo, spi, status: '', value: '', unit: 'bar' }))
+        item.subPoints.map((_, spi) => ({
+            sNo: item.sNo,
+            spi,
+            status: '',
+            value: '',
+            unit: 'bar'
+        }))
     );
 
-const ObsCell = ({ sNo, spi, hasInput, checks, updateCheck }) => {
+const buildChecksFromBackend = (backendCheckpoints = []) => {
+    const baseChecks = buildChecks();
+
+    if (!Array.isArray(backendCheckpoints) || backendCheckpoints.length === 0) {
+        return baseChecks;
+    }
+
+    return baseChecks.map(base => {
+        const match = backendCheckpoints.find(cp => {
+            const cpSno = cp.sNo ?? cp.s_no ?? cp.sr_no ?? cp.sr ?? cp.Sr;
+            const cpSpi = cp.spi ?? cp.sub_index ?? cp.subPointIndex;
+
+            if (cpSpi !== undefined && cpSpi !== null) {
+                return Number(cpSno) === Number(base.sNo) && Number(cpSpi) === Number(base.spi);
+            }
+
+            const item = checkData.find(x => Number(x.sNo) === Number(base.sNo));
+            const subPoint = item?.subPoints?.[base.spi];
+
+            return (
+                Number(cpSno) === Number(base.sNo) &&
+                String(cp.specification || cp.Specification || '').trim() === String(subPoint?.specification || '').trim()
+            );
+        });
+
+        if (!match) return base;
+
+        return {
+            ...base,
+            status: normalizeStatusForUI(match.status || match.result || match.is_ok),
+            value: match.observedValue || match.observed_value || match.value || '',
+            unit: match.unit || 'bar',
+        };
+    });
+};
+
+const ObsCell = ({ sNo, spi, hasInput, checks, updateCheck, disabled = false }) => {
     const chk = checks.find(c => c.sNo === sNo && c.spi === spi);
-    if (!hasInput) return <span style={{ color: '#cbd5e1', fontSize: '0.9rem', fontWeight: 700 }}>—</span>;
+
+    if (!hasInput) {
+        return (
+            <span style={{ color: '#cbd5e1', fontSize: '0.9rem', fontWeight: 700 }}>
+                —
+            </span>
+        );
+    }
+
     return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
             <input
@@ -89,49 +152,72 @@ const ObsCell = ({ sNo, spi, hasInput, checks, updateCheck }) => {
                 step="0.1"
                 placeholder="Value"
                 value={chk?.value || ''}
+                disabled={disabled}
                 onChange={e => updateCheck(sNo, spi, { value: e.target.value })}
             />
+
             <select
                 className="unit-select"
                 value={chk?.unit || 'bar'}
+                disabled={disabled}
                 onChange={e => updateCheck(sNo, spi, { unit: e.target.value })}
             >
-                {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                {UNITS.map(u => (
+                    <option key={u} value={u}>
+                        {u}
+                    </option>
+                ))}
             </select>
         </div>
     );
 };
 
-const CheckBtns = ({ sNo, spi, checks, setStatus }) => {
+const CheckBtns = ({ sNo, spi, checks, setStatus, disabled = false }) => {
     const chk = checks.find(c => c.sNo === sNo && c.spi === spi);
+
     return (
         <div className="d-flex justify-content-center gap-2">
             <button
+                type="button"
                 className={`check-btn ${chk?.status === 'OK' ? 'ok-active' : 'ok-idle'}`}
-                onClick={() => setStatus(sNo, spi, 'OK')}
+                onClick={() => !disabled && setStatus(sNo, spi, 'OK')}
+                disabled={disabled}
                 title="OK"
-            >✓</button>
+            >
+                ✓
+            </button>
+
             <button
+                type="button"
                 className={`check-btn ${chk?.status === 'NG' ? 'ng-active' : 'ng-idle'}`}
-                onClick={() => setStatus(sNo, spi, 'NG')}
+                onClick={() => !disabled && setStatus(sNo, spi, 'NG')}
+                disabled={disabled}
                 title="NG"
-            >✗</button>
+            >
+                ✗
+            </button>
         </div>
     );
 };
 
 const DailyPowerPressChecksheet = () => {
     const navigate = useNavigate();
-    const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const { id } = useParams();
+
+    const isViewMode = Boolean(id);
+
+    const today = new Date().toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
 
     const [plant, setPlant] = useState('');
-    
-    // --- Operator States ---
+
     const [operatorName, setOperatorName] = useState('');
     const [operators, setOperators] = useState([]);
     const [operatorsLoading, setOperatorsLoading] = useState(false);
-     
-    // --- NEW: Add Operator States ---
+
     const [isAddingNewOperator, setIsAddingNewOperator] = useState(false);
     const [newOperatorName, setNewOperatorName] = useState('');
     const [isSavingOperator, setIsSavingOperator] = useState(false);
@@ -143,12 +229,20 @@ const DailyPowerPressChecksheet = () => {
     const [shift, setShift] = useState('');
     const [checks, setChecks] = useState(buildChecks());
 
+    const [approvalRemark, setApprovalRemark] = useState('');
+    const [approvalLoading, setApprovalLoading] = useState(false);
+    const [loadingReport, setLoadingReport] = useState(false);
+
     useEffect(() => {
-        if (!plant) {
-            setOperators([]);
-            setMachineList([]);
-            setOperatorName('');
-            setMachineNo('');
+        if (!plant || isViewMode) {
+            if (!plant) {
+                setOperators([]);
+                setMachineList([]);
+                if (!isViewMode) {
+                    setOperatorName('');
+                    setMachineNo('');
+                }
+            }
             return;
         }
 
@@ -156,10 +250,11 @@ const DailyPowerPressChecksheet = () => {
 
         setOperatorName('');
         setMachineNo('');
-        setIsAddingNewOperator(false); // Reset add mode if plant changes
+        setIsAddingNewOperator(false);
         setNewOperatorName('');
 
         setOperatorsLoading(true);
+
         fetch(`${BASE_URL}/api/operators/?plant=${plantKey}`)
             .then(r => r.json())
             .then(data => {
@@ -169,25 +264,92 @@ const DailyPowerPressChecksheet = () => {
                     setOperators([]);
                 }
             })
-            .catch((err) => {
-                console.error("Fetch Error:", err);
+            .catch(err => {
+                console.error('Fetch Error:', err);
                 setOperators([]);
             })
             .finally(() => setOperatorsLoading(false));
 
         setMachinesLoading(true);
+
         fetch(`${BASE_URL}/api/machines/list/?plant=${plantKey}`)
             .then(r => r.json())
             .then(data => {
-                if (data.success) setMachineList(data.machines);
-                else setMachineList([]);
+                if (data.success) {
+                    setMachineList(data.machines);
+                } else {
+                    setMachineList([]);
+                }
             })
             .catch(() => setMachineList([]))
             .finally(() => setMachinesLoading(false));
+    }, [plant, isViewMode]);
 
-    }, [plant]);
+    useEffect(() => {
+        if (!id) return;
 
-    // --- NEW: Handle Save New Operator ---
+        const fetchSingleReport = async () => {
+            try {
+                setLoadingReport(true);
+
+                const res = await axios.get(
+                    `${BASE_URL}/api/get-single-maintenance-report/power-press-checksheet/${id}/`
+                );
+
+                if (!res.data.success) {
+                    alert(res.data.error || 'Failed to load Daily Power Press Checksheet.');
+                    return;
+                }
+
+                const data = res.data.data || {};
+
+                const detailSource = data.checksheet || data.report || data;
+
+                const loadedPlant = normalizePlantForUI(
+                    detailSource.plant || data.plant || ''
+                );
+
+                const loadedOperator =
+                    detailSource.operator_name ||
+                    detailSource.operatorName ||
+                    data.operator_name ||
+                    data.operatorName ||
+                    '';
+
+                const loadedMachine =
+                    detailSource.machine_no ||
+                    detailSource.machineNo ||
+                    data.machine_no ||
+                    data.machineNo ||
+                    '';
+
+                const loadedShift =
+                    detailSource.shift ||
+                    data.shift ||
+                    '';
+
+                const loadedCheckpoints =
+                    detailSource.checkpoints ||
+                    data.checkpoints ||
+                    [];
+
+                setPlant(loadedPlant);
+                setOperatorName(loadedOperator);
+                setMachineNo(loadedMachine);
+                setShift(loadedShift);
+                setChecks(buildChecksFromBackend(loadedCheckpoints));
+                setApprovalRemark(data.approval_remarks || data.remarks || '');
+            } catch (err) {
+                console.error('Error loading Daily Power Press Checksheet:', err);
+                alert('Failed to load Daily Power Press Checksheet.');
+            } finally {
+                setLoadingReport(false);
+            }
+        };
+
+        fetchSingleReport();
+    }, [id]);
+
     const handleSaveNewOperator = async () => {
         const opName = newOperatorName.trim();
         if (!opName) return;
@@ -200,22 +362,17 @@ const DailyPowerPressChecksheet = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     name: opName,
-                    plant: PLANT_MAP[plant] 
+                    plant: PLANT_MAP[plant]
                 })
             });
 
             const result = await response.json();
 
             if (response.ok) {
-                
-                const newOp = { id: result.id || Date.now(), name: opName }; 
-                
-                // Dropdown list me naya operator add karo
+                const newOp = { id: result.id || Date.now(), name: opName };
+
                 setOperators(prev => [...prev, newOp]);
-                // Naya operator automatically select ho jaye
                 setOperatorName(opName);
-                
-                // State reset karo
                 setIsAddingNewOperator(false);
                 setNewOperatorName('');
             } else {
@@ -232,27 +389,41 @@ const DailyPowerPressChecksheet = () => {
     const formReady = operatorName.trim() !== '' && plant !== '' && machineNo.trim() !== '' && shift !== '';
 
     const getCheck = (sNo, spi) => checks.find(c => c.sNo === sNo && c.spi === spi);
+
     const updateCheck = (sNo, spi, patch) =>
-        setChecks(prev => prev.map(c => c.sNo === sNo && c.spi === spi ? { ...c, ...patch } : c));
+        setChecks(prev =>
+            prev.map(c =>
+                c.sNo === sNo && c.spi === spi
+                    ? { ...c, ...patch }
+                    : c
+            )
+        );
+
     const setStatus = (sNo, spi, status) =>
-        updateCheck(sNo, spi, { status: getCheck(sNo, spi)?.status === status ? '' : status });
+        updateCheck(sNo, spi, {
+            status: getCheck(sNo, spi)?.status === status ? '' : status
+        });
 
     const allDone = checks.every(c => c.status !== '');
 
     const handleSubmit = async () => {
         if (!formReady) {
-             alert(' Please fill in all required details (Operator, Plant, Machine, Shift) before proceeding.');
+            alert(' Please fill in all required details (Operator, Plant, Machine, Shift) before proceeding.');
             return;
         }
+
         if (!allDone) {
             alert(' Please complete all checkpoints before saving.');
             return;
         }
 
+        const currentUser = localStorage.getItem('username') || 'Unknown User';
+
         const dateParts = today.split('/');
         const backendDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
 
         const payload = {
+            username: currentUser,
             plant: plant,
             operator_name: operatorName,
             machine_no: machineNo,
@@ -261,8 +432,10 @@ const DailyPowerPressChecksheet = () => {
             checkpoints: checkData.flatMap(item =>
                 item.subPoints.map((sp, spi) => {
                     const chk = getCheck(item.sNo, spi);
+
                     return {
                         sNo: item.sNo,
+                        spi: spi,
                         checkPoint: item.checkPoint,
                         specification: sp.specification,
                         checkingMethod: sp.checkingMethod,
@@ -273,7 +446,7 @@ const DailyPowerPressChecksheet = () => {
                 })
             ),
         };
-        
+
         console.log('Sending Payload to Database:', payload);
 
         try {
@@ -286,30 +459,69 @@ const DailyPowerPressChecksheet = () => {
             const data = await response.json();
 
             if (data.success || response.ok) {
-                 const currentUser = localStorage.getItem("username") || "Unknown User";
-                
-                        try {
-                          await axios.post(API_LOG, {
-                            username: currentUser,
-                            report_name: "power press machine Form", // Yahan hardcode kar diya form ka naam
-                          });
-                          console.log("Activity log successfully saved!");
-                        } catch (logError) {
-                          console.error("Activity log save karne mein error aayi:", logError);
-                        }
                 setPlant('');
                 setOperatorName('');
                 setMachineNo('');
                 setShift('');
                 setChecks(buildChecks());
-                alert(' Badhai ho! Daily Power Press Checksheet database me successfully save ho gayi!');
+
+                alert(' Daily Power Press Checksheet database me successfully save ho gayi!');
             } else {
-                console.error("Backend Error:", data);
-                alert(` Data save nahi ho paya! Error: ${data.error || 'Check console'}`);
+                console.error('Backend Error:', data);
+                alert(`Data save nahi ho paya! Error: ${data.error || 'Check console'}`);
             }
         } catch (error) {
             console.error('Network Error:', error);
-            alert(' Server se connect nahi ho paya! Apni backend IP aur connection check karo.');
+            alert('Server se connect nahi ho paya! Apni backend IP aur connection check karo.');
+        }
+    };
+
+    const handleApprove = async () => {
+        try {
+            setApprovalLoading(true);
+
+            const currentUser = localStorage.getItem('username') || 'Approver';
+
+            await axios.post(`${BASE_URL}/api/approve-report/`, {
+                log_id: id,
+                approver_username: currentUser,
+                remarks: approvalRemark,
+            });
+
+            alert('Report approved successfully.');
+            navigate('/notifications');
+        } catch (err) {
+            console.error('Approve error:', err);
+            alert(err.response?.data?.error || 'Approval failed.');
+        } finally {
+            setApprovalLoading(false);
+        }
+    };
+
+    const handleReject = async () => {
+        if (!approvalRemark.trim()) {
+            alert('Please enter remark before rejecting.');
+            return;
+        }
+
+        try {
+            setApprovalLoading(true);
+
+            const currentUser = localStorage.getItem('username') || 'Approver';
+
+            await axios.post(`${BASE_URL}/api/reject-report/`, {
+                log_id: id,
+                approver_username: currentUser,
+                remarks: approvalRemark,
+            });
+
+            alert('Report rejected successfully.');
+            navigate('/notifications');
+        } catch (err) {
+            console.error('Reject error:', err);
+            alert(err.response?.data?.error || 'Reject failed.');
+        } finally {
+            setApprovalLoading(false);
         }
     };
 
@@ -378,9 +590,7 @@ const DailyPowerPressChecksheet = () => {
                     height: 46px; transition: 0.2s; outline: none; font-family: 'Inter', sans-serif;
                 }
                 .field-input:focus { border-color: #df8008; box-shadow: 0 0 0 3px rgba(223,128,8,0.15); background: #fff; }
-                .field-input:disabled { opacity: 0.5; cursor: not-allowed; background: #f1f5f9; }
-                
-                /* New Operator Buttons styling */
+                .field-input:disabled { opacity: 0.65; cursor: not-allowed; background: #f1f5f9; }
                 .op-action-btn {
                     height: 46px; width: 46px; border-radius: 10px; border: 1px solid #cbd5e1;
                     display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
@@ -391,10 +601,8 @@ const DailyPowerPressChecksheet = () => {
                 .op-action-btn.cancel { background: #fee2e2; border-color: #ef4444; color: #991b1b; font-size: 1.1rem;}
                 .op-action-btn.cancel:hover { background: #ef4444; color: #fff; }
                 .op-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-                
                 @keyframes spin { 100% { transform: rotate(360deg); } }
                 .animate-spin-icon { animation: spin 1s linear infinite; display: inline-block; }
-
                 .table-section { animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
                 @keyframes slideDown {
                     from { opacity: 0; transform: translateY(-18px); }
@@ -420,10 +628,12 @@ const DailyPowerPressChecksheet = () => {
                 }
                 .obs-input { border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 8px; width: 85px; text-align: center; font-weight: 700; }
                 .unit-select { border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px; background: #f1f5f9; font-weight: 700; }
+                .obs-input:disabled, .unit-select:disabled { opacity: 0.75; cursor: not-allowed; }
                 .check-btn {
                     width: 38px; height: 38px; border-radius: 50%; border: 2px solid; background: #fff;
                     display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
                 }
+                .check-btn:disabled { cursor: not-allowed; opacity: 0.85; }
                 .ok-idle, .ng-idle { border-color: #e2e8f0; color: #cbd5e1; }
                 .ok-active { border-color: #10b981; background: #10b981; color: #fff; }
                 .ng-active { border-color: #ef4444; background: #ef4444; color: #fff; }
@@ -433,17 +643,45 @@ const DailyPowerPressChecksheet = () => {
                     padding: 0.9rem 2rem; width: 100%; font-size: 1.05rem; cursor: pointer;
                     display: flex; align-items: center; justify-content: center; gap: 8px;
                 }
+                .btn-approve {
+                    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+                    color: #fff; border: none; border-radius: 12px; font-weight: 800;
+                    padding: 0.85rem 1.5rem; width: 100%; cursor: pointer;
+                }
+                .btn-reject {
+                    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                    color: #fff; border: none; border-radius: 12px; font-weight: 800;
+                    padding: 0.85rem 1.5rem; width: 100%; cursor: pointer;
+                }
+                .approval-remark {
+                    width: 100%;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 12px;
+                    padding: 0.8rem 1rem;
+                    outline: none;
+                    font-weight: 700;
+                    background: #f8fafc;
+                }
+                .approval-remark:focus {
+                    border-color: #df8008;
+                    box-shadow: 0 0 0 3px rgba(223,128,8,0.15);
+                    background: #fff;
+                }
                 @media (max-width: 992px) {
                     .desktop-table { display: none; }
                 }
             `}</style>
 
             <nav className="pp-navbar">
-                <div className="pp-brand" onClick={() => navigate('/Maintenance/Machine/daily')}>
+                <div
+                    className="pp-brand"
+                    onClick={() => navigate(isViewMode ? '/notifications' : '/Maintenance/Machine/daily')}
+                >
                     <i className="bi bi-arrow-left-circle back-arrow"></i>
                     <div className="pp-brand-icon">🖨️</div>
                     <span style={{ color: '#df8008' }}>Daily Power Press Checksheet</span>
                 </div>
+
                 <div className="nav-right">
                     <span className="doc-badge">AOT-F-MM-02</span>
                     <span className="rev-badge">Rev: 03</span>
@@ -451,206 +689,310 @@ const DailyPowerPressChecksheet = () => {
             </nav>
 
             <div className="pp-main">
-                <div className="pp-card">
-                    <div className="pp-card-header">
-                        <div className="icon-box"><i className="bi bi-clipboard2-pulse"></i></div>
-                        Checksheet Information
-                        <div className="header-meta">
-                            <span className="date-meta"><i className="bi bi-calendar3 me-2"></i>{today}</span>
-                        </div>
+                {loadingReport ? (
+                    <div className="pp-card text-center fw-bold text-muted">
+                        Loading report, please wait...
                     </div>
-
-                    <div className="row g-4">
-                        <div className="col-12 col-md-6 col-lg-3">
-                            <label className="field-label">Plant <span className="required-star">*</span></label>
-                            <select
-                                className="field-input"
-                                value={plant}
-                                onChange={e => setPlant(e.target.value)}
-                            >
-                                <option value="">-- Select Plant --</option>
-                                {Object.keys(PLANT_MAP).map(p => (
-                                    <option key={p} value={p}>{p}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* UPDATED: Operator Name Logic Here */}
-                        <div className="col-12 col-md-6 col-lg-3">
-                            <label className="field-label">Operator Name <span className="required-star">*</span></label>
-                            {isAddingNewOperator ? (
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    <input
-                                        type="text"
-                                        autoFocus
-                                        placeholder="Enter Name"
-                                        value={newOperatorName}
-                                        onChange={(e) => setNewOperatorName(e.target.value)}
-                                        disabled={isSavingOperator}
-                                        className="field-input"
-                                        style={{ paddingRight: '10px', paddingLeft: '10px' }}
-                                    />
-                                    <button 
-                                        type="button" 
-                                        onClick={handleSaveNewOperator} 
-                                        disabled={isSavingOperator || !newOperatorName.trim()}
-                                        className="op-action-btn save"
-                                        title="Save Operator"
-                                    >
-                                        {isSavingOperator ? <i className="bi bi-arrow-repeat animate-spin-icon"></i> : <i className="bi bi-check2"></i>}
-                                    </button>
-                                    <button 
-                                        type="button" 
-                                        onClick={() => setIsAddingNewOperator(false)} 
-                                        disabled={isSavingOperator}
-                                        className="op-action-btn cancel"
-                                        title="Cancel"
-                                    >
-                                        <i className="bi bi-x-lg"></i>
-                                    </button>
+                ) : (
+                    <>
+                        <div className="pp-card">
+                            <div className="pp-card-header">
+                                <div className="icon-box">
+                                    <i className="bi bi-clipboard2-pulse"></i>
                                 </div>
-                            ) : (
-                                <select
-                                    className="field-input"
-                                    value={operatorName}
-                                    onChange={e => {
-                                        if (e.target.value === 'ADD_NEW') {
-                                            setIsAddingNewOperator(true);
-                                        } else {
-                                            setOperatorName(e.target.value);
-                                        }
-                                    }}
-                                    disabled={!plant || operatorsLoading}
-                                >
-                                    <option value="">
-                                        {operatorsLoading
-                                            ? 'Loading Operators...'
-                                            : !plant
-                                                ? '-- Select Plant First --'
-                                                : '-- Select Operator --'}
-                                    </option>
-                                    {operators.map(op => (
-                                        <option key={op.id || op.name} value={op.name}>{op.name}</option>
-                                    ))}
-                                    
-                                    {/* Direct Option Without Condition */}
-                                    <option value="ADD_NEW" style={{ fontWeight: '800', color: '#df8008', backgroundColor: '#fff3e0' }}>
-                                        + Add New Operator
-                                    </option>
-                                </select>
-                            )}
-                        </div>
-
-                        <div className="col-12 col-md-6 col-lg-3">
-                            <label className="field-label">Machine No. <span className="required-star">*</span></label>
-                            <select
-                                className="field-input"
-                                value={machineNo}
-                                onChange={e => setMachineNo(e.target.value)}
-                                disabled={!plant || machinesLoading}
-                            >
-                                <option value="">
-                                    {machinesLoading
-                                        ? 'Loading Machines...'
-                                        : !plant
-                                            ? '-- Select Plant First --'
-                                            : '-- Select Machine --'}
-                                </option>
-                                {machineList.map(m => (
-                                    <option key={m} value={m}>Machine {m}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div className="col-12 col-md-6 col-lg-3">
-                            <label className="field-label">Shift <span className="required-star">*</span></label>
-                            <select
-                                className="field-input"
-                                value={shift}
-                                onChange={e => setShift(e.target.value)}
-                            >
-                                <option value="">-- Select Shift --</option>
-                                <option value="A">Morning (08:30AM – 08:00PM)</option>
-                                <option value="B">Night (08:30PM – 08:00AM)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                {formReady && (
-                    <div className="table-section">
-                        <div className="pp-card desktop-table" style={{ padding: '0' }}>
-                            <div className="table-wrapper">
-                                <table className="pp-table">
-                                    <thead>
-                                        <tr>
-                                            <th style={{ width: '6%' }}>S.No.</th>
-                                            <th style={{ width: '16%' }}>Check Point</th>
-                                            <th style={{ width: '28%' }}>Specification</th>
-                                            <th style={{ width: '16%' }}>Method</th>
-                                            <th style={{ width: '18%' }}>Observed Value</th>
-                                            <th style={{ width: '16%' }}>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {checkData.map(item =>
-                                            item.subPoints.map((sp, spi) => (
-                                                <tr key={`${item.sNo}-${spi}`}>
-                                                    {spi === 0 && (
-                                                        <td rowSpan={item.subPoints.length} className="sno-cell">
-                                                            {item.sNo}
-                                                        </td>
-                                                    )}
-                                                    {spi === 0 && (
-                                                        <td rowSpan={item.subPoints.length}>
-                                                            {item.checkPoint}
-                                                        </td>
-                                                    )}
-                                                    <td>{sp.specification}</td>
-                                                    <td className="text-center">
-                                                        <span className="method-badge">{sp.checkingMethod}</span>
-                                                    </td>
-                                                    <td className="text-center">
-                                                        <ObsCell
-                                                            sNo={item.sNo}
-                                                            spi={spi}
-                                                            hasInput={sp.hasInput}
-                                                            checks={checks}
-                                                            updateCheck={updateCheck}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <CheckBtns
-                                                            sNo={item.sNo}
-                                                            spi={spi}
-                                                            checks={checks}
-                                                            setStatus={setStatus}
-                                                        />
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div className="pp-card mt-4">
-                            <div className="row g-3 align-items-center">
-                                <div className="col-12 col-md-8">
-                                    <span className="text-muted fw-bold">
-                                        <i className="bi bi-info-circle me-2"></i>
-                                        Double check all values before submitting.
+                                Checksheet Information
+                                <div className="header-meta">
+                                    <span className="date-meta">
+                                        <i className="bi bi-calendar3 me-2"></i>
+                                        {today}
                                     </span>
                                 </div>
-                                <div className="col-12 col-md-4">
-                                    <button className="btn-submit" onClick={handleSubmit}>
-                                        <i className="bi bi-cloud-arrow-up"></i> Save Checksheet
-                                    </button>
+                            </div>
+
+                            <div className="row g-4">
+                                <div className="col-12 col-md-6 col-lg-3">
+                                    <label className="field-label">
+                                        Plant <span className="required-star">*</span>
+                                    </label>
+                                    <select
+                                        className="field-input"
+                                        value={plant}
+                                        onChange={e => setPlant(e.target.value)}
+                                        disabled={isViewMode}
+                                    >
+                                        <option value="">-- Select Plant --</option>
+                                        {Object.keys(PLANT_MAP).map(p => (
+                                            <option key={p} value={p}>{p}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="col-12 col-md-6 col-lg-3">
+                                    <label className="field-label">
+                                        Operator Name <span className="required-star">*</span>
+                                    </label>
+
+                                    {isAddingNewOperator && !isViewMode ? (
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <input
+                                                type="text"
+                                                autoFocus
+                                                placeholder="Enter Name"
+                                                value={newOperatorName}
+                                                onChange={(e) => setNewOperatorName(e.target.value)}
+                                                disabled={isSavingOperator}
+                                                className="field-input"
+                                                style={{ paddingRight: '10px', paddingLeft: '10px' }}
+                                            />
+
+                                            <button
+                                                type="button"
+                                                onClick={handleSaveNewOperator}
+                                                disabled={isSavingOperator || !newOperatorName.trim()}
+                                                className="op-action-btn save"
+                                                title="Save Operator"
+                                            >
+                                                {isSavingOperator ? (
+                                                    <i className="bi bi-arrow-repeat animate-spin-icon"></i>
+                                                ) : (
+                                                    <i className="bi bi-check2"></i>
+                                                )}
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsAddingNewOperator(false)}
+                                                disabled={isSavingOperator}
+                                                className="op-action-btn cancel"
+                                                title="Cancel"
+                                            >
+                                                <i className="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <select
+                                            className="field-input"
+                                            value={operatorName}
+                                            onChange={e => {
+                                                if (e.target.value === 'ADD_NEW') {
+                                                    setIsAddingNewOperator(true);
+                                                } else {
+                                                    setOperatorName(e.target.value);
+                                                }
+                                            }}
+                                            disabled={!plant || operatorsLoading || isViewMode}
+                                        >
+                                            <option value="">
+                                                {operatorsLoading
+                                                    ? 'Loading Operators...'
+                                                    : !plant
+                                                        ? '-- Select Plant First --'
+                                                        : '-- Select Operator --'}
+                                            </option>
+
+                                            {operatorName && !operators.some(op => op.name === operatorName) && (
+                                                <option value={operatorName}>{operatorName}</option>
+                                            )}
+
+                                            {operators.map(op => (
+                                                <option key={op.id || op.name} value={op.name}>
+                                                    {op.name}
+                                                </option>
+                                            ))}
+
+                                            {!isViewMode && (
+                                                <option
+                                                    value="ADD_NEW"
+                                                    style={{
+                                                        fontWeight: '800',
+                                                        color: '#df8008',
+                                                        backgroundColor: '#fff3e0'
+                                                    }}
+                                                >
+                                                    + Add New Operator
+                                                </option>
+                                            )}
+                                        </select>
+                                    )}
+                                </div>
+
+                                <div className="col-12 col-md-6 col-lg-3">
+                                    <label className="field-label">
+                                        Machine No. <span className="required-star">*</span>
+                                    </label>
+                                    <select
+                                        className="field-input"
+                                        value={machineNo}
+                                        onChange={e => setMachineNo(e.target.value)}
+                                        disabled={!plant || machinesLoading || isViewMode}
+                                    >
+                                        <option value="">
+                                            {machinesLoading
+                                                ? 'Loading Machines...'
+                                                : !plant
+                                                    ? '-- Select Plant First --'
+                                                    : '-- Select Machine --'}
+                                        </option>
+
+                                        {machineNo && !machineList.includes(machineNo) && (
+                                            <option value={machineNo}>Machine {machineNo}</option>
+                                        )}
+
+                                        {machineList.map(m => (
+                                            <option key={m} value={m}>Machine {m}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="col-12 col-md-6 col-lg-3">
+                                    <label className="field-label">
+                                        Shift <span className="required-star">*</span>
+                                    </label>
+                                    <select
+                                        className="field-input"
+                                        value={shift}
+                                        onChange={e => setShift(e.target.value)}
+                                        disabled={isViewMode}
+                                    >
+                                        <option value="">-- Select Shift --</option>
+                                        <option value="A">Morning (08:30AM – 08:00PM)</option>
+                                        <option value="B">Night (08:30PM – 08:00AM)</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
-                    </div>
+
+                        {(formReady || isViewMode) && (
+                            <div className="table-section">
+                                <div className="pp-card desktop-table" style={{ padding: '0' }}>
+                                    <div className="table-wrapper">
+                                        <table className="pp-table">
+                                            <thead>
+                                                <tr>
+                                                    <th style={{ width: '6%' }}>S.No.</th>
+                                                    <th style={{ width: '16%' }}>Check Point</th>
+                                                    <th style={{ width: '28%' }}>Specification</th>
+                                                    <th style={{ width: '16%' }}>Method</th>
+                                                    <th style={{ width: '18%' }}>Observed Value</th>
+                                                    <th style={{ width: '16%' }}>Status</th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                {checkData.map(item =>
+                                                    item.subPoints.map((sp, spi) => (
+                                                        <tr key={`${item.sNo}-${spi}`}>
+                                                            {spi === 0 && (
+                                                                <td rowSpan={item.subPoints.length} className="sno-cell">
+                                                                    {item.sNo}
+                                                                </td>
+                                                            )}
+
+                                                            {spi === 0 && (
+                                                                <td rowSpan={item.subPoints.length}>
+                                                                    {item.checkPoint}
+                                                                </td>
+                                                            )}
+
+                                                            <td>{sp.specification}</td>
+
+                                                            <td className="text-center">
+                                                                <span className="method-badge">
+                                                                    {sp.checkingMethod}
+                                                                </span>
+                                                            </td>
+
+                                                            <td className="text-center">
+                                                                <ObsCell
+                                                                    sNo={item.sNo}
+                                                                    spi={spi}
+                                                                    hasInput={sp.hasInput}
+                                                                    checks={checks}
+                                                                    updateCheck={updateCheck}
+                                                                    disabled={isViewMode}
+                                                                />
+                                                            </td>
+
+                                                            <td>
+                                                                <CheckBtns
+                                                                    sNo={item.sNo}
+                                                                    spi={spi}
+                                                                    checks={checks}
+                                                                    setStatus={setStatus}
+                                                                    disabled={isViewMode}
+                                                                />
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {isViewMode ? (
+                                    <div className="pp-card mt-4">
+                                        <div className="mb-3">
+                                            <label className="field-label">
+                                                Approval / Rejection Remark
+                                            </label>
+                                            <textarea
+                                                className="approval-remark"
+                                                rows="3"
+                                                value={approvalRemark}
+                                                onChange={(e) => setApprovalRemark(e.target.value)}
+                                                placeholder="Enter approval or rejection remark..."
+                                            />
+                                        </div>
+
+                                        <div className="row g-3">
+                                            <div className="col-12 col-md-6">
+                                                <button
+                                                    type="button"
+                                                    className="btn-reject"
+                                                    onClick={handleReject}
+                                                    disabled={approvalLoading}
+                                                >
+                                                    <i className="bi bi-x-circle me-2"></i>
+                                                    Reject
+                                                </button>
+                                            </div>
+
+                                            <div className="col-12 col-md-6">
+                                                <button
+                                                    type="button"
+                                                    className="btn-approve"
+                                                    onClick={handleApprove}
+                                                    disabled={approvalLoading}
+                                                >
+                                                    <i className="bi bi-check-circle me-2"></i>
+                                                    Approve
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="pp-card mt-4">
+                                        <div className="row g-3 align-items-center">
+                                            <div className="col-12 col-md-8">
+                                                <span className="text-muted fw-bold">
+                                                    <i className="bi bi-info-circle me-2"></i>
+                                                    Double check all values before submitting.
+                                                </span>
+                                            </div>
+
+                                            <div className="col-12 col-md-4">
+                                                <button className="btn-submit" onClick={handleSubmit}>
+                                                    <i className="bi bi-cloud-arrow-up"></i>
+                                                    Save Checksheet
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>

@@ -14,7 +14,7 @@
 //   const [currentIndex, setCurrentIndex] = useState(0);
 //   const [isLoading, setIsLoading] = useState(false);
 //   const [errorMessage, setErrorMessage] = useState(''); // 🔥 ADDED: Error message state
-  
+
 //   // 🔥 NAYI STATES: Forgot password toggle aur email ke liye
 //   const [isForgotView, setIsForgotView] = useState(false);
 //   const [resetEmail, setResetEmail] = useState('');
@@ -116,7 +116,7 @@
 //           // Plant users ko bhi pehle dashboard hi dikhana hai
 //           navigate('/dashboard'); 
 //         }
-        
+
 //       } else if (response.status === 401) {
 //         // 🔥 ADDED: 401 aane par GitHub jaisa error message
 //         setErrorMessage('Incorrect username or password.');
@@ -134,7 +134,7 @@
 //         localStorage.setItem('access_token', 'demo_blocked_token');
 //         localStorage.setItem('user_role', 'Blocked');
 //         localStorage.setItem('username', username);
-        
+
 //         if (onLogin) onLogin();
 //         navigate('/404-page-not-found'); 
 //       }
@@ -221,7 +221,7 @@
 //       <div className="hidden lg:flex lg:w-1/2 relative">
 //         <div className="absolute inset-0 bg-gradient-to-br from-[#1e3a8a] via-[#1e293b] to-[#0f172a]" />
 //         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnptMCAxMmMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnpNMTggMThjMy4zMTQgMCA2IDIuNjg2IDYgNnMtMi42ODYgNi02IDYtNi0yLjY4Ni02LTYgMi42ODYtNiA2LTZ6bTAgMTJjMy4zMTQgMCA2IDIuNjg2IDYgNnMtMi42ODYgNi02IDYtNi0yLjY4Ni02LTYgMi42ODYtNiA2LTZ6IiBzdHJva2U9IiMwNmI2ZDQiIHN0cm9rZS13aWR0aD0iMC4zIiBvcGFjaXR5PSIwLjEiLz48L2c+PC9zdmc+')] opacity-20" />
-        
+
 //         <div className="relative z-10 flex flex-col justify-center items-center w-full px-12">
 //           <motion.div
 //             initial={{ opacity: 0, y: 20 }}
@@ -237,11 +237,11 @@
 //                 <Zap className="w-9 h-9 text-[#0f172a]" />
 //               </div>
 //             </div>
-            
+
 //             <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-cyan-400 to-yellow-400 bg-clip-text text-transparent">
 //               AtomOne Technologies
 //             </h1>
-            
+
 //             <div className="bg-transparent rounded-3xl p-8 border border-cyan-500/20">
 //               <p className="text-cyan-100/90 text-lg italic mb-4">
 //                 "Success is the sum of small efforts, repeated day in and day out"
@@ -486,17 +486,17 @@ import { toast } from "react-toastify";
 
 export default function Auth({ onLogin }) {
   const navigate = useNavigate();
-  
+
   // Login States
   const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState(''); 
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  
+
   // UI States
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  
+
   // 🔥 FORGOT PASSWORD STATES (UPDATED FOR OTP)
   const [isForgotView, setIsForgotView] = useState(false);
   const [otpSent, setOtpSent] = useState(false); // Track karna ki OTP bheja ja chuka hai ya nahi
@@ -519,7 +519,7 @@ export default function Auth({ onLogin }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username: resetUsername }) 
+        body: JSON.stringify({ username: resetUsername })
       });
 
       const data = await response.json();
@@ -556,11 +556,11 @@ export default function Auth({ onLogin }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          username: resetUsername, 
+        body: JSON.stringify({
+          username: resetUsername,
           otp: otp,
-          new_password: newPassword 
-        }) 
+          new_password: newPassword
+        })
       });
 
       const data = await response.json();
@@ -588,23 +588,44 @@ export default function Auth({ onLogin }) {
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setErrorMessage(''); 
+    setErrorMessage('');
 
     const loginAsDemoAdmin = () => {
       localStorage.setItem('access_token', 'demo_admin_token');
       localStorage.setItem('user_role', 'Admin');
+
+      localStorage.setItem(
+        'allowedHubs',
+        JSON.stringify(['production-hub', 'qa-hub', 'maintenance-hub'])
+      );
+
+      localStorage.setItem(
+        'permissions',
+        JSON.stringify([
+          'Admin',
+          'Production_Hub',
+          'Production_Approvers',
+          'QA_Hub',
+          'QA_Approvers',
+          'Maintenance_Hub',
+          'Maintenance_Approvers',
+        ])
+      );
+
       localStorage.setItem('username', 'Admin');
+
       if (onLogin) {
         onLogin();
       }
-      navigate('/dashboard'); 
+
+      navigate('/dashboard');
     };
 
     try {
       if (window.location.protocol === 'https:' && username === 'Admin' && password === 'admin') {
         loginAsDemoAdmin();
         setIsLoading(false);
-        return; 
+        return;
       }
 
       const controller = new AbortController();
@@ -616,26 +637,82 @@ export default function Auth({ onLogin }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
-        signal: controller.signal 
+        signal: controller.signal
       });
 
-      clearTimeout(timeoutId); 
+      clearTimeout(timeoutId);
       const data = await response.json();
 
       if (response.ok) {
         localStorage.setItem('access_token', data.access);
         localStorage.setItem('refresh_token', data.refresh);
-        localStorage.setItem('user_role', data.role);
+        const role = data.role || '';
+
+        let accessRole = role;
+
+        if (role === 'Production_Approvers') {
+          accessRole = 'Production_Hub';
+        }
+
+        if (role === 'QA_Approvers' || role === 'Quality_Approvers') {
+          accessRole = 'QA_Hub';
+        }
+
+        if (role === 'Maintenance_Approvers') {
+          accessRole = 'Maintenance_Hub';
+        }
+
+        localStorage.setItem('user_role', accessRole);
+        localStorage.setItem('actual_role', role);
+
+        let allowedHubs = [];
+        let permissions = [];
+
+        if (role === 'Admin') {
+          allowedHubs = [
+            'production-hub',
+            'qa-hub',
+            'maintenance-hub',
+          ];
+
+          permissions = [
+            'Admin',
+            'Production_Hub',
+            'Production_Approvers',
+            'QA_Hub',
+            'QA_Approvers',
+            'Maintenance_Hub',
+            'Maintenance_Approvers',
+          ];
+        }
+
+        if (role === 'Production_Hub' || role === 'Production_Approvers') {
+          allowedHubs = ['production-hub'];
+          permissions = ['Production_Hub', 'Production_Approvers', 'production-hub'];
+        }
+
+        if (role === 'QA_Hub' || role === 'QA_Approvers' || role === 'Quality_Approvers') {
+          allowedHubs = ['qa-hub'];
+          permissions = ['QA_Hub', 'QA_Approvers', 'Quality_Approvers', 'qa-hub'];
+        }
+
+        if (role === 'Maintenance_Hub' || role === 'Maintenance_Approvers') {
+          allowedHubs = ['maintenance-hub'];
+          permissions = ['Maintenance_Hub', 'Maintenance_Approvers', 'maintenance-hub'];
+        }
+
+        localStorage.setItem('allowedHubs', JSON.stringify(allowedHubs));
+        localStorage.setItem('permissions', JSON.stringify(permissions));
         localStorage.setItem('username', username);
         toast.success(`Welcome ${username} to AtomOne Dashboard 🚀`);
 
         if (onLogin) onLogin();
 
-        if (data.role === 'QA_Hub') navigate('/qa-hub');
-        else if (data.role === 'Production_Hub') navigate('/production-hub');
-        else if (data.role === 'Maintenance_Hub') navigate('/maintenance-hub');
-        else navigate('/dashboard'); 
-        
+        if (accessRole === 'QA_Hub') navigate('/qa-hub');
+        else if (accessRole === 'Production_Hub') navigate('/production-hub');
+        else if (accessRole === 'Maintenance_Hub') navigate('/maintenance-hub');
+        else navigate('/dashboard');
+
       } else if (response.status === 401) {
         setErrorMessage('Incorrect username or password.');
       } else {
@@ -644,13 +721,16 @@ export default function Auth({ onLogin }) {
     } catch (error) {
       if (username === 'Admin' && password === 'admin') {
         loginAsDemoAdmin();
-      } 
+      }
       else {
+        localStorage.clear();
+
         localStorage.setItem('access_token', 'demo_blocked_token');
         localStorage.setItem('user_role', 'Blocked');
         localStorage.setItem('username', username);
+
         if (onLogin) onLogin();
-        navigate('/404-page-not-found'); 
+        navigate('/404-page-not-found');
       }
     } finally {
       setIsLoading(false);
@@ -684,7 +764,7 @@ export default function Auth({ onLogin }) {
               height: Math.random() * 300 + 50,
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-              background: i % 2 === 0 
+              background: i % 2 === 0
                 ? 'radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, transparent 70%)'
                 : 'radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, transparent 70%)',
             }}
@@ -698,7 +778,7 @@ export default function Auth({ onLogin }) {
       <div className="hidden lg:flex lg:w-1/2 relative">
         <div className="absolute inset-0 bg-gradient-to-br from-[#1e3a8a] via-[#1e293b] to-[#0f172a]" />
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnptMCAxMmMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnpNMTggMThjMy4zMTQgMCA2IDIuNjg2IDYgNnMtMi42ODYgNi02IDYtNi0yLjY4Ni02LTYgMi42ODYtNiA2LTZ6bTAgMTJjMy4zMTQgMCA2IDIuNjg2IDYgNnMtMi42ODYgNi02IDYtNi0yLjY4Ni02LTYgMi42ODYtNiA2LTZ6IiBzdHJva2U9IiMwNmI2ZDQiIHN0cm9rZS13aWR0aD0iMC4zIiBvcGFjaXR5PSIwLjEiLz48L2c+PC9zdmc+')] opacity-20" />
-        
+
         <div className="relative z-10 flex flex-col justify-center items-center w-full px-12">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-center">
             <div className="flex items-center justify-center gap-2 mb-8">
@@ -743,13 +823,13 @@ export default function Auth({ onLogin }) {
             {/* Title */}
             <div className="text-center mb-8">
               <h2 className="text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-yellow-400 bg-clip-text text-transparent">
-                {isForgotView 
-                  ? (otpSent ? 'Reset Password' : 'Request Password Reset') 
+                {isForgotView
+                  ? (otpSent ? 'Reset Password' : 'Request Password Reset')
                   : 'Welcome Back'}
               </h2>
               <p className="text-slate-400 text-sm sm:text-base">
-                {isForgotView 
-                  ? (otpSent ? 'Enter the OTP received by your Department Head' : 'Enter your username to request an OTP') 
+                {isForgotView
+                  ? (otpSent ? 'Enter the OTP received by your Department Head' : 'Enter your username to request an OTP')
                   : 'Login to access your dashboard'}
               </p>
             </div>
@@ -785,7 +865,7 @@ export default function Auth({ onLogin }) {
                   <Button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white font-bold h-12 rounded-lg mt-2" size="lg">
                     {isLoading ? 'Requesting OTP...' : 'Get OTP from Head'}
                   </Button>
-                  
+
                   <div className="text-center text-sm mt-4">
                     <button type="button" onClick={() => { setIsForgotView(false); setErrorMessage(''); }} className="text-slate-400 hover:text-cyan-400 transition-colors">
                       ← Back to Login

@@ -58,7 +58,10 @@ import ToolRoutes from "./routes/ToolRoutes";
 import DailyPowerPressChecksheetprint from "./components/All_Deperments_Hub/MaintenanceHub/Report/DailyPowerPressChecksheetprint";
 import MachineHistoryCardprint from "./components/All_Deperments_Hub/MaintenanceHub/Report/MachineHistoryCardprint";
 import MachineBreakdownSummaryPrint from "./components/All_Deperments_Hub/MaintenanceHub/Report/MachineBreakdownSummaryPrint";
-
+import MachineHistoryCard from "./components/All_Deperments_Hub/MaintenanceHub/forms/MachineHistoryCard";
+import DailyPowerPressChecksheet from "./components/All_Deperments_Hub/MaintenanceHub/forms/DailyPowerPressChecksheet";
+import MachineBreakDownForm from "./components/All_Deperments_Hub/MaintenanceHub/forms/MachineBreakDownForm";
+import PokaYokeChecksheet from "./components/All_Deperments_Hub/MaintenanceHub/forms/PokaYokeChecksheet";
 // ========== HrSafetyHub IMPORTS ==========
 import HrSafetyHub from "./components/All_Deperments_Hub/HrSafetyHub/HrSafetyHub";
 import InductionTrainingForm from "./components/All_Deperments_Hub/HrSafetyHub/InductionTrainingForm";
@@ -318,6 +321,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/Production-history"
             element={
@@ -402,6 +406,23 @@ function App() {
                 <MaintenanceHub />
               </ProtectedRoute>
             }
+          />
+
+          <Route
+            path="/maintenance-hub/view-report/machine-history/:id"
+            element={<MachineHistoryCard />}
+          />
+          <Route
+            path="/maintenance-hub/view-report/power-press-checksheet/:id"
+            element={<DailyPowerPressChecksheet />}
+          />
+          <Route
+            path="/maintenance-hub/view-report/machine-breakdown/:id"
+            element={<MachineBreakDownForm />}
+          />
+          <Route
+            path="/maintenance-hub/view-report/poka-yoke/:id"
+            element={<PokaYokeChecksheet />}
           />
           <Route
             path="/Maintenance/Machine"

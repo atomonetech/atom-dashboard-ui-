@@ -3,6 +3,6 @@ build/
 .DS_Store
 .env.local
 npm-debug.log*
-
+.Auth.js
 # Added to protect production variables
 .env
