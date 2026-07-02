@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useReadOnlyMode } from "../../../../../hooks/useReadOnlyMode";
 import axios from "axios";
 
 // Example SOP Content
@@ -65,6 +66,7 @@ const InspectionForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isViewMode = Boolean(id);
+   const isReadOnly = useReadOnlyMode();
   const currentUser = localStorage.getItem("username") || "Unknown User";
 
   const [customers, setCustomers] = useState([]);
@@ -2013,7 +2015,7 @@ const renderCell = (col, rowSr, paramName, instr) => {
                   )}
 
                   <div className="mt-6 sm:mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-top pt-4">
-                    <div className="flex flex-col">
+                    {/* <div className="flex flex-col">
                       {!isViewMode && activeColId && (
                         <>
                           <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
@@ -2029,9 +2031,9 @@ const renderCell = (col, rowSr, paramName, instr) => {
                           />
                         </>
                       )}
-                    </div>
+                    </div> */}
 
-                    {(activeColId || isViewMode) && (
+                    {(activeColId || isViewMode) && (!isReadOnly)&&(
                       <div className="d-flex gap-2 flex-wrap justify-content-end">
                         {isViewMode ? (
                           <>

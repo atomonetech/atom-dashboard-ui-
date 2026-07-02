@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { GoPackageDependencies } from "react-icons/go";
 import { IoIosArrowDown } from "react-icons/io";
 import { useParams, useNavigate } from "react-router-dom";
+import { useReadOnlyMode } from "../../../../../hooks/useReadOnlyMode";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBinoculars } from "@fortawesome/free-solid-svg-icons";
@@ -206,6 +207,7 @@ const API_REJECT = `${API_URL}/reject-report/`;
 export default function IncomingMaterialInsp() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const isReadOnly = useReadOnlyMode();
   const isViewMode = Boolean(id);
   const currentUser = localStorage.getItem("username") || "Unknown User";
 
@@ -1963,7 +1965,7 @@ export default function IncomingMaterialInsp() {
               </div>
             </div>
           )}
-
+          
           {headerFilled && (
             <div
               style={{
@@ -1999,7 +2001,7 @@ export default function IncomingMaterialInsp() {
                     />
                   </div>
 
-                  {isViewMode && reviewApprovedBy && (
+                  {isViewMode && reviewApprovedBy && !isReadOnly&& (
                     <div style={{ minWidth: isMobile ? "100%" : 220 }}>
                       <label style={LBL}>Review Approved By</label>
                       <input
@@ -2011,7 +2013,7 @@ export default function IncomingMaterialInsp() {
                     </div>
                   )}
 
-                  {isViewMode && reviewRejectedBy && (
+                  {isViewMode && reviewRejectedBy && !isReadOnly&&  (
                     <div style={{ minWidth: isMobile ? "100%" : 220 }}>
                       <label style={LBL}>Review Rejected By</label>
                       <input
@@ -2045,6 +2047,7 @@ export default function IncomingMaterialInsp() {
                 </div>
 
                 {isViewMode && (
+                
                   <div style={{ width: "100%" }}>
                     <label style={LBL}>Approval / Rejection Remark</label>
                     <textarea
@@ -2104,7 +2107,7 @@ export default function IncomingMaterialInsp() {
                     </button>
                   )}
 
-                  {isViewMode ? (
+                  {isViewMode ? !isReadOnly&& (
                     <>
                       <button
                         type="button"
@@ -2168,6 +2171,7 @@ export default function IncomingMaterialInsp() {
               </div>
             </div>
           )}
+      
         </div>
 
         <div

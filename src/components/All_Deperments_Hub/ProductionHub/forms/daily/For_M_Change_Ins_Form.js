@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { useReadOnlyMode } from "../../../../../hooks/useReadOnlyMode";
 import {
   ArrowLeft,
   Calendar,
@@ -43,6 +44,7 @@ const C = {
   greenLight: "#f0fdf4",
   greenBorder: "#86efac",
   green: "#16a34a",
+  greenDark: "#15803d",
 };
 
 /* ─── shared input style ─────────────────────────────────────── */
@@ -185,6 +187,7 @@ const sortArrayAlphabetically = (arr) => {
 const For_M_Change_Ins_Form = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+   const isReadOnly = useReadOnlyMode();
 
   const [formDate, setFormDate] = useState("");
 
@@ -557,6 +560,24 @@ const For_M_Change_Ins_Form = () => {
     fontWeight: 700,
     padding: "1px 6px",
     borderRadius: "0 0 4px 0",
+  };
+
+  /* ── shared styling blueprint for compact review controls ── */
+  const compactActionBtn = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    border: "none",
+    color: "#fff",
+    padding: "8px 16px",
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: ".06em",
+    textTransform: "uppercase",
+    borderRadius: 5,
+    fontFamily: "inherit",
+    transition: "all .15s ease",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
   };
 
   return (
@@ -995,341 +1016,319 @@ const For_M_Change_Ins_Form = () => {
                 style={{
                   height: 1,
                   background: C.border,
-                  margin: "8px 0 22px",
+                  margin: "8px 0 24px",
                 }}
               />
 
-              {/* Footer */}
+              {/* ─── Bottom Core Module Block ─── */}
               <div
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: 18,
+                  gap: 20,
+                  background: "#fafaf8",
+                  padding: "20px",
+                  borderRadius: "6px",
+                  border: `1px solid ${C.border}`,
                 }}
               >
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: id ? "1fr 1fr" : "1fr",
-                    gap: 16,
-                  }}
-                >
-                  {/* Prepared by */}
-                  <div style={{ minWidth: 200 }}>
-                    <div
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        letterSpacing: ".12em",
-                        textTransform: "uppercase",
-                        color: C.textMid,
-                        marginBottom: 6,
-                      }}
-                    >
-                      Prepared By
-                    </div>
-
-                    <StyledInput
-                      type="text"
-                      value={preparedBy}
-                      onChange={(e) => setPreparedBy(e.target.value)}
-                      readOnly={!!id}
-                      placeholder="Enter name"
-                    />
-                  </div>
-
-                  {id && approvedBy && (
-                    <div style={{ minWidth: 200 }}>
-                      <div
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          letterSpacing: ".12em",
-                          textTransform: "uppercase",
-                          color: C.textMid,
-                          marginBottom: 6,
-                        }}
-                      >
-                        Approved By
-                      </div>
-
-                      <StyledInput
-                        type="text"
-                        value={approvedBy}
-                        readOnly
-                        placeholder="Approved by"
-                      />
-                    </div>
-                  )}
-
-                  {id && rejectedBy && (
-                    <div style={{ minWidth: 200 }}>
-                      <div
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          letterSpacing: ".12em",
-                          textTransform: "uppercase",
-                          color: C.textMid,
-                          marginBottom: 6,
-                        }}
-                      >
-                        Rejected By
-                      </div>
-
-                      <StyledInput
-                        type="text"
-                        value={rejectedBy}
-                        readOnly
-                        placeholder="Rejected by"
-                      />
-                    </div>
-                  )}
-                </div>
-
+                {/* Modern Dynamic Extended Review Remarks Area */}
                 {id && (
                   <div>
                     <div
                       style={{
-                        fontSize: 10,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        fontSize: 11,
                         fontWeight: 700,
                         letterSpacing: ".12em",
                         textTransform: "uppercase",
-                        color: C.textMid,
-                        marginBottom: 6,
+                        color: C.text,
+                        marginBottom: 8,
                       }}
                     >
+                      <MessageSquare size={14} color={C.red} />
                       Approval / Rejection Remark
                     </div>
 
                     <textarea
                       value={reviewRemark}
                       onChange={(e) => setReviewRemark(e.target.value)}
-                      rows={3}
-                      placeholder="Enter approval/rejection remark..."
+                      readOnly={approvalStatus !== "Pending"}
+                      rows={4}
+                      placeholder="Enter detailed validation feedback or clear reasons for rejection here..."
                       style={{
                         ...inputBase,
                         resize: "vertical",
-                        minHeight: 86,
+                        minHeight: 110,
+                        padding: "12px",
+                        lineHeight: "1.5",
+                        borderColor: approvalStatus !== "Pending" ? C.border : C.borderFoc,
+                        background: approvalStatus !== "Pending" ? "#f9f9f7" : C.inputBg,
                       }}
                     />
                   </div>
                 )}
 
-                {/* Action buttons */}
+                {/* Footer Dynamic Actions Stack Layout */}
                 <div
                   style={{
                     display: "flex",
-                    gap: 12,
-                    flexShrink: 0,
-                    justifyContent: "flex-end",
+                    justifyContent: "space-between",
+                    alignItems: "flex-end",
+                    gap: 16,
                     flexWrap: "wrap",
                   }}
                 >
-                  {id ? (
-                    <>
-                      <button
-                        type="button"
-                        disabled={isApproving || approvalStatus === "Approved"}
-                        onClick={handleApprove}
+                  {/* Meta Group Alignment */}
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 16,
+                      flexWrap: "wrap",
+                      flexGrow: 1,
+                    }}
+                  >
+                    {/* Prepared by */}
+                    <div style={{ minWidth: 200, flexGrow: 1, maxWidth: 300 }}>
+                      <div
                         style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 8,
-                          background:
-                            isApproving || approvalStatus === "Approved"
-                              ? "#15803d"
-                              : C.green,
-                          border: "none",
-                          color: "#fff",
-                          padding: "11px 28px",
-                          fontSize: 12,
+                          fontSize: 10,
                           fontWeight: 700,
-                          letterSpacing: ".1em",
+                          letterSpacing: ".12em",
                           textTransform: "uppercase",
-                          borderRadius: 6,
-                          cursor:
-                            isApproving || approvalStatus === "Approved"
-                              ? "not-allowed"
-                              : "pointer",
-                          fontFamily: "inherit",
-                          transition: "background .15s",
-                          boxShadow: "0 2px 8px rgba(22,163,74,.35)",
-                          opacity: approvalStatus === "Approved" ? 0.65 : 1,
+                          color: C.textMid,
+                          marginBottom: 6,
                         }}
-                        onMouseEnter={(e) =>
-                          !isApproving &&
-                          approvalStatus !== "Approved" &&
-                          (e.currentTarget.style.background = "#15803d")
-                        }
-                        onMouseLeave={(e) =>
-                          !isApproving &&
-                          approvalStatus !== "Approved" &&
-                          (e.currentTarget.style.background = C.green)
-                        }
                       >
-                        {isApproving ? (
-                          <>
-                            <Loader2
-                              size={14}
-                              style={{ animation: "spin 1s linear infinite" }}
-                            />
-                            Approving...
-                          </>
-                        ) : (
-                          <>
-                            <Check size={14} strokeWidth={2.5} />
-                            Approve Report
-                          </>
-                        )}
-                      </button>
+                        Prepared By
+                      </div>
 
-                      <button
-                        type="button"
-                        disabled={isRejecting || approvalStatus === "Rejected"}
-                        onClick={handleReject}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 8,
-                          background:
-                            isRejecting || approvalStatus === "Rejected"
-                              ? C.redDark
-                              : C.red,
-                          border: "none",
-                          color: "#fff",
-                          padding: "11px 28px",
-                          fontSize: 12,
-                          fontWeight: 700,
-                          letterSpacing: ".1em",
-                          textTransform: "uppercase",
-                          borderRadius: 6,
-                          cursor:
-                            isRejecting || approvalStatus === "Rejected"
-                              ? "not-allowed"
-                              : "pointer",
-                          fontFamily: "inherit",
-                          transition: "background .15s",
-                          boxShadow: "0 2px 8px rgba(185,28,28,.35)",
-                          opacity: approvalStatus === "Rejected" ? 0.65 : 1,
-                        }}
-                        onMouseEnter={(e) =>
-                          !isRejecting &&
-                          approvalStatus !== "Rejected" &&
-                          (e.currentTarget.style.background = C.redDark)
-                        }
-                        onMouseLeave={(e) =>
-                          !isRejecting &&
-                          approvalStatus !== "Rejected" &&
-                          (e.currentTarget.style.background = C.red)
-                        }
-                      >
-                        {isRejecting ? (
-                          <>
-                            <Loader2
-                              size={14}
-                              style={{ animation: "spin 1s linear infinite" }}
-                            />
-                            Rejecting...
-                          </>
-                        ) : (
-                          <>
-                            <X size={14} strokeWidth={2.5} />
-                            Reject Report
-                          </>
-                        )}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {/* Reset */}
-                      <button
-                        type="button"
-                        onClick={handleReset}
-                        disabled={isLoading}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 8,
-                          background: C.white,
-                          border: `2px solid #d1d5db`,
-                          color: "#374151",
-                          padding: "11px 24px",
-                          fontSize: 12,
-                          fontWeight: 700,
-                          letterSpacing: ".1em",
-                          textTransform: "uppercase",
-                          borderRadius: 6,
-                          cursor: isLoading ? "not-allowed" : "pointer",
-                          fontFamily: "inherit",
-                          opacity: isLoading ? 0.5 : 1,
-                          transition: "all .15s",
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isLoading) {
-                            e.currentTarget.style.background = "#f9fafb";
-                            e.currentTarget.style.borderColor = "#9ca3af";
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = C.white;
-                          e.currentTarget.style.borderColor = "#d1d5db";
-                        }}
-                      >
-                        <RotateCcw size={14} />
-                        Reset Form
-                      </button>
+                      <StyledInput
+                        type="text"
+                        value={preparedBy}
+                        onChange={(e) => setPreparedBy(e.target.value)}
+                        readOnly={!!id}
+                        placeholder="Enter name"
+                      />
+                    </div>
 
-                      {/* Submit */}
-                      <button
-                        type="submit"
-                        disabled={isLoading}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 8,
-                          background: isLoading ? C.redDark : C.red,
-                          border: "none",
-                          color: "#fff",
-                          padding: "11px 28px",
-                          fontSize: 12,
-                          fontWeight: 700,
-                          letterSpacing: ".1em",
-                          textTransform: "uppercase",
-                          borderRadius: 6,
-                          cursor: isLoading ? "not-allowed" : "pointer",
-                          fontFamily: "inherit",
-                          transition: "background .15s",
-                          boxShadow: "0 2px 8px rgba(185,28,28,.35)",
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isLoading) {
-                            e.currentTarget.style.background = C.redDark;
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isLoading) {
-                            e.currentTarget.style.background = C.red;
-                          }
-                        }}
-                      >
-                        {isLoading ? (
-                          <>
-                            <Loader2
-                              size={14}
-                              style={{ animation: "spin 1s linear infinite" }}
-                            />
-                            Submitting…
-                          </>
-                        ) : (
-                          <>
-                            <Send size={14} />
-                            Submit Report
-                          </>
-                        )}
-                      </button>
-                    </>
-                  )}
+                    {id && approvedBy && (
+                      <div style={{ minWidth: 200, flexGrow: 1, maxWidth: 300 }}>
+                        <div
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            letterSpacing: ".12em",
+                            textTransform: "uppercase",
+                            color: C.textMid,
+                            marginBottom: 6,
+                          }}
+                        >
+                          Approved By
+                        </div>
+
+                        <StyledInput
+                          type="text"
+                          value={approvedBy}
+                          readOnly
+                          placeholder="Approved by"
+                        />
+                      </div>
+                    )}
+
+                    {id && rejectedBy && (
+                      <div style={{ minWidth: 200, flexGrow: 1, maxWidth: 300 }}>
+                        <div
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            letterSpacing: ".12em",
+                            textTransform: "uppercase",
+                            color: C.textMid,
+                            marginBottom: 6,
+                          }}
+                        >
+                          Rejected By
+                        </div>
+
+                        <StyledInput
+                          type="text"
+                          value={rejectedBy}
+                          readOnly
+                          placeholder="Rejected by"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Operational Controls Block Layout */}
+                    {!isReadOnly && (
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      alignItems: "center",
+                      justifyContent: "flex-end",
+                    }}
+                  >
+                    {id ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={isApproving || approvalStatus !== "Pending"}
+                          onClick={handleApprove}
+                          style={{
+                            ...compactActionBtn,
+                            background: C.green,
+                            cursor: isApproving || approvalStatus !== "Pending" ? "not-allowed" : "pointer",
+                            opacity: approvalStatus !== "Pending" && approvalStatus !== "Approved" ? 0.4 : 1,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isApproving && approvalStatus === "Pending") {
+                              e.currentTarget.style.background = C.greenDark;
+                              e.currentTarget.style.transform = "translateY(-1px)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isApproving && approvalStatus === "Pending") {
+                              e.currentTarget.style.background = C.green;
+                              e.currentTarget.style.transform = "none";
+                            }
+                          }}
+                        >
+                          {isApproving ? (
+                            <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
+                          ) : (
+                            <Check size={13} strokeWidth={3} />
+                          )}
+                          Approve
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={isRejecting || approvalStatus !== "Pending"}
+                          onClick={handleReject}
+                          style={{
+                            ...compactActionBtn,
+                            background: C.red,
+                            cursor: isRejecting || approvalStatus !== "Pending" ? "not-allowed" : "pointer",
+                            opacity: approvalStatus !== "Pending" && approvalStatus !== "Rejected" ? 0.4 : 1,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isRejecting && approvalStatus === "Pending") {
+                              e.currentTarget.style.background = C.redDark;
+                              e.currentTarget.style.transform = "translateY(-1px)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isRejecting && approvalStatus === "Pending") {
+                              e.currentTarget.style.background = C.red;
+                              e.currentTarget.style.transform = "none";
+                            }
+                          }}
+                        >
+                          {isRejecting ? (
+                            <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />
+                          ) : (
+                            <X size={13} strokeWidth={3} />
+                          )}
+                          Reject
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {/* Reset */}
+                        <button
+                          type="button"
+                          onClick={handleReset}
+                          disabled={isLoading}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            background: C.white,
+                            border: `2px solid #d1d5db`,
+                            color: "#374151",
+                            padding: "11px 24px",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            letterSpacing: ".1em",
+                            textTransform: "uppercase",
+                            borderRadius: 6,
+                            cursor: isLoading ? "not-allowed" : "pointer",
+                            fontFamily: "inherit",
+                            opacity: isLoading ? 0.5 : 1,
+                            transition: "all .15s",
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isLoading) {
+                              e.currentTarget.style.background = "#f9fafb";
+                              e.currentTarget.style.borderColor = "#9ca3af";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = C.white;
+                            e.currentTarget.style.borderColor = "#d1d5db";
+                          }}
+                        >
+                          <RotateCcw size={14} />
+                          Reset Form
+                        </button>
+
+                        {/* Submit */}
+                        <button
+                          type="submit"
+                          disabled={isLoading}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            background: isLoading ? C.redDark : C.red,
+                            border: "none",
+                            color: "#fff",
+                            padding: "11px 28px",
+                            fontSize: 12,
+                            fontWeight: 700,
+                            letterSpacing: ".1em",
+                            textTransform: "uppercase",
+                            borderRadius: 6,
+                            cursor: isLoading ? "not-allowed" : "pointer",
+                            fontFamily: "inherit",
+                            transition: "background .15s",
+                            boxShadow: "0 2px 8px rgba(185,28,28,.35)",
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isLoading) {
+                              e.currentTarget.style.background = C.redDark;
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isLoading) {
+                              e.currentTarget.style.background = C.red;
+                            }
+                          }}
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2
+                                size={14}
+                                style={{ animation: "spin 1s linear infinite" }}
+                              />
+                              Submitting…
+                            </>
+                          ) : (
+                            <>
+                              <Send size={14} />
+                              Submit Report
+                            </>
+                          )}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                    )}
                 </div>
               </div>
             </div>

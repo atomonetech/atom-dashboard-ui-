@@ -12,6 +12,7 @@ import {
   X,
   Loader2,
 } from "lucide-react";
+import { useReadOnlyMode } from "../../../../../hooks/useReadOnlyMode";
 import axios from "axios";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
@@ -131,6 +132,7 @@ const sColors = [
 const Operator5S = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+    const isReadOnly = useReadOnlyMode();
 
   const today = new Date().toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -821,6 +823,7 @@ const Operator5S = () => {
               </div>
             )}
 
+            {/* Upper Metadata Row */}
             {id && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {approvedBy && (
@@ -828,7 +831,6 @@ const Operator5S = () => {
                     <label className="block text-xs font-bold text-slate-600 uppercase mb-1">
                       Approved By
                     </label>
-
                     <input
                       type="text"
                       value={approvedBy}
@@ -843,7 +845,6 @@ const Operator5S = () => {
                     <label className="block text-xs font-bold text-slate-600 uppercase mb-1">
                       Rejected By
                     </label>
-
                     <input
                       type="text"
                       value={rejectedBy}
@@ -852,94 +853,121 @@ const Operator5S = () => {
                     />
                   </div>
                 )}
-
-                <div className="md:col-span-3">
-                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1">
-                    Remark
-                  </label>
-
-                  <textarea
-                    value={reviewRemark}
-                    onChange={(e) => setReviewRemark(e.target.value)}
-                    rows={3}
-                    placeholder="Enter approval/rejection remark..."
-                    className="w-full border border-slate-300 rounded-lg p-2 text-sm text-black bg-white placeholder-slate-400"
-                  />
-                </div>
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-3">
+            {/* Bottom Actions Row */}
+            <div className="w-full">
               {id ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleApprove}
-                    disabled={isApproving || approvalStatus === "Approved"}
-                    className="px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2 bg-[#10b981] hover:bg-[#059669] text-white shadow-md hover:shadow-lg w-full sm:w-auto disabled:opacity-60"
-                  >
-                    {isApproving ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <Check size={16} />
-                    )}
-                    {isApproving ? "APPROVING..." : "APPROVE REPORT"}
-                  </button>
+                /* 1. REVIEW MODE: Side-by-Side balanced layout aligning elements to the bottom */
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-end gap-6 w-full">
+                  
+                  {/* Left Side text wrapper container */}
+                  <div className="flex flex-col gap-1.5 flex-1 w-full">
+                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wide">
+                      Remark
+                    </label>
+                    <textarea
+                      value={reviewRemark}
+                      onChange={(e) => setReviewRemark(e.target.value)}
+                      disabled={isApproving || isRejecting || approvalStatus === "Approved" || approvalStatus === "Rejected"}
+                      rows={3}
+                      placeholder="Enter approval/rejection remark..."
+                      className="w-full border border-slate-300 rounded-xl p-3.5 text-sm text-black bg-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all font-sans shadow-sm min-h-[96px] max-h-[220px]"
+                    />
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={handleReject}
-                    disabled={isRejecting || approvalStatus === "Rejected"}
-                    className="px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg w-full sm:w-auto disabled:opacity-60"
-                  >
-                    {isRejecting ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <X size={16} />
-                    )}
-                    {isRejecting ? "REJECTING..." : "REJECT REPORT"}
-                  </button>
-                </>
+                  {/* Right Side Buttons aligned cleanly on the baseline */}
+                     {!isReadOnly && (
+                  <div className="flex flex-col sm:flex-row gap-3 shrink-0 justify-end items-end pb-0.5 w-full lg:w-auto">
+                    <button
+                      type="button"
+                      onClick={handleApprove}
+                      disabled={isApproving || approvalStatus === "Approved" || approvalStatus === "Rejected"}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 h-12 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-sm font-bold rounded-xl uppercase tracking-wider shadow-md hover:shadow-lg active:scale-[0.98] transition-all min-w-[180px] disabled:opacity-40 disabled:pointer-events-none"
+                    >
+                      {isApproving ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <Check size={16} />
+                      )}
+                      {isApproving ? "APPROVING..." : "APPROVE REPORT"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleReject}
+                      disabled={isRejecting || approvalStatus === "Approved" || approvalStatus === "Rejected"}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 h-12 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white text-sm font-bold rounded-xl uppercase tracking-wider shadow-md hover:shadow-lg active:scale-[0.98] transition-all min-w-[180px] disabled:opacity-40 disabled:pointer-events-none"
+                    >
+                      {isRejecting ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <X size={16} />
+                      )}
+                      {isRejecting ? "REJECTING..." : "REJECT REPORT"}
+                    </button>
+                  </div>
+                     )}
+
+                </div>
               ) : (
-                <button
-                  className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide transition-all flex items-center gap-2 w-full sm:w-auto justify-center ${
-                    isAlreadyFilled || isSubmitting
-                      ? "bg-slate-300 text-slate-500 cursor-not-allowed border-transparent shadow-none"
-                      : "bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg"
-                  }`}
-                  onClick={handleSubmit}
-                  disabled={isSubmitting || isAlreadyFilled}
-                >
-                  {isSubmitting ? (
-                    "Saving..."
-                  ) : isAlreadyFilled ? (
-                    "Locked"
-                  ) : (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
-                        />
-                      </svg>
+                /* 2. OPERATOR MODE: Keeps your original input design safe */
+                <div className="flex flex-col gap-4 w-full">
+                  <div className="w-full">
+                    <label className="block text-xs font-bold text-slate-600 uppercase mb-1">
+                      Remark
+                    </label>
+                    <textarea
+                      value={reviewRemark}
+                      onChange={(e) => setReviewRemark(e.target.value)}
+                      rows={3}
+                      placeholder="Enter approval/rejection remark..."
+                      className="w-full border border-slate-300 rounded-lg p-2 text-sm text-black bg-white placeholder-slate-400"
+                    />
+                  </div>
 
-                      {lang === "eng"
-                        ? "Save Checksheet"
-                        : lang === "hin"
-                        ? "चेकशीट सहेजें"
-                        : "ચેકશીટ સહેજ કરો"}
-                    </>
-                  )}
-                </button>
+                  <div className="flex flex-col sm:flex-row items-center justify-end gap-3 w-full">
+                    <button
+                      className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold text-xs sm:text-sm uppercase tracking-wide transition-all flex items-center gap-2 w-full sm:w-auto justify-center ${
+                        isAlreadyFilled || isSubmitting
+                          ? "bg-slate-300 text-slate-500 cursor-not-allowed border-transparent shadow-none"
+                          : "bg-amber-500 hover:bg-amber-600 text-white shadow-md hover:shadow-lg"
+                      }`}
+                      onClick={handleSubmit}
+                      disabled={isSubmitting || isAlreadyFilled}
+                    >
+                      {isSubmitting ? (
+                        "Saving..."
+                      ) : isAlreadyFilled ? (
+                        "Locked"
+                      ) : (
+                        <>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                            />
+                          </svg>
+
+                          {lang === "eng"
+                            ? "Save Checksheet"
+                            : lang === "hin"
+                            ? "चेकशीट सहेजें"
+                            : "ચેકશીટ સહેજ કરો"}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           </div>

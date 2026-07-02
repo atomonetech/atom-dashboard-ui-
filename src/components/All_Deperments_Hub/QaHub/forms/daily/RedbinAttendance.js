@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ClipboardList } from "lucide-react";
 import { CiCalendarDate } from "react-icons/ci";
 import { IoMdArrowBack, IoIosArrowDown } from "react-icons/io";
+
+import { useReadOnlyMode } from "../../../../../hooks/useReadOnlyMode";
 import axios from "axios";
 
 const today = new Date();
@@ -67,6 +69,8 @@ const SelectWrapper = ({ children, color = "#f59e0b", disabled = false }) => (
 
 export default function RedbinAttendance() {
   const navigate = useNavigate();
+  // 🔥 View Mode Logic
+    const isReadOnly = useReadOnlyMode();
   const { id } = useParams();
   const isViewMode = Boolean(id);
   const currentUser = localStorage.getItem("username") || "Unknown User";
@@ -1383,7 +1387,7 @@ export default function RedbinAttendance() {
                   </button>
                 )}
 
-                {isViewMode ? (
+                {isViewMode ? !isReadOnly&&(
                   <>
                     <button
                       type="button"
@@ -1424,6 +1428,7 @@ export default function RedbinAttendance() {
                 )}
               </div>
             </div>
+               
           </div>
         </div>
       )}

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiScissors } from "react-icons/fi";
 import { IoIosArrowDown } from "react-icons/io";
+import { useReadOnlyMode } from "../../../../../hooks/useReadOnlyMode";
 import axios from "axios";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
@@ -146,6 +147,7 @@ export default function ReworkRepair() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isViewMode = Boolean(id);
+   const isReadOnly = useReadOnlyMode();
   const currentUser = localStorage.getItem("username") || "Unknown User";
 
   const [date, setDate] = useState(formattedDate);
@@ -1784,7 +1786,7 @@ export default function ReworkRepair() {
                   </button>
                 )}
 
-                {isViewMode ? (
+                {isViewMode ? !isReadOnly&& (
                   <>
                     <button
                       type="button"

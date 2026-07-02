@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import axios from "axios";
+import { useReadOnlyMode } from "../../../../../hooks/useReadOnlyMode";
 
 const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
@@ -35,6 +36,7 @@ const C = {
 const MChangeTrackForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+    const isReadOnly = useReadOnlyMode();
 
   const today = new Date().toISOString().split("T")[0];
   const [headerDate, setHeaderDate] = useState(today);
@@ -1347,7 +1349,7 @@ const MChangeTrackForm = () => {
                     </div>
                   </div>
 
-                  <div className="mt-5">
+                 <div className="mt-5">
                     <label className={labelStyle}>Remark</label>
                     <textarea
                       value={formData.remark}
@@ -1362,6 +1364,7 @@ const MChangeTrackForm = () => {
                   </div>
 
                   <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col gap-4">
+                    {/* Metadata Traceability Grid Row */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="flex flex-col">
                         <label className="text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">
@@ -1404,60 +1407,65 @@ const MChangeTrackForm = () => {
                           />
                         </div>
                       )}
-
-                      {id && (
-                        <div className="flex flex-col md:col-span-3">
-                          <label className="text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">
-                            Approval / Rejection Remark
-                          </label>
-                          <textarea
-                            value={reviewRemark}
-                            onChange={(e) => setReviewRemark(e.target.value)}
-                            rows="3"
-                            placeholder="Enter approval/rejection remark..."
-                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 bg-white text-slate-800 placeholder-slate-400"
-                          />
-                        </div>
-                      )}
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                    {/* Actions Workflow Area */}
+                    <div className="w-full">
                       {id ? (
-                        <>
-                          <button
-                            type="button"
-                            disabled={
-                              isApproving || approvalStatus === "Approved"
-                            }
-                            onClick={handleApprove}
-                            className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold tracking-wider uppercase transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                          >
-                            {isApproving ? (
-                              <Loader2 size={16} className="animate-spin" />
-                            ) : (
-                              <Check size={16} />
-                            )}
-                            {isApproving ? "APPROVING..." : "APPROVE REPORT"}
-                          </button>
+                        /* 1. REVIEW MODE: Horizontally balanced layout snapping elements to baseline */
+                        <div className="flex flex-col lg:flex-row items-stretch lg:items-end gap-6 w-full">
+                          
+                          {/* Textarea spans left container region smoothly */}
+                          <div className="flex flex-col gap-1.5 flex-1 w-full">
+                            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                              Approval / Rejection Remark
+                            </label>
+                            <textarea
+                              value={reviewRemark}
+                              onChange={(e) => setReviewRemark(e.target.value)}
+                              disabled={isApproving || isRejecting || approvalStatus === "Approved" || approvalStatus === "Rejected"}
+                              rows="3"
+                              placeholder="Enter approval/rejection remark..."
+                              className="w-full border border-slate-200 rounded-xl px-3 py-3.5 text-sm focus:outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-400 bg-white text-slate-800 placeholder-slate-400 font-sans shadow-sm min-h-[96px] max-h-[220px]"
+                            />
+                          </div>
 
-                          <button
-                            type="button"
-                            disabled={
-                              isRejecting || approvalStatus === "Rejected"
-                            }
-                            onClick={handleReject}
-                            className="w-full sm:w-auto px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold tracking-wider uppercase transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                          >
-                            {isRejecting ? (
-                              <Loader2 size={16} className="animate-spin" />
-                            ) : (
-                              <X size={16} />
-                            )}
-                            {isRejecting ? "REJECTING..." : "REJECT REPORT"}
-                          </button>
-                        </>
+                          {/* Premium Action Control Array aligned exactly at bottom baseline */}
+                          {!isReadOnly && (
+                          <div className="flex flex-col sm:flex-row gap-3 shrink-0 justify-end items-end pb-0.5 w-full lg:w-auto">
+                            <button
+                              type="button"
+                              disabled={isApproving || approvalStatus === "Approved" || approvalStatus === "Rejected"}
+                              onClick={handleApprove}
+                              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 h-12 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-sm font-bold rounded-xl uppercase tracking-wider shadow-md hover:shadow-lg active:scale-[0.98] transition-all min-w-[180px] disabled:opacity-40 disabled:pointer-events-none"
+                            >
+                              {isApproving ? (
+                                <Loader2 size={16} className="animate-spin" />
+                              ) : (
+                                <Check size={16} />
+                              )}
+                              {isApproving ? "APPROVING..." : "APPROVE REPORT"}
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={isRejecting || approvalStatus === "Approved" || approvalStatus === "Rejected"}
+                              onClick={handleReject}
+                              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 h-12 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white text-sm font-bold rounded-xl uppercase tracking-wider shadow-md hover:shadow-lg active:scale-[0.98] transition-all min-w-[180px] disabled:opacity-40 disabled:pointer-events-none"
+                            >
+                              {isRejecting ? (
+                                <Loader2 size={16} className="animate-spin" />
+                              ) : (
+                                <X size={16} />
+                              )}
+                              {isRejecting ? "REJECTING..." : "REJECT REPORT"}
+                            </button>
+                          </div>
+                          )}
+                        </div>
                       ) : (
-                        <>
+                        /* 2. OPERATOR BASE ENTRY MODE */
+                        <div className="flex flex-col sm:flex-row gap-3 justify-end w-full">
                           <button
                             type="button"
                             onClick={handleReset}
@@ -1475,7 +1483,7 @@ const MChangeTrackForm = () => {
                           >
                             {isSubmitting ? "Saving..." : "Save Data"}
                           </button>
-                        </>
+                        </div>
                       )}
                     </div>
                   </div>

@@ -2,7 +2,10 @@
 import "./index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
+
+import axios from 'axios';
 import React, { useState, useEffect } from "react";
+import { useLocation } from 'react-router-dom';
 import {
   BrowserRouter as Router,
   Routes,
@@ -161,6 +164,44 @@ const AccessDeniedScreen = () => {
     </div>
   );
 };
+// ── 1. PLACE THE GLOBAL STRING CLEANER OUTSIDE ──
+const cleanGlobalUsername = (rawString) => {
+  if (!rawString || typeof rawString !== 'string') return rawString;
+  if (rawString.includes('@')) {
+    const handle = rawString.split('@')[0];
+    const cleanName = handle.replace(/[._-]/g, ' '); 
+    return cleanName
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+  return rawString;
+};
+
+// ── 2. PLACE THE INTERCEPTOR CONFIGURATION OUTSIDE ──
+axios.interceptors.response.use(
+  (response) => {
+    const scanAndClean = (obj) => {
+      if (!obj || typeof obj !== 'object') return;
+      const targetKeys = ['submitted_by', 'prepared_by', 'approved_by', 'operator', 'inspected_by'];
+      
+      Object.keys(obj).forEach((key) => {
+        if (targetKeys.includes(key) && typeof obj[key] === 'string') {
+          obj[key] = cleanGlobalUsername(obj[key]);
+        } else if (typeof obj[key] === 'object') {
+          scanAndClean(obj[key]);
+        }
+      });
+    };
+
+    if (response.data) {
+      scanAndClean(response.data);
+    }
+    return response;
+  },
+  (error) => Promise.reject(error)
+);
+
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {

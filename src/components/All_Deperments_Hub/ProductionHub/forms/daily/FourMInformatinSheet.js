@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { useReadOnlyMode } from "../../../../../hooks/useReadOnlyMode";
+
 import {
   ArrowLeft,
   Calendar,
@@ -59,6 +61,7 @@ const EMPTY_ROW = {
 const FourMInformatinSheet = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const isReadOnly = useReadOnlyMode();
 
   const [formDate, setFormDate] = useState("");
   const [preparedBy, setPreparedBy] = useState("");
@@ -863,249 +866,292 @@ const FourMInformatinSheet = () => {
                 </div>
               )}
 
-              <div className="flex flex-col gap-4 pt-6 border-t border-slate-200">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div style={{ minWidth: 200, alignSelf: "flex-start" }}>
-                    <div
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        letterSpacing: ".12em",
-                        textTransform: "uppercase",
-                        color: C.textMid,
-                        marginBottom: 6,
-                      }}
-                    >
-                      Prepared By
-                    </div>
+             <div className="flex flex-col gap-4 pt-6 border-t border-slate-200">
+  {/* Upper Metadata Traceability Section */}
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div style={{ minWidth: 200, alignSelf: "flex-start" }}>
+      <div
+        style={{
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: ".12em",
+          textTransform: "uppercase",
+          color: C.textMid,
+          marginBottom: 6,
+        }}
+      >
+        Prepared By
+      </div>
 
-                    <input
-                      type="text"
-                      value={preparedBy}
-                      onChange={(e) => setPreparedBy(e.target.value)}
-                      readOnly={!!id}
-                      placeholder="Enter name"
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        fontSize: 13,
-                        background: id ? "#f9f9f7" : C.inputBg,
-                        color: id ? C.textMid : C.text,
-                        cursor: id ? "not-allowed" : "text",
-                        border: `1.5px solid ${C.border}`,
-                        borderRadius: 6,
-                        outline: "none",
-                      }}
-                    />
-                  </div>
+      <input
+        type="text"
+        value={preparedBy}
+        onChange={(e) => setPreparedBy(e.target.value)}
+        readOnly={!!id}
+        placeholder="Enter name"
+        style={{
+          width: "100%",
+          padding: "8px 12px",
+          fontSize: 13,
+          background: id ? "#f9f9f7" : C.inputBg,
+          color: id ? C.textMid : C.text,
+          cursor: id ? "not-allowed" : "text",
+          border: `1.5px solid ${C.border}`,
+          borderRadius: 6,
+          outline: "none",
+        }}
+      />
+    </div>
 
-                  {id && approvedBy && (
-                    <div style={{ minWidth: 200, alignSelf: "flex-start" }}>
-                      <div
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          letterSpacing: ".12em",
-                          textTransform: "uppercase",
-                          color: C.textMid,
-                          marginBottom: 6,
-                        }}
-                      >
-                        Approved By
-                      </div>
+    {id && approvedBy && (
+      <div style={{ minWidth: 200, alignSelf: "flex-start" }}>
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: ".12em",
+            textTransform: "uppercase",
+            color: C.textMid,
+            marginBottom: 6,
+          }}
+        >
+          Approved By
+        </div>
 
-                      <input
-                        type="text"
-                        value={approvedBy}
-                        readOnly
-                        style={{
-                          width: "100%",
-                          padding: "8px 12px",
-                          fontSize: 13,
-                          background: "#f9f9f7",
-                          color: C.textMid,
-                          cursor: "not-allowed",
-                          border: `1.5px solid ${C.border}`,
-                          borderRadius: 6,
-                          outline: "none",
-                        }}
-                      />
-                    </div>
-                  )}
+        <input
+          type="text"
+          value={approvedBy}
+          readOnly
+          style={{
+            width: "100%",
+            padding: "8px 12px",
+            fontSize: 13,
+            background: "#f9f9f7",
+            color: C.textMid,
+            cursor: "not-allowed",
+            border: `1.5px solid ${C.border}`,
+            borderRadius: 6,
+            outline: "none",
+          }}
+        />
+      </div>
+    )}
 
-                  {id && rejectedBy && (
-                    <div style={{ minWidth: 200, alignSelf: "flex-start" }}>
-                      <div
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          letterSpacing: ".12em",
-                          textTransform: "uppercase",
-                          color: C.textMid,
-                          marginBottom: 6,
-                        }}
-                      >
-                        Rejected By
-                      </div>
+    {id && rejectedBy && (
+      <div style={{ minWidth: 200, alignSelf: "flex-start" }}>
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: ".12em",
+            textTransform: "uppercase",
+            color: C.textMid,
+            marginBottom: 6,
+          }}
+        >
+          Rejected By
+        </div>
 
-                      <input
-                        type="text"
-                        value={rejectedBy}
-                        readOnly
-                        style={{
-                          width: "100%",
-                          padding: "8px 12px",
-                          fontSize: 13,
-                          background: "#f9f9f7",
-                          color: C.textMid,
-                          cursor: "not-allowed",
-                          border: `1.5px solid ${C.border}`,
-                          borderRadius: 6,
-                          outline: "none",
-                        }}
-                      />
-                    </div>
-                  )}
+        <input
+          type="text"
+          value={rejectedBy}
+          readOnly
+          style={{
+            width: "100%",
+            padding: "8px 12px",
+            fontSize: 13,
+            background: "#f9f9f7",
+            color: C.textMid,
+            cursor: "not-allowed",
+            border: `1.5px solid ${C.border}`,
+            borderRadius: 6,
+            outline: "none",
+          }}
+        />
+      </div>
+    )}
+  </div>
 
-                  {id && (
-                    <div className="md:col-span-3">
-                      <div
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          letterSpacing: ".12em",
-                          textTransform: "uppercase",
-                          color: C.textMid,
-                          marginBottom: 6,
-                        }}
-                      >
-                        Approval / Rejection Remark
-                      </div>
+  {/* Dynamic Row Layout: Separates Review (id) vs Operator input footprints cleanly */}
+  {id ? (
+    /* REFACTOR: Clean Horizontal Baseline Side-by-Side Flex Engine */
+    <div 
+      style={{ 
+        display: "flex", 
+        flexDirection: "row", 
+        alignItems: "flex-end", 
+        gap: 24, 
+        width: "100%", 
+        marginTop: 4 
+      }}
+    >
+      {/* Flexible Left Side Text Container */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: ".12em",
+            textTransform: "uppercase",
+            color: C.textMid,
+            marginBottom: 6,
+          }}
+        >
+          Approval / Rejection Remark
+        </div>
 
-                      <textarea
-                        value={reviewRemark}
-                        onChange={(e) => setReviewRemark(e.target.value)}
-                        rows={3}
-                        placeholder="Enter approval/rejection remark..."
-                        style={{
-                          width: "100%",
-                          padding: "10px 12px",
-                          fontSize: 13,
-                          background: C.inputBg,
-                          color: C.text,
-                          border: `1.5px solid ${C.border}`,
-                          borderRadius: 6,
-                          outline: "none",
-                          resize: "vertical",
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
+        <textarea
+          value={reviewRemark}
+          onChange={(e) => setReviewRemark(e.target.value)}
+          rows={3}
+          placeholder="Enter explicit description explaining why this report is approved or rejected..."
+          style={{
+            width: "100%",
+            padding: "10px 12px",
+            fontSize: 13,
+            background: C.inputBg,
+            color: C.text,
+            border: `1.5px solid ${C.border}`,
+            borderRadius: 10,
+            outline: "none",
+            resize: "vertical",
+            minHeight: 96,
+            maxHeight: 220,
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-end">
-                  {id ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handleApprove}
-                        disabled={isApproving || approvalStatus === "Approved"}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 8,
-                          background: C.green,
-                          border: "none",
-                          color: "#fff",
-                          padding: "11px 28px",
-                          fontSize: 12,
-                          fontWeight: 700,
-                          letterSpacing: ".1em",
-                          textTransform: "uppercase",
-                          borderRadius: 6,
-                          cursor:
-                            isApproving || approvalStatus === "Approved"
-                              ? "not-allowed"
-                              : "pointer",
-                          fontFamily: "inherit",
-                          transition: "background .15s",
-                          boxShadow: "0 2px 8px rgba(22,163,74,.35)",
-                          opacity: approvalStatus === "Approved" ? 0.6 : 1,
-                        }}
-                      >
-                        {isApproving ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Check size={14} strokeWidth={2.5} />
-                        )}
-                        {isApproving ? "APPROVING..." : "APPROVE REPORT"}
-                      </button>
+      {/* Modern High-Vibrancy Action Control Group perfectly level with baseline */}
+      {!isReadOnly && (
+      <div 
+        style={{ 
+          display: "flex", 
+          gap: 12, 
+          flexShrink: 0, 
+          paddingBottom: 2 
+        }}
+      >
+        <button
+          type="button"
+          onClick={handleApprove}
+          disabled={isApproving || approvalStatus === "Approved" || approvalStatus === "Rejected"}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+            border: "none",
+            color: "#fff",
+            padding: "0 28px",
+            height: 48,
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: ".08em",
+            textTransform: "uppercase",
+            borderRadius: 10,
+            cursor: (isApproving || approvalStatus === "Approved" || approvalStatus === "Rejected") ? "not-allowed" : "pointer",
+            fontFamily: "inherit",
+            transition: "all 0.2s ease",
+            boxShadow: "0 4px 12px rgba(16,185,129,0.25)",
+            opacity: (approvalStatus === "Approved" || approvalStatus === "Rejected") ? 0.5 : 1,
+            minWidth: 175,
+          }}
+          onMouseEnter={(e) => {
+            if (!isApproving && approvalStatus !== "Approved" && approvalStatus !== "Rejected") {
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "0 6px 16px rgba(16,185,129,0.35)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "0 4px 12px rgba(16,185,129,0.25)";
+          }}
+        >
+          {isApproving ? (
+            <Loader2 className="h-4 w-4 animate-spin" style={{ animation: "spin 1s linear infinite" }} />
+          ) : (
+            <Check size={14} strokeWidth={2.5} />
+          )}
+          {isApproving ? "APPROVING..." : "APPROVE REPORT"}
+        </button>
 
-                      <button
-                        type="button"
-                        onClick={handleReject}
-                        disabled={isRejecting || approvalStatus === "Rejected"}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: 8,
-                          background: C.red,
-                          border: "none",
-                          color: "#fff",
-                          padding: "11px 28px",
-                          fontSize: 12,
-                          fontWeight: 700,
-                          letterSpacing: ".1em",
-                          textTransform: "uppercase",
-                          borderRadius: 6,
-                          cursor:
-                            isRejecting || approvalStatus === "Rejected"
-                              ? "not-allowed"
-                              : "pointer",
-                          fontFamily: "inherit",
-                          transition: "background .15s",
-                          boxShadow: "0 2px 8px rgba(185,28,28,.35)",
-                          opacity: approvalStatus === "Rejected" ? 0.6 : 1,
-                        }}
-                      >
-                        {isRejecting ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <X size={14} strokeWidth={2.5} />
-                        )}
-                        {isRejecting ? "REJECTING..." : "REJECT REPORT"}
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handleReset}
-                        disabled={isLoading}
-                        className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white text-slate-700 px-6 py-3 hover:bg-slate-50 transition-all font-bold tracking-widest border-2 border-slate-300 text-sm disabled:opacity-50 rounded-none uppercase"
-                      >
-                        <RotateCcw className="h-4 w-4" />
-                        Reset Form
-                      </button>
+        <button
+          type="button"
+          onClick={handleReject}
+          disabled={isRejecting || approvalStatus === "Approved" || approvalStatus === "Rejected"}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            background: "linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)",
+            border: "none",
+            color: "#fff",
+            padding: "0 28px",
+            height: 48,
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: ".08em",
+            textTransform: "uppercase",
+            borderRadius: 10,
+            cursor: (isRejecting || approvalStatus === "Approved" || approvalStatus === "Rejected") ? "not-allowed" : "pointer",
+            fontFamily: "inherit",
+            transition: "all 0.2s ease",
+            boxShadow: "0 4px 12px rgba(244,63,94,0.25)",
+            opacity: (approvalStatus === "Approved" || approvalStatus === "Rejected") ? 0.5 : 1,
+            minWidth: 175,
+          }}
+          onMouseEnter={(e) => {
+            if (!isRejecting && approvalStatus !== "Approved" && approvalStatus !== "Rejected") {
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "0 6px 16px rgba(244,63,94,0.35)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow = "0 4px 12px rgba(244,63,94,0.25)";
+          }}
+        >
+          {isRejecting ? (
+            <Loader2 className="h-4 w-4 animate-spin" style={{ animation: "spin 1s linear infinite" }} />
+          ) : (
+            <X size={14} strokeWidth={2.5} />
+          )}
+          {isRejecting ? "REJECTING..." : "REJECT REPORT"}
+        </button>
+      </div>
+      )}
+    </div>
+  ) : (
+    /* Standard Operator Creation View Footer Elements */
+    <div className="flex flex-col sm:flex-row gap-4 justify-end w-full">
+      <button
+        type="button"
+        onClick={handleReset}
+        disabled={isLoading}
+        className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white text-slate-700 px-6 py-3 hover:bg-slate-50 transition-all font-bold tracking-widest border-2 border-slate-300 text-sm disabled:opacity-50 rounded-none uppercase"
+      >
+        <RotateCcw className="h-4 w-4" />
+        Reset Form
+      </button>
 
-                      <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-[#e03131] text-white px-8 py-3 hover:bg-[#c92a2a] transition-all shadow-sm font-bold tracking-widest text-sm disabled:opacity-70 disabled:cursor-not-allowed rounded-none uppercase"
-                      >
-                        {isLoading ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Send className="h-4 w-4" />
-                        )}
-                        {isLoading ? "Submitting..." : "Submit Board"}
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
+      <button
+        type="submit"
+        disabled={isLoading}
+        className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-[#e03131] text-white px-8 py-3 hover:bg-[#c92a2a] transition-all shadow-sm font-bold tracking-widest text-sm disabled:opacity-70 disabled:cursor-not-allowed rounded-none uppercase"
+      >
+        {isLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Send className="h-4 w-4" />
+        )}
+        {isLoading ? "Submitting..." : "Submit Board"}
+      </button>
+    </div>
+  )}
+</div>
             </div>
           </div>
         </form>

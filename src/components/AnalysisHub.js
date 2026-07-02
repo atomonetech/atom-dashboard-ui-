@@ -4,7 +4,7 @@ import AnalysisHubLanding from './AnalysisHubLanding';
 import DepartmentHierarchy from './DepartmentHierarchy';
 import TeamHierarchy from './TeamHierarchy';
 import ReportDetails from './ReportDetails';
-import AnalysisHeader from './AnalysisHeader';
+
 
 function AnalysisHubContent({ 
   currentView, 
@@ -112,7 +112,7 @@ export default function AnalysisHub() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 transition-colors duration-300">
       <Suspense fallback={<div className="h-16" />}>
-        <AnalysisHeader breadcrumb={breadcrumb} />
+       
       </Suspense>
       
       <AnalysisHubContent
