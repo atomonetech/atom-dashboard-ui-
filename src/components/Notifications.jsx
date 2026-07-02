@@ -1,4 +1,3 @@
-
 //by aman pal
 
 import React, { useEffect, useState } from "react";
@@ -37,11 +36,8 @@ const normalizeText = (value = "") => {
 const buildRoutes = (hub, title, items) =>
   Object.fromEntries(
     items.flatMap(([formRoute, aliases]) =>
-      aliases.map((alias) => [
-        normalizeText(alias),
-        { formRoute, hub, title },
-      ])
-    )
+      aliases.map((alias) => [normalizeText(alias), { formRoute, hub, title }]),
+    ),
   );
 
 const ROUTE_MAP = {
@@ -78,7 +74,10 @@ const ROUTE_MAP = {
     ["deviation", ["deviation report", "deviation"]],
     ["redbin-attendance", ["redbin attendance", "red bin attendance"]],
     ["redbin", ["redbin", "red bin", "red bin analysis"]],
-    ["incoming", ["incoming", "incoming inspection","incoming material inspection"]],
+    [
+      "incoming",
+      ["incoming", "incoming inspection", "incoming material inspection"],
+    ],
     ["scrap", ["scrap", "scrap note"]],
     ["poka-yoke", ["poka yoke"]],
     ["inspection", ["inspection"]],
@@ -98,7 +97,16 @@ const ROUTE_MAP = {
   ]),
 
   ...buildRoutes(MAINT_HUB, MAINT_TITLE, [
-    ["machine-breakdown", ["machine breakdown", "machine breakdown form"]],
+    ["machine-history", ["machine history card", "machine history form"]],
+    [
+      "power-press-checksheet",
+      ["daily power press checksheet", "power press checksheet"],
+    ],
+    [
+      "machine-breakdown",
+      ["machine breakdown", "machine breakdown form", "machine breakdown slip"],
+    ],
+    ["poka-yoke", ["poka yoke monitoring", "poka yoke"]],
     [
       "preventive-maintenance",
       ["preventive maintenance", "machine preventive maintenance"],
@@ -192,9 +200,7 @@ export default function Notifications() {
     const rawValue = dateString || "";
 
     const fixedFormattedDate =
-      typeof rawValue === "string" && rawValue.includes("-")
-        ? rawValue
-        : null;
+      typeof rawValue === "string" && rawValue.includes("-") ? rawValue : null;
 
     const date = new Date(rawValue);
     const invalidDate = Number.isNaN(date.getTime());
@@ -220,7 +226,9 @@ export default function Notifications() {
 
     try {
       const encodedUser = encodeURIComponent(currentUser);
-      const res = await fetch(`${API_BASE}/api/qa-notifications/${encodedUser}/`);
+      const res = await fetch(
+        `${API_BASE}/api/qa-notifications/${encodedUser}/`,
+      );
       const data = await res.json();
 
       const nextNotifications =
@@ -282,11 +290,8 @@ export default function Notifications() {
       notif.form_key ||
       fallbackRoute.formRoute;
 
-    const hub =
-      notif.hub ||
-      notif.hubRoute ||
-      notif.hub_route ||
-      fallbackRoute.hub;
+    const rawHub =
+      notif.hub || notif.hubRoute || notif.hub_route || fallbackRoute.hub;
 
     const reportLogId =
       notif.report_log_id ||
@@ -295,11 +300,53 @@ export default function Notifications() {
       notif.log_id ||
       notif.id;
 
-    const targetUrl = `/${hub}/view-report/${route}/${reportLogId}`;
+    const maintenanceMachineRoutes = new Set([
+      "machine-history",
+      "power-press-checksheet",
+      "machine-breakdown",
+      "poka-yoke",
+      "preventive-maintenance",
+      "machine-preventive-maintenance",
+      "cnc-maintenance",
+      "vertical-milling-checksheet",
+      "projection-welding-pm",
+      "power-press-pm",
+      "hydraulic-pm",
+    ]);
+
+    const maintenanceToolRoutes = new Set([
+      "tool-history",
+      "tool-breakdown",
+      "tool-preventive-maintenance",
+      "tool-critical-spare",
+      "fixture-maintenance",
+    ]);
+
+    const isMaintenanceRoute =
+      maintenanceMachineRoutes.has(route) || maintenanceToolRoutes.has(route);
+
+    const hub = isMaintenanceRoute ? MAINT_HUB : rawHub;
+
+    const getViewBasePath = (hubName, formRoute) => {
+      if (hubName === MAINT_HUB) {
+        return maintenanceToolRoutes.has(formRoute)
+          ? "/Maintenance/Tool"
+          : "/Maintenance/Machine";
+      }
+
+      return `/${hubName}`;
+    };
+
+    const targetUrl = `${getViewBasePath(
+      hub,
+      route,
+    )}/view-report/${route}/${reportLogId}`;
 
     reportLogId
       ? navigate(targetUrl)
-      : alert("Report log id missing. Please check backend notification response.");
+      : alert(
+          "Report log id missing. Please check backend notification response.",
+        );
   };
 
   return (
@@ -400,7 +447,7 @@ export default function Notifications() {
                               {formatTimeAgo(
                                 notif.time ||
                                   notif.created_at ||
-                                  notif.createdAt
+                                  notif.createdAt,
                               )}
                             </span>
                           </div>
@@ -428,8 +475,3 @@ export default function Notifications() {
     </div>
   );
 }
-
-
-
-
-

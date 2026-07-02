@@ -404,6 +404,24 @@ function App() {
             }
           />
           <Route
+            path="/Maintenance/Machine/*"
+            element={
+              <ProtectedRoute allowedRole="Maintenance_Hub">
+                <MachineRoutes />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/Maintenance/Tool/*"
+            element={
+              <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ToolRoutes />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/Maintenance/Machine"
             element={
               <ProtectedRoute allowedRole="Maintenance_Hub">

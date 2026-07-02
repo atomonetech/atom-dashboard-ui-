@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState , useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle, XCircle, Save, RotateCcw } from "lucide-react";
 import axios from "axios";
 
@@ -99,7 +100,11 @@ const MachineBreakDownForm = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [preparedBy, setPreparedBy] = useState("");
+  const { formKey, reportId, id } = useParams();
 
+  const currentFormKey = formKey || "machine-breakdown";
+  const currentReportId = reportId || id;
+  const isViewMode = Boolean(currentReportId);
   const currentLang = language === "english" ? content.english : content.hindi;
   const currentDate = new Date().toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -128,52 +133,79 @@ const MachineBreakDownForm = () => {
     setShowResetConfirm(false);
   };
 
+  useEffect(() => {
+    const fetchReportData = async () => {
+      if (!currentReportId) return;
+
+      try {
+        const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
+
+        const response = await axios.get(
+          `${apiUrl}/api/get-single-maintenance-report/${currentFormKey}/${currentReportId}/`,
+        );
+
+        console.log("🔥 VIEW REPORT RESPONSE =", response.data);
+
+        if (response.data?.success) {
+          const apiData = response.data.data || {};
+          const loadedFormData = apiData.formData || apiData;
+
+          setFormData((prev) => ({
+            ...prev,
+            ...loadedFormData,
+          }));
+
+          setLanguage(apiData.language || "english");
+          setPreparedBy(apiData.prepared_by || apiData.submitted_by || "");
+        } else {
+          alert(response.data?.error || "Report data not found.");
+        }
+      } catch (error) {
+        console.error("View report fetch error:", error);
+        alert("❌ Could not load report data.");
+      }
+    };
+
+    fetchReportData();
+  }, [currentFormKey, currentReportId]);
+
   // --- API INTEGRATION ADDED HERE ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Create submission data
+    const currentUser = localStorage.getItem("username") || "Unknown User";
+
     const submissionData = {
       ...formData,
       language: language,
+      username: currentUser,
+      prepared_by: preparedBy || currentUser,
     };
 
     try {
-      // Backend ko API request bhejna
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
-      const API_LOG = `${
-        process.env.REACT_APP_API_URL || "http://localhost:8000"
-      }/api/log-report/`;
-      const response = await fetch(`${apiUrl}/api/machine-breakdown-summary/save/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+
+      const response = await fetch(
+        `${apiUrl}/api/machine-breakdown-slip/save/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(submissionData),
         },
-        body: JSON.stringify(submissionData),
-      });
+      );
 
       const result = await response.json();
 
       if (result.success) {
-        const currentUser = localStorage.getItem("username") || "Unknown User";
-
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "machine breakdown  Form", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
         setShowSuccess(true);
         alert("✅ Success: Breakdown report has been submitted successfully!");
 
-        // Reset form after successful submission
         resetForm();
+        setPreparedBy("");
 
-        // Hide success message after 3 seconds
         setTimeout(() => {
           setShowSuccess(false);
         }, 3000);
