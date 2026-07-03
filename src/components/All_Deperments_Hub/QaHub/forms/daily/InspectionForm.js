@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useReadOnlyMode } from "../../../../../hooks/useReadOnlyMode";
+import {
+  successAlert,
+  errorAlert,
+  warningAlert,
+  infoAlert,
+  confirmAlert,
+} from "../../../../../utils/alertUtils";
 import axios from "axios";
 
 // Example SOP Content
@@ -136,14 +143,16 @@ const InspectionForm = () => {
 
             const inspectionData = d.inspection_data || {};
 
-            const normalizedParams = (inspectionData.parameters || []).map((row, index) => ({
-              sr: row.sr || row.sr_no || index + 1,
-              category: row.category || "",
-              item: row.item || row.parameter_name || "",
-              spec: row.spec || row.specification || "",
-              tol: row.tol || row.tolerance || "-",
-              instr: row.instr || row.instrument || "",
-            }));
+          const normalizedParams = (inspectionData.parameters || []).map((row, index) => ({
+  ...row,
+  backendSr: row.backendSr ?? row.sr ?? row.sr_no,
+  uiSr: index + 1,
+  category: row.category || "",
+  item: row.item || row.parameter_name || "",
+  spec: row.spec || row.specification || "",
+  tol: row.tol || row.tolerance || "-",
+  instr: row.instr || row.instrument || "",
+}));
 
             const normalizedLogs = inspectionData.logs || [];
 
@@ -217,15 +226,26 @@ const InspectionForm = () => {
       setPartNumber(masterData.part_number || "68P00-S310050");
       setModelName(masterData.model_name || "K12M");
 
-      let allItems = [];
+     let allItems = [];
+   let uiSr = 1;
 
-      (masterData.productItems || []).forEach((item) =>
-        allItems.push({ ...item, category: "PRODUCT", sr: item.sr_no })
-      );
+(masterData.productItems || []).forEach((item) => {
+  allItems.push({
+    ...item,
+    backendSr: item.sr_no, // original backend sr
+    uiSr: uiSr++,          // unique frontend sr
+    category: "PRODUCT",
+  });
+});
 
-      (masterData.processItems || []).forEach((item) =>
-        allItems.push({ ...item, category: "PROCESS", sr: item.sr_no })
-      );
+(masterData.processItems || []).forEach((item) => {
+  allItems.push({
+    ...item,
+    backendSr: item.sr_no,
+    uiSr: uiSr++,
+    category: "PROCESS",
+  });
+});
 
       if (allItems.length === 0) {
         allItems = [
@@ -342,8 +362,9 @@ const InspectionForm = () => {
   // ==========================================
   const handleUpdateAction = () => {
     if (dbLogs.length === 0) {
-      alert(
-        "ℹ️ No existing records found for this date. Please select 'New Record' to initiate an inspection."
+       warningAlert(
+        "ℹ️ No existing records found for this date. Please select",
+         "New Record' to initiate an inspection."
       );
       return;
     }
@@ -357,20 +378,22 @@ const InspectionForm = () => {
 
   const handleDeleteAction = async () => {
     if (dbLogs.length === 0) {
-      alert("ℹ️ No data available to purge for the selected date.");
+      infoAlert("ℹ️ No data available to purge for the selected date.");
       return;
     }
 
-    const confirmDelete = window.confirm(
-      "⚠️ Critical Warning: You are about to permanently purge all inspection records for this date. \n\nDo you wish to proceed?"
+    const confirmDelete = confirmAlert(
+      " Critical Warning",
+      " You are about to permanently purge all inspection records for this date. \n\nDo you wish to proceed?"
     );
 
     if (confirmDelete) {
       try {
-        alert("🗑️ Records successfully purged from the database.");
+        successAlert("🗑️ Records successfully purged from the database.");
         loadDataForGates(selectedCustomer, selectedPart, selectedTool, selectedDate);
       } catch (err) {
-        alert("❌ Deletion failed. Please verify database connection.");
+        errorAlert("❌ Deletion failed",
+          " Please verify database connection.");
       }
     }
   };
@@ -389,8 +412,9 @@ const InspectionForm = () => {
   const startFillingStage = (stageCode) => {
     if (stageCode === "4HRS") {
       if (!setupLog) {
-        alert(
-          "⛔ Sequence Error: Please complete the SETUP inspection before initiating the 4-Hourly report."
+        warningAlert(
+          "⛔ Sequence Error",
+          "Please complete the SETUP inspection before initiating the 4-Hourly report."
         );
         return;
       }
@@ -404,7 +428,7 @@ const InspectionForm = () => {
           const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
           const minsLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
 
-          alert(
+          warningAlert(
             `⏳ Time Restriction Active: The 4-Hourly inspection will unlock in ${hoursLeft}h ${minsLeft}m.`
           );
           return;
@@ -413,11 +437,20 @@ const InspectionForm = () => {
     }
 
     if (stageCode === "LAST") {
-      const isConfirmed = window.confirm(
-        `⚠️ Verification Required: Are you sure you want to log the LAST PIECE for the [${selectedTool}] operation?\n\nProceeding will finalize the batch inspection.`
-      );
+    const result =  warningAlert(
+  "Verification Required",
+  `
+    Are you sure you want to log the <b>LAST PIECE</b> for the
+    <b>[${selectedTool}]</b> operation?
 
-      if (!isConfirmed) return;
+    <br><br>
+
+    <span style="color:#DC2626;font-weight:600;">
+      Proceeding will finalize the batch inspection.
+    </span>
+  `
+);
+      if (!result) return;
     }
 
     setSelectedStage(stageCode);
@@ -519,7 +552,7 @@ const InspectionForm = () => {
   };
 
   const handleVideoClick = (paramName) => {
-    alert(`🎥 Initializing tutorial video for: ${paramName}`);
+    confirmAlert(`🎥 Initializing tutorial video for: ${paramName}`);
   };
 
   const handleApprove = async () => {
@@ -538,14 +571,14 @@ const InspectionForm = () => {
       });
 
       if (response.status === 200) {
-        alert(response.data.message || "✅ Report Approved Successfully!");
+        successAlert(response.data.message || "✅ Report Approved Successfully!");
         navigate(-1);
       }
     } catch (error) {
       console.error("Error approving data:", error);
 
       if (error.response) {
-        alert(
+        errorAlert(
           `❌ Backend Error: ${
             error.response.data.error ||
             error.response.data.message ||
@@ -553,7 +586,8 @@ const InspectionForm = () => {
           }`
         );
       } else {
-        alert("❌ Network Error: Could not connect to server.");
+        errorAlert(" Network Error",
+          " Could not connect to server.");
       }
     } finally {
       setIsApproving(false);
@@ -564,7 +598,7 @@ const InspectionForm = () => {
     if (!id) return;
 
     if (!reviewRemark.trim()) {
-      alert("Please enter rejection remark");
+      infoAlert("Please enter rejection remark");
       return;
     }
 
@@ -582,14 +616,14 @@ const InspectionForm = () => {
       });
 
       if (response.status === 200) {
-        alert(response.data.message || "❌ Report Rejected Successfully!");
+        warningAlert(response.data.message || "❌ Report Rejected Successfully!");
         navigate(-1);
       }
     } catch (error) {
       console.error("Error rejecting data:", error);
 
       if (error.response) {
-        alert(
+        errorAlert(
           `❌ Backend Error: ${
             error.response.data.error ||
             error.response.data.message ||
@@ -597,7 +631,7 @@ const InspectionForm = () => {
           }`
         );
       } else {
-        alert("❌ Network Error: Could not connect to server.");
+        errorAlert("❌ Network Error: Could not connect to server.");
       }
     } finally {
       setIsRejecting(false);
@@ -608,7 +642,8 @@ const InspectionForm = () => {
     if (isViewMode) return;
 
     if (!activeColumn?.plant || !activeColumn?.operator || !activeColumn?.machine) {
-      alert("⛔ Validation Error: Please select Plant Location, Operator ID, and Machine Node.");
+     warningAlert(" Validation Error",
+      " Please select Plant Location, Operator ID, and Machine Node.");
       return;
     }
 
@@ -616,7 +651,7 @@ const InspectionForm = () => {
     let allFilled = true;
 
     for (let row of specList) {
-      const readObj = activeColumn.readings[row.sr] || { val1: "", val2: "" };
+      const readObj = activeColumn.readings[row.uiSr] || { val1: "", val2: "" };
 
       if (format === "single") {
         if (!readObj.val1 || String(readObj.val1).trim() === "") {
@@ -637,8 +672,9 @@ const InspectionForm = () => {
     }
 
     if (!allFilled) {
-      alert(
-        "⛔ Validation Error: All readings are compulsory. Please fill all the data fields before committing."
+      warningAlert(
+        " Validation Error",
+        " All readings are compulsory. Please fill all the data fields before committing."
       );
       return;
     }
@@ -693,9 +729,9 @@ const InspectionForm = () => {
           });
         } catch (logErr) {
           console.error("Activity log error:", logErr);
-          alert("Form saved, but notification not created.");
+          successAlert("Form saved, but notification not created.");
         }
-        alert(
+        successAlert(
           `✅ ${
             activeColumn?.displayStage || "Data"
           } inspection successfully committed to the database.`
@@ -708,7 +744,7 @@ const InspectionForm = () => {
           errorData = { error: await response.text() };
         }
         console.error("❌ Django Backend Error:", errorData);
-        alert(
+        errorAlert(
           `❌ Backend rejected payload: ${
             errorData.error ||
             errorData.message ||
@@ -719,8 +755,9 @@ const InspectionForm = () => {
 
     }
   } catch (error) {
-    alert(
-      "❌ Connection Timeout: Unable to reach the server. Please verify your network or backend status."
+    errorAlert(
+      " Connection Timeout",
+      "Unable to reach the server. Please verify your network or backend status."
     );
   }
   setDbLogs(newLogs);
@@ -1919,9 +1956,9 @@ const renderCell = (col, rowSr, paramName, instr) => {
 
                       <tbody>
                         {specList.map((row) => (
-                          <tr key={row.sr}>
+                          <tr key={row.uiSr}>
                             <td className="fw-bold text-center" style={{ color: "#475569" }}>
-                              {row.sr}
+                              {row.uiSr}
                             </td>
 
                             <td>
@@ -1950,7 +1987,7 @@ const renderCell = (col, rowSr, paramName, instr) => {
 
                             {logColumns.map((col) => (
                               <React.Fragment key={col.id}>
-                                {renderCell(col, row.sr, row.item, row.instr)}
+                                {renderCell(col, row.uiSr, row.item, row.instr)}
                               </React.Fragment>
                             ))}
                           </tr>
