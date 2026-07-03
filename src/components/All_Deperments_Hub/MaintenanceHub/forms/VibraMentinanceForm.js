@@ -1,11 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { getApiUrl } from '../../../../config/api'; // <--- API Import added
+import { getApiUrl } from "../../../../config/api"; // <--- API Import added
 import axios from "axios";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
 
 const VibraMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -19,70 +16,70 @@ const VibraMaintenanceForm = () => {
 
   // --- FIXED HYDRAULIC CHECKLIST DATA WITH PRE-DEFINED CHECKING METHODS ---
   const initialChecklist = [
-  {
-    id: 1,
-    point: "Machine Area",
-    parameter: "Clean, no debris",
-    method: "Visual",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 2,
-    point: "Mounting Bolts",
-    parameter: "Tight, not loose",
-    method: "Visual/Torque check",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 3,
-    point: "Vibrator Motor",
-    parameter: "Normal running sound",
-    method: "Visual/Auditory",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 4,
-    point: "Electrical Leads",
-    parameter: "No Damage, secure",
-    method: "Visual",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 5,
-    point: "Spring Condition",
-    parameter: "Tight, not loose",
-    method: "Visual",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 6,
-    point: "Abnormal Noises",
-    parameter: "Unusual Sounds",
-    method: "Visual/Auditory",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 7,
-    point: "Check the preventive maintenance date",
-    parameter: "Updated in history card",
-    method: "Visually",
-    before: "",
-    after: "",
-    remarks: ""
-  }
-];
+    {
+      id: 1,
+      point: "Machine Area",
+      parameter: "Clean, no debris",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 2,
+      point: "Mounting Bolts",
+      parameter: "Tight, not loose",
+      method: "Visual/Torque check",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 3,
+      point: "Vibrator Motor",
+      parameter: "Normal running sound",
+      method: "Visual/Auditory",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 4,
+      point: "Electrical Leads",
+      parameter: "No Damage, secure",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 5,
+      point: "Spring Condition",
+      parameter: "Tight, not loose",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 6,
+      point: "Abnormal Noises",
+      parameter: "Unusual Sounds",
+      method: "Visual/Auditory",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 7,
+      point: "Check the preventive maintenance date",
+      parameter: "Updated in history card",
+      method: "Visually",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+  ];
 
   // --- INITIAL STATES (For Resetting) ---
   const initialMetaData = {
@@ -93,7 +90,7 @@ const VibraMaintenanceForm = () => {
     specification: "",
     maintenancePersonnel: "",
     preparedBy: "", // <--- Added
-    checkedBy: "",  // <--- Added
+    checkedBy: "", // <--- Added
   };
 
   // --- COMPONENT STATE ---
@@ -150,22 +147,42 @@ const VibraMaintenanceForm = () => {
 
     setIsSubmitting(true);
 
+    const currentUser = localStorage.getItem("username") || "Unknown User";
+    const preparedByValue = (metaData.preparedBy || currentUser).trim();
+
     const payload = {
-      ...metaData,
-      tableData: tableData,
+      machine_name: metaData.machineName,
+      date: metaData.date,
+      machine_no: metaData.machineNo,
+      location: metaData.location,
+      specification: metaData.specification,
+      maintenance_personnel: metaData.maintenancePersonnel,
+      prepared_by: preparedByValue,
+      checked_by: metaData.checkedBy,
+      username: currentUser,
+      department_name: `${metaData.location} (Maintenance)`,
+      checkpoints: tableData.map((row, index) => ({
+        sr_no: index + 1,
+        check_point: row.point,
+        checking_parameter: row.parameter,
+        checking_method: row.method,
+        before_maintenance: row.before,
+        after_maintenance: row.after,
+        remarks: row.remarks || "",
+        spare_used_remarks: row.remarks || "",
+      })),
     };
 
     try {
-      const response = await fetch(getApiUrl('/api/vibra-maintenance/save/'), {
-        method: 'POST',
+      const response = await fetch(getApiUrl("/api/vibra-maintenance/save/"), {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
-           
         setShowSuccess(true);
         setTimeout(() => {
           setMetaData(initialMetaData);
@@ -173,26 +190,21 @@ const VibraMaintenanceForm = () => {
           setShowSuccess(false);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }, 1500);
-       
       } else {
         const errorData = await response.json();
-        alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
+        alert(
+          "Failed to save data. Error: " +
+            (errorData.error
+              ? JSON.stringify(errorData.error)
+              : "Unknown Error"),
+        );
       }
     } catch (error) {
       console.error("Error saving data:", error);
       alert("An error occurred while saving the data.");
     } finally {
-       const currentUser = localStorage.getItem("username") || "Unknown User";
+      const currentUser = localStorage.getItem("username") || "Unknown User";
 
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "Vibra Mentinance Form", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
       setIsSubmitting(false);
     }
   };
@@ -701,10 +713,10 @@ const VibraMaintenanceForm = () => {
               {/* Prepared By - LINKED TO STATE */}
               <div className="fw-bold " style={{ color: "#495057" }}>
                 Prepared By
-                <input 
-                  type="text" 
-                  className="form-control mt-1" 
-                  placeholder="Name" 
+                <input
+                  type="text"
+                  className="form-control mt-1"
+                  placeholder="Name"
                   name="preparedBy"
                   value={metaData.preparedBy}
                   onChange={handleMetaChange}
@@ -737,14 +749,14 @@ const VibraMaintenanceForm = () => {
               {/* Checked By - LINKED TO STATE */}
               <div className="fw-bold" style={{ color: "#495057" }}>
                 Checked By
-                 <input 
-                   type="text" 
-                   className="form-control mt-1" 
-                   placeholder="Name" 
-                   name="checkedBy"
-                   value={metaData.checkedBy}
-                   onChange={handleMetaChange}
-                 />
+                <input
+                  type="text"
+                  className="form-control mt-1"
+                  placeholder="Name"
+                  name="checkedBy"
+                  value={metaData.checkedBy}
+                  onChange={handleMetaChange}
+                />
               </div>
             </div>
 
@@ -763,7 +775,8 @@ const VibraMaintenanceForm = () => {
                 disabled={isSubmitting}
                 className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
               >
-                <i className="bi bi-floppy me-2"></i> {isSubmitting ? "Saving..." : "Save Record"}
+                <i className="bi bi-floppy me-2"></i>{" "}
+                {isSubmitting ? "Saving..." : "Save Record"}
               </button>
             </div>
           </form>

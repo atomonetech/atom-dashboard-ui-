@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { getApiUrl } from '../../../../config/api'; // <--- API Import added
+import { getApiUrl } from "../../../../config/api"; // <--- API Import added
 import axios from "axios";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
+
 
 const DipMoldingMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -19,94 +17,92 @@ const DipMoldingMaintenanceForm = () => {
 
   // --- FIXED HYDRAULIC CHECKLIST DATA WITH PRE-DEFINED CHECKING METHODS ---
   const initialChecklist = [
-  {
-    id: 1,
-    point: "Pushbutton",
-    parameter: "Check all push buttons ",
-    method: "Manually",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 2,
-    point: "Proximity Sensor",
-    parameter: "Check Working condition",
-    method: "Manually",
-    before: "",
-    after: "",
-    remarks: ""
-  },
+    {
+      id: 1,
+      point: "Pushbutton",
+      parameter: "Check all push buttons ",
+      method: "Manually",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 2,
+      point: "Proximity Sensor",
+      parameter: "Check Working condition",
+      method: "Manually",
+      before: "",
+      after: "",
+      remarks: "",
+    },
 
-  {
-    id: 3,
-    point: "Limit Switch",
-    parameter: "Check all Limit Switchs for proper operation",
-    method: "Manually",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 4,
-    point: "Servo Motor",
-    parameter: "Check Working condition",
-    method: "Visually",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 5,
-    point: "Counter Balance cylinder",
-    parameter: "Air Leakages",
-    method: "visually",
-    before: "",
-    after: "",
-    remarks: ""
-  },
+    {
+      id: 3,
+      point: "Limit Switch",
+      parameter: "Check all Limit Switchs for proper operation",
+      method: "Manually",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 4,
+      point: "Servo Motor",
+      parameter: "Check Working condition",
+      method: "Visually",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 5,
+      point: "Counter Balance cylinder",
+      parameter: "Air Leakages",
+      method: "visually",
+      before: "",
+      after: "",
+      remarks: "",
+    },
 
-  {
-    id: 6,
-    point: "Timer Display",
-    parameter: "Timer Working Condition",
-    method: "visually",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 7,
-    point: "Control Pannel Box",
-    parameter: "Loose wiring",
-    method: "visually",
-    before: "",
-    after: "",
-    remarks: ""
-  },
+    {
+      id: 6,
+      point: "Timer Display",
+      parameter: "Timer Working Condition",
+      method: "visually",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 7,
+      point: "Control Pannel Box",
+      parameter: "Loose wiring",
+      method: "visually",
+      before: "",
+      after: "",
+      remarks: "",
+    },
 
-  {
-    id: 8,
-    point: "Roller Bearing",
-    parameter: "Bearing Jamming condition",
-    method: "Manually",
-    before: "",
-    after: "",
-    remarks: ""
-  },
+    {
+      id: 8,
+      point: "Roller Bearing",
+      parameter: "Bearing Jamming condition",
+      method: "Manually",
+      before: "",
+      after: "",
+      remarks: "",
+    },
 
-  {
-    id: 9,
-    point: "Check the preventive maintenance date",
-    parameter: "Updated in history card",
-    method: "visually",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-
-  
-];
+    {
+      id: 9,
+      point: "Check the preventive maintenance date",
+      parameter: "Updated in history card",
+      method: "visually",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+  ];
 
   // --- INITIAL STATES (For Resetting) ---
   const initialMetaData = {
@@ -117,7 +113,7 @@ const DipMoldingMaintenanceForm = () => {
     specification: "",
     maintenancePersonnel: "",
     preparedBy: "", // <--- Added for state binding
-    checkedBy: "",  // <--- Added for state binding
+    checkedBy: "", // <--- Added for state binding
   };
 
   // --- COMPONENT STATE ---
@@ -175,33 +171,49 @@ const DipMoldingMaintenanceForm = () => {
     setIsSubmitting(true);
 
     // FIXED PAYLOAD: Spread metaData to put date at the root level for backend
+    const currentUser = localStorage.getItem("username") || "Unknown User";
+    const preparedByValue = (metaData.preparedBy || currentUser).trim();
+
     const payload = {
-      ...metaData,
-      tableData: tableData,
+      machine_name: metaData.machineName,
+      date: metaData.date,
+      machine_no: metaData.machineNo,
+      location: metaData.location,
+      specification: metaData.specification,
+      maintenance_personnel: metaData.maintenancePersonnel,
+      prepared_by: preparedByValue,
+      checked_by: metaData.checkedBy,
+      username: currentUser,
+      department_name: `${metaData.location} (Maintenance)`,
+      checkpoints: tableData.map((row, index) => ({
+        sr_no: index + 1,
+        check_point: row.point,
+        checking_parameter: row.parameter,
+        checking_method: row.method,
+        before_maintenance: row.before,
+        after_maintenance: row.after,
+        remarks: row.remarks || "",
+        spare_used_remarks: row.remarks || "",
+      })),
     };
 
     try {
       // Assuming your backend endpoint follows this pattern
-      const response = await fetch(getApiUrl('/api/dip-molding-maintenance/save/'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        getApiUrl("/api/dip-molding-maintenance/save/"),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload)
-      });
+      );
 
       if (response.ok) {
-         const currentUser = localStorage.getItem("username") || "Unknown User";
+        const currentUser = localStorage.getItem("username") || "Unknown User";
 
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "Dip MOlding Mentinance Form", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
+      
         setShowSuccess(true);
         setTimeout(() => {
           setMetaData(initialMetaData);
@@ -211,7 +223,12 @@ const DipMoldingMaintenanceForm = () => {
         }, 1500);
       } else {
         const errorData = await response.json();
-        alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
+        alert(
+          "Failed to save data. Error: " +
+            (errorData.error
+              ? JSON.stringify(errorData.error)
+              : "Unknown Error"),
+        );
       }
     } catch (error) {
       console.error("Error saving data:", error);
@@ -660,10 +677,10 @@ const DipMoldingMaintenanceForm = () => {
               {/* Prepared By - LINKED TO STATE */}
               <div className="fw-bold " style={{ color: "#495057" }}>
                 Prepared By
-                <input 
-                  type="text" 
-                  className="form-control mt-1" 
-                  placeholder="Name" 
+                <input
+                  type="text"
+                  className="form-control mt-1"
+                  placeholder="Name"
                   name="preparedBy"
                   value={metaData.preparedBy}
                   onChange={handleMetaChange}
@@ -696,14 +713,14 @@ const DipMoldingMaintenanceForm = () => {
               {/* Checked By - LINKED TO STATE */}
               <div className="fw-bold" style={{ color: "#495057" }}>
                 Checked By
-                 <input 
-                   type="text" 
-                   className="form-control mt-1" 
-                   placeholder="Name" 
-                   name="checkedBy"
-                   value={metaData.checkedBy}
-                   onChange={handleMetaChange}
-                 />
+                <input
+                  type="text"
+                  className="form-control mt-1"
+                  placeholder="Name"
+                  name="checkedBy"
+                  value={metaData.checkedBy}
+                  onChange={handleMetaChange}
+                />
               </div>
             </div>
 
@@ -722,7 +739,8 @@ const DipMoldingMaintenanceForm = () => {
                 disabled={isSubmitting}
                 className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
               >
-                <i className="bi bi-floppy me-2"></i> {isSubmitting ? "Saving..." : "Save Record"}
+                <i className="bi bi-floppy me-2"></i>{" "}
+                {isSubmitting ? "Saving..." : "Save Record"}
               </button>
             </div>
           </form>

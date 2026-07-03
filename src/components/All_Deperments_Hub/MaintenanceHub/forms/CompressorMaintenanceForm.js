@@ -4,10 +4,6 @@ import "bootstrap/dist/css/bootstrap.min.css";
 // Dhyan dein: Apna API config path apne folder structure ke hisaab se adjust kar lena
 import { getApiUrl } from "../../../../config/api";
 import axios from "axios";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
-
 
 const CompressorMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -21,13 +17,69 @@ const CompressorMaintenanceForm = () => {
 
   // --- FIXED HYDRAULIC CHECKLIST DATA WITH PRE-DEFINED CHECKING METHODS ---
   const initialChecklist = [
-    { id: 1, point: "Clean the machine by cloth", parameter: "Dust free", method: "Visual", before: '', after: '', remarks: '' },
-    { id: 2, point: "Check the oil level", parameter: "Should be proper", method: "By spanner", before: '', after: '', remarks: '' },
-    { id: 3, point: "Check the air filter", parameter: "Should be proper condition", method: "By spanner", before: '', after: '', remarks: '' },
-    { id: 4, point: "Check the air receiver", parameter: "Should be cleaned", method: "Visual", before: '', after: '', remarks: '' },
-    { id: 5, point: "Check any abnormal sound", parameter: "No abnormal sound", method: "Visual", before: '', after: '', remarks: '' },
-    { id: 6, point: "Check nut & bolt", parameter: "Should be tight", method: "By Spanner/ allen key", before: '', after: '', remarks: '' },
-    { id: 7, point: "Check loose wiring", parameter: "Should be tight", method: "By plier/ spanner", before: '', after: '', remarks: '' }
+    {
+      id: 1,
+      point: "Clean the machine by cloth",
+      parameter: "Dust free",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 2,
+      point: "Check the oil level",
+      parameter: "Should be proper",
+      method: "By spanner",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 3,
+      point: "Check the air filter",
+      parameter: "Should be proper condition",
+      method: "By spanner",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 4,
+      point: "Check the air receiver",
+      parameter: "Should be cleaned",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 5,
+      point: "Check any abnormal sound",
+      parameter: "No abnormal sound",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 6,
+      point: "Check nut & bolt",
+      parameter: "Should be tight",
+      method: "By Spanner/ allen key",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 7,
+      point: "Check loose wiring",
+      parameter: "Should be tight",
+      method: "By plier/ spanner",
+      before: "",
+      after: "",
+      remarks: "",
+    },
   ];
 
   // --- INITIAL STATES (For Resetting) ---
@@ -39,7 +91,7 @@ const CompressorMaintenanceForm = () => {
     specification: "",
     maintenancePersonnel: "",
     preparedBy: "", // Added to save signatures
-    checkedBy: ""   // Added to save signatures
+    checkedBy: "", // Added to save signatures
   };
 
   // --- COMPONENT STATE ---
@@ -92,47 +144,57 @@ const CompressorMaintenanceForm = () => {
     }
 
     setIsSubmitting(true);
-
+    const currentUser = localStorage.getItem("username") || "Unknown User";
     const payload = {
-      machineName: metaData.machineName,
+      machine_name: metaData.machineName,
       date: metaData.date,
-      machineNo: metaData.machineNo,
+      machine_no: metaData.machineNo,
       location: metaData.location,
       specification: metaData.specification,
-      maintenancePersonnel: metaData.maintenancePersonnel,
-      preparedBy: metaData.preparedBy,
-      checkedBy: metaData.checkedBy,
-      tableData: tableData
+      maintenance_personnel: metaData.maintenancePersonnel,
+      prepared_by: metaData.preparedBy,
+      checked_by: metaData.checkedBy,
+      username: currentUser,
+      department_name: `${metaData.location} (Maintenance)`,
+      checkpoints: tableData.map((row, index) => ({
+        sr_no: index + 1,
+        check_point: row.point,
+        checking_parameter: row.parameter,
+        checking_method: row.method,
+        before_maintenance: row.before,
+        after_maintenance: row.after,
+        remarks: row.remarks || "",
+        spare_used_remarks: row.remarks || "",
+      })),
     };
 
     try {
-      const response = await fetch(getApiUrl('/api/compressor-maintenance/save/'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        getApiUrl("/api/compressor-maintenance/save/"),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload)
-      });
+      );
 
       if (response.ok) {
-         const currentUser = localStorage.getItem("username") || "Unknown User";
+        const currentUser = localStorage.getItem("username") || "Unknown User";
 
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "Compressor Mentinance Form", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
         alert("Success! Compressor Maintenance record has been saved.");
         setMetaData(initialMetaData);
         setTableData(initialChecklist);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         const errorData = await response.json();
-        alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
+        alert(
+          "Failed to save data. Error: " +
+            (errorData.error
+              ? JSON.stringify(errorData.error)
+              : "Unknown Error"),
+        );
       }
     } catch (error) {
       console.error("Error saving data:", error);
@@ -241,27 +303,58 @@ const CompressorMaintenanceForm = () => {
       `}</style>
 
       {/* --- TOP BACK BUTTON --- */}
-      <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
-        <button 
+      <div
+        className="mx-auto mb-3 no-print animate-fade-in px-2"
+        style={{ maxWidth: "1200px" }}
+      >
+        <button
           className="btn btn-outline-custom rounded-pill"
-          onClick={() => navigate('/Maintenance/Machine/weekly')}
-          style={{ fontSize: '0.85rem' }}
+          onClick={() => navigate("/Maintenance/Machine/weekly")}
+          style={{ fontSize: "0.85rem" }}
         >
           ← Back to Weekly Hub
         </button>
       </div>
 
       {/* Header Panel */}
-      <div className="teal-card mx-auto mb-4 p-3 p-md-4 d-flex justify-content-between align-items-center" style={{ maxWidth: '1200px', borderTop: '6px solid #14b8a6', background: 'white', borderRadius: '20px', boxShadow: '0 4px 20px rgba(13, 148, 136, 0.08)' }}>
+      <div
+        className="teal-card mx-auto mb-4 p-3 p-md-4 d-flex justify-content-between align-items-center"
+        style={{
+          maxWidth: "1200px",
+          borderTop: "6px solid #14b8a6",
+          background: "white",
+          borderRadius: "20px",
+          boxShadow: "0 4px 20px rgba(13, 148, 136, 0.08)",
+        }}
+      >
         <div>
-          <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#115e59' }}>COMPRESSOR MAINTENANCE</h3>
-          <span className="badge rounded-pill" style={{ backgroundColor: '#ccfbf1', color: '#0f766e', padding: '8px 15px' }}>Form: AOT-F-PM-01 | Weekly</span>
+          <h3
+            className="fw-bold mb-1 fs-5 fs-md-3"
+            style={{ color: "#115e59" }}
+          >
+            COMPRESSOR MAINTENANCE
+          </h3>
+          <span
+            className="badge rounded-pill"
+            style={{
+              backgroundColor: "#ccfbf1",
+              color: "#0f766e",
+              padding: "8px 15px",
+            }}
+          >
+            Form: AOT-F-PM-01 | Weekly
+          </span>
         </div>
       </div>
 
       <div
         className="white-card mx-auto animate-fade-in"
-        style={{ maxWidth: "1200px", background: 'white', borderRadius: '20px', boxShadow: '0 4px 20px rgba(13, 148, 136, 0.08)' }}
+        style={{
+          maxWidth: "1200px",
+          background: "white",
+          borderRadius: "20px",
+          boxShadow: "0 4px 20px rgba(13, 148, 136, 0.08)",
+        }}
       >
         <div
           className="p-3 p-md-4"
@@ -372,13 +465,17 @@ const CompressorMaintenanceForm = () => {
             <div
               className="collapse-header d-flex justify-content-between align-items-center mb-3 text-slate-700"
               onClick={() => setIsChecklistOpen(!isChecklistOpen)}
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: "pointer" }}
             >
               <div>
                 <span className="fw-bold">Checklist Items </span>
-                <span className="badge-count bg-secondary text-white px-2 py-1 rounded-circle">{tableData.length}</span>
+                <span className="badge-count bg-secondary text-white px-2 py-1 rounded-circle">
+                  {tableData.length}
+                </span>
                 <small className="text-muted ms-2 d-none d-md-inline-block">
-                  {isChecklistOpen ? "▼ Click to collapse" : "▶ Click to expand"}
+                  {isChecklistOpen
+                    ? "▼ Click to collapse"
+                    : "▶ Click to expand"}
                 </small>
               </div>
               <span style={{ color: "#10b981", fontWeight: "bold" }}>
@@ -392,7 +489,9 @@ const CompressorMaintenanceForm = () => {
                   <table className="table clean-table align-middle mb-0">
                     <thead>
                       <tr>
-                        <th style={{ width: "4%" }} className="text-center">#</th>
+                        <th style={{ width: "4%" }} className="text-center">
+                          #
+                        </th>
                         <th style={{ width: "35%" }}>Check Point</th>
                         <th style={{ width: "20%" }}>Checking Parameter</th>
                         <th style={{ width: "15%" }}>Checking Method</th>
@@ -413,7 +512,9 @@ const CompressorMaintenanceForm = () => {
                             {row.point}
                           </td>
                           <td>
-                            <span className="mobile-label">Checking Parameter</span>
+                            <span className="mobile-label">
+                              Checking Parameter
+                            </span>
                             {row.parameter}
                           </td>
                           <td>
@@ -421,39 +522,55 @@ const CompressorMaintenanceForm = () => {
                             <div className="method-badge">{row.method}</div>
                           </td>
                           <td>
-                            <span className="mobile-label required-field">Before Maint.</span>
+                            <span className="mobile-label required-field">
+                              Before Maint.
+                            </span>
                             <select
                               className="form-select border-1 bg-light shadow-sm w-100"
                               value={row.before}
-                              onChange={(e) => handleBeforeChange(row.id, e.target.value)}
+                              onChange={(e) =>
+                                handleBeforeChange(row.id, e.target.value)
+                              }
                               required
                             >
                               {statusOptions.map((opt, i) => (
-                                <option key={i} value={opt}>{opt || "Select..."}</option>
+                                <option key={i} value={opt}>
+                                  {opt || "Select..."}
+                                </option>
                               ))}
                             </select>
                           </td>
                           <td>
-                            <span className="mobile-label required-field">After Maint.</span>
+                            <span className="mobile-label required-field">
+                              After Maint.
+                            </span>
                             <select
                               className="form-select border-1 bg-light shadow-sm w-100"
                               value={row.after}
-                              onChange={(e) => handleAfterChange(row.id, e.target.value)}
+                              onChange={(e) =>
+                                handleAfterChange(row.id, e.target.value)
+                              }
                               required
                             >
                               {statusOptions.map((opt, i) => (
-                                <option key={i} value={opt}>{opt || "Select..."}</option>
+                                <option key={i} value={opt}>
+                                  {opt || "Select..."}
+                                </option>
                               ))}
                             </select>
                           </td>
                           <td>
-                            <span className="mobile-label">Remarks / Spares</span>
+                            <span className="mobile-label">
+                              Remarks / Spares
+                            </span>
                             <input
                               type="text"
                               className="form-control border-1 bg-light shadow-sm w-100"
                               placeholder="Add remarks..."
                               value={row.remarks}
-                              onChange={(e) => handleRemarksChange(row.id, e.target.value)}
+                              onChange={(e) =>
+                                handleRemarksChange(row.id, e.target.value)
+                              }
                             />
                           </td>
                         </tr>
@@ -466,23 +583,28 @@ const CompressorMaintenanceForm = () => {
 
             <div
               className="d-flex flex-wrap align-items-center justify-content-between p-3 rounded-3 mb-4"
-              style={{ backgroundColor: "#f8f9fa", border: "1px dashed #dee2e6" }}
+              style={{
+                backgroundColor: "#f8f9fa",
+                border: "1px dashed #dee2e6",
+              }}
             >
               <div className="fw-bold" style={{ color: "#495057" }}>
                 Prepared By
-                <input 
-                  type="text" 
-                  className="form-control mt-1" 
+                <input
+                  type="text"
+                  className="form-control mt-1"
                   name="preparedBy"
                   value={metaData.preparedBy}
                   onChange={handleMetaChange}
-                  placeholder="Name" 
+                  placeholder="Name"
                   required
                 />
               </div>
 
               <div className="d-flex align-items-center gap-4">
-                <span className="fw-bold" style={{ color: "#495057" }}>Legends:</span>
+                <span className="fw-bold" style={{ color: "#495057" }}>
+                  Legends:
+                </span>
                 <div className="d-flex align-items-center gap-2">
                   <input type="checkbox" checked readOnly />
                   <span style={{ color: "#495057" }}>Good</span>
@@ -499,13 +621,13 @@ const CompressorMaintenanceForm = () => {
 
               <div className="fw-bold" style={{ color: "#495057" }}>
                 Checked By
-                 <input 
-                  type="text" 
-                  className="form-control mt-1" 
+                <input
+                  type="text"
+                  className="form-control mt-1"
                   name="checkedBy"
                   value={metaData.checkedBy}
                   onChange={handleMetaChange}
-                  placeholder="Name" 
+                  placeholder="Name"
                 />
               </div>
             </div>
@@ -525,7 +647,8 @@ const CompressorMaintenanceForm = () => {
                 disabled={isSubmitting}
                 className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
               >
-                <i className="bi bi-floppy me-2"></i> {isSubmitting ? 'Submitting...' : 'Save Record'}
+                <i className="bi bi-floppy me-2"></i>{" "}
+                {isSubmitting ? "Submitting..." : "Save Record"}
               </button>
             </div>
           </form>

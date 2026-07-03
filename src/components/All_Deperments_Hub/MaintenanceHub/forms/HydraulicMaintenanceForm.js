@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { getApiUrl } from '../../../../config/api'; // <--- API Import added
+import { getApiUrl } from "../../../../config/api"; // <--- API Import added
 import axios from "axios";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
+
 
 const HydraulicMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -127,114 +125,131 @@ const HydraulicMaintenanceForm = () => {
   };
 
   const formatBackendError = (result) => {
-  if (!result) return 'Unable to save record.';
-  if (typeof result === 'string') return result;
-  if (result.message) return result.message;
-  if (result.error) return result.error;
-  if (result.errors) {
-    if (typeof result.errors === 'string') return result.errors;
-    return Object.entries(result.errors)
-      .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
-      .join('\n');
-  }
-  return JSON.stringify(result);
-};
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  // 1. Debugging line: Look at your browser console to see the exact keys inside metaData
-  console.log("Current Form MetaData State:", metaData);
-
-  // 2. Defensive Client-side validation
-  // This safely checks both camelCase and snake_case variations just in case your input fields use either.
-  const machineNo = metaData.machineNo || metaData.machine_no;
-  const location = metaData.location;
-  const maintenancePersonnel = metaData.maintenancePersonnel || metaData.maintenance_personnel;
-  const preparedBy = metaData.preparedBy || metaData.prepared_by;
-  const checkedBy = metaData.checkedBy || metaData.checked_by;
-
-  if (!machineNo || !location || !maintenancePersonnel || !preparedBy || !checkedBy) {
-    alert("Please fill all required fields in General Information and Signatures.");
-    return;
-  }
-
-  // Check if any checklist row is incomplete
-  const incompleteRow = tableData.findIndex(row => !row.before || !row.after);
-  if (incompleteRow !== -1) {
-    alert(`Please complete Before/After status for row ${incompleteRow + 1}`);
-    return;
-  }
-
-  // 3. Structuring the payload matching the Hydraulic machine JSON model
-  const payload = {
-    machine_name: metaData.machineName || metaData.machine_name || "HYDRAULIC MACHINE",
-    machine_no: machineNo,
-    date: metaData.date,
-    location: location,
-    specification: metaData.specification,
-    maintenance_personnel: maintenancePersonnel,
-    prepared_by: preparedBy,
-    checked_by: checkedBy, 
-    checkpoints: tableData.map((row, index) => ({
-      sr_no: index + 1,
-      check_point: row.point,
-      checking_parameter: row.parameter,
-      checking_method: row.method,
-      before_maintenance: row.before,
-      after_maintenance: row.after,
-      remarks: row.remarks || "", 
-    })),
+    if (!result) return "Unable to save record.";
+    if (typeof result === "string") return result;
+    if (result.message) return result.message;
+    if (result.error) return result.error;
+    if (result.errors) {
+      if (typeof result.errors === "string") return result.errors;
+      return Object.entries(result.errors)
+        .map(
+          ([field, messages]) =>
+            `${field}: ${
+              Array.isArray(messages) ? messages.join(", ") : messages
+            }`,
+        )
+        .join("\n");
+    }
+    return JSON.stringify(result);
   };
 
-  try {
-    setIsSaving(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    // 4. Requesting data save to the explicit Hydraulic API path
-    const response = await fetch(getApiUrl('/api/hydraulic-pm/save/'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    // 1. Debugging line: Look at your browser console to see the exact keys inside metaData
+    console.log("Current Form MetaData State:", metaData);
 
-    const result = await response.json().catch(() => ({}));
+    // 2. Defensive Client-side validation
+    // This safely checks both camelCase and snake_case variations just in case your input fields use either.
+    const machineNo = metaData.machineNo || metaData.machine_no;
+    const location = metaData.location;
+    const maintenancePersonnel =
+      metaData.maintenancePersonnel || metaData.maintenance_personnel;
+    const preparedBy = metaData.preparedBy || metaData.prepared_by;
+    const checkedBy = metaData.checkedBy || metaData.checked_by;
 
-    // 5. Catching network failures or backend error payloads
-    if (!response.ok || result.success === false) {
-       const currentUser = localStorage.getItem("username") || "Unknown User";
-
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "Hydraulic Mentinance Form", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
-      console.error("Hydraulic machine PM save failed:", result);
-      throw new Error(formatBackendError(result) || `Request failed with status ${response.status}`);
+    if (
+      !machineNo ||
+      !location ||
+      !maintenancePersonnel ||
+      !preparedBy ||
+      !checkedBy
+    ) {
+      alert(
+        "Please fill all required fields in General Information and Signatures.",
+      );
+      return;
     }
 
-    // 6. Triggering successful UI reset animation flows
-    setShowSuccess(true);
+    // Check if any checklist row is incomplete
+    const incompleteRow = tableData.findIndex(
+      (row) => !row.before || !row.after,
+    );
+    if (incompleteRow !== -1) {
+      alert(`Please complete Before/After status for row ${incompleteRow + 1}`);
+      return;
+    }
 
-    setTimeout(() => {
-      setMetaData(initialMetaData);
-      setTableData(initialChecklist);
-      setShowSuccess(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1500);
-  } catch (error) {
-    console.error("Failed to save hydraulic maintenance record:", error);
-    alert(`Failed to save hydraulic maintenance record: ${error.message}`);
-  } finally {
-    setIsSaving(false);
-  }
-};
+    const currentUser = localStorage.getItem("username") || "Unknown User";
+    // 3. Structuring the payload matching the Hydraulic machine JSON model
+
+    const payload = {
+      machine_name:
+        metaData.machineName || metaData.machine_name || "HYDRAULIC MACHINE",
+      machine_no: machineNo,
+      date: metaData.date,
+      location: location,
+      specification: metaData.specification,
+      maintenance_personnel: maintenancePersonnel,
+      prepared_by: preparedBy,
+      checked_by: checkedBy,
+      username: currentUser,
+      department_name: `${location} (Maintenance)`,
+      checkpoints: tableData.map((row, index) => ({
+        sr_no: index + 1,
+        check_point: row.point,
+        checking_parameter: row.parameter,
+        checking_method: row.method,
+        before_maintenance: row.before,
+        after_maintenance: row.after,
+        remarks: row.remarks || "",
+        spare_used_remarks: row.remarks || "",
+      })),
+    };
+
+    try {
+      setIsSaving(true);
+
+      // 4. Requesting data save to the explicit Hydraulic API path
+      const response = await fetch(getApiUrl("/api/hydraulic-pm/save/"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      // 5. Catching network failures or backend error payloads
+      if (!response.ok || result.success === false) {
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
+       
+        console.error("Hydraulic machine PM save failed:", result);
+        throw new Error(
+          formatBackendError(result) ||
+            `Request failed with status ${response.status}`,
+        );
+      }
+
+      // 6. Triggering successful UI reset animation flows
+      setShowSuccess(true);
+
+      setTimeout(() => {
+        setMetaData(initialMetaData);
+        setTableData(initialChecklist);
+        setShowSuccess(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 1500);
+    } catch (error) {
+      console.error("Failed to save hydraulic maintenance record:", error);
+      alert(`Failed to save hydraulic maintenance record: ${error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleReset = () => {
     if (window.confirm("Are you sure you want to reset all fields?")) {
@@ -769,7 +784,7 @@ const handleSubmit = async (e) => {
               {/* Checked By */}
               <div className="fw-bold" style={{ color: "#495057" }}>
                 Checked By
-                 <input
+                <input
                   type="text"
                   name="checkedBy"
                   className="form-control mt-1"
@@ -797,7 +812,8 @@ const handleSubmit = async (e) => {
                 className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
                 disabled={isSaving}
               >
-                <i className="bi bi-floppy me-2"></i> {isSaving ? "Saving..." : "Save Record"}
+                <i className="bi bi-floppy me-2"></i>{" "}
+                {isSaving ? "Saving..." : "Save Record"}
               </button>
             </div>
           </form>

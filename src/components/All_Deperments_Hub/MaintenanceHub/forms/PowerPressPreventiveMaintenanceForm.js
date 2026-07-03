@@ -1,12 +1,8 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { getApiUrl } from '../../../../config/api'; // <--- API Import added
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { getApiUrl } from "../../../../config/api"; // <--- API Import added
 import axios from "axios";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
-
 
 const PowerPressPreventiveMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -18,32 +14,152 @@ const PowerPressPreventiveMaintenanceForm = () => {
 
   // --- FIXED CHECKLIST DATA ---
   const initialChecklist = [
-    { id: 1, point: "Clean the machine by cloth", method: "Visual", parameter: "Dust free", before: '', after: '', remarks: '' },
-    { id: 2, point: "Check the v-belt condition/looseness", method: "By hand", parameter: "Should be correct or replace", before: '', after: '', remarks: '' },
-    { id: 3, point: "Check the diecushion bolt & working function, if applicable", method: "By Spanner/allen key", parameter: "Should be tight & proper up down", before: '', after: '', remarks: '' },
-    { id: 4, point: "Check the motor foundation bolt & terminals", method: "By Spanner/plier", parameter: "Should be tight", before: '', after: '', remarks: '' },
-    { id: 5, point: "Check the slide guide plate bolt", method: "By hand/plier/screw driver", parameter: "Proper dressing", before: '', after: '', remarks: '' },
-    { id: 6, point: "Check the loose wiring", method: "Visual", parameter: "Should be proper working", before: '', after: '', remarks: '' },
-    { id: 7, point: "Checking of all push button, emergency switch", method: "By hand operation", parameter: "Should be proper working", before: '', after: '', remarks: '' },
-    { id: 8, point: "Check the Oiling & greasing of required moving parts", method: "By oil cane/grease gun", parameter: "Should be oil/grease", before: '', after: '', remarks: '' },
-    { id: 9, point: "Check the Parallelism between lower and upper bed every 6 months", method: "By dial gauge", parameter: "LxR=0.50(MAX), FxB=0.94(MAX)", before: '', after: '', remarks: '' },
-    { id: 10, point: "Check the crank upper & bottom plate bolt", method: "By spanner", parameter: "Should be tight", before: '', after: '', remarks: '' },
-    { id: 11, point: "Check the looseness any bolts", method: "By spanner", parameter: "Should be tight", before: '', after: '', remarks: '' },
-    { id: 12, point: "Check the Brake Liner condition", method: "Visual", parameter: "Should be in Good Condition", before: '', after: '', remarks: '' },
-    { id: 13, point: "Check the T-slot condition", method: "Visual", parameter: "Should be clean", before: '', after: '', remarks: '' },
-    { id: 14, point: "Check the Rolling & L-Key,s", method: "Visual", parameter: "Should be in Good working Condition", before: '', after: '', remarks: '' },
-    { id: 15, point: "Check the preventive maintenance date", method: "Visual", parameter: "Updated in History Card", before: '', after: '', remarks: '' }
+    {
+      id: 1,
+      point: "Clean the machine by cloth",
+      method: "Visual",
+      parameter: "Dust free",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 2,
+      point: "Check the v-belt condition/looseness",
+      method: "By hand",
+      parameter: "Should be correct or replace",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 3,
+      point: "Check the diecushion bolt & working function, if applicable",
+      method: "By Spanner/allen key",
+      parameter: "Should be tight & proper up down",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 4,
+      point: "Check the motor foundation bolt & terminals",
+      method: "By Spanner/plier",
+      parameter: "Should be tight",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 5,
+      point: "Check the slide guide plate bolt",
+      method: "By hand/plier/screw driver",
+      parameter: "Proper dressing",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 6,
+      point: "Check the loose wiring",
+      method: "Visual",
+      parameter: "Should be proper working",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 7,
+      point: "Checking of all push button, emergency switch",
+      method: "By hand operation",
+      parameter: "Should be proper working",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 8,
+      point: "Check the Oiling & greasing of required moving parts",
+      method: "By oil cane/grease gun",
+      parameter: "Should be oil/grease",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 9,
+      point: "Check the Parallelism between lower and upper bed every 6 months",
+      method: "By dial gauge",
+      parameter: "LxR=0.50(MAX), FxB=0.94(MAX)",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 10,
+      point: "Check the crank upper & bottom plate bolt",
+      method: "By spanner",
+      parameter: "Should be tight",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 11,
+      point: "Check the looseness any bolts",
+      method: "By spanner",
+      parameter: "Should be tight",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 12,
+      point: "Check the Brake Liner condition",
+      method: "Visual",
+      parameter: "Should be in Good Condition",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 13,
+      point: "Check the T-slot condition",
+      method: "Visual",
+      parameter: "Should be clean",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 14,
+      point: "Check the Rolling & L-Key,s",
+      method: "Visual",
+      parameter: "Should be in Good working Condition",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 15,
+      point: "Check the preventive maintenance date",
+      method: "Visual",
+      parameter: "Updated in History Card",
+      before: "",
+      after: "",
+      remarks: "",
+    },
   ];
 
-  const statusOptions = ['', 'Ok', 'Not Ok', 'Ng'];
+  const statusOptions = ["", "Ok", "Not Ok", "Ng"];
 
   // --- INITIAL META STATE ---
   const initialMetaData = {
-    machineName: location.state?.machineName || 'POWER PRESS',
-    date: new Date().toISOString().split('T')[0],
-    machineNo: '',
-    location: '',
-    specification: ''
+    machineName: location.state?.machineName || "POWER PRESS",
+    date: new Date().toISOString().split("T")[0],
+    machineNo: "",
+    location: "",
+    specification: "",
   };
 
   // --- COMPONENT STATE ---
@@ -53,26 +169,40 @@ const PowerPressPreventiveMaintenanceForm = () => {
   const [preparedBy, setPreparedBy] = useState("");
 
   // --- HANDLERS ---
-  const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
-  
+  const handleMetaChange = (e) =>
+    setMetaData({ ...metaData, [e.target.name]: e.target.value });
+
   const handleBeforeChange = (id, value) => {
-    setTableData(tableData.map(row => row.id === id ? { ...row, before: value } : row));
+    setTableData(
+      tableData.map((row) => (row.id === id ? { ...row, before: value } : row)),
+    );
   };
 
   const handleAfterChange = (id, value) => {
-    setTableData(tableData.map(row => row.id === id ? { ...row, after: value } : row));
+    setTableData(
+      tableData.map((row) => (row.id === id ? { ...row, after: value } : row)),
+    );
   };
 
   const handleRemarksChange = (id, value) => {
-    setTableData(tableData.map(row => row.id === id ? { ...row, remarks: value } : row));
+    setTableData(
+      tableData.map((row) =>
+        row.id === id ? { ...row, remarks: value } : row,
+      ),
+    );
   };
 
   const getErrorMessage = async (response) => {
-    const contentType = response.headers.get('content-type') || '';
+    const contentType = response.headers.get("content-type") || "";
 
-    if (contentType.includes('application/json')) {
+    if (contentType.includes("application/json")) {
       const errorData = await response.json();
-      return errorData.error || errorData.message || errorData.detail || JSON.stringify(errorData);
+      return (
+        errorData.error ||
+        errorData.message ||
+        errorData.detail ||
+        JSON.stringify(errorData)
+      );
     }
 
     const errorText = await response.text();
@@ -80,20 +210,20 @@ const PowerPressPreventiveMaintenanceForm = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); 
-    
+    e.preventDefault();
+
     if (!metaData.machineName || !metaData.machineNo || !metaData.location) {
       alert("Please fill all required fields in General Information.");
       return;
     }
-    
+
     for (let i = 0; i < tableData.length; i++) {
       if (!tableData[i].before || !tableData[i].after) {
         alert(`Please complete the Before/After status for row ${i + 1}`);
         return;
       }
     }
-    
+
     setIsSubmitting(true);
 
     const checklistPayload = tableData.map((row, index) => ({
@@ -103,49 +233,42 @@ const PowerPressPreventiveMaintenanceForm = () => {
       checking_parameter: row.parameter,
       before_maintenance: row.before,
       after_maintenance: row.after,
-      remarks: row.remarks || '',
-      spare_used_remarks: row.remarks || ''
+      remarks: row.remarks || "",
+      spare_used_remarks: row.remarks || "",
     }));
-
+    const currentUser = localStorage.getItem("username") || "Unknown User";
     const payload = {
       machine_name: metaData.machineName,
       date: metaData.date,
       machine_no: metaData.machineNo,
       location: metaData.location,
       specification: metaData.specification,
+      prepared_by: preparedBy,
+      username: currentUser,
+      department_name: `${metaData.location} (Maintenance)`,
       checkpoints: checklistPayload,
-      checklist: checklistPayload
     };
-    
+
     try {
-      const response = await fetch(getApiUrl('/api/power-press-pm/save/'), {
-        method: 'POST',
+      const response = await fetch(getApiUrl("/api/power-press-pm/save/"), {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
         const currentUser = localStorage.getItem("username") || "Unknown User";
 
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "Power  Press Mentinance Form", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
         setShowSuccess(true);
-        
+
         setTimeout(() => {
           setMetaData(initialMetaData);
           setTableData(initialChecklist);
           setShowSuccess(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          window.scrollTo({ top: 0, behavior: "smooth" });
         }, 1500);
       } else {
         const errorMessage = await getErrorMessage(response);
@@ -160,15 +283,17 @@ const PowerPressPreventiveMaintenanceForm = () => {
   };
 
   const handleReset = () => {
-    if (window.confirm('Are you sure you want to clear all data?')) {
+    if (window.confirm("Are you sure you want to clear all data?")) {
       setMetaData(initialMetaData);
-      setTableData(initialChecklist); 
+      setTableData(initialChecklist);
     }
   };
 
   return (
-    <div className="container-fluid py-3 py-md-4" style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
-      
+    <div
+      className="container-fluid py-3 py-md-4"
+      style={{ backgroundColor: "#ffffff", minHeight: "100vh" }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
@@ -323,56 +448,109 @@ const PowerPressPreventiveMaintenanceForm = () => {
       `}</style>
 
       {/* --- TOP BACK BUTTON --- */}
-      <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
-        <button 
+      <div
+        className="mx-auto mb-3 no-print animate-fade-in px-2"
+        style={{ maxWidth: "1200px" }}
+      >
+        <button
           className="btn btn-outline-custom rounded-pill"
-          onClick={() => navigate('/Maintenance/Machine/weekly')}
-          style={{ fontSize: '0.85rem' }}
+          onClick={() => navigate("/Maintenance/Machine/weekly")}
+          style={{ fontSize: "0.85rem" }}
         >
           ← Back to Weekly Hub
         </button>
       </div>
 
-      <div className="white-card mx-auto animate-fade-in" style={{ maxWidth: '1200px' }}>
-        
+      <div
+        className="white-card mx-auto animate-fade-in"
+        style={{ maxWidth: "1200px" }}
+      >
         {/* HEADER */}
-        <div className="p-3 p-md-4" style={{ borderBottom: '1px solid #f3f4f6', background: '#ffffff', borderRadius: '20px 20px 0 0' }}>
-          <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#d97706' }}>
+        <div
+          className="p-3 p-md-4"
+          style={{
+            borderBottom: "1px solid #f3f4f6",
+            background: "#ffffff",
+            borderRadius: "20px 20px 0 0",
+          }}
+        >
+          <h3
+            className="fw-bold mb-1 fs-5 fs-md-3"
+            style={{ color: "#d97706" }}
+          >
             Power Press Preventive Maintenance
           </h3>
-          <p className="text-muted mb-0" style={{ fontSize: '0.85rem' }}>
+          <p className="text-muted mb-0" style={{ fontSize: "0.85rem" }}>
             AOT-F-MM-03 | Complete maintenance checklist and tracking system
           </p>
         </div>
 
         <div className="card-body p-3 p-md-4">
           <form onSubmit={handleSubmit}>
-            
             {/* --- SECTION 1: META DATA INPUTS --- */}
             <div className="section-header">
               <h5>General Information</h5>
             </div>
-            
+
             <div className="row g-3 mb-4">
               <div className="col-12 col-md-4">
-                <label className="form-label required-field">Machine Name</label>
-                <input type="text" className="form-control" name="machineName" value={metaData.machineName} onChange={handleMetaChange} required />
+                <label className="form-label required-field">
+                  Machine Name
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="machineName"
+                  value={metaData.machineName}
+                  onChange={handleMetaChange}
+                  required
+                />
               </div>
               <div className="col-12 col-md-2">
                 <label className="form-label required-field">Date</label>
-                <input type="date" name="date" className="form-control" value={metaData.date} onChange={handleMetaChange} required />
+                <input
+                  type="date"
+                  name="date"
+                  className="form-control"
+                  value={metaData.date}
+                  onChange={handleMetaChange}
+                  required
+                />
               </div>
               <div className="col-12 col-md-3">
                 <label className="form-label required-field">Machine No.</label>
-                <input type="text" name="machineNo" className="form-control" value={metaData.machineNo} onChange={handleMetaChange} placeholder="Enter No." required />
+                <input
+                  type="text"
+                  name="machineNo"
+                  className="form-control"
+                  value={metaData.machineNo}
+                  onChange={handleMetaChange}
+                  placeholder="Enter No."
+                  required
+                />
               </div>
               <div className="col-12 col-md-3">
                 <label className="form-label required-field">Location</label>
-                <input type="text" name="location" className="form-control" value={metaData.location} onChange={handleMetaChange} placeholder="Enter Location" required />
+                <input
+                  type="text"
+                  name="location"
+                  className="form-control"
+                  value={metaData.location}
+                  onChange={handleMetaChange}
+                  placeholder="Enter Location"
+                  required
+                />
               </div>
               <div className="col-12 col-md-12">
                 <label className="form-label">Specification</label>
-                <input type="text" name="specification" className="form-control" value={metaData.specification} onChange={handleMetaChange} placeholder="Enter specs" />
+                <input
+                  type="text"
+                  name="specification"
+                  className="form-control"
+                  value={metaData.specification}
+                  onChange={handleMetaChange}
+                  placeholder="Enter specs"
+                />
               </div>
             </div>
 
@@ -381,18 +559,27 @@ const PowerPressPreventiveMaintenanceForm = () => {
               <h5>Maintenance Checklist</h5>
             </div>
 
-            <div 
+            <div
               className="collapse-header d-flex justify-content-between align-items-center mb-3"
               onClick={() => setIsChecklistOpen(!isChecklistOpen)}
             >
               <div>
-                <span className="fw-bold" style={{ color: '#374151' }}>Checklist Items</span>
+                <span className="fw-bold" style={{ color: "#374151" }}>
+                  Checklist Items
+                </span>
                 <span className="badge-count">{tableData.length}</span>
-                <small className="text-muted ms-2 d-none d-md-inline-block" style={{ color: '#6b7280' }}>
-                  {isChecklistOpen ? '▼ Click to collapse' : '▶ Click to expand'}
+                <small
+                  className="text-muted ms-2 d-none d-md-inline-block"
+                  style={{ color: "#6b7280" }}
+                >
+                  {isChecklistOpen
+                    ? "▼ Click to collapse"
+                    : "▶ Click to expand"}
                 </small>
               </div>
-              <span style={{ color: '#d97706', fontWeight: 'bold' }}>{isChecklistOpen ? '−' : '+'}</span>
+              <span style={{ color: "#d97706", fontWeight: "bold" }}>
+                {isChecklistOpen ? "−" : "+"}
+              </span>
             </div>
 
             {isChecklistOpen && (
@@ -401,13 +588,15 @@ const PowerPressPreventiveMaintenanceForm = () => {
                   <table className="table clean-table align-middle mb-0">
                     <thead>
                       <tr>
-                        <th style={{ width: '4%' }} className="text-center">#</th>
-                        <th style={{ width: '26%' }}>Check Point</th>
-                        <th style={{ width: '15%' }}>Checking Method</th>
-                        <th style={{ width: '20%' }}>Checking Parameter</th>
-                        <th style={{ width: '10%' }}>Before Maint.*</th>
-                        <th style={{ width: '10%' }}>After Maint.*</th>
-                        <th style={{ width: '15%' }}>Remarks</th>
+                        <th style={{ width: "4%" }} className="text-center">
+                          #
+                        </th>
+                        <th style={{ width: "26%" }}>Check Point</th>
+                        <th style={{ width: "15%" }}>Checking Method</th>
+                        <th style={{ width: "20%" }}>Checking Parameter</th>
+                        <th style={{ width: "10%" }}>Before Maint.*</th>
+                        <th style={{ width: "10%" }}>After Maint.*</th>
+                        <th style={{ width: "15%" }}>Remarks</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -429,43 +618,57 @@ const PowerPressPreventiveMaintenanceForm = () => {
                             <span className="mobile-label">Parameter</span>
                             {row.parameter}
                           </td>
-                          
+
                           <td>
-                            <span className="mobile-label required-field">Before Maint.</span>
-                            <select 
-                              className="form-select border-1 bg-light shadow-sm w-100" 
-                              value={row.before} 
-                              onChange={(e) => handleBeforeChange(row.id, e.target.value)}
+                            <span className="mobile-label required-field">
+                              Before Maint.
+                            </span>
+                            <select
+                              className="form-select border-1 bg-light shadow-sm w-100"
+                              value={row.before}
+                              onChange={(e) =>
+                                handleBeforeChange(row.id, e.target.value)
+                              }
                               required
                             >
                               {statusOptions.map((opt, i) => (
-                                <option key={i} value={opt}>{opt || 'Select...'}</option>
+                                <option key={i} value={opt}>
+                                  {opt || "Select..."}
+                                </option>
                               ))}
                             </select>
                           </td>
 
                           <td>
-                            <span className="mobile-label required-field">After Maint.</span>
-                            <select 
-                              className="form-select border-1 bg-light shadow-sm w-100" 
-                              value={row.after} 
-                              onChange={(e) => handleAfterChange(row.id, e.target.value)}
+                            <span className="mobile-label required-field">
+                              After Maint.
+                            </span>
+                            <select
+                              className="form-select border-1 bg-light shadow-sm w-100"
+                              value={row.after}
+                              onChange={(e) =>
+                                handleAfterChange(row.id, e.target.value)
+                              }
                               required
                             >
                               {statusOptions.map((opt, i) => (
-                                <option key={i} value={opt}>{opt || 'Select...'}</option>
+                                <option key={i} value={opt}>
+                                  {opt || "Select..."}
+                                </option>
                               ))}
                             </select>
                           </td>
 
                           <td>
                             <span className="mobile-label">Remarks</span>
-                            <input 
-                              type="text" 
-                              className="form-control border-1 bg-light shadow-sm w-100" 
-                              placeholder="Remarks..." 
-                              value={row.remarks} 
-                              onChange={(e) => handleRemarksChange(row.id, e.target.value)}
+                            <input
+                              type="text"
+                              className="form-control border-1 bg-light shadow-sm w-100"
+                              placeholder="Remarks..."
+                              value={row.remarks}
+                              onChange={(e) =>
+                                handleRemarksChange(row.id, e.target.value)
+                              }
                             />
                           </td>
                         </tr>
@@ -477,58 +680,121 @@ const PowerPressPreventiveMaintenanceForm = () => {
             )}
 
             {/* Legend Section */}
-            <div className="d-flex flex-wrap align-items-center gap-3 gap-md-4 p-3 rounded-3 mb-4" style={{ backgroundColor: '#f9fafb', border: '1px dashed #d1d5db' }}>
-              <span className="text-sm fw-bold w-100 w-md-auto" style={{ color: '#374151' }}>Legends:</span>
+            <div
+              className="d-flex flex-wrap align-items-center gap-3 gap-md-4 p-3 rounded-3 mb-4"
+              style={{
+                backgroundColor: "#f9fafb",
+                border: "1px dashed #d1d5db",
+              }}
+            >
+              <span
+                className="text-sm fw-bold w-100 w-md-auto"
+                style={{ color: "#374151" }}
+              >
+                Legends:
+              </span>
               <div className="d-flex align-items-center gap-2">
-                <span className="w-4 h-4 rounded-circle" style={{ width: '14px', height: '14px', backgroundColor: '#10b981', borderRadius: '50%' }}></span>
-                <span className="text-sm fw-medium" style={{ color: '#374151' }}>Ok</span>
+                <span
+                  className="w-4 h-4 rounded-circle"
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    backgroundColor: "#10b981",
+                    borderRadius: "50%",
+                  }}
+                ></span>
+                <span
+                  className="text-sm fw-medium"
+                  style={{ color: "#374151" }}
+                >
+                  Ok
+                </span>
               </div>
               <div className="d-flex align-items-center gap-2">
-                <span className="w-4 h-4 rounded-circle" style={{ width: '14px', height: '14px', backgroundColor: '#ef4444', borderRadius: '50%' }}></span>
-                <span className="text-sm fw-medium" style={{ color: '#374151' }}>Not Ok</span>
+                <span
+                  className="w-4 h-4 rounded-circle"
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    backgroundColor: "#ef4444",
+                    borderRadius: "50%",
+                  }}
+                ></span>
+                <span
+                  className="text-sm fw-medium"
+                  style={{ color: "#374151" }}
+                >
+                  Not Ok
+                </span>
               </div>
               <div className="d-flex align-items-center gap-2">
-                <span className="w-4 h-4 rounded-circle" style={{ width: '14px', height: '14px', backgroundColor: '#f59e0b', borderRadius: '50%' }}></span>
-                <span className="text-sm fw-medium" style={{ color: '#374151' }}>Ng (No Good)</span>
+                <span
+                  className="w-4 h-4 rounded-circle"
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    backgroundColor: "#f59e0b",
+                    borderRadius: "50%",
+                  }}
+                ></span>
+                <span
+                  className="text-sm fw-medium"
+                  style={{ color: "#374151" }}
+                >
+                  Ng (No Good)
+                </span>
               </div>
             </div>
 
             {/* --- ACTION BUTTONS --- */}
-            <div className="d-flex flex-column flex-sm-row justify-content-end gap-3 mt-4 pt-3 no-print border-top" style={{ borderTopColor: '#f3f4f6' }}>
-
+            <div
+              className="d-flex flex-column flex-sm-row justify-content-end gap-3 mt-4 pt-3 no-print border-top"
+              style={{ borderTopColor: "#f3f4f6" }}
+            >
               <div className="flex flex-col">
-    <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-      Prepared By
-    </label>
-    <input
-      type="text"
-      value={preparedBy}
-      onChange={(e) => setPreparedBy(e.target.value)}
-      placeholder="Enter name"
-      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
-    />
-  </div>
-              <button 
-                type="button" 
-                className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto" 
+                <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+                  Prepared By
+                </label>
+                <input
+                  type="text"
+                  value={preparedBy}
+                  onChange={(e) => setPreparedBy(e.target.value)}
+                  placeholder="Enter name"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+                />
+              </div>
+              <button
+                type="button"
+                className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto"
                 onClick={handleReset}
                 disabled={isSubmitting}
-                style={{ fontWeight: '600', border: '1px solid #e5e7eb', color: '#374151' }}
+                style={{
+                  fontWeight: "600",
+                  border: "1px solid #e5e7eb",
+                  color: "#374151",
+                }}
               >
                 Reset Data
               </button>
-              <button type="submit" className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto" disabled={isSubmitting}>
-                <i className="bi bi-floppy me-2"></i> {isSubmitting ? 'Saving...' : 'Save Record'}
+              <button
+                type="submit"
+                className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
+                disabled={isSubmitting}
+              >
+                <i className="bi bi-floppy me-2"></i>{" "}
+                {isSubmitting ? "Saving..." : "Save Record"}
               </button>
             </div>
-            
           </form>
         </div>
       </div>
 
       {/* Success Toast */}
       {showSuccess && (
-        <div className="position-fixed bottom-0 end-0 m-3 m-md-4 bg-success text-white px-4 py-3 rounded-3 shadow-lg z-3" style={{ minWidth: '250px' }}>
+        <div
+          className="position-fixed bottom-0 end-0 m-3 m-md-4 bg-success text-white px-4 py-3 rounded-3 shadow-lg z-3"
+          style={{ minWidth: "250px" }}
+        >
           <div className="d-flex align-items-center gap-2">
             <i className="bi bi-check-circle-fill fs-5"></i>
             <span className="fw-medium">Record submitted successfully!</span>

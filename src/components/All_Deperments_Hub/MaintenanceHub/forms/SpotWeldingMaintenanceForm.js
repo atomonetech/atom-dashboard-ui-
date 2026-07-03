@@ -1,102 +1,182 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { getApiUrl } from '../../../../config/api'; 
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { getApiUrl } from "../../../../config/api";
 import axios from "axios";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
 
 const SpotWeldingMaintenanceForm = () => {
   const navigate = useNavigate();
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
-  const statusOptions = ['', 'Ok', 'Not Ok', 'N/A'];
+  const statusOptions = ["", "Ok", "Not Ok", "N/A"];
 
   // --- FULL CHECKLIST DATA ---
   const initialChecklist = [
-    { id: 1, point: "Air Filter", parameter: "Clean air filter", method: "Visual", before: '', after: '', remarks: '' },
-    { id: 2, point: "Coolant Pump", parameter: "Coolant pump is working", method: "Visual", before: '', after: '', remarks: '' },
-    { id: 3, point: "Digital Panel", parameter: "Digital panel is working", method: "Visual", before: '', after: '', remarks: '' },
-    { id: 4, point: "Air Pressure", parameter: "Check air pressure", method: "Visual", before: '', after: '', remarks: '' },
-    { id: 5, point: "Electrode Alignment", parameter: "Check alignment of electrodes", method: "Visual", before: '', after: '', remarks: '' },
-    { id: 6, point: "Abnormal sound", parameter: "Any abnormal sound heard?", method: "Hearing", before: '', after: '', remarks: '' },
-    { id: 7, point: "Starter & Wiring", parameter: "Starter & Wiring is in good condition", method: "Visual", before: '', after: '', remarks: '' },
-    { id: 8, point: "PEDAL SPRING", parameter: "Should be proper working", method: "Manual", before: '', after: '', remarks: '' }
+    {
+      id: 1,
+      point: "Air Filter",
+      parameter: "Clean air filter",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 2,
+      point: "Coolant Pump",
+      parameter: "Coolant pump is working",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 3,
+      point: "Digital Panel",
+      parameter: "Digital panel is working",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 4,
+      point: "Air Pressure",
+      parameter: "Check air pressure",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 5,
+      point: "Electrode Alignment",
+      parameter: "Check alignment of electrodes",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 6,
+      point: "Abnormal sound",
+      parameter: "Any abnormal sound heard?",
+      method: "Hearing",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 7,
+      point: "Starter & Wiring",
+      parameter: "Starter & Wiring is in good condition",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 8,
+      point: "PEDAL SPRING",
+      parameter: "Should be proper working",
+      method: "Manual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
   ];
 
   const initialMetaData = {
-    machineName: '', // Editable Machine Name
-    date: new Date().toISOString().split('T')[0],
-    machineNo: '',
-    location: '',
-    specification: '',
-    maintenancePersonnel: '',
-    preparedBy: '',
-    checkedBy: ''
+    machineName: "", // Editable Machine Name
+    date: new Date().toISOString().split("T")[0],
+    machineNo: "",
+    location: "",
+    specification: "",
+    maintenancePersonnel: "",
+    preparedBy: "",
+    checkedBy: "",
   };
 
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
-  
+  const handleMetaChange = (e) =>
+    setMetaData({ ...metaData, [e.target.name]: e.target.value });
+
   const handleBeforeChange = (id, value) => {
-    setTableData(tableData.map(row => row.id === id ? { ...row, before: value } : row));
+    setTableData(
+      tableData.map((row) => (row.id === id ? { ...row, before: value } : row)),
+    );
   };
-  
+
   const handleAfterChange = (id, value) => {
-    setTableData(tableData.map(row => row.id === id ? { ...row, after: value } : row));
+    setTableData(
+      tableData.map((row) => (row.id === id ? { ...row, after: value } : row)),
+    );
   };
-  
+
   const handleRemarksChange = (id, value) => {
-    setTableData(tableData.map(row => row.id === id ? { ...row, remarks: value } : row));
+    setTableData(
+      tableData.map((row) =>
+        row.id === id ? { ...row, remarks: value } : row,
+      ),
+    );
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-
+    const currentUser = localStorage.getItem("username") || "Unknown User";
     const payload = {
-      machineName: metaData.machineName,
+      machine_name: metaData.machineName,
       date: metaData.date,
-      machineNo: metaData.machineNo,
+      machine_no: metaData.machineNo,
       location: metaData.location,
       specification: metaData.specification,
-      maintenancePersonnel: metaData.maintenancePersonnel,
-      preparedBy: metaData.preparedBy,
-      checkedBy: metaData.checkedBy,
-      tableData: tableData
+      maintenance_personnel: metaData.maintenancePersonnel,
+      prepared_by: metaData.preparedBy,
+      checked_by: metaData.checkedBy,
+      username: currentUser,
+      department_name: `${metaData.location} (Maintenance)`,
+      checkpoints: tableData.map((row, index) => ({
+        sr_no: index + 1,
+        check_point: row.point,
+        checking_parameter: row.parameter,
+        checking_method: row.method,
+        before_maintenance: row.before,
+        after_maintenance: row.after,
+        remarks: row.remarks || "",
+        spare_used_remarks: row.remarks || "",
+      })),
     };
 
     try {
-      const response = await fetch(getApiUrl('/api/spot-welding-maintenance/save/'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        getApiUrl("/api/spot-welding-maintenance/save/"),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload)
-      });
+      );
 
       if (response.ok) {
-         const currentUser = localStorage.getItem("username") || "Unknown User";
+        const currentUser = localStorage.getItem("username") || "Unknown User";
 
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "Spot Welding Mentinance Form", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
         alert("Success! Spot Welding Maintenance record has been saved.");
         setMetaData(initialMetaData);
         setTableData(initialChecklist);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         const errorData = await response.json();
-        alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
+        alert(
+          "Failed to save data. Error: " +
+            (errorData.error
+              ? JSON.stringify(errorData.error)
+              : "Unknown Error"),
+        );
       }
     } catch (error) {
       console.error("Error saving data:", error);
@@ -107,7 +187,10 @@ const SpotWeldingMaintenanceForm = () => {
   };
 
   return (
-    <div className="container-fluid py-4" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+    <div
+      className="container-fluid py-4"
+      style={{ backgroundColor: "#f8fafc", minHeight: "100vh" }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
         * { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -226,62 +309,117 @@ const SpotWeldingMaintenanceForm = () => {
       `}</style>
 
       {/* --- TOP BACK BUTTON --- */}
-      <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
-        <button 
+      <div
+        className="mx-auto mb-3 no-print animate-fade-in px-2"
+        style={{ maxWidth: "1200px" }}
+      >
+        <button
           className="btn btn-outline-custom rounded-pill"
-          onClick={() => navigate('/Maintenance/Machine/weekly')}
-          style={{ fontSize: '0.85rem' }}
+          onClick={() => navigate("/Maintenance/Machine/weekly")}
+          style={{ fontSize: "0.85rem" }}
         >
           ← Back to Weekly Hub
         </button>
       </div>
 
       {/* Header Panel */}
-      <div className="theme-card mx-auto mb-4 p-3 p-md-4 d-flex justify-content-between align-items-center" style={{ maxWidth: '1200px', borderTop: '6px solid #6366f1' }}>
+      <div
+        className="theme-card mx-auto mb-4 p-3 p-md-4 d-flex justify-content-between align-items-center"
+        style={{ maxWidth: "1200px", borderTop: "6px solid #6366f1" }}
+      >
         <div>
-          <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#1e293b' }}>SPOT WELDING MAINTENANCE</h3>
-          <span className="badge rounded-pill" style={{ backgroundColor: '#e0e7ff', color: '#4f46e5', padding: '8px 15px' }}>Form: AOT-F-PM-01 | Weekly</span>
+          <h3
+            className="fw-bold mb-1 fs-5 fs-md-3"
+            style={{ color: "#1e293b" }}
+          >
+            SPOT WELDING MAINTENANCE
+          </h3>
+          <span
+            className="badge rounded-pill"
+            style={{
+              backgroundColor: "#e0e7ff",
+              color: "#4f46e5",
+              padding: "8px 15px",
+            }}
+          >
+            Form: AOT-F-PM-01 | Weekly
+          </span>
         </div>
       </div>
 
-      <div className="theme-card mx-auto p-3 p-md-4" style={{ maxWidth: '1200px' }}>
+      <div
+        className="theme-card mx-auto p-3 p-md-4"
+        style={{ maxWidth: "1200px" }}
+      >
         <form onSubmit={handleSubmit}>
           {/* General Information */}
           <div className="row g-3 mb-4">
             <div className="col-12 col-md-4">
               <label className="form-label">Machine Name</label>
-              <input 
-                type="text" 
-                className="form-control" 
+              <input
+                type="text"
+                className="form-control"
                 name="machineName"
-                value={metaData.machineName} 
-                onChange={handleMetaChange} 
+                value={metaData.machineName}
+                onChange={handleMetaChange}
                 placeholder="Enter Machine Name"
-                required 
+                required
               />
             </div>
             <div className="col-12 col-md-4">
               <label className="form-label">Date</label>
-              <input type="date" className="form-control" name="date" value={metaData.date} onChange={handleMetaChange} required />
+              <input
+                type="date"
+                className="form-control"
+                name="date"
+                value={metaData.date}
+                onChange={handleMetaChange}
+                required
+              />
             </div>
             <div className="col-12 col-md-4">
               <label className="form-label">Machine No.</label>
-              <input type="text" className="form-control" name="machineNo" value={metaData.machineNo} onChange={handleMetaChange} required />
+              <input
+                type="text"
+                className="form-control"
+                name="machineNo"
+                value={metaData.machineNo}
+                onChange={handleMetaChange}
+                required
+              />
             </div>
             <div className="col-12 col-md-4">
               <label className="form-label">Location</label>
-              <input type="text" className="form-control" name="location" value={metaData.location} onChange={handleMetaChange} required />
+              <input
+                type="text"
+                className="form-control"
+                name="location"
+                value={metaData.location}
+                onChange={handleMetaChange}
+                required
+              />
             </div>
             <div className="col-12 col-md-8">
               <label className="form-label">Maintenance Personnel</label>
-              <input type="text" className="form-control" name="maintenancePersonnel" value={metaData.maintenancePersonnel} onChange={handleMetaChange} required />
+              <input
+                type="text"
+                className="form-control"
+                name="maintenancePersonnel"
+                value={metaData.maintenancePersonnel}
+                onChange={handleMetaChange}
+                required
+              />
             </div>
           </div>
 
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h5 className="fw-bold mb-0">Check Points</h5>
-            <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setIsChecklistOpen(!isChecklistOpen)}>
-              {isChecklistOpen ? 'Hide' : 'Show'}
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary"
+              onClick={() => setIsChecklistOpen(!isChecklistOpen)}
+            >
+              {isChecklistOpen ? "Hide" : "Show"}
             </button>
           </div>
 
@@ -290,13 +428,17 @@ const SpotWeldingMaintenanceForm = () => {
               <table className="table mb-0 ss-table">
                 <thead>
                   <tr className="text-center">
-                    <th style={{ width: '5%' }}>Sr.</th>
-                    <th className="text-start" style={{ width: '25%' }}>Check Points</th>
-                    <th className="text-start" style={{ width: '25%' }}>Parameter</th>
-                    <th style={{ width: '10%' }}>Method</th>
-                    <th style={{ width: '10%' }}>Before</th>
-                    <th style={{ width: '10%' }}>After</th>
-                    <th style={{ width: '15%' }}>Remarks</th>
+                    <th style={{ width: "5%" }}>Sr.</th>
+                    <th className="text-start" style={{ width: "25%" }}>
+                      Check Points
+                    </th>
+                    <th className="text-start" style={{ width: "25%" }}>
+                      Parameter
+                    </th>
+                    <th style={{ width: "10%" }}>Method</th>
+                    <th style={{ width: "10%" }}>Before</th>
+                    <th style={{ width: "10%" }}>After</th>
+                    <th style={{ width: "15%" }}>Remarks</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -320,19 +462,49 @@ const SpotWeldingMaintenanceForm = () => {
                       </td>
                       <td>
                         <span className="mobile-label">Before Maint.</span>
-                        <select className="form-select form-select-sm w-100" value={row.before} onChange={(e) => handleBeforeChange(row.id, e.target.value)} required>
-                          {statusOptions.map(opt => <option key={opt} value={opt}>{opt || 'Select'}</option>)}
+                        <select
+                          className="form-select form-select-sm w-100"
+                          value={row.before}
+                          onChange={(e) =>
+                            handleBeforeChange(row.id, e.target.value)
+                          }
+                          required
+                        >
+                          {statusOptions.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt || "Select"}
+                            </option>
+                          ))}
                         </select>
                       </td>
                       <td>
                         <span className="mobile-label">After Maint.</span>
-                        <select className="form-select form-select-sm w-100" value={row.after} onChange={(e) => handleAfterChange(row.id, e.target.value)} required>
-                          {statusOptions.map(opt => <option key={opt} value={opt}>{opt || 'Select'}</option>)}
+                        <select
+                          className="form-select form-select-sm w-100"
+                          value={row.after}
+                          onChange={(e) =>
+                            handleAfterChange(row.id, e.target.value)
+                          }
+                          required
+                        >
+                          {statusOptions.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt || "Select"}
+                            </option>
+                          ))}
                         </select>
                       </td>
                       <td>
                         <span className="mobile-label">Remarks</span>
-                        <input type="text" className="form-control form-control-sm w-100" placeholder="Remarks..." value={row.remarks} onChange={(e) => handleRemarksChange(row.id, e.target.value)} />
+                        <input
+                          type="text"
+                          className="form-control form-control-sm w-100"
+                          placeholder="Remarks..."
+                          value={row.remarks}
+                          onChange={(e) =>
+                            handleRemarksChange(row.id, e.target.value)
+                          }
+                        />
                       </td>
                     </tr>
                   ))}
@@ -346,24 +518,37 @@ const SpotWeldingMaintenanceForm = () => {
             <div className="col-12 col-md-6">
               <div className="p-3 rounded-3 border">
                 <label className="form-label">Prepared By</label>
-                <input type="text" className="form-control border-0" name="preparedBy" value={metaData.preparedBy} onChange={handleMetaChange} required />
+                <input
+                  type="text"
+                  className="form-control border-0"
+                  name="preparedBy"
+                  value={metaData.preparedBy}
+                  onChange={handleMetaChange}
+                  required
+                />
               </div>
             </div>
             <div className="col-12 col-md-6">
               <div className="p-3 rounded-3 border">
                 <label className="form-label">Checked By</label>
-                <input type="text" className="form-control border-0" name="checkedBy" value={metaData.checkedBy} onChange={handleMetaChange} />
+                <input
+                  type="text"
+                  className="form-control border-0"
+                  name="checkedBy"
+                  value={metaData.checkedBy}
+                  onChange={handleMetaChange}
+                />
               </div>
             </div>
           </div>
 
           <div className="d-flex flex-column flex-sm-row justify-content-end mt-4">
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isSubmitting}
               className="btn btn-theme rounded-pill px-5 w-100 w-sm-auto"
             >
-              {isSubmitting ? 'Submitting...' : 'Save Record'}
+              {isSubmitting ? "Submitting..." : "Save Record"}
             </button>
           </div>
         </form>

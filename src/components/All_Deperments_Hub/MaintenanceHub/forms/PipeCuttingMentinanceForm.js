@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { getApiUrl } from '../../../../config/api'; // <--- API Import added
+import { getApiUrl } from "../../../../config/api"; // <--- API Import added
 import axios from "axios";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
+
 
 const PipeCuttingMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -18,116 +16,116 @@ const PipeCuttingMaintenanceForm = () => {
   const statusOptions = ["", "Ok", "Not Ok", "Ng", "N/A"];
 
   // --- FIXED HYDRAULIC CHECKLIST DATA WITH PRE-DEFINED CHECKING METHODS ---
- const initialChecklist = [
-  {
-    id: 1,
-    point: "Clean the machine",
-    parameter: "Dust free",
-    method: "Visual",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 2,
-    point: "Check the on/off condition of power switch button",
-    parameter: "Should be proper working",
-    method: "Manual",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 3,
-    point: "Check the electrical loose wire and connection",
-    parameter: "Should not be loose and proper working condition",
-    method: "Visual",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 4,
-    point: "Check the pedal condition and pedal spring condition",
-    parameter: "Should be proper working condition",
-    method: "Visual",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 5,
-    point: "Check blade condition",
-    parameter: "Should be in good condition",
-    method: "Visual",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 6,
-    point: "Coolant to be filled",
-    parameter: "Level for coolant should be ok",
-    method: "Visual",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 7,
-    point: "Check the oiling and greasing of required moving parts",
-    parameter: "Checking level of oil/grease",
-    method: "By oil gun / grease gun",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 8,
-    point: "Check the motor foundation bolt and terminals",
-    parameter: "Should be tight",
-    method: "By spanner",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 9,
-    point: "Check the V belt condition/looseness",
-    parameter: "Should be correct or replace",
-    method: "By hand",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 10,
-    point: "Check the condition of cutting shaft",
-    parameter: "Should be tight",
-    method: "By spanner",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 11,
-    point: "Check the condition of level",
-    parameter: "Should be in good condition and working condition",
-    method: "Visual",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 12,
-    point: "Check the preventive maintenance date",
-    parameter: "Updated in history card",
-    method: "Visual",
-    before: "",
-    after: "",
-    remarks: ""
-  }
-];
+  const initialChecklist = [
+    {
+      id: 1,
+      point: "Clean the machine",
+      parameter: "Dust free",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 2,
+      point: "Check the on/off condition of power switch button",
+      parameter: "Should be proper working",
+      method: "Manual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 3,
+      point: "Check the electrical loose wire and connection",
+      parameter: "Should not be loose and proper working condition",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 4,
+      point: "Check the pedal condition and pedal spring condition",
+      parameter: "Should be proper working condition",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 5,
+      point: "Check blade condition",
+      parameter: "Should be in good condition",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 6,
+      point: "Coolant to be filled",
+      parameter: "Level for coolant should be ok",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 7,
+      point: "Check the oiling and greasing of required moving parts",
+      parameter: "Checking level of oil/grease",
+      method: "By oil gun / grease gun",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 8,
+      point: "Check the motor foundation bolt and terminals",
+      parameter: "Should be tight",
+      method: "By spanner",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 9,
+      point: "Check the V belt condition/looseness",
+      parameter: "Should be correct or replace",
+      method: "By hand",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 10,
+      point: "Check the condition of cutting shaft",
+      parameter: "Should be tight",
+      method: "By spanner",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 11,
+      point: "Check the condition of level",
+      parameter: "Should be in good condition and working condition",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 12,
+      point: "Check the preventive maintenance date",
+      parameter: "Updated in history card",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+  ];
 
   // --- INITIAL STATES (For Resetting) ---
   const initialMetaData = {
@@ -138,7 +136,7 @@ const PipeCuttingMaintenanceForm = () => {
     specification: "",
     maintenancePersonnel: "",
     preparedBy: "", // <--- Added
-    checkedBy: "",  // <--- Added
+    checkedBy: "", // <--- Added
   };
 
   // --- COMPONENT STATE ---
@@ -195,32 +193,47 @@ const PipeCuttingMaintenanceForm = () => {
 
     setIsSubmitting(true);
 
+    const currentUser = localStorage.getItem("username") || "Unknown User";
+    const preparedByValue = (metaData.preparedBy || currentUser).trim();
+
     const payload = {
-      ...metaData,
-      tableData: tableData,
+      machine_name: metaData.machineName,
+      date: metaData.date,
+      machine_no: metaData.machineNo,
+      location: metaData.location,
+      specification: metaData.specification,
+      maintenance_personnel: metaData.maintenancePersonnel,
+      prepared_by: preparedByValue,
+      checked_by: metaData.checkedBy,
+      username: currentUser,
+      department_name: `${metaData.location} (Maintenance)`,
+      checkpoints: tableData.map((row, index) => ({
+        sr_no: index + 1,
+        check_point: row.point,
+        checking_parameter: row.parameter,
+        checking_method: row.method,
+        before_maintenance: row.before,
+        after_maintenance: row.after,
+        remarks: row.remarks || "",
+        spare_used_remarks: row.remarks || "",
+      })),
     };
 
     try {
-      const response = await fetch(getApiUrl('/api/pipe-cutting-maintenance/save/'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        getApiUrl("/api/pipe-cutting-maintenance/save/"),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload)
-      });
+      );
 
       if (response.ok) {
-          const currentUser = localStorage.getItem("username") || "Unknown User";
+        const currentUser = localStorage.getItem("username") || "Unknown User";
 
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "Pipe cutter Mentinance Form", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
         setShowSuccess(true);
         setTimeout(() => {
           setMetaData(initialMetaData);
@@ -230,7 +243,12 @@ const PipeCuttingMaintenanceForm = () => {
         }, 1500);
       } else {
         const errorData = await response.json();
-        alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
+        alert(
+          "Failed to save data. Error: " +
+            (errorData.error
+              ? JSON.stringify(errorData.error)
+              : "Unknown Error"),
+        );
       }
     } catch (error) {
       console.error("Error saving data:", error);
@@ -744,10 +762,10 @@ const PipeCuttingMaintenanceForm = () => {
               {/* Prepared By - LINKED TO STATE */}
               <div className="fw-bold " style={{ color: "#495057" }}>
                 Prepared By
-                <input 
-                  type="text" 
-                  className="form-control mt-1" 
-                  placeholder="Name" 
+                <input
+                  type="text"
+                  className="form-control mt-1"
+                  placeholder="Name"
                   name="preparedBy"
                   value={metaData.preparedBy}
                   onChange={handleMetaChange}
@@ -780,14 +798,14 @@ const PipeCuttingMaintenanceForm = () => {
               {/* Checked By - LINKED TO STATE */}
               <div className="fw-bold" style={{ color: "#495057" }}>
                 Checked By
-                 <input 
-                   type="text" 
-                   className="form-control mt-1" 
-                   placeholder="Name" 
-                   name="checkedBy"
-                   value={metaData.checkedBy}
-                   onChange={handleMetaChange}
-                 />
+                <input
+                  type="text"
+                  className="form-control mt-1"
+                  placeholder="Name"
+                  name="checkedBy"
+                  value={metaData.checkedBy}
+                  onChange={handleMetaChange}
+                />
               </div>
             </div>
 
@@ -806,7 +824,8 @@ const PipeCuttingMaintenanceForm = () => {
                 disabled={isSubmitting}
                 className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
               >
-                <i className="bi bi-floppy me-2"></i> {isSubmitting ? "Saving..." : "Save Record"}
+                <i className="bi bi-floppy me-2"></i>{" "}
+                {isSubmitting ? "Saving..." : "Save Record"}
               </button>
             </div>
           </form>

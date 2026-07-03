@@ -106,16 +106,18 @@ const MachinePreventMainForm = () => {
       remarks: row.remarks || '',
       spare_used_remarks: row.remarks || '',
     }));
-
+    const currentUser = localStorage.getItem("username") || "Unknown User";
     const payload = {
-      machine_name: metaData.machineName,
-      machine_no: metaData.machineNo,
-      date: metaData.date,
-      location: metaData.location,
-      specification: metaData.specification,
-      maintenance_personnel: metaData.maintenancePersonnel,
-      checkpoints: checklistPayload,
-      checklist: checklistPayload
+    machine_name: metaData.machineName,
+    machine_no: metaData.machineNo,
+    date: metaData.date,
+    location: metaData.location,
+    specification: metaData.specification,
+    maintenance_personnel: metaData.maintenancePersonnel,
+    prepared_by: preparedBy,
+    username: currentUser,
+    department_name: `${metaData.location} (Maintenance)`,
+    checkpoints: checklistPayload,
     };
     
     try {
@@ -133,15 +135,7 @@ const MachinePreventMainForm = () => {
       if (response.ok && result.success !== false) {
          const currentUser = localStorage.getItem("username") || "Unknown User";
 
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "VMC Mentinance Form", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
+  
         setShowSuccess(true);
         setTimeout(() => {
           setMetaData(initialMetaData);

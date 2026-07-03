@@ -1,26 +1,53 @@
-import React, { useState , useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle, XCircle, Save, RotateCcw } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import {
+  ArrowLeft,
+  CheckCircle,
+  XCircle,
+  Save,
+  RotateCcw,
+} from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
+const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+
+const initialFormState = {
+  givenDate: "",
+  givenTime: "",
+  machineNameNo: "",
+  breakdownName: "",
+  partMadeAfterInspection: "",
+  breakdownDesc: "",
+  repairDate: "",
+  repairTime: "",
+  repairHours: "",
+  mechanicsCount: "",
+  repairDesc: "",
+  status: "OK",
+  verificationDate: "",
+  verificationTime: "",
+};
+
 const MachineBreakDownForm = () => {
+  const navigate = useNavigate();
+  const { formKey, reportId, id } = useParams();
+
+  const currentFormKey = formKey || "machine-breakdown";
+  const currentReportId = reportId || id;
+  const isViewMode = Boolean(currentReportId);
+
   const [language, setLanguage] = useState("english");
-  const [formData, setFormData] = useState({
-    givenDate: "",
-    givenTime: "",
-    machineNameNo: "",
-    breakdownName: "",
-    partMadeAfterInspection: "",
-    breakdownDesc: "",
-    repairDate: "",
-    repairTime: "",
-    repairHours: "",
-    mechanicsCount: "",
-    repairDesc: "",
-    status: "OK",
-    verificationDate: "",
-    verificationTime: "",
-  });
+  const [formData, setFormData] = useState(initialFormState);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [preparedBy, setPreparedBy] = useState("");
+
+  const [approvalRemark, setApprovalRemark] = useState("");
+  const [approvalLoading, setApprovalLoading] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState("");
+  const [reviewedAt, setReviewedAt] = useState("");
 
   const content = {
     english: {
@@ -79,69 +106,29 @@ const MachineBreakDownForm = () => {
     },
   };
 
-  const initialFormState = {
-    givenDate: "",
-    givenTime: "",
-    machineNameNo: "",
-    breakdownName: "",
-    partMadeAfterInspection: "",
-    breakdownDesc: "",
-    repairDate: "",
-    repairTime: "",
-    repairHours: "",
-    mechanicsCount: "",
-    repairDesc: "",
-    status: "OK",
-    verificationDate: "",
-    verificationTime: "",
-  };
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [preparedBy, setPreparedBy] = useState("");
-  const { formKey, reportId, id } = useParams();
-
-  const currentFormKey = formKey || "machine-breakdown";
-  const currentReportId = reportId || id;
-  const isViewMode = Boolean(currentReportId);
   const currentLang = language === "english" ? content.english : content.hindi;
+
   const currentDate = new Date().toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
   });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const inputClass =
+    "w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed";
 
-  const resetForm = () => {
-    setFormData(initialFormState);
-    setShowResetConfirm(false);
-  };
-
-  const handleResetClick = () => {
-    setShowResetConfirm(true);
-  };
-
-  const handleCancelReset = () => {
-    setShowResetConfirm(false);
-  };
+  const isAlreadyReviewed =
+    approvalStatus &&
+    (approvalStatus.toLowerCase().includes("approved") ||
+      approvalStatus.toLowerCase().includes("rejected"));
 
   useEffect(() => {
     const fetchReportData = async () => {
       if (!currentReportId) return;
 
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
-
         const response = await axios.get(
-          `${apiUrl}/api/get-single-maintenance-report/${currentFormKey}/${currentReportId}/`,
+          `${BASE_URL}/api/get-single-maintenance-report/${currentFormKey}/${currentReportId}/`,
         );
 
         console.log("🔥 VIEW REPORT RESPONSE =", response.data);
@@ -157,54 +144,95 @@ const MachineBreakDownForm = () => {
 
           setLanguage(apiData.language || "english");
           setPreparedBy(apiData.prepared_by || apiData.submitted_by || "");
+
+          setApprovalRemark(apiData.approval_remarks || "");
+          setApprovalStatus(apiData.approval_status || "");
+          setReviewedAt(apiData.approved_or_rejected_at || "");
         } else {
           alert(response.data?.error || "Report data not found.");
         }
       } catch (error) {
         console.error("View report fetch error:", error);
-        alert("❌ Could not load report data.");
+        alert(
+          error.response?.data?.error ||
+            "❌ Could not load report data from notification.",
+        );
       }
     };
 
     fetchReportData();
   }, [currentFormKey, currentReportId]);
 
-  // --- API INTEGRATION ADDED HERE ---
+  const handleInputChange = (e) => {
+    if (isViewMode) return;
+
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const resetForm = () => {
+    setFormData(initialFormState);
+    setPreparedBy("");
+    setShowResetConfirm(false);
+  };
+
+  const handleResetClick = () => {
+    if (isViewMode) return;
+    setShowResetConfirm(true);
+  };
+
+  const handleCancelReset = () => {
+    setShowResetConfirm(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (isViewMode) return;
+
     setIsSubmitting(true);
 
     const currentUser = localStorage.getItem("username") || "Unknown User";
 
     const submissionData = {
       ...formData,
-      language: language,
+      language,
       username: currentUser,
       prepared_by: preparedBy || currentUser,
     };
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
-
-      const response = await fetch(
-        `${apiUrl}/api/machine-breakdown-slip/save/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(submissionData),
+      const response = await fetch(`${BASE_URL}/api/machine-breakdown-slip/save/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify(submissionData),
+      });
 
       const result = await response.json();
 
-      if (result.success) {
+      console.log("🔥 Machine Breakdown Save Response =", result);
+
+      if (result.success || response.ok) {
+        if (!result.log_id) {
+          alert(
+            "Breakdown form saved, but log_id missing. Backend did not create ReportActivityLog / notification.",
+          );
+          return;
+        }
+
         setShowSuccess(true);
-        alert("✅ Success: Breakdown report has been submitted successfully!");
+
+        alert(
+          `✅ Success: Breakdown report submitted successfully. Log ID: ${result.log_id}`,
+        );
 
         resetForm();
-        setPreparedBy("");
 
         setTimeout(() => {
           setShowSuccess(false);
@@ -220,18 +248,73 @@ const MachineBreakDownForm = () => {
     }
   };
 
+  const handleApprove = async () => {
+    try {
+      setApprovalLoading(true);
+
+      const currentUser = localStorage.getItem("username") || "Approver";
+
+      const res = await axios.post(`${BASE_URL}/api/approve-report/`, {
+        log_id: currentReportId,
+        approver_username: currentUser,
+        remarks: approvalRemark,
+      });
+
+      alert(res.data?.message || "Report approved successfully.");
+      navigate("/notifications");
+    } catch (err) {
+      console.error("Approve error:", err);
+      alert(err.response?.data?.error || "Approval failed.");
+    } finally {
+      setApprovalLoading(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!approvalRemark.trim()) {
+      alert("Please enter remark before rejecting.");
+      return;
+    }
+
+    try {
+      setApprovalLoading(true);
+
+      const currentUser = localStorage.getItem("username") || "Approver";
+
+      const res = await axios.post(`${BASE_URL}/api/reject-report/`, {
+        log_id: currentReportId,
+        approver_username: currentUser,
+        remarks: approvalRemark,
+      });
+
+      alert(res.data?.message || "Report rejected successfully.");
+      navigate("/notifications");
+    } catch (err) {
+      console.error("Reject error:", err);
+      alert(err.response?.data?.error || "Reject failed.");
+    } finally {
+      setApprovalLoading(false);
+    }
+  };
+
   const handleBack = () => {
-    window.location.href = "/Maintenance/Machine/daily";
+    if (isViewMode) {
+      navigate("/notifications");
+      return;
+    }
+
+    navigate("/Maintenance/Machine/daily");
   };
 
   const toggleLanguage = () => {
+    if (isViewMode) return;
+
     setLanguage((prev) => (prev === "english" ? "hindi" : "english"));
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-4 sm:py-6 md:py-8 px-3 sm:px-4 md:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        {/* Back Button and Header */}
         <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <button
             onClick={handleBack}
@@ -240,19 +323,29 @@ const MachineBreakDownForm = () => {
           >
             <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             <span className="text-sm sm:text-base font-medium">
-              {currentLang.back}
+              {isViewMode ? "Back to Notifications" : currentLang.back}
             </span>
           </button>
 
           <div className="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
+            {isViewMode && (
+              <div className="bg-blue-50 px-4 py-2 rounded-lg shadow-sm border border-blue-200">
+                <span className="text-sm text-blue-600 font-black">
+                  Review Mode
+                </span>
+              </div>
+            )}
+
             <div className="bg-white px-4 py-2 rounded-lg shadow-sm">
               <span className="text-sm text-gray-600 font-medium">
                 {currentDate}
               </span>
             </div>
+
             <button
               onClick={toggleLanguage}
-              className="px-4 py-2 bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white rounded-lg hover:from-[#dc2626] hover:to-[#b91c1c] transition-all shadow-sm hover:shadow-md text-sm font-medium min-w-[80px] cursor-pointer"
+              disabled={isViewMode}
+              className="px-4 py-2 bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white rounded-lg hover:from-[#dc2626] hover:to-[#b91c1c] transition-all shadow-sm hover:shadow-md text-sm font-medium min-w-[80px] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               type="button"
             >
               {language === "english" ? "हिंदी" : "English"}
@@ -260,7 +353,40 @@ const MachineBreakDownForm = () => {
           </div>
         </div>
 
-        {/* Success Message */}
+        {isViewMode && approvalStatus && (
+          <div className="mb-4 bg-white border border-gray-200 rounded-xl shadow-sm px-4 py-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <p className="text-xs font-black text-gray-500 uppercase mb-1">
+                  Current Status
+                </p>
+
+                <p
+                  className={`font-black ${
+                    approvalStatus.toLowerCase().includes("approved")
+                      ? "text-green-600"
+                      : approvalStatus.toLowerCase().includes("rejected")
+                      ? "text-red-600"
+                      : "text-yellow-600"
+                  }`}
+                >
+                  {approvalStatus}
+                </p>
+              </div>
+
+              {reviewedAt && (
+                <div className="sm:text-right">
+                  <p className="text-xs font-black text-gray-500 uppercase mb-1">
+                    Reviewed At
+                  </p>
+
+                  <p className="font-bold text-gray-700">{reviewedAt}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {showSuccess && (
           <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg shadow-sm animate-fade-in">
             <div className="flex items-center">
@@ -270,13 +396,13 @@ const MachineBreakDownForm = () => {
           </div>
         )}
 
-        {/* Reset Confirmation Modal */}
         {showResetConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-fade-in">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 {currentLang.resetConfirm}
               </h3>
+
               <div className="flex justify-end space-x-3">
                 <button
                   onClick={handleCancelReset}
@@ -285,6 +411,7 @@ const MachineBreakDownForm = () => {
                 >
                   Cancel
                 </button>
+
                 <button
                   onClick={resetForm}
                   className="px-4 py-2 bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white rounded-lg hover:from-[#dc2626] hover:to-[#b91c1c] transition-all cursor-pointer"
@@ -297,40 +424,37 @@ const MachineBreakDownForm = () => {
           </div>
         )}
 
-        {/* Form Container */}
         <div className="bg-white shadow-xl rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200">
-          {/* Form Header */}
           <div className="bg-gradient-to-r from-[#ef4444] via-[#dc2626] to-[#b91c1c] px-4 sm:px-6 py-4 sm:py-5">
             <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-white text-center tracking-tight">
               {currentLang.title}
             </h1>
           </div>
 
-          {/* Form Body */}
           <form
             onSubmit={handleSubmit}
             className="p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8"
           >
-            {/* First Section - Production fields (no heading) */}
             <div className="space-y-4 sm:space-y-5">
-              {/* Row 1: Breakdown Name and Part made after inspection - Side by side */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                 <div className="space-y-1">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
                     {currentLang.breakdownName}{" "}
                     <span className="text-[#ef4444]">*</span>
                   </label>
+
                   <input
                     type="text"
                     name="breakdownName"
                     value={formData.breakdownName}
                     onChange={handleInputChange}
+                    disabled={isViewMode}
                     placeholder={
                       language === "english"
                         ? "Enter breakdown name"
                         : "ब्रेकडाउन का नाम दर्ज करें"
                     }
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
+                    className={inputClass}
                     required
                   />
                 </div>
@@ -340,56 +464,58 @@ const MachineBreakDownForm = () => {
                     {currentLang.partMadeAfterInspection}{" "}
                     <span className="text-[#ef4444]">*</span>
                   </label>
+
                   <input
                     type="text"
                     name="partMadeAfterInspection"
                     value={formData.partMadeAfterInspection}
                     onChange={handleInputChange}
+                    disabled={isViewMode}
                     placeholder={
                       language === "english"
                         ? "Enter part details"
                         : "भाग का विवरण दर्ज करें"
                     }
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
+                    className={inputClass}
                     required
                   />
                 </div>
               </div>
 
-              {/* Row 2: Machine Name - Full width */}
               <div className="space-y-1">
                 <label className="block text-xs sm:text-sm font-medium text-gray-700">
                   {currentLang.machineName}{" "}
                   <span className="text-[#ef4444]">*</span>
                 </label>
+
                 <input
                   type="text"
                   name="machineNameNo"
                   value={formData.machineNameNo}
                   onChange={handleInputChange}
+                  disabled={isViewMode}
                   placeholder={
-                    language === "english"
-                      ? "e.g., 3.00 No.S"
-                      : "उदा., 3.00 नं.एस"
+                    language === "english" ? "e.g., 3.00 No.S" : "उदा., 3.00 नं.एस"
                   }
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
+                  className={inputClass}
                   required
                 />
               </div>
 
-              {/* Row 3: Given Date and Given Time - Side by side */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                 <div className="space-y-1">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
                     {currentLang.givenOn}{" "}
                     <span className="text-[#ef4444]">*</span>
                   </label>
+
                   <input
                     type="date"
                     name="givenDate"
                     value={formData.givenDate}
                     onChange={handleInputChange}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
+                    disabled={isViewMode}
+                    className={inputClass}
                     required
                   />
                 </div>
@@ -399,60 +525,62 @@ const MachineBreakDownForm = () => {
                     {currentLang.givenAt}{" "}
                     <span className="text-[#ef4444]">*</span>
                   </label>
+
                   <input
                     type="time"
                     name="givenTime"
                     value={formData.givenTime}
                     onChange={handleInputChange}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
+                    disabled={isViewMode}
+                    className={inputClass}
                     required
                   />
                 </div>
               </div>
 
-              {/* Row 4: Breakdown Details - Full width */}
               <div className="space-y-1">
                 <label className="block text-xs sm:text-sm font-medium text-gray-700">
                   {currentLang.breakdownDetails}{" "}
                   <span className="text-[#ef4444]">*</span>
                 </label>
+
                 <textarea
                   name="breakdownDesc"
                   value={formData.breakdownDesc}
                   onChange={handleInputChange}
+                  disabled={isViewMode}
                   rows="3"
                   placeholder={
                     language === "english"
                       ? "Describe the breakdown in detail"
                       : "ब्रेकडाउन के बारे में विस्तार से लिखें"
                   }
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
+                  className={inputClass}
                   required
                 />
               </div>
             </div>
 
-            {/* Separator line */}
             <div className="border-t-2 border-gray-200"></div>
 
-            {/* Second Section - Maintenance fields with heading */}
             <div className="space-y-4 sm:space-y-5">
               <h2 className="text-base sm:text-lg font-semibold text-gray-800 border-b-2 border-[#ef4444] pb-2">
                 {currentLang.maintenanceOnly}
               </h2>
 
-              {/* Row 1: Repair Date and Repair Time - Side by side */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                 <div className="space-y-1">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
                     {currentLang.repairDate}
                   </label>
+
                   <input
                     type="date"
                     name="repairDate"
                     value={formData.repairDate}
                     onChange={handleInputChange}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
+                    disabled={isViewMode}
+                    className={inputClass}
                   />
                 </div>
 
@@ -460,31 +588,34 @@ const MachineBreakDownForm = () => {
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
                     {currentLang.repairTime}
                   </label>
+
                   <input
                     type="time"
                     name="repairTime"
                     value={formData.repairTime}
                     onChange={handleInputChange}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
+                    disabled={isViewMode}
+                    className={inputClass}
                   />
                 </div>
               </div>
 
-              {/* Row 2: Hours Taken and Mechanics Involved - Side by side */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                 <div className="space-y-1">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
                     {currentLang.hoursTaken}
                   </label>
+
                   <input
                     type="number"
                     name="repairHours"
                     value={formData.repairHours}
                     onChange={handleInputChange}
+                    disabled={isViewMode}
                     step="0.5"
                     min="0"
                     placeholder="0.0"
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
+                    className={inputClass}
                   />
                 </div>
 
@@ -492,42 +623,43 @@ const MachineBreakDownForm = () => {
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
                     {currentLang.mechanicsInvolved}
                   </label>
+
                   <input
                     type="number"
                     name="mechanicsCount"
                     value={formData.mechanicsCount}
                     onChange={handleInputChange}
+                    disabled={isViewMode}
                     min="0"
                     placeholder="0"
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
+                    className={inputClass}
                   />
                 </div>
               </div>
 
-              {/* Row 3: Repair Description - Full width */}
               <div className="space-y-1">
                 <label className="block text-xs sm:text-sm font-medium text-gray-700">
                   {currentLang.repairDescription}
                 </label>
+
                 <textarea
                   name="repairDesc"
                   value={formData.repairDesc}
                   onChange={handleInputChange}
+                  disabled={isViewMode}
                   rows="2"
                   placeholder={
                     language === "english"
                       ? "Describe the repair work done"
                       : "मरम्मत कार्य का विवरण लिखें"
                   }
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
+                  className={inputClass}
                 />
               </div>
             </div>
 
-            {/* Separator line */}
             <div className="border-t-2 border-gray-200"></div>
 
-            {/* Third Section - Quality fields with heading */}
             <div className="space-y-4 sm:space-y-5">
               <h2 className="text-base sm:text-lg font-semibold text-gray-800 border-b-2 border-[#ef4444] pb-2">
                 {currentLang.verification}
@@ -537,6 +669,7 @@ const MachineBreakDownForm = () => {
                 <label className="block text-xs sm:text-sm font-medium text-gray-700">
                   {currentLang.statusOfProblem}
                 </label>
+
                 <div className="flex flex-col sm:flex-row gap-3 sm:space-x-6">
                   <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                     <input
@@ -545,13 +678,16 @@ const MachineBreakDownForm = () => {
                       value="OK"
                       checked={formData.status === "OK"}
                       onChange={handleInputChange}
+                      disabled={isViewMode}
                       className="w-4 h-4 text-[#ef4444]"
                     />
+
                     <span className="ml-2 flex items-center text-green-600 font-medium">
                       <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5" />
                       {currentLang.ok}
                     </span>
                   </label>
+
                   <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                     <input
                       type="radio"
@@ -559,8 +695,10 @@ const MachineBreakDownForm = () => {
                       value="NG"
                       checked={formData.status === "NG"}
                       onChange={handleInputChange}
+                      disabled={isViewMode}
                       className="w-4 h-4 text-[#ef4444]"
                     />
+
                     <span className="ml-2 flex items-center text-red-600 font-medium">
                       <XCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5" />
                       {currentLang.ng}
@@ -569,18 +707,19 @@ const MachineBreakDownForm = () => {
                 </div>
               </div>
 
-              {/* Row: Date and Time - Side by side */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                 <div className="space-y-1">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
                     {currentLang.date}
                   </label>
+
                   <input
                     type="date"
                     name="verificationDate"
                     value={formData.verificationDate}
                     onChange={handleInputChange}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm  text-slate-700"
+                    disabled={isViewMode}
+                    className={inputClass}
                   />
                 </div>
 
@@ -588,97 +727,155 @@ const MachineBreakDownForm = () => {
                   <label className="block text-xs sm:text-sm font-medium text-gray-700">
                     {currentLang.time}
                   </label>
+
                   <input
                     type="time"
                     name="verificationTime"
                     value={formData.verificationTime}
                     onChange={handleInputChange}
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700"
+                    disabled={isViewMode}
+                    className={inputClass}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Form Actions - Submit and Reset Buttons */}
-            <div className="pt-4 sm:pt-6 flex flex-col sm:flex-row gap-4">
-              <div className="flex flex-col">
-                <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-                  Prepared By
-                </label>
-                <input
-                  type="text"
-                  value={preparedBy}
-                  onChange={(e) => setPreparedBy(e.target.value)}
-                  placeholder="Enter name"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-red-600 w-full sm:w-64"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={handleResetClick}
-                className="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all font-medium text-base sm:text-lg shadow-lg hover:shadow-xl flex items-center justify-center order-2 sm:order-1 cursor-pointer"
-              >
-                <RotateCcw className="w-5 h-5 mr-2" />
-                {currentLang.restButton}
-              </button>
+            <div className="pt-4 sm:pt-6">
+              {!isViewMode ? (
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex flex-col">
+                    <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+                      Prepared By
+                    </label>
 
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`flex-1 bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl transition-all font-medium text-base sm:text-lg shadow-lg flex items-center justify-center order-1 sm:order-2 ${
-                  isSubmitting
-                    ? "opacity-70 cursor-not-allowed"
-                    : "hover:from-[#dc2626] hover:to-[#b91c1c] hover:shadow-xl cursor-pointer"
-                }`}
-              >
-                {isSubmitting ? (
-                  <>
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    {currentLang.submitting}
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-5 h-5 mr-2" />
-                    {currentLang.submit}
-                  </>
-                )}
-              </button>
+                    <input
+                      type="text"
+                      value={preparedBy}
+                      onChange={(e) => setPreparedBy(e.target.value)}
+                      placeholder="Enter name"
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-red-600 w-full sm:w-64"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleResetClick}
+                    className="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all font-medium text-base sm:text-lg shadow-lg hover:shadow-xl flex items-center justify-center order-2 sm:order-1 cursor-pointer"
+                  >
+                    <RotateCcw className="w-5 h-5 mr-2" />
+                    {currentLang.restButton}
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className={`flex-1 bg-gradient-to-r from-[#ef4444] to-[#dc2626] text-white py-3 sm:py-4 px-4 sm:px-6 rounded-xl transition-all font-medium text-base sm:text-lg shadow-lg flex items-center justify-center order-1 sm:order-2 ${
+                      isSubmitting
+                        ? "opacity-70 cursor-not-allowed"
+                        : "hover:from-[#dc2626] hover:to-[#b91c1c] hover:shadow-xl cursor-pointer"
+                    }`}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <svg
+                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+
+                        {currentLang.submitting}
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-5 h-5 mr-2" />
+                        {currentLang.submit}
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="border-t border-gray-200 pt-5">
+                  <label className="block text-xs sm:text-sm font-bold text-gray-700 uppercase mb-2">
+                    Approval / Rejection Remark
+                  </label>
+
+                  <textarea
+                    rows="3"
+                    value={approvalRemark}
+                    onChange={(e) => setApprovalRemark(e.target.value)}
+                    disabled={isAlreadyReviewed}
+                    placeholder="Enter approval or rejection remark..."
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ef4444] focus:border-transparent text-sm text-slate-700 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                  />
+
+                  {approvalStatus && (
+                    <div className="mt-2 text-sm font-bold text-gray-600">
+                      Status: {approvalStatus}
+                      {reviewedAt ? ` | Reviewed At: ${reviewedAt}` : ""}
+                    </div>
+                  )}
+
+                  {isAlreadyReviewed ? (
+                    <div className="mt-3 bg-gray-100 border border-gray-200 rounded-lg p-3 text-sm font-bold text-gray-600">
+                      This report is already reviewed.
+                    </div>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                      <button
+                        type="button"
+                        onClick={handleReject}
+                        disabled={approvalLoading}
+                        className="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold disabled:opacity-70 disabled:cursor-not-allowed"
+                      >
+                        {approvalLoading ? "Please wait..." : "Reject"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleApprove}
+                        disabled={approvalLoading}
+                        className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold disabled:opacity-70 disabled:cursor-not-allowed"
+                      >
+                        {approvalLoading ? "Please wait..." : "Approve"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </form>
         </div>
       </div>
 
-      {/* Add custom animation styles */}
       <style jsx>{`
         @keyframes fadeIn {
           from {
             opacity: 0;
             transform: translateY(-10px);
           }
+
           to {
             opacity: 1;
             transform: translateY(0);
           }
         }
+
         .animate-fade-in {
           animation: fadeIn 0.3s ease-out;
         }

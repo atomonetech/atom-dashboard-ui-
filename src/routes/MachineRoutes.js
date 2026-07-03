@@ -71,7 +71,13 @@ const MachineRoutes = () => {
         path="view-report/machine-breakdown/:id"
         element={<MachineBreakDownForm />}
       />
+      <Route path="Poka-Yoke" element={<PokaYokeChecksheet />} />
+      <Route path="poka_yoke_check" element={<PokaYokeChecksheet />} />
 
+      <Route
+        path="view-report/poka-yoke/:id"
+        element={<PokaYokeChecksheet />}
+      />
       <Route path="breakdown-summary" element={<MachineBreakDownSummary />} />
       {/* FOOLPROOF POKA YOKE ROUTES */}
       <Route path="Poka-Yoke" element={<PokaYokeChecksheet />} />

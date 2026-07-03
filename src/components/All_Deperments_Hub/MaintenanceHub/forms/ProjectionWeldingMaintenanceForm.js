@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
-import { getApiUrl } from '../../../../config/api';
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
+import { getApiUrl } from "../../../../config/api";
+
 const ProjectionWeldingMaintenanceForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,156 +12,249 @@ const ProjectionWeldingMaintenanceForm = () => {
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
 
   // --- DROPDOWN OPTIONS FOR STATUS ---
-  const statusOptions = ['', 'Ok', 'Not Ok', 'N/A'];
+  const statusOptions = ["", "Ok", "Not Ok", "N/A"];
 
   // --- FIXED PROJECTION WELDING CHECKLIST DATA ---
   const initialChecklist = [
-    { id: 1, point: "Air filter", parameter: "Clean air filter", method: "visual", before: '', after: '', remarks: '' },
-    { id: 2, point: "Digital pannel", parameter: "Digital pannel is working", method: "visual", before: '', after: '', remarks: '' },
-    { id: 3, point: "Air pressure", parameter: "Check air pressure", method: "visual", before: '', after: '', remarks: '' },
-    { id: 4, point: "Electrode alignment", parameter: "Check alignment of electrode", method: "visual", before: '', after: '', remarks: '' },
-    { id: 5, point: "Abnormal sound", parameter: "Any abnormal sound heard ?", method: "Hearing", before: '', after: '', remarks: '' },
-    { id: 6, point: "Starter & wiring", parameter: "Starter & wiring is in good condition", method: "visual", before: '', after: '', remarks: '' },
-    { id: 7, point: "Push button", parameter: "Should be proper working", method: "manual", before: '', after: '', remarks: '' },
-    { id: 8, point: "Check the preventive maintenance data", parameter: "Updated in history card", method: "visual", before: '', after: '', remarks: '' }
+    {
+      id: 1,
+      point: "Air filter",
+      parameter: "Clean air filter",
+      method: "visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 2,
+      point: "Digital pannel",
+      parameter: "Digital pannel is working",
+      method: "visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 3,
+      point: "Air pressure",
+      parameter: "Check air pressure",
+      method: "visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 4,
+      point: "Electrode alignment",
+      parameter: "Check alignment of electrode",
+      method: "visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 5,
+      point: "Abnormal sound",
+      parameter: "Any abnormal sound heard ?",
+      method: "Hearing",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 6,
+      point: "Starter & wiring",
+      parameter: "Starter & wiring is in good condition",
+      method: "visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 7,
+      point: "Push button",
+      parameter: "Should be proper working",
+      method: "manual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 8,
+      point: "Check the preventive maintenance data",
+      parameter: "Updated in history card",
+      method: "visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
   ];
 
   // --- INITIAL STATES ---
   const initialMetaData = {
-    machineName: 'PROJECTION WELDING', 
-    date: new Date().toISOString().split('T')[0],
-    machineNo: '',
-    location: '',
-    specification: '',
-    maintenancePersonnel: '',
-    preparedBy: '',
-    checkedBy: ''
+    machineName: "PROJECTION WELDING",
+    date: new Date().toISOString().split("T")[0],
+    machineNo: "",
+    location: "",
+    specification: "",
+    maintenancePersonnel: "",
+    preparedBy: "",
+    checkedBy: "",
   };
 
   // --- COMPONENT STATE ---
   const [metaData, setMetaData] = useState(initialMetaData);
-  const [tableData, setTableData] = useState(initialChecklist); 
+  const [tableData, setTableData] = useState(initialChecklist);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   // --- HANDLERS ---
-  const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
-  
+  const handleMetaChange = (e) =>
+    setMetaData({ ...metaData, [e.target.name]: e.target.value });
+
   const handleBeforeChange = (id, value) => {
-    setTableData(tableData.map(row => row.id === id ? { ...row, before: value } : row));
+    setTableData(
+      tableData.map((row) => (row.id === id ? { ...row, before: value } : row)),
+    );
   };
 
   const handleAfterChange = (id, value) => {
-    setTableData(tableData.map(row => row.id === id ? { ...row, after: value } : row));
+    setTableData(
+      tableData.map((row) => (row.id === id ? { ...row, after: value } : row)),
+    );
   };
 
   const handleRemarksChange = (id, value) => {
-    setTableData(tableData.map(row => row.id === id ? { ...row, remarks: value } : row));
+    setTableData(
+      tableData.map((row) =>
+        row.id === id ? { ...row, remarks: value } : row,
+      ),
+    );
   };
-  
+
   const formatBackendError = (result) => {
-  if (!result) return 'Unable to save record.';
-  if (typeof result === 'string') return result;
-  if (result.message) return result.message;
-  if (result.error) return result.error;
-  if (result.errors) {
-    if (typeof result.errors === 'string') return result.errors;
-    return Object.entries(result.errors)
-      .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
-      .join('\n');
-  }
-  return JSON.stringify(result);
-};
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  if (!metaData.machineNo || !metaData.location || !metaData.maintenancePersonnel || !metaData.preparedBy) {
-    alert("Please fill all required fields in General Information and Signatures.");
-    return;
-  }
-
-  const incompleteRow = tableData.findIndex(row => !row.before || !row.after);
-  if (incompleteRow !== -1) {
-    alert(`Please complete Before/After status for row ${incompleteRow + 1}`);
-    return;
-  }
-
-  const payload = {
-    machine_name: metaData.machineName,
-    machine_no: metaData.machineNo,
-    date: metaData.date,
-    location: metaData.location,
-    specification: metaData.specification,
-    maintenance_personnel: metaData.maintenancePersonnel,
-    prepared_by: metaData.preparedBy,
-    checked_by: metaData.checkedBy,
-    checkpoints: tableData.map((row, index) => ({
-      sr_no: index + 1,
-      check_point: row.point,
-      checking_parameter: row.parameter,
-      checking_method: row.method,
-      before_maintenance: row.before,
-      after_maintenance: row.after,
-      spare_used_remarks: row.remarks || "",
-    })),
+    if (!result) return "Unable to save record.";
+    if (typeof result === "string") return result;
+    if (result.message) return result.message;
+    if (result.error) return result.error;
+    if (result.errors) {
+      if (typeof result.errors === "string") return result.errors;
+      return Object.entries(result.errors)
+        .map(
+          ([field, messages]) =>
+            `${field}: ${
+              Array.isArray(messages) ? messages.join(", ") : messages
+            }`,
+        )
+        .join("\n");
+    }
+    return JSON.stringify(result);
   };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  try {
-    setIsSaving(true);
-
-    const response = await fetch(getApiUrl('/api/projection-welding-pm/save/'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const result = await response.json().catch(() => ({}));
-
-    if (!response.ok || result.success === false) {
-
-        const currentUser = localStorage.getItem("username") || "Unknown User";
-
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "Projection welding Mentinance  Form", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
-      console.error("Projection welding save failed:", result);
-      throw new Error(formatBackendError(result) || `Request failed with status ${response.status}`);
+    if (
+      !metaData.machineNo ||
+      !metaData.location ||
+      !metaData.maintenancePersonnel ||
+      !metaData.preparedBy
+    ) {
+      alert(
+        "Please fill all required fields in General Information and Signatures.",
+      );
+      return;
     }
 
-    setShowSuccess(true);
+    const incompleteRow = tableData.findIndex(
+      (row) => !row.before || !row.after,
+    );
+    if (incompleteRow !== -1) {
+      alert(`Please complete Before/After status for row ${incompleteRow + 1}`);
+      return;
+    }
+    const currentUser = localStorage.getItem("username") || "Unknown User";
+    const payload = {
+      machine_name: metaData.machineName,
+      machine_no: metaData.machineNo,
+      date: metaData.date,
+      location: metaData.location,
+      specification: metaData.specification,
+      maintenance_personnel: metaData.maintenancePersonnel,
+      prepared_by: metaData.preparedBy,
+      checked_by: metaData.checkedBy,
+      username: currentUser,
+      department_name: `${metaData.location} (Maintenance)`,
+      checkpoints: tableData.map((row, index) => ({
+        sr_no: index + 1,
+        check_point: row.point,
+        checking_parameter: row.parameter,
+        checking_method: row.method,
+        before_maintenance: row.before,
+        after_maintenance: row.after,
+        spare_used_remarks: row.remarks || "",
+        remarks: row.remarks || "",
+      })),
+    };
 
-    setTimeout(() => {
-      setMetaData(initialMetaData);
-      setTableData(initialChecklist);
-      setShowSuccess(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1500);
-  } catch (error) {
-    console.error("Failed to save projection welding maintenance record:", error);
-    alert(`Failed to save projection welding maintenance record: ${error.message}`);
-  } finally {
-    setIsSaving(false);
-  }
-};
+    try {
+      setIsSaving(true);
+
+      const response = await fetch(
+        getApiUrl("/api/projection-welding-pm/save/"),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || result.success === false) {
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        console.error("Projection welding save failed:", result);
+        throw new Error(
+          formatBackendError(result) ||
+            `Request failed with status ${response.status}`,
+        );
+      }
+
+      setShowSuccess(true);
+
+      setTimeout(() => {
+        setMetaData(initialMetaData);
+        setTableData(initialChecklist);
+        setShowSuccess(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 1500);
+    } catch (error) {
+      console.error(
+        "Failed to save projection welding maintenance record:",
+        error,
+      );
+      alert(
+        `Failed to save projection welding maintenance record: ${error.message}`,
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleReset = () => {
-    if (window.confirm('Are you sure you want to reset all fields?')) {
+    if (window.confirm("Are you sure you want to reset all fields?")) {
       setMetaData(initialMetaData);
       setTableData(initialChecklist);
     }
   };
 
   return (
-    <div className="container-fluid py-3 py-md-4" style={{ backgroundColor: '#f4f5f7', minHeight: '100vh' }}>
-      
+    <div
+      className="container-fluid py-3 py-md-4"
+      style={{ backgroundColor: "#f4f5f7", minHeight: "100vh" }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -322,70 +413,145 @@ const handleSubmit = async (e) => {
       `}</style>
 
       {/* --- TOP BACK BUTTON UPDATED --- */}
-      <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
-        <button 
+      <div
+        className="mx-auto mb-3 no-print animate-fade-in px-2"
+        style={{ maxWidth: "1200px" }}
+      >
+        <button
           className="btn btn-outline-custom rounded-pill"
-          onClick={() => navigate('/Maintenance/Machine/weekly')}
-          style={{ fontSize: '0.85rem' }}
+          onClick={() => navigate("/Maintenance/Machine/weekly")}
+          style={{ fontSize: "0.85rem" }}
         >
           ← Back to Weekly Hub
         </button>
       </div>
 
-      <div className="white-card mx-auto" style={{ maxWidth: '1200px' }}>
-        
+      <div className="white-card mx-auto" style={{ maxWidth: "1200px" }}>
         {/* HEADER BLOCK */}
-        <div className="p-3 p-md-4 d-flex flex-column flex-md-row justify-content-between" style={{ borderBottom: '2px solid #1e293b', background: '#ffffff', borderRadius: '16px 16px 0 0' }}>
+        <div
+          className="p-3 p-md-4 d-flex flex-column flex-md-row justify-content-between"
+          style={{
+            borderBottom: "2px solid #1e293b",
+            background: "#ffffff",
+            borderRadius: "16px 16px 0 0",
+          }}
+        >
           <div>
-            <h2 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#0f172a', letterSpacing: '1px' }}>
+            <h2
+              className="fw-bold mb-1 fs-5 fs-md-3"
+              style={{ color: "#0f172a", letterSpacing: "1px" }}
+            >
               MACHINE PREVENTIVE MAINTENANCE CHECK SHEET
             </h2>
-            <span className="badge bg-primary px-3 py-2 mt-2 d-inline-block" style={{ backgroundColor: '#8b5cf6 !important' }}>Form: AOT-F-PM-01 | Weekly</span>
+            <span
+              className="badge bg-primary px-3 py-2 mt-2 d-inline-block"
+              style={{ backgroundColor: "#8b5cf6 !important" }}
+            >
+              Form: AOT-F-PM-01 | Weekly
+            </span>
           </div>
         </div>
 
         <div className="card-body p-3 p-md-4">
           <form onSubmit={handleSubmit}>
-            
             {/* --- SECTION 1: META DATA INPUTS --- */}
-            <div className="row g-0 mb-4 border" style={{ borderColor: '#1e293b !important', borderRadius: '6px', overflow: 'hidden' }}>
+            <div
+              className="row g-0 mb-4 border"
+              style={{
+                borderColor: "#1e293b !important",
+                borderRadius: "6px",
+                overflow: "hidden",
+              }}
+            >
               <div className="col-12 col-md-6 border-bottom p-2 p-md-3 border-md-end">
-                <label className="form-label required-field">MACHINE NAME:</label>
-                <input type="text" className="form-control fw-bold border-1" name="machineName" value={metaData.machineName} readOnly />
+                <label className="form-label required-field">
+                  MACHINE NAME:
+                </label>
+                <input
+                  type="text"
+                  className="form-control fw-bold border-1"
+                  name="machineName"
+                  value={metaData.machineName}
+                  readOnly
+                />
               </div>
               <div className="col-12 col-md-6 border-bottom p-2 p-md-3">
                 <label className="form-label required-field">DATE:</label>
-                <input type="date" className="form-control border-1" name="date" value={metaData.date} onChange={handleMetaChange} required />
+                <input
+                  type="date"
+                  className="form-control border-1"
+                  name="date"
+                  value={metaData.date}
+                  onChange={handleMetaChange}
+                  required
+                />
               </div>
-              
+
               <div className="col-12 col-md-6 border-bottom p-2 p-md-3 border-md-end">
-                <label className="form-label required-field">MACHINE NO.:</label>
-                <input type="text" className="form-control border-1" name="machineNo" value={metaData.machineNo} onChange={handleMetaChange} required placeholder="Enter Machine No." />
+                <label className="form-label required-field">
+                  MACHINE NO.:
+                </label>
+                <input
+                  type="text"
+                  className="form-control border-1"
+                  name="machineNo"
+                  value={metaData.machineNo}
+                  onChange={handleMetaChange}
+                  required
+                  placeholder="Enter Machine No."
+                />
               </div>
               <div className="col-12 col-md-6 border-bottom p-2 p-md-3">
                 <label className="form-label required-field">LOCATION:</label>
-                <input type="text" className="form-control border-1" name="location" value={metaData.location} onChange={handleMetaChange} required placeholder="Enter Location" />
+                <input
+                  type="text"
+                  className="form-control border-1"
+                  name="location"
+                  value={metaData.location}
+                  onChange={handleMetaChange}
+                  required
+                  placeholder="Enter Location"
+                />
               </div>
-              
+
               <div className="col-12 col-md-6 border-bottom border-md-bottom-0 p-2 p-md-3 border-md-end">
                 <label className="form-label">SPECIFICATION:</label>
-                <input type="text" className="form-control border-1" name="specification" value={metaData.specification} onChange={handleMetaChange} placeholder="Enter Specifications (Optional)" />
+                <input
+                  type="text"
+                  className="form-control border-1"
+                  name="specification"
+                  value={metaData.specification}
+                  onChange={handleMetaChange}
+                  placeholder="Enter Specifications (Optional)"
+                />
               </div>
               <div className="col-12 col-md-6 p-2 p-md-3">
-                <label className="form-label required-field">MAINTENANCE PERSONNEL:</label>
-                <input type="text" className="form-control border-1" name="maintenancePersonnel" value={metaData.maintenancePersonnel} onChange={handleMetaChange} required placeholder="Enter Technician Name" />
+                <label className="form-label required-field">
+                  MAINTENANCE PERSONNEL:
+                </label>
+                <input
+                  type="text"
+                  className="form-control border-1"
+                  name="maintenancePersonnel"
+                  value={metaData.maintenancePersonnel}
+                  onChange={handleMetaChange}
+                  required
+                  placeholder="Enter Technician Name"
+                />
               </div>
             </div>
 
             {/* --- SECTION 2: CHECKLIST TABLE --- */}
             <div className="d-flex justify-content-between align-items-center mb-2 mt-4">
-              <h5 className="fw-bold mb-0" style={{ color: '#1e293b' }}>Check Points</h5>
-              <button 
-                type="button" 
-                className="btn btn-sm btn-outline-secondary" 
+              <h5 className="fw-bold mb-0" style={{ color: "#1e293b" }}>
+                Check Points
+              </h5>
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-secondary"
                 onClick={() => setIsChecklistOpen(!isChecklistOpen)}
               >
-                {isChecklistOpen ? 'Hide Table' : 'Show Table'}
+                {isChecklistOpen ? "Hide Table" : "Show Table"}
               </button>
             </div>
 
@@ -394,13 +560,13 @@ const handleSubmit = async (e) => {
                 <table className="ss-table w-100">
                   <thead>
                     <tr>
-                      <th style={{ width: '5%' }}>Sr. No.</th>
-                      <th style={{ width: '20%' }}>Check Points</th>
-                      <th style={{ width: '25%' }}>Checking Parameter</th>
-                      <th style={{ width: '10%' }}>Checking Method</th>
-                      <th style={{ width: '12%' }}>Before Maint.</th>
-                      <th style={{ width: '12%' }}>After Maint.</th>
-                      <th style={{ width: '16%' }}>Spare Used / Remarks</th>
+                      <th style={{ width: "5%" }}>Sr. No.</th>
+                      <th style={{ width: "20%" }}>Check Points</th>
+                      <th style={{ width: "25%" }}>Checking Parameter</th>
+                      <th style={{ width: "10%" }}>Checking Method</th>
+                      <th style={{ width: "12%" }}>Before Maint.</th>
+                      <th style={{ width: "12%" }}>After Maint.</th>
+                      <th style={{ width: "16%" }}>Spare Used / Remarks</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -418,48 +584,62 @@ const handleSubmit = async (e) => {
                           <span className="mobile-label">Parameter</span>
                           {row.parameter}
                         </td>
-                        
+
                         <td className="text-md-center">
                           <span className="mobile-label">Method</span>
                           <span className="method-badge">{row.method}</span>
                         </td>
-                        
+
                         <td>
-                          <span className="mobile-label required-field">Before Maint.</span>
-                          <select 
-                            className="form-select border-1 bg-transparent text-dark w-100" 
-                            value={row.before} 
-                            onChange={(e) => handleBeforeChange(row.id, e.target.value)} 
+                          <span className="mobile-label required-field">
+                            Before Maint.
+                          </span>
+                          <select
+                            className="form-select border-1 bg-transparent text-dark w-100"
+                            value={row.before}
+                            onChange={(e) =>
+                              handleBeforeChange(row.id, e.target.value)
+                            }
                             required
                           >
                             {statusOptions.map((opt, i) => (
-                              <option key={i} value={opt}>{opt || 'Select...'}</option>
+                              <option key={i} value={opt}>
+                                {opt || "Select..."}
+                              </option>
                             ))}
                           </select>
                         </td>
 
                         <td>
-                          <span className="mobile-label required-field">After Maint.</span>
-                          <select 
-                            className="form-select border-1 bg-transparent text-dark w-100" 
-                            value={row.after} 
-                            onChange={(e) => handleAfterChange(row.id, e.target.value)} 
+                          <span className="mobile-label required-field">
+                            After Maint.
+                          </span>
+                          <select
+                            className="form-select border-1 bg-transparent text-dark w-100"
+                            value={row.after}
+                            onChange={(e) =>
+                              handleAfterChange(row.id, e.target.value)
+                            }
                             required
                           >
                             {statusOptions.map((opt, i) => (
-                              <option key={i} value={opt}>{opt || 'Select...'}</option>
+                              <option key={i} value={opt}>
+                                {opt || "Select..."}
+                              </option>
                             ))}
                           </select>
                         </td>
 
                         <td>
                           <span className="mobile-label">Remarks</span>
-                          <input 
-                            type="text" 
-                            className="form-control border-1 bg-transparent text-dark w-100" 
-                            placeholder="Add remarks..." 
-                            value={row.remarks} 
-                            onChange={(e) => handleRemarksChange(row.id, e.target.value)}
+                          <input
+                            type="text"
+                            className="form-control border-1 bg-transparent text-dark w-100"
+                            placeholder="Add remarks..."
+                            value={row.remarks}
+                            onChange={(e) =>
+                              handleRemarksChange(row.id, e.target.value)
+                            }
                           />
                         </td>
                       </tr>
@@ -470,59 +650,74 @@ const handleSubmit = async (e) => {
             )}
 
             {/* --- SECTION 3: FOOTER (Signatures ONLY) --- */}
-            <div className="row g-0 border" style={{ borderColor: '#1e293b !important', borderRadius: '6px', overflow: 'hidden' }}>
-              
+            <div
+              className="row g-0 border"
+              style={{
+                borderColor: "#1e293b !important",
+                borderRadius: "6px",
+                overflow: "hidden",
+              }}
+            >
               <div className="col-12 col-md-6 border-bottom border-md-bottom-0 p-3 border-md-end">
-                <label className="form-label required-field">PREPARED BY:</label>
-                <input 
-                  type="text" 
-                  className="form-control border-1" 
-                  name="preparedBy" 
-                  value={metaData.preparedBy} 
-                  onChange={handleMetaChange} 
-                  required 
-                  placeholder="Signature / Name" 
+                <label className="form-label required-field">
+                  PREPARED BY:
+                </label>
+                <input
+                  type="text"
+                  className="form-control border-1"
+                  name="preparedBy"
+                  value={metaData.preparedBy}
+                  onChange={handleMetaChange}
+                  required
+                  placeholder="Signature / Name"
                 />
               </div>
-              
+
               <div className="col-12 col-md-6 p-3">
                 <label className="form-label">CHECKED BY:</label>
-                <input 
-                  type="text" 
-                  className="form-control border-1" 
-                  name="checkedBy" 
-                  value={metaData.checkedBy} 
-                  onChange={handleMetaChange} 
-                  placeholder="Signature / Name" 
+                <input
+                  type="text"
+                  className="form-control border-1"
+                  name="checkedBy"
+                  value={metaData.checkedBy}
+                  onChange={handleMetaChange}
+                  placeholder="Signature / Name"
                 />
               </div>
-              
             </div>
 
             {/* --- ACTION BUTTONS --- */}
             <div className="d-flex flex-column flex-sm-row justify-content-end gap-3 mt-4 pt-3 no-print">
-              <button 
-                type="button" 
-                className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto" 
+              <button
+                type="button"
+                className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto"
                 onClick={handleReset}
-                style={{ fontWeight: '600', border: '1px solid #cbd5e1' }}
+                style={{ fontWeight: "600", border: "1px solid #cbd5e1" }}
               >
                 Reset Data
               </button>
-             <button type="submit" className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto" disabled={isSaving}>
-  {isSaving ? 'Saving...' : 'Save Record'}
-</button>
+              <button
+                type="submit"
+                className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
+                disabled={isSaving}
+              >
+                {isSaving ? "Saving..." : "Save Record"}
+              </button>
             </div>
-
           </form>
         </div>
       </div>
 
       {/* Success Toast */}
       {showSuccess && (
-        <div className="position-fixed bottom-0 end-0 m-3 m-md-4 bg-success text-white px-4 py-3 rounded-3 shadow-lg z-3" style={{ minWidth: '250px' }}>
+        <div
+          className="position-fixed bottom-0 end-0 m-3 m-md-4 bg-success text-white px-4 py-3 rounded-3 shadow-lg z-3"
+          style={{ minWidth: "250px" }}
+        >
           <div className="d-flex align-items-center gap-2">
-            <span className="fw-medium">✔ Maintenance record saved successfully!</span>
+            <span className="fw-medium">
+              ✔ Maintenance record saved successfully!
+            </span>
           </div>
         </div>
       )}

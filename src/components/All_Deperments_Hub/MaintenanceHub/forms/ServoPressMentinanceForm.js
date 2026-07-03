@@ -1,11 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { getApiUrl } from '../../../../config/api'; // <--- API Import added
+import { getApiUrl } from "../../../../config/api"; // <--- API Import added
 import axios from "axios";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
 
 const ServoPressMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -19,112 +16,116 @@ const ServoPressMaintenanceForm = () => {
 
   // --- FIXED HYDRAULIC CHECKLIST DATA WITH PRE-DEFINED CHECKING METHODS ---
   const initialChecklist = [
-  {
-    id: 1,
-    point: "Auto Drain Filter",
-    parameter: "Check the element for clogging or damage",
-    method: "Clean or replace",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 2,
-    point: "Auto Drain Filter",
-    parameter: "Check for cracks or damage",
-    method: "Clean or replace",
-    before: "",
-    after: "",
-    remarks: ""
-  },
+    {
+      id: 1,
+      point: "Auto Drain Filter",
+      parameter: "Check the element for clogging or damage",
+      method: "Clean or replace",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 2,
+      point: "Auto Drain Filter",
+      parameter: "Check for cracks or damage",
+      method: "Clean or replace",
+      before: "",
+      after: "",
+      remarks: "",
+    },
 
-  {
-    id: 3,
-    point: "Pushbuttons and Switches",
-    parameter: "Check for oil and dust accumulation",
-    method: "Clean or replace",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 4,
-    point: "Pushbuttons and Switches",
-    parameter: "Confirm proper operation and smooth movement of the selector switches and pushbuttons",
-    method: "Clean or replace",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 5,
-    point: "Pushbuttons and Switches",
-    parameter: "Check for damage and cracks",
-    method: "Clean or replace",
-    before: "",
-    after: "",
-    remarks: ""
-  },
+    {
+      id: 3,
+      point: "Pushbuttons and Switches",
+      parameter: "Check for oil and dust accumulation",
+      method: "Clean or replace",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 4,
+      point: "Pushbuttons and Switches",
+      parameter:
+        "Confirm proper operation and smooth movement of the selector switches and pushbuttons",
+      method: "Clean or replace",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 5,
+      point: "Pushbuttons and Switches",
+      parameter: "Check for damage and cracks",
+      method: "Clean or replace",
+      before: "",
+      after: "",
+      remarks: "",
+    },
 
-  {
-    id: 6,
-    point: "Electrical Wires in Moving Areas and External Wires for the Operation Button Box",
-    parameter: "Check for wire cover damage",
-    method: "Replace",
-    before: "",
-    after: "",
-    remarks: ""
-  },
-  {
-    id: 7,
-    point: "Electrical Wires in Moving Areas and External Wires for the Operation Button Box",
-    parameter: "Check wires for damage",
-    method: "Replace",
-    before: "",
-    after: "",
-    remarks: ""
-  },
+    {
+      id: 6,
+      point:
+        "Electrical Wires in Moving Areas and External Wires for the Operation Button Box",
+      parameter: "Check for wire cover damage",
+      method: "Replace",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 7,
+      point:
+        "Electrical Wires in Moving Areas and External Wires for the Operation Button Box",
+      parameter: "Check wires for damage",
+      method: "Replace",
+      before: "",
+      after: "",
+      remarks: "",
+    },
 
-  {
-    id: 8,
-    point: "Covers",
-    parameter: "Check for loose bolts",
-    method: "Tighten",
-    before: "",
-    after: "",
-    remarks: ""
-  },
+    {
+      id: 8,
+      point: "Covers",
+      parameter: "Check for loose bolts",
+      method: "Tighten",
+      before: "",
+      after: "",
+      remarks: "",
+    },
 
-  {
-    id: 9,
-    point: "Oil Filter",
-    parameter: "Check the oil filter for clogging or damage",
-    method: "Clean or replace",
-    before: "",
-    after: "",
-    remarks: ""
-  },
+    {
+      id: 9,
+      point: "Oil Filter",
+      parameter: "Check the oil filter for clogging or damage",
+      method: "Clean or replace",
+      before: "",
+      after: "",
+      remarks: "",
+    },
 
-  {
-    id: 10,
-    point: "Control Panel Air Fan Filter",
-    parameter: "Check the control panel air fan filter for clogging or damage",
-    method: "Clean or replace",
-    before: "",
-    after: "",
-    remarks: ""
-  },
+    {
+      id: 10,
+      point: "Control Panel Air Fan Filter",
+      parameter:
+        "Check the control panel air fan filter for clogging or damage",
+      method: "Clean or replace",
+      before: "",
+      after: "",
+      remarks: "",
+    },
 
-  {
-    id: 11,
-    point: "Check the preventive maintenance date",
-    parameter: "Updated in history card",
-    method: "Visually",
-    before: "",
-    after: "",
-    remarks: ""
-  }
-];
+    {
+      id: 11,
+      point: "Check the preventive maintenance date",
+      parameter: "Updated in history card",
+      method: "Visually",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+  ];
 
   // --- INITIAL STATES (For Resetting) ---
   const initialMetaData = {
@@ -135,7 +136,7 @@ const ServoPressMaintenanceForm = () => {
     specification: "",
     maintenancePersonnel: "",
     preparedBy: "", // <--- Added for state binding
-    checkedBy: "",  // <--- Added for state binding
+    checkedBy: "", // <--- Added for state binding
   };
 
   // --- COMPONENT STATE ---
@@ -193,33 +194,48 @@ const ServoPressMaintenanceForm = () => {
     setIsSubmitting(true);
 
     // FIXED PAYLOAD: Spread metaData to put date at the root level for backend
+    const currentUser = localStorage.getItem("username") || "Unknown User";
+    const preparedByValue = (metaData.preparedBy || currentUser).trim();
+
     const payload = {
-      ...metaData,
-      tableData: tableData,
+      machine_name: metaData.machineName,
+      date: metaData.date,
+      machine_no: metaData.machineNo,
+      location: metaData.location,
+      specification: metaData.specification,
+      maintenance_personnel: metaData.maintenancePersonnel,
+      prepared_by: preparedByValue,
+      checked_by: metaData.checkedBy,
+      username: currentUser,
+      department_name: `${metaData.location} (Maintenance)`,
+      checkpoints: tableData.map((row, index) => ({
+        sr_no: index + 1,
+        check_point: row.point,
+        checking_parameter: row.parameter,
+        checking_method: row.method,
+        before_maintenance: row.before,
+        after_maintenance: row.after,
+        remarks: row.remarks || "",
+        spare_used_remarks: row.remarks || "",
+      })),
     };
 
     try {
       // Assuming your backend endpoint follows this pattern
-      const response = await fetch(getApiUrl('/api/servo-press-maintenance/save/'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        getApiUrl("/api/servo-press-maintenance/save/"),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload)
-      });
+      );
 
       if (response.ok) {
-         const currentUser = localStorage.getItem("username") || "Unknown User";
+        const currentUser = localStorage.getItem("username") || "Unknown User";
 
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "Servo Press Mentinance  Form", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
         setShowSuccess(true);
         setTimeout(() => {
           setMetaData(initialMetaData);
@@ -229,7 +245,12 @@ const ServoPressMaintenanceForm = () => {
         }, 1500);
       } else {
         const errorData = await response.json();
-        alert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
+        alert(
+          "Failed to save data. Error: " +
+            (errorData.error
+              ? JSON.stringify(errorData.error)
+              : "Unknown Error"),
+        );
       }
     } catch (error) {
       console.error("Error saving data:", error);
@@ -678,10 +699,10 @@ const ServoPressMaintenanceForm = () => {
               {/* Prepared By - LINKED TO STATE */}
               <div className="fw-bold " style={{ color: "#495057" }}>
                 Prepared By
-                <input 
-                  type="text" 
-                  className="form-control mt-1" 
-                  placeholder="Name" 
+                <input
+                  type="text"
+                  className="form-control mt-1"
+                  placeholder="Name"
                   name="preparedBy"
                   value={metaData.preparedBy}
                   onChange={handleMetaChange}
@@ -714,14 +735,14 @@ const ServoPressMaintenanceForm = () => {
               {/* Checked By - LINKED TO STATE */}
               <div className="fw-bold" style={{ color: "#495057" }}>
                 Checked By
-                 <input 
-                   type="text" 
-                   className="form-control mt-1" 
-                   placeholder="Name" 
-                   name="checkedBy"
-                   value={metaData.checkedBy}
-                   onChange={handleMetaChange}
-                 />
+                <input
+                  type="text"
+                  className="form-control mt-1"
+                  placeholder="Name"
+                  name="checkedBy"
+                  value={metaData.checkedBy}
+                  onChange={handleMetaChange}
+                />
               </div>
             </div>
 
@@ -740,7 +761,8 @@ const ServoPressMaintenanceForm = () => {
                 disabled={isSubmitting}
                 className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
               >
-                <i className="bi bi-floppy me-2"></i> {isSubmitting ? "Saving..." : "Save Record"}
+                <i className="bi bi-floppy me-2"></i>{" "}
+                {isSubmitting ? "Saving..." : "Save Record"}
               </button>
             </div>
           </form>

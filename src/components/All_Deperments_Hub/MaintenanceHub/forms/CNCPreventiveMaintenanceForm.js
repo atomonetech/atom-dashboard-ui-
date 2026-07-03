@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import axios from 'axios';
-
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
+import axios from "axios";
 
 const CncPreventiveMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -12,77 +11,199 @@ const CncPreventiveMaintenanceForm = () => {
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
 
   // --- DROPDOWN OPTIONS FOR STATUS ---
-  const statusOptions = ['', 'Ok', 'Not Ok', 'Ng', 'N/A'];
+  const statusOptions = ["", "Ok", "Not Ok", "Ng", "N/A"];
 
   // --- FIXED CNC CHECKLIST DATA WITH PRE-DEFINED CHECKING METHODS ---
   const initialChecklist = [
-    { id: 1, point: "Lub oil pressure (12 to 15 bar)", method: 'Visual', before: '', after: '', remarks: '' },
-    { id: 2, point: "Lub oil level", method: 'Visual', before: '', after: '', remarks: '' },
-    { id: 3, point: "Hydraulic oil level and condition", method: 'Visual', before: '', after: '', remarks: '' },
-    { id: 4, point: "Hydraulic system pressure", method: 'Visual', before: '', after: '', remarks: '' },
-    { id: 5, point: "Chuck clamping Pressure", method: 'Visual', before: '', after: '', remarks: '' },
-    { id: 6, point: "Coolant level in coolant tank", method: 'Visual', before: '', after: '', remarks: '' },
-    { id: 7, point: "Work holding greasing", method: 'Visual', before: '', after: '', remarks: '' },
-    { id: 8, point: "Oil level in chip conveyor gear", method: 'Visual', before: '', after: '', remarks: '' },
-    { id: 9, point: "Oil/ coolant leakage in fitting", method: 'Visual', before: '', after: '', remarks: '' },
-    { id: 10, point: "Lubricator hose condition", method: 'Visual', before: '', after: '', remarks: '' },
-    { id: 11, point: "Spindle belt condition, belt tension", method: 'Feel by Hand', before: '', after: '', remarks: '' },
-    { id: 12, point: "Spindle motor blower fan", method: 'Visual', before: '', after: '', remarks: '' },
-    { id: 13, point: "Drive cooling fan", method: 'Visual', before: '', after: '', remarks: '' },
-    { id: 14, point: "Overall cleaning", method: 'By clothes/ brushes', before: '', after: '', remarks: '' }
+    {
+      id: 1,
+      point: "Lub oil pressure (12 to 15 bar)",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 2,
+      point: "Lub oil level",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 3,
+      point: "Hydraulic oil level and condition",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 4,
+      point: "Hydraulic system pressure",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 5,
+      point: "Chuck clamping Pressure",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 6,
+      point: "Coolant level in coolant tank",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 7,
+      point: "Work holding greasing",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 8,
+      point: "Oil level in chip conveyor gear",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 9,
+      point: "Oil/ coolant leakage in fitting",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 10,
+      point: "Lubricator hose condition",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 11,
+      point: "Spindle belt condition, belt tension",
+      method: "Feel by Hand",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 12,
+      point: "Spindle motor blower fan",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 13,
+      point: "Drive cooling fan",
+      method: "Visual",
+      before: "",
+      after: "",
+      remarks: "",
+    },
+    {
+      id: 14,
+      point: "Overall cleaning",
+      method: "By clothes/ brushes",
+      before: "",
+      after: "",
+      remarks: "",
+    },
   ];
 
   // --- INITIAL STATES (For Resetting) ---
   const initialMetaData = {
-    machineName: location.state?.machineName || 'CNC', 
-    date: new Date().toISOString().split('T')[0],
-    machineNo: '',
-    location: '',
-    specification: '',
-    maintenancePersonnel: ''
+    machineName: location.state?.machineName || "CNC",
+    date: new Date().toISOString().split("T")[0],
+    machineNo: "",
+    location: "",
+    specification: "",
+    maintenancePersonnel: "",
   };
 
   // --- COMPONENT STATE ---
   const [metaData, setMetaData] = useState(initialMetaData);
-  const [tableData, setTableData] = useState(initialChecklist); 
+  const [tableData, setTableData] = useState(initialChecklist);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [preparedBy, setPreparedBy] = useState("");
 
   // --- HANDLERS ---
-  const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
-  
+  const handleMetaChange = (e) =>
+    setMetaData({ ...metaData, [e.target.name]: e.target.value });
+
   const handleBeforeChange = (id, value) => {
-    setTableData(tableData.map(row => row.id === id ? { ...row, before: value } : row));
+    setTableData(
+      tableData.map((row) => (row.id === id ? { ...row, before: value } : row)),
+    );
   };
 
   const handleAfterChange = (id, value) => {
-    setTableData(tableData.map(row => row.id === id ? { ...row, after: value } : row));
+    setTableData(
+      tableData.map((row) => (row.id === id ? { ...row, after: value } : row)),
+    );
   };
 
   const handleRemarksChange = (id, value) => {
-    setTableData(tableData.map(row => row.id === id ? { ...row, remarks: value } : row));
+    setTableData(
+      tableData.map((row) =>
+        row.id === id ? { ...row, remarks: value } : row,
+      ),
+    );
   };
 
   const formatBackendError = (result) => {
-    if (!result) return 'Unable to save record.';
-    if (typeof result === 'string') return result;
+    if (!result) return "Unable to save record.";
+    if (typeof result === "string") return result;
     if (result.message) return result.message;
     if (result.detail) return result.detail;
-    if (result.error) return typeof result.error === 'string' ? result.error : JSON.stringify(result.error);
+    if (result.error)
+      return typeof result.error === "string"
+        ? result.error
+        : JSON.stringify(result.error);
     if (result.errors) {
-      if (typeof result.errors === 'string') return result.errors;
+      if (typeof result.errors === "string") return result.errors;
       return Object.entries(result.errors)
-        .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : JSON.stringify(messages)}`)
-        .join('\n');
+        .map(
+          ([field, messages]) =>
+            `${field}: ${
+              Array.isArray(messages)
+                ? messages.join(", ")
+                : JSON.stringify(messages)
+            }`,
+        )
+        .join("\n");
     }
     return JSON.stringify(result);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!metaData.machineName || !metaData.machineNo || !metaData.location || !metaData.maintenancePersonnel) {
+
+    if (
+      !metaData.machineName ||
+      !metaData.machineNo ||
+      !metaData.location ||
+      !metaData.maintenancePersonnel
+    ) {
       alert("Please fill all required fields in General Information.");
       return;
     }
@@ -93,7 +214,7 @@ const CncPreventiveMaintenanceForm = () => {
         return;
       }
     }
-    
+
     setIsSubmitting(true);
 
     const checklistPayload = tableData.map((row, index) => ({
@@ -102,9 +223,9 @@ const CncPreventiveMaintenanceForm = () => {
       checking_method: row.method,
       before_maintenance: row.before,
       after_maintenance: row.after,
-      remarks: row.remarks || ''
+      remarks: row.remarks || "",
     }));
-
+    const currentUser = localStorage.getItem("username") || "Unknown User";
     const payload = {
       machine_name: metaData.machineName,
       machine_no: metaData.machineNo,
@@ -112,21 +233,22 @@ const CncPreventiveMaintenanceForm = () => {
       location: metaData.location,
       specification: metaData.specification,
       maintenance_personnel: metaData.maintenancePersonnel,
-      checklist: checklistPayload
+      prepared_by: preparedBy,
+      username: currentUser,
+      department_name: `${metaData.location} (Maintenance)`,
+      checklist: checklistPayload,
     };
-    
+
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-     const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
+
       const response = await fetch(`${apiUrl}/api/cnc-maintenance/save/`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json().catch(() => ({}));
@@ -134,26 +256,20 @@ const CncPreventiveMaintenanceForm = () => {
       if (!response.ok || result.success === false) {
         const currentUser = localStorage.getItem("username") || "Unknown User";
 
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "CNC Mentinance  Form", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
         console.error("CNC maintenance save failed:", result);
-        throw new Error(formatBackendError(result) || `Request failed with status ${response.status}`);
+        throw new Error(
+          formatBackendError(result) ||
+            `Request failed with status ${response.status}`,
+        );
       }
 
       setShowSuccess(true);
-      
+
       setTimeout(() => {
         setMetaData(initialMetaData);
-        setTableData(initialChecklist); 
+        setTableData(initialChecklist);
         setShowSuccess(false);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }, 1500);
     } catch (error) {
       console.error("Failed to save CNC maintenance record:", error);
@@ -164,15 +280,17 @@ const CncPreventiveMaintenanceForm = () => {
   };
 
   const handleReset = () => {
-    if (window.confirm('Are you sure you want to reset all fields?')) {
+    if (window.confirm("Are you sure you want to reset all fields?")) {
       setMetaData(initialMetaData);
       setTableData(initialChecklist);
     }
   };
 
   return (
-    <div className="container-fluid py-3 py-md-4" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-      
+    <div
+      className="container-fluid py-3 py-md-4"
+      style={{ backgroundColor: "#f8fafc", minHeight: "100vh" }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -337,60 +455,124 @@ const CncPreventiveMaintenanceForm = () => {
       `}</style>
 
       {/* --- TOP BACK BUTTON --- */}
-      <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
-        <button 
+      <div
+        className="mx-auto mb-3 no-print animate-fade-in px-2"
+        style={{ maxWidth: "1200px" }}
+      >
+        <button
           className="btn btn-outline-custom rounded-pill"
-          onClick={() => navigate('/Maintenance/Machine/weekly')}
-          style={{ fontSize: '0.85rem' }}
+          onClick={() => navigate("/Maintenance/Machine/weekly")}
+          style={{ fontSize: "0.85rem" }}
         >
           ← Back to Weekly Reports
         </button>
       </div>
 
-      <div className="white-card mx-auto animate-fade-in" style={{ maxWidth: '1200px' }}>
-        
+      <div
+        className="white-card mx-auto animate-fade-in"
+        style={{ maxWidth: "1200px" }}
+      >
         {/* HEADER */}
-        <div className="p-3 p-md-4" style={{ borderBottom: '1px solid #e9ecef', background: 'white', borderRadius: '20px 20px 0 0' }}>
-          <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#10b981' }}>
+        <div
+          className="p-3 p-md-4"
+          style={{
+            borderBottom: "1px solid #e9ecef",
+            background: "white",
+            borderRadius: "20px 20px 0 0",
+          }}
+        >
+          <h3
+            className="fw-bold mb-1 fs-5 fs-md-3"
+            style={{ color: "#10b981" }}
+          >
             CNC Preventive Maintenance
           </h3>
-          <p className="text-muted mb-0" style={{ fontSize: '0.85rem' }}>
+          <p className="text-muted mb-0" style={{ fontSize: "0.85rem" }}>
             Complete maintenance checklist and tracking system
           </p>
         </div>
 
         <div className="card-body p-3 p-md-4">
           <form onSubmit={handleSubmit}>
-            
             {/* --- SECTION 1: META DATA INPUTS --- */}
             <div className="section-header">
               <h5>General Information</h5>
             </div>
-            
+
             <div className="row g-3 mb-4">
               <div className="col-12 col-md-4">
-                <label className="form-label required-field">Machine Name</label>
-                <input type="text" className="form-control" name="machineName" value={metaData.machineName} onChange={handleMetaChange} required placeholder="e.g., CNC Milling Machine" />
+                <label className="form-label required-field">
+                  Machine Name
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="machineName"
+                  value={metaData.machineName}
+                  onChange={handleMetaChange}
+                  required
+                  placeholder="e.g., CNC Milling Machine"
+                />
               </div>
               <div className="col-12 col-md-2">
                 <label className="form-label required-field">Machine No.</label>
-                <input type="text" className="form-control" name="machineNo" value={metaData.machineNo} onChange={handleMetaChange} required placeholder="Number" />
+                <input
+                  type="text"
+                  className="form-control"
+                  name="machineNo"
+                  value={metaData.machineNo}
+                  onChange={handleMetaChange}
+                  required
+                  placeholder="Number"
+                />
               </div>
               <div className="col-12 col-md-3">
                 <label className="form-label required-field">Date</label>
-                <input type="date" className="form-control" name="date" value={metaData.date} onChange={handleMetaChange} required />
+                <input
+                  type="date"
+                  className="form-control"
+                  name="date"
+                  value={metaData.date}
+                  onChange={handleMetaChange}
+                  required
+                />
               </div>
               <div className="col-12 col-md-3">
                 <label className="form-label required-field">Location</label>
-                <input type="text" className="form-control" name="location" value={metaData.location} onChange={handleMetaChange} required placeholder="Facility location" />
+                <input
+                  type="text"
+                  className="form-control"
+                  name="location"
+                  value={metaData.location}
+                  onChange={handleMetaChange}
+                  required
+                  placeholder="Facility location"
+                />
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label">Specification</label>
-                <input type="text" className="form-control" name="specification" value={metaData.specification} onChange={handleMetaChange} placeholder="Machine specs (optional)" />
+                <input
+                  type="text"
+                  className="form-control"
+                  name="specification"
+                  value={metaData.specification}
+                  onChange={handleMetaChange}
+                  placeholder="Machine specs (optional)"
+                />
               </div>
               <div className="col-12 col-md-6">
-                <label className="form-label required-field">Maintenance Personnel</label>
-                <input type="text" className="form-control" name="maintenancePersonnel" value={metaData.maintenancePersonnel} onChange={handleMetaChange} required placeholder="Technician name" />
+                <label className="form-label required-field">
+                  Maintenance Personnel
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  name="maintenancePersonnel"
+                  value={metaData.maintenancePersonnel}
+                  onChange={handleMetaChange}
+                  required
+                  placeholder="Technician name"
+                />
               </div>
             </div>
 
@@ -399,7 +581,7 @@ const CncPreventiveMaintenanceForm = () => {
               <h5>Maintenance Checklist</h5>
             </div>
 
-            <div 
+            <div
               className="collapse-header d-flex justify-content-between align-items-center mb-3 text-slate-700"
               onClick={() => setIsChecklistOpen(!isChecklistOpen)}
             >
@@ -407,10 +589,14 @@ const CncPreventiveMaintenanceForm = () => {
                 <span className="fw-bold">Checklist Items</span>
                 <span className="badge-count">{tableData.length}</span>
                 <small className="text-muted ms-2 d-none d-md-inline-block">
-                  {isChecklistOpen ? '▼ Click to collapse' : '▶ Click to expand'}
+                  {isChecklistOpen
+                    ? "▼ Click to collapse"
+                    : "▶ Click to expand"}
                 </small>
               </div>
-              <span style={{ color: '#10b981', fontWeight: 'bold' }}>{isChecklistOpen ? '−' : '+'}</span>
+              <span style={{ color: "#10b981", fontWeight: "bold" }}>
+                {isChecklistOpen ? "−" : "+"}
+              </span>
             </div>
 
             {isChecklistOpen && (
@@ -419,12 +605,14 @@ const CncPreventiveMaintenanceForm = () => {
                   <table className="table clean-table align-middle mb-0">
                     <thead>
                       <tr>
-                        <th style={{ width: '4%' }} className="text-center">#</th>
-                        <th style={{ width: '35%' }}>Check Point</th>
-                        <th style={{ width: '15%' }}>Checking Method</th>
-                        <th style={{ width: '12%' }}>Before Maint.*</th>
-                        <th style={{ width: '12%' }}>After Maint.*</th>
-                        <th style={{ width: '22%' }}>Remarks / Spares</th>
+                        <th style={{ width: "4%" }} className="text-center">
+                          #
+                        </th>
+                        <th style={{ width: "35%" }}>Check Point</th>
+                        <th style={{ width: "15%" }}>Checking Method</th>
+                        <th style={{ width: "12%" }}>Before Maint.*</th>
+                        <th style={{ width: "12%" }}>After Maint.*</th>
+                        <th style={{ width: "22%" }}>Remarks / Spares</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -441,44 +629,60 @@ const CncPreventiveMaintenanceForm = () => {
                           <td>
                             <span className="mobile-label">Method</span>
                             <div className="method-badge">{row.method}</div>
-                           </td>
-                          
+                          </td>
+
                           <td>
-                            <span className="mobile-label required-field">Before Maint.</span>
-                            <select 
-                              className="form-select border-1 bg-light shadow-sm w-100" 
-                              value={row.before} 
-                              onChange={(e) => handleBeforeChange(row.id, e.target.value)} 
+                            <span className="mobile-label required-field">
+                              Before Maint.
+                            </span>
+                            <select
+                              className="form-select border-1 bg-light shadow-sm w-100"
+                              value={row.before}
+                              onChange={(e) =>
+                                handleBeforeChange(row.id, e.target.value)
+                              }
                               required
                             >
                               {statusOptions.map((opt, i) => (
-                                <option key={i} value={opt}>{opt || 'Select...'}</option>
+                                <option key={i} value={opt}>
+                                  {opt || "Select..."}
+                                </option>
                               ))}
                             </select>
                           </td>
 
                           <td>
-                            <span className="mobile-label required-field">After Maint.</span>
-                            <select 
-                              className="form-select border-1 bg-light shadow-sm w-100" 
-                              value={row.after} 
-                              onChange={(e) => handleAfterChange(row.id, e.target.value)} 
+                            <span className="mobile-label required-field">
+                              After Maint.
+                            </span>
+                            <select
+                              className="form-select border-1 bg-light shadow-sm w-100"
+                              value={row.after}
+                              onChange={(e) =>
+                                handleAfterChange(row.id, e.target.value)
+                              }
                               required
                             >
                               {statusOptions.map((opt, i) => (
-                                <option key={i} value={opt}>{opt || 'Select...'}</option>
+                                <option key={i} value={opt}>
+                                  {opt || "Select..."}
+                                </option>
                               ))}
                             </select>
                           </td>
 
                           <td>
-                            <span className="mobile-label">Remarks / Spares</span>
-                            <input 
-                              type="text" 
-                              className="form-control border-1 bg-light shadow-sm w-100" 
-                              placeholder="Add remarks..." 
-                              value={row.remarks} 
-                              onChange={(e) => handleRemarksChange(row.id, e.target.value)}
+                            <span className="mobile-label">
+                              Remarks / Spares
+                            </span>
+                            <input
+                              type="text"
+                              className="form-control border-1 bg-light shadow-sm w-100"
+                              placeholder="Add remarks..."
+                              value={row.remarks}
+                              onChange={(e) =>
+                                handleRemarksChange(row.id, e.target.value)
+                              }
                             />
                           </td>
                         </tr>
@@ -490,58 +694,114 @@ const CncPreventiveMaintenanceForm = () => {
             )}
 
             {/* Legend Section */}
-            <div className="d-flex flex-wrap align-items-center gap-3 gap-md-4 p-3 rounded-3 mb-4" style={{ backgroundColor: '#f8f9fa', border: '1px dashed #dee2e6' }}>
-              <span className="text-sm fw-bold w-100 w-md-auto" style={{ color: '#495057' }}>Legends:</span>
+            <div
+              className="d-flex flex-wrap align-items-center gap-3 gap-md-4 p-3 rounded-3 mb-4"
+              style={{
+                backgroundColor: "#f8f9fa",
+                border: "1px dashed #dee2e6",
+              }}
+            >
+              <span
+                className="text-sm fw-bold w-100 w-md-auto"
+                style={{ color: "#495057" }}
+              >
+                Legends:
+              </span>
               <div className="d-flex align-items-center gap-2">
-                <span className="w-4 h-4 rounded-circle" style={{ width: '14px', height: '14px', backgroundColor: '#10b981', borderRadius: '50%' }}></span>
-                <span className="text-sm fw-medium" style={{ color: '#495057' }}>Ok</span>
+                <span
+                  className="w-4 h-4 rounded-circle"
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    backgroundColor: "#10b981",
+                    borderRadius: "50%",
+                  }}
+                ></span>
+                <span
+                  className="text-sm fw-medium"
+                  style={{ color: "#495057" }}
+                >
+                  Ok
+                </span>
               </div>
               <div className="d-flex align-items-center gap-2">
-                <span className="w-4 h-4 rounded-circle" style={{ width: '14px', height: '14px', backgroundColor: '#ef4444', borderRadius: '50%' }}></span>
-                <span className="text-sm fw-medium" style={{ color: '#495057' }}>Not Ok</span>
+                <span
+                  className="w-4 h-4 rounded-circle"
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    backgroundColor: "#ef4444",
+                    borderRadius: "50%",
+                  }}
+                ></span>
+                <span
+                  className="text-sm fw-medium"
+                  style={{ color: "#495057" }}
+                >
+                  Not Ok
+                </span>
               </div>
               <div className="d-flex align-items-center gap-2">
-                <span className="w-4 h-4 rounded-circle" style={{ width: '14px', height: '14px', backgroundColor: '#f59e0b', borderRadius: '50%' }}></span>
-                <span className="text-sm fw-medium" style={{ color: '#495057' }}>Ng (No Good)</span>
+                <span
+                  className="w-4 h-4 rounded-circle"
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    backgroundColor: "#f59e0b",
+                    borderRadius: "50%",
+                  }}
+                ></span>
+                <span
+                  className="text-sm fw-medium"
+                  style={{ color: "#495057" }}
+                >
+                  Ng (No Good)
+                </span>
               </div>
             </div>
 
             {/* --- ACTION BUTTONS --- */}
             <div className="d-flex flex-column flex-sm-row justify-content-end gap-3 mt-4 pt-3 no-print border-top">
-              
               <div className="flex flex-col">
-    <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-      Prepared By
-    </label>
-    <input
-      type="text"
-      value={preparedBy}
-      onChange={(e) => setPreparedBy(e.target.value)}
-      placeholder="Enter name"
-      className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-green-600 w-full sm:w-64"
-    />
-  </div>
-              <button 
-                type="button" 
-                className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto" 
+                <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
+                  Prepared By
+                </label>
+                <input
+                  type="text"
+                  value={preparedBy}
+                  onChange={(e) => setPreparedBy(e.target.value)}
+                  placeholder="Enter name"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-green-600 w-full sm:w-64"
+                />
+              </div>
+              <button
+                type="button"
+                className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto"
                 onClick={handleReset}
                 disabled={isSubmitting}
-                style={{ fontWeight: '600', border: '1px solid #dee2e6' }}
+                style={{ fontWeight: "600", border: "1px solid #dee2e6" }}
               >
                 Reset Data
               </button>
-              <button type="submit" className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto" disabled={isSubmitting}>
-                <i className="bi bi-floppy me-2"></i> {isSubmitting ? 'Saving...' : 'Save Record'}
+              <button
+                type="submit"
+                className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
+                disabled={isSubmitting}
+              >
+                <i className="bi bi-floppy me-2"></i>{" "}
+                {isSubmitting ? "Saving..." : "Save Record"}
               </button>
             </div>
-
           </form>
         </div>
       </div>
 
       {/* Success Toast */}
       {showSuccess && (
-        <div className="position-fixed bottom-0 end-0 m-3 m-md-4 bg-success text-white px-4 py-3 rounded-3 shadow-lg z-3" style={{ minWidth: '250px' }}>
+        <div
+          className="position-fixed bottom-0 end-0 m-3 m-md-4 bg-success text-white px-4 py-3 rounded-3 shadow-lg z-3"
+          style={{ minWidth: "250px" }}
+        >
           <div className="d-flex align-items-center gap-2">
             <i className="bi bi-check-circle-fill fs-5"></i>
             <span className="fw-medium">Maintenance record saved!</span>
