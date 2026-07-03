@@ -2,6 +2,9 @@
 import "./index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
+import "./styles/alert.css";
+
+import axios from 'axios';
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
