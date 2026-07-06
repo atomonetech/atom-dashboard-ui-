@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getApiUrl } from '../../../../../config/api'; 
+import { getApiUrl } from '../../../../../config/api';
 import axios from "axios";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
+
 
 const ProcessAuditChecksheet = () => {
     const navigate = useNavigate();
@@ -13,7 +11,7 @@ const ProcessAuditChecksheet = () => {
         partName: '',
         partNo: '',
         model: '',
-        date: '', 
+        date: '',
         auditor: '',
         auditee: '',
         observations: Array(19).fill(''),
@@ -54,7 +52,7 @@ const ProcessAuditChecksheet = () => {
             try {
                 const res = await fetch(getApiUrl('/api/master-dropdown/?filter=all_parts'));
                 if (!res.ok) throw new Error("Network response was not ok");
-                
+
                 const data = await res.json();
                 const uniqueParts = [...new Set(data.map(item => Array.isArray(item) ? item[0] : item))].filter(Boolean);
                 setPartList(uniqueParts);
@@ -77,7 +75,7 @@ const ProcessAuditChecksheet = () => {
 
     const handlePartNameChange = async (value) => {
         handleInputChange('partName', value);
-        
+
         if (!value) {
             setFormData(prev => ({ ...prev, partNo: '', model: '' }));
             return;
@@ -88,7 +86,7 @@ const ProcessAuditChecksheet = () => {
                 fetch(getApiUrl(`/api/master-dropdown/?filter=part_no&part=${encodeURIComponent(value)}`)),
                 fetch(getApiUrl(`/api/master-dropdown/?filter=model_by_part&part=${encodeURIComponent(value)}`))
             ]);
-            
+
             const noData = await noRes.json();
             const modData = await modRes.json();
 
@@ -104,7 +102,7 @@ const ProcessAuditChecksheet = () => {
     };
 
     const resetForm = () => {
-        if(window.confirm("Clear all audit data?")) {
+        if (window.confirm("Clear all audit data?")) {
             const today = new Date().toISOString().split('T')[0];
             setFormData({ ...initialFormState, date: today });
         }
@@ -114,13 +112,14 @@ const ProcessAuditChecksheet = () => {
         e.preventDefault();
         setIsSubmitting(true);
 
-        // YAHAN PAR DATA KO MAP KIYA GAYA HAI TAQKI PARAMETERS BHI BACKEND JAYE
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
         const detailedAuditData = auditPoints.map((point, index) => ({
             s_no: point.sNo,
             parameter: point.param,
             specification: point.spec,
             observation: formData.observations[index],
-            status_remark: formData.remarks[index]
+            status_remark: formData.remarks[index],
         }));
 
         const payload = {
@@ -130,38 +129,30 @@ const ProcessAuditChecksheet = () => {
             audit_date: formData.date,
             auditor_name: formData.auditor,
             auditee_name: formData.auditee,
-            audit_details: detailedAuditData // Yeh pura array bhej rahe hain
+            audit_details: detailedAuditData,
+
+            username: currentUser,
+            department_name: "QA",
         };
 
         try {
-            const response = await fetch(getApiUrl('/api/save-process-audit/'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+            const response = await fetch(getApiUrl("/api/save-process-audit/"), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
             });
 
             if (response.ok) {
-                  const currentUser = localStorage.getItem("username") || "Unknown User";
-                
-                        try {
-                          await axios.post(API_LOG, {
-                            username: currentUser,
-                            report_name: "process audit checksheet Form", // Yahan hardcode kar diya form ka naam
-                          });
-                          console.log("Activity log successfully saved!");
-                        } catch (logError) {
-                          console.error("Activity log save karne mein error aayi:", logError);
-                        }
-                alert('Process Audit Saved Successfully!');
-                const today = new Date().toISOString().split('T')[0];
+                alert("Process Audit Saved Successfully!");
+                const today = new Date().toISOString().split("T")[0];
                 setFormData({ ...initialFormState, date: today });
             } else {
                 const errorData = await response.json();
                 alert(`Failed to submit: ${JSON.stringify(errorData)}`);
             }
         } catch (error) {
-            console.error('Submission Error:', error);
-            alert('An error occurred while sending data.');
+            console.error("Submission Error:", error);
+            alert("An error occurred while sending data.");
         } finally {
             setIsSubmitting(false);
         }
@@ -192,13 +183,13 @@ const ProcessAuditChecksheet = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="bg-white rounded shadow-xl p-6 md:p-8 border border-white">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-                            
+
                             <div className="space-y-2">
                                 <label className="text-[11px] font-black text-blue-600 uppercase tracking-wider">Part Name</label>
-                                <select 
-                                    required 
-                                    className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded focus:border-[#3b82f5] focus:bg-white outline-none transition-all font-medium text-sm appearance-none" 
-                                    value={formData.partName} 
+                                <select
+                                    required
+                                    className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded focus:border-[#3b82f5] focus:bg-white outline-none transition-all font-medium text-sm appearance-none"
+                                    value={formData.partName}
                                     onChange={(e) => handlePartNameChange(e.target.value)}
                                 >
                                     <option value="" disabled>Select Part</option>
@@ -208,38 +199,38 @@ const ProcessAuditChecksheet = () => {
 
                             <div className="space-y-2">
                                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Part Number</label>
-                                <input 
-                                    readOnly 
-                                    className="w-full px-4 py-4 bg-slate-100 border border-slate-200 rounded text-slate-500 font-bold text-sm cursor-not-allowed outline-none" 
-                                    placeholder="Auto-filled" 
-                                    value={formData.partNo} 
+                                <input
+                                    readOnly
+                                    className="w-full px-4 py-4 bg-slate-100 border border-slate-200 rounded text-slate-500 font-bold text-sm cursor-not-allowed outline-none"
+                                    placeholder="Auto-filled"
+                                    value={formData.partNo}
                                 />
                             </div>
 
                             <div className="space-y-2">
                                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Machine Model</label>
-                                <input 
-                                    readOnly 
-                                    className="w-full px-4 py-4 bg-slate-100 border border-slate-200 rounded text-slate-500 font-bold text-sm cursor-not-allowed outline-none" 
-                                    placeholder="Auto-filled" 
-                                    value={formData.model} 
+                                <input
+                                    readOnly
+                                    className="w-full px-4 py-4 bg-slate-100 border border-slate-200 rounded text-slate-500 font-bold text-sm cursor-not-allowed outline-none"
+                                    placeholder="Auto-filled"
+                                    value={formData.model}
                                 />
                             </div>
 
                             <div className="space-y-2">
                                 <label className="text-[11px] font-black text-blue-600 uppercase tracking-wider">Audit Date</label>
-                                <input required type="date" className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded focus:border-[#3b82f5] focus:bg-white outline-none transition-all font-medium text-sm" 
-                                value={formData.date} onChange={(e) => handleInputChange('date', e.target.value)} />
+                                <input required type="date" className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded focus:border-[#3b82f5] focus:bg-white outline-none transition-all font-medium text-sm"
+                                    value={formData.date} onChange={(e) => handleInputChange('date', e.target.value)} />
                             </div>
                             <div className="space-y-2 sm:col-span-2">
                                 <label className="text-[11px] font-black text-blue-600 uppercase tracking-wider">Auditor Name</label>
-                                <input required className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded focus:border-[#3b82f5] focus:bg-white outline-none transition-all font-medium text-sm" 
-                                value={formData.auditor} onChange={(e) => handleInputChange('auditor', e.target.value)} />
+                                <input required className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded focus:border-[#3b82f5] focus:bg-white outline-none transition-all font-medium text-sm"
+                                    value={formData.auditor} onChange={(e) => handleInputChange('auditor', e.target.value)} />
                             </div>
                             <div className="space-y-2 sm:col-span-2">
                                 <label className="text-[11px] font-black text-blue-600 uppercase tracking-wider">Auditee (Operator/In-charge)</label>
-                                <input required className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded focus:border-[#3b82f5] focus:bg-white outline-none transition-all font-medium text-sm" 
-                                value={formData.auditee} onChange={(e) => handleInputChange('auditee', e.target.value)} />
+                                <input required className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded focus:border-[#3b82f5] focus:bg-white outline-none transition-all font-medium text-sm"
+                                    value={formData.auditee} onChange={(e) => handleInputChange('auditee', e.target.value)} />
                             </div>
                         </div>
                     </div>
@@ -249,7 +240,7 @@ const ProcessAuditChecksheet = () => {
                             <h3 className="font-black text-slate-800 uppercase text-sm tracking-widest">Inspection Points</h3>
                             <span className="text-[10px] bg-blue-100 text-blue-700 px-3 py-1.5 rounded font-bold uppercase">19 Points</span>
                         </div>
-                        
+
                         <div className="p-6 md:p-8 space-y-12">
                             {auditPoints.map((point, idx) => (
                                 <div key={point.sNo} className="relative pl-8 md:pl-10 border-l-2 border-slate-200 hover:border-blue-400 transition-colors">
@@ -282,7 +273,7 @@ const ProcessAuditChecksheet = () => {
                         <button type="button" onClick={() => navigate('/qa-hub/monthly')} className="hidden md:flex px-8 py-4 text-slate-500 font-bold hover:text-slate-800 transition items-center gap-2 uppercase text-xs tracking-wider">
                             Exit
                         </button>
-                        
+
                         <div className="flex gap-4 w-full md:w-auto">
                             <button type="button" onClick={resetForm} className="flex-1 md:flex-none px-8 py-4 bg-slate-100 text-slate-600 rounded font-black uppercase text-xs tracking-widest hover:bg-slate-200 transition">
                                 Reset
