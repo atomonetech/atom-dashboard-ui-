@@ -2,9 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../../../../../config/api'; // Adjust path if needed
 import axios from "axios";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
 
 
 const CustomerSatisfactionCard = () => {
@@ -37,43 +34,38 @@ const CustomerSatisfactionCard = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsSubmitting(true);
+  e.preventDefault();
+  setIsSubmitting(true);
 
-        try {
-            const response = await fetch(getApiUrl('/api/customer-satisfaction/'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
+  const currentUser = localStorage.getItem("username") || "Unknown User";
 
-            if (response.ok) {
-                const currentUser = localStorage.getItem("username") || "Unknown User";
+  const payload = {
+    ...formData,
+    username: currentUser,
+    department_name: "QA",
+  };
 
-        try {
-          await axios.post(API_LOG, {
-            
-            username: currentUser,
-            report_name: "Customer Satisfaction Card  Form", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
-                
-                alert('Customer Satisfaction Card Submitted Successfully!');
-                setFormData(initialFormState);
-            } else {
-                const errorData = await response.json();
-                alert(`Failed to submit: ${JSON.stringify(errorData)}`);
-            }
-        } catch (error) {
-            console.error('Submission Error:', error);
-            alert('An error occurred while sending data.');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+  try {
+    const response = await fetch(getApiUrl("/api/customer-satisfaction/"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      alert("Customer Satisfaction Card Submitted Successfully!");
+      setFormData(initialFormState);
+    } else {
+      const errorData = await response.json();
+      alert(`Failed to submit: ${JSON.stringify(errorData)}`);
+    }
+  } catch (error) {
+    console.error("Submission Error:", error);
+    alert("An error occurred while sending data.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
     return (
         <div className="min-h-screen bg-[#fff7fb] text-slate-700 font-sans pb-32 md:pb-12">

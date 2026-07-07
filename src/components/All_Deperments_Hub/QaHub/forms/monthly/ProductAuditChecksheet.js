@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
-import { getApiUrl } from '../../../../../config/api'; 
+import { getApiUrl } from '../../../../../config/api';
 
 const ProductAuditPlan = () => {
     const navigate = useNavigate();
@@ -30,9 +30,9 @@ const ProductAuditPlan = () => {
         const fetchParts = async () => {
             try {
                 const res = await fetch(getApiUrl(`/api/master-dropdown/?filter=all_parts`));
-                
+
                 if (!res.ok) {
-                   throw new Error(`HTTP error! status: ${res.status}`);
+                    throw new Error(`HTTP error! status: ${res.status}`);
                 }
 
                 const data = await res.json();
@@ -46,11 +46,11 @@ const ProductAuditPlan = () => {
     }, []);
 
     const addRow = () => setAuditRows([...auditRows, { ...initialRow }]);
-    
+
     // Updated removeRow to use index
     const removeRow = (indexToRemove) => {
         if (auditRows.length > 1) {
-             setAuditRows(auditRows.filter((_, index) => index !== indexToRemove));
+            setAuditRows(auditRows.filter((_, index) => index !== indexToRemove));
         }
     };
 
@@ -71,9 +71,9 @@ const ProductAuditPlan = () => {
                 fetch(getApiUrl(`/api/master-dropdown/?filter=part_no&part=${encodeURIComponent(value)}`)),
                 fetch(getApiUrl(`/api/master-dropdown/?filter=model_by_part&part=${encodeURIComponent(value)}`))
             ]);
-            
+
             if (!noRes.ok || !modRes.ok) {
-                 throw new Error("Failed to fetch auto-fill data");
+                throw new Error("Failed to fetch auto-fill data");
             }
 
             const noData = await noRes.json();
@@ -101,7 +101,7 @@ const ProductAuditPlan = () => {
             month_status: row.monthStatus,
             status_mark: row.statusMark
         }));
-
+        const currentUser = localStorage.getItem("username") || "Unknown User";
         const payload = {
             doc_no: headerData.docNo,
             rev_no: headerData.revNo,
@@ -109,7 +109,10 @@ const ProductAuditPlan = () => {
             plan_year: headerData.planYear,
             prepared_by: headerData.preparedBy,
             approved_by: headerData.approvedBy,
-            rows: formattedRows
+            rows: formattedRows,
+
+            username: currentUser,
+            department_name: "QA",
         };
 
         try {
@@ -161,7 +164,7 @@ const ProductAuditPlan = () => {
                             </div>
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Audit Date</label>
-                                <input required type="date" value={headerData.date} onChange={(e) => setHeaderData({...headerData, date: e.target.value})} className="p-3 bg-white border border-pink-100 rounded-xl font-bold text-xs outline-none focus:border-[#ec4899]" />
+                                <input required type="date" value={headerData.date} onChange={(e) => setHeaderData({ ...headerData, date: e.target.value })} className="p-3 bg-white border border-pink-100 rounded-xl font-bold text-xs outline-none focus:border-[#ec4899]" />
                             </div>
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Doc Reference</label>
@@ -251,11 +254,11 @@ const ProductAuditPlan = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pt-4">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">Prepared By</label>
-                                <input required type="text" value={headerData.preparedBy} onChange={(e) => setHeaderData({...headerData, preparedBy: e.target.value})} placeholder="Inspector Name" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-bold" />
+                                <input required type="text" value={headerData.preparedBy} onChange={(e) => setHeaderData({ ...headerData, preparedBy: e.target.value })} placeholder="Inspector Name" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-bold" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1 md:text-right block">Approved By</label>
-                                <input required type="text" value={headerData.approvedBy} onChange={(e) => setHeaderData({...headerData, approvedBy: e.target.value})} placeholder="Manager Name" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-bold md:text-right" />
+                                <input required type="text" value={headerData.approvedBy} onChange={(e) => setHeaderData({ ...headerData, approvedBy: e.target.value })} placeholder="Manager Name" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-xs font-bold md:text-right" />
                             </div>
                         </div>
 

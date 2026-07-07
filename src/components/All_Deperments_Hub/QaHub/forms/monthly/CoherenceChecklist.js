@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { getApiUrl } from '../../../../../config/api'; 
 import axios from "axios";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
+
 
 const CoherenceChecklist = () => {
     const navigate = useNavigate();
@@ -107,41 +105,39 @@ const CoherenceChecklist = () => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        
-        try {
-            const response = await fetch(getApiUrl(`/api/coherence/`), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
+  e.preventDefault();
+  setIsSubmitting(true);
 
-            if (response.ok) {
-                  const currentUser = localStorage.getItem("username") || "Unknown User";
+  const currentUser = localStorage.getItem("username") || "Unknown User";
 
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "cpherence checksheet Mentinance Form", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
-                alert('Coherence Check Sheet Submitted Successfully!');
-                const today = new Date().toISOString().split('T')[0];
-                setFormData({ ...initialFormState, date: today });
-            } else {
-                alert('Failed to submit. Please check network or backend logs.');
-            }
-        } catch (error) {
-            console.error('Submission Error:', error);
-            alert('An error occurred while sending data to the server.');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+const payload = {
+  ...formData,
+  username: currentUser,
+  department_name: "QA",
+};
+
+  try {
+    const response = await fetch(getApiUrl(`/api/coherence/`), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      alert("Coherence Check Sheet Submitted Successfully!");
+      const today = new Date().toISOString().split("T")[0];
+      setFormData({ ...initialFormState, date: today });
+    } else {
+      const errorData = await response.json();
+      alert("Failed to submit: " + JSON.stringify(errorData));
+    }
+  } catch (error) {
+    console.error("Submission Error:", error);
+    alert("An error occurred while sending data to the server.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
     return (
         <div className="min-h-screen bg-[#f8fafc] text-slate-700 font-sans pb-12">
