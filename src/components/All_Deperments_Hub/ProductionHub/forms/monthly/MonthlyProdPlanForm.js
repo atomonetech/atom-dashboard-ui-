@@ -4,9 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../../../../../config/api';
 import axios from "axios";
 
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
+
 
 const getItemText = (item) => {
     if (!item) return "";
@@ -24,10 +22,10 @@ const sortArrayAlphabetically = (arr) => {
 };
 const MonthlyProdPlanForm = () => {
     const navigate = useNavigate();
-    
+
     // Date state
     const [currentDate, setCurrentDate] = useState('');
-    
+
     // Dropdown options state
     const [partsList, setPartsList] = useState([]);
     const [customersList, setCustomersList] = useState([]); // Naya state Customers ke liye
@@ -45,7 +43,7 @@ const MonthlyProdPlanForm = () => {
         // Fetching Parts from Backend API
         const fetchParts = async () => {
             try {
-                const response = await fetch(getApiUrl('/api/master-dropdown/?filter=all_parts')); 
+                const response = await fetch(getApiUrl('/api/master-dropdown/?filter=all_parts'));
                 if (response.ok) {
                     const data = await response.json();
                     setPartsList(sortArrayAlphabetically(data));
@@ -58,7 +56,7 @@ const MonthlyProdPlanForm = () => {
         // Fetching Customers from Backend API
         const fetchCustomers = async () => {
             try {
-                const response = await fetch(getApiUrl('/api/master-dropdown/?filter=customer')); 
+                const response = await fetch(getApiUrl('/api/master-dropdown/?filter=customer'));
                 if (response.ok) {
                     const data = await response.json();
                     setCustomersList(sortArrayAlphabetically(data));
@@ -71,7 +69,7 @@ const MonthlyProdPlanForm = () => {
         fetchParts();
         fetchCustomers(); // Customer fetch call
     }, []);
-    
+
     const initialState = {
         date: new Date().toISOString().split('T')[0],
         partName: '',
@@ -80,8 +78,8 @@ const MonthlyProdPlanForm = () => {
         scheduleQty: '',
         plannedQty: '',
         remark: '',
-        preparedBy: '', 
-        approvedBy: ''  
+        preparedBy: '',
+        approvedBy: ''
     };
 
     const [formData, setFormData] = useState(initialState);
@@ -95,32 +93,30 @@ const MonthlyProdPlanForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        
+
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        const payload = {
+            ...formData,
+            username: currentUser,
+            department_name: "Production",
+        };
+
         try {
             const response = await fetch(getApiUrl('/api/monthly-prod-plan/save/'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(payload)
             });
 
             if (response.ok) {
-                  const currentUser = localStorage.getItem("username") || "Unknown User";
-                
-                        try {
-                          await axios.post(API_LOG, {
-                            username: currentUser,
-                            report_name: "Monthly Prod Form", // Yahan hardcode kar diya form ka naam
-                          });
-                          console.log("Activity log successfully saved!");
-                        } catch (logError) {
-                          console.error("Activity log save karne mein error aayi:", logError);
-                        }
                 alert("Success! Monthly Production Plan has been saved.");
-                setFormData(initialState); 
+                setFormData(initialState);
             } else {
-                alert("Failed to save production plan.");
+                const errorData = await response.json();
+                alert("Failed to save production plan: " + JSON.stringify(errorData));
             }
         } catch (error) {
             console.error("Error saving data:", error);
@@ -132,28 +128,28 @@ const MonthlyProdPlanForm = () => {
 
     return (
         <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-900 flex flex-col items-center pb-20">
-            
+
             <div className="w-full max-w-4xl px-4 mt-8">
-                
+
                 {/* --- Top Navigation --- */}
                 <div className="flex items-center mb-6">
-                    <button 
+                    <button
                         onClick={() => navigate(-1)}
                         className="flex items-center gap-2 px-5 py-2 bg-white border border-slate-200 text-slate-800 rounded-xl hover:bg-slate-50 transition-all shadow-sm font-bold active:scale-95 text-xs"
                     >
-                        <i className="bi bi-chevron-left text-[#3b82f6]"></i> 
+                        <i className="bi bi-chevron-left text-[#3b82f6]"></i>
                         Back
                     </button>
                 </div>
 
                 {/* --- Main Card with Gradient Header --- */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200 border border-slate-100 overflow-hidden"
                 >
                     <div className="w-full bg-gradient-to-br from-[#3b82f6] via-[#4f46e5] to-[#312e81] p-10 md:p-14 text-center border-b border-white/10 relative overflow-hidden">
-                        
+
                         <div className="absolute top-[-20%] left-[-10%] w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
                         <div className="absolute bottom-[-20%] right-[-10%] w-40 h-40 bg-indigo-400/20 rounded-full blur-3xl"></div>
 
@@ -170,14 +166,14 @@ const MonthlyProdPlanForm = () => {
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-8 md:p-14 space-y-10">
-                        
+
                         {/* Section 1: Identification */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            
+
                             {/* DYNAMIC DROPDOWN FOR PART INFO */}
                             <div className="flex flex-col gap-2.5">
                                 <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">Part Number & Name</label>
-                                <select 
+                                <select
                                     name="partName"
                                     required
                                     className="w-full px-5 py-4 bg-slate-50 border border-slate-200 focus:border-[#3b82f6] focus:bg-white rounded-2xl transition-all outline-none text-sm font-bold shadow-inner cursor-pointer appearance-none"
@@ -196,7 +192,7 @@ const MonthlyProdPlanForm = () => {
                             {/* DYNAMIC DROPDOWN FOR CUSTOMER NAME */}
                             <div className="flex flex-col gap-2.5">
                                 <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">Customer Name</label>
-                                <select 
+                                <select
                                     name="customer"
                                     required
                                     className="w-full px-5 py-4 bg-slate-50 border border-slate-200 focus:border-[#3b82f6] focus:bg-white rounded-2xl transition-all outline-none text-sm font-bold shadow-inner cursor-pointer appearance-none"
@@ -221,9 +217,9 @@ const MonthlyProdPlanForm = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                                 <div className="flex flex-col gap-2">
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Opening Stock</label>
-                                    <input 
+                                    <input
                                         name="openingStock"
-                                        type="number" 
+                                        type="number"
                                         placeholder="0"
                                         className="w-full px-5 py-4 bg-white border border-slate-200 focus:border-[#3b82f6] rounded-2xl outline-none text-sm font-black shadow-sm"
                                         value={formData.openingStock}
@@ -232,9 +228,9 @@ const MonthlyProdPlanForm = () => {
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Schedule Qty</label>
-                                    <input 
+                                    <input
                                         name="scheduleQty"
-                                        type="number" 
+                                        type="number"
                                         placeholder="0"
                                         className="w-full px-5 py-4 bg-white border border-slate-200 focus:border-[#3b82f6] rounded-2xl outline-none text-sm font-black shadow-sm"
                                         value={formData.scheduleQty}
@@ -243,9 +239,9 @@ const MonthlyProdPlanForm = () => {
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-[10px] font-black text-blue-700 uppercase tracking-wider ml-1">Planned Qty</label>
-                                    <input 
+                                    <input
                                         name="plannedQty"
-                                        type="number" 
+                                        type="number"
                                         required
                                         placeholder="0"
                                         className="w-full px-5 py-4 bg-blue-100/50 border-2 border-blue-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 rounded-2xl outline-none text-sm font-black text-blue-800 shadow-sm"
@@ -259,7 +255,7 @@ const MonthlyProdPlanForm = () => {
                         {/* Section 3: Remarks */}
                         <div className="flex flex-col gap-2.5">
                             <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">Special Remarks / Operational Notes</label>
-                            <textarea 
+                            <textarea
                                 name="remark"
                                 rows="3"
                                 placeholder="Add specific machine or man-power notes..."
@@ -273,9 +269,9 @@ const MonthlyProdPlanForm = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8 mt-4">
                             <div className="flex flex-col gap-2.5">
                                 <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">Prepared By</label>
-                                <input 
+                                <input
                                     name="preparedBy"
-                                    type="text" 
+                                    type="text"
                                     required
                                     placeholder="Enter your name..."
                                     className="w-full px-5 py-4 bg-slate-50 border border-slate-200 focus:border-[#3b82f6] focus:bg-white rounded-2xl transition-all outline-none text-sm font-bold shadow-inner"
@@ -285,9 +281,9 @@ const MonthlyProdPlanForm = () => {
                             </div>
                             <div className="flex flex-col gap-2.5">
                                 <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">Approved By</label>
-                                <input 
+                                <input
                                     name="approvedBy"
-                                    type="text" 
+                                    type="text"
                                     placeholder="Enter manager/supervisor name..."
                                     className="w-full px-5 py-4 bg-slate-50 border border-slate-200 focus:border-[#3b82f6] focus:bg-white rounded-2xl transition-all outline-none text-sm font-bold shadow-inner"
                                     value={formData.approvedBy}
@@ -298,14 +294,13 @@ const MonthlyProdPlanForm = () => {
 
                         {/* Submit Button */}
                         <div className="pt-6 flex justify-center md:justify-end">
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 disabled={isSubmitting}
-                                className={`w-full sm:w-auto px-13 p-3 py-4.5 rounded-2xl font-black text-white text-[11px] tracking-[0.25em] transition-all shadow-xl active:scale-[0.98] ${
-                                    isSubmitting 
-                                    ? 'bg-slate-300' 
+                                className={`w-full sm:w-auto px-13 p-3 py-4.5 rounded-2xl font-black text-white text-[11px] tracking-[0.25em] transition-all shadow-xl active:scale-[0.98] ${isSubmitting
+                                    ? 'bg-slate-300'
                                     : 'bg-gradient-to-r from-[#3b82f6] to-[#1e40af] hover:shadow-blue-300 hover:-translate-y-0.5'
-                                }`}
+                                    }`}
                             >
                                 {isSubmitting ? 'SAVING DATA...' : 'SAVE PROD'}
                             </button>
