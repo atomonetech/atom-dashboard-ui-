@@ -15,6 +15,29 @@ import PowerPressForm from "../components/All_Deperments_Hub/MaintenanceHub/form
 import HydraulicMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/HydraulicMaintenanceForm";
 import ServoPressMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/ServoPressMentinanceForm";
 
+// weekly Reports Print Route import
+import VerticalMillingMachineMaintenancePrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/VMMMaintenancePrint";
+import ProjectionWeldingMaintenancePrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/ProjectionWeldPrint";
+import VMCMaintenancePrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/VMCMaintenancePrint";
+import CNCMaintenancePrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/CNCMaintenancePrint";
+import PowerPressPreventiveMaintenanceCheckSheetPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/PowerPressPMChecksheetPrint";
+import HydraulicMachinePreventiveMaintenanceCheckSheetPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/HydraulicPMCheckSheetPrint";
+import TigWeldingMachinePreventiveMaintenanceCheckSheetPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/TIGChecksheetPrint";
+import SpotWeldingMachinePreventiveMaintenanceCheckSheetPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/SpotWeldingPMPrint";
+import CompressorPreventiveMaintenanceCheckSheetPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/CompressorPMChecksheetPrint";
+import LatheMachinePMCheckSheetPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/LathePMChecksheetPrint";
+import DrillMachinePMCheckSheetPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/DrillPMChecksheetPrint";
+import SurfaceGrinderPMCheckSheetPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/SurfaceGrinderPMPrint";
+import BeltGrinderPMCheckSheetPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/BeltGrinderPMPrint";
+import BaseGrinderPMCheckSheetPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/BaseGrinderPMPrint";
+import PipeCutterPMCheckSheetPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/PipeCutterPMPrint";
+import VibraPMCheckSheetPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/VibraPMPrint";
+import DipMoldingPMCheckSheetPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/DipMoldingPMPrint";
+import ServoPressPMCheckSheetPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/ServoPressPMPrint";
+
+
+
+
 // Existing New Machine Forms
 import TIGMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/TIGMaintenanceForm";
 import SpotWeldingMaintenanceForm from "../components/All_Deperments_Hub/MaintenanceHub/forms/SpotWeldingMaintenanceForm";
@@ -46,7 +69,6 @@ import WeeklyReports from "../components/All_Deperments_Hub/MaintenanceHub/views
 import DailyPowerPressChecksheetPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/DailyPowerPressChecksheetprint";
 import MachineBreakdownSummaryPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/MachineBreakdownSummaryPrint";
 import MachineHistoryCardPrint from "../components/All_Deperments_Hub/MaintenanceHub/Report/MachineHistoryCardprint";
-import ToolHistoryReport from "../components/All_Deperments_Hub/MaintenanceHub/Report/ToolHistoryReport";
 import { Pi } from "lucide-react";
 
 const MachineRoutes = () => {
@@ -79,9 +101,7 @@ const MachineRoutes = () => {
         element={<PokaYokeChecksheet />}
       />
       <Route path="breakdown-summary" element={<MachineBreakDownSummary />} />
-      {/* FOOLPROOF POKA YOKE ROUTES */}
-      <Route path="Poka-Yoke" element={<PokaYokeChecksheet />} />
-      <Route path="poka_yoke_check" element={<PokaYokeChecksheet />} />
+  
       {/* --- WEEKLY ROUTES --- */}
       <Route path="weekly-reports" element={<WeeklyReports />} />
       <Route
@@ -101,16 +121,25 @@ const MachineRoutes = () => {
         path="weekly/projection-welding"
         element={<ProjectionWeldingMaintenanceForm />}
       />
-      <Route path="weekly/vmm" element={<VMMMaintenanceForm />} />
-      <Route path="weekly/tig" element={<TIGMaintenanceForm />} />
+      <Route 
+      path="weekly/vmm" element={<VMMMaintenanceForm />} />
+
+      <Route 
+      path="weekly/tig" element={<TIGMaintenanceForm />} />
+
       <Route
         path="weekly/spot-welding"
         element={<SpotWeldingMaintenanceForm />}
       />
-      <Route path="weekly/compressor" element={<CompressorMaintenanceForm />} />
+
+      <Route 
+      path="weekly/compressor" element={<CompressorMaintenanceForm />} />
+      
       {/* ✅ NEW MACHINE ROUTES ADDED HERE: */}
-      <Route path="weekly/lathe" element={<LatheMaintenanceForm />} />
-      <Route path="weekly/drill" element={<DrillMachineMaintenanceForm />} />
+      <Route 
+      path="weekly/lathe" element={<LatheMaintenanceForm />} />
+      <Route 
+      path="weekly/drill" element={<DrillMachineMaintenanceForm />} />
       <Route
         path="weekly/surface-grinder"
         element={<SurfaceGrinderMaintenanceForm />}
@@ -153,12 +182,53 @@ const MachineRoutes = () => {
         path="power-press-checksheet/print"
         element={<DailyPowerPressChecksheetPrint />}
       />
+      <Route
+        path="breakdown-form/print"
+        element={<MachineBreakdownSummaryPrint />} />
+
       <Route path="history-card/print" element={<MachineHistoryCardPrint />} />
-      <Route path="tool-history/report" element={<ToolHistoryReport />} />
+
+     
+       
+
+
+
+      {/* Weekly Reports Print Route */}
+
+      <Route path="weekly/vmm/print" element={<VerticalMillingMachineMaintenancePrint />} />
+      <Route path="weekly/projection-welding/print" element={<ProjectionWeldingMaintenancePrint />} />
+      <Route path="weekly/preventive-vmc/print" element={<VMCMaintenancePrint />} />
+      <Route path="weekly/preventive-cnc/print" element={<CNCMaintenancePrint />} />
+      <Route path="weekly/preventive-powerpress/print" element={<PowerPressPreventiveMaintenanceCheckSheetPrint />} />
+      <Route path="weekly/preventive-mig/print" element={<HydraulicMachinePreventiveMaintenanceCheckSheetPrint />} />
+      <Route path="weekly/tig/print" element={<TigWeldingMachinePreventiveMaintenanceCheckSheetPrint />} />
+      <Route path="weekly/spot-welding/print" element={<SpotWeldingMachinePreventiveMaintenanceCheckSheetPrint />} />
+      <Route path="weekly/compressor/print" element={<CompressorPreventiveMaintenanceCheckSheetPrint />} />
+      <Route path="weekly/lathe/print" element={<LatheMachinePMCheckSheetPrint />} />
+      <Route path="weekly/drill/print" element={<DrillMachinePMCheckSheetPrint />} />
+      <Route path="weekly/surface-grinder/print" element={<SurfaceGrinderPMCheckSheetPrint />} />
+      <Route path="weekly/belt-grinder/print" element={<BeltGrinderPMCheckSheetPrint />} />
+      <Route path="weekly/base-grinder/print" element={<BaseGrinderPMCheckSheetPrint />} />
+      <Route path="weekly/preventive-cutting/print" element={<PipeCutterPMCheckSheetPrint />} />
+      <Route path="weekly/preventive-vibra/print" element={<VibraPMCheckSheetPrint />} />
+      <Route path="weekly/preventive-molding/print" element={<DipMoldingPMCheckSheetPrint />} />
+      <Route path="weekly/preventive-press/print" element={<ServoPressPMCheckSheetPrint />} />
+      
+
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
       {/* FOOLPROOF POKA YOKE PRINT ROUTES */}
       <Route path="PokaYoke-report" element={<PokaYokeChecksheetprint />} />
-      <Route
-        path="poka_yoke_check/print"
+
+      <Route path="poka_yoke_check/print"
         element={<PokaYokeChecksheetprint />}
       />
       {/* --- MONTHLY ROUTES --- */}

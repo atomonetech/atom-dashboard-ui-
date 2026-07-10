@@ -90,7 +90,8 @@ import ToolYearlyReport from '../components/All_Deperments_Hub/MaintenanceHub/vi
 
 // --- Forms Imports ---
 import ToolHistoryForm from '../components/All_Deperments_Hub/MaintenanceHub/forms/ToolHistoryForm';
-import ToolPrevMaintenanceForm from '../components/All_Deperments_Hub/MaintenanceHub/forms/ToolPrevMaintenanceForm';
+import ToolHistoryReport from '../components/All_Deperments_Hub/MaintenanceHub/Report/ToolHistoryReport';
+import ToolPreventiveMaintenanceCheckSheetPrint from '../components/All_Deperments_Hub/MaintenanceHub/Report/ToolPMChecklistPrint';
 import ToolBreakdownForm from '../components/All_Deperments_Hub/MaintenanceHub/forms/ToolBreakdownForm';
 import WeldingFixtureForm from '../components/All_Deperments_Hub/MaintenanceHub/forms/WeldingFixtureForm';
 import BushPinChart from '../components/All_Deperments_Hub/MaintenanceHub/forms/BushPinChart';
@@ -115,8 +116,10 @@ const ToolRoutes = () => {
             
             {/* --- DAILY / REGULAR FORM ROUTES --- */}
             <Route path="history-form" element={<ToolHistoryForm />} />
-            <Route path="pm-checklist" element={<ToolPrevMaintenanceForm />} />
+            <Route path="history-form/print" element={<ToolHistoryReport />} />
+            {/* <Route path="pm-checklist" element={<ToolPrevMaintenanceForm />} /> */}
             <Route path="breakdown-form" element={<ToolBreakdownForm />} />
+            <Route path="pm-checklist/print" element={<ToolPreventiveMaintenanceCheckSheetPrint />} />
             <Route path="welding-fixture-checklist" element={<WeldingFixtureForm />} />
             <Route path="bush-check-point" element={<BushPinChart />} />
 
