@@ -1,13 +1,21 @@
-import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useState,useEffect } from "react";
+import { useNavigate, useLocation,useParams } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { getApiUrl } from "../../../../config/api"; // <--- API Import added
+import { getApiUrl } from '../../../../config/api'; // <--- API Import added
+import {
+  successAlert,
+  errorAlert,
+  warningAlert,
+  infoAlert,
+  confirmAlert,
+} from "../../../../utils/alertUtils";
 import axios from "axios";
-
-
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 const HydraulicMaintenanceForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { id } = useParams(); // Get the ID from the URL
+  const isViewMode=Boolean(id);
 
   // --- COLLAPSIBLE STATE FOR CHECKLIST ---
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
@@ -100,6 +108,69 @@ const HydraulicMaintenanceForm = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  
+      // --- APPROVAL / VIEW MODE STATE ---
+      const [approvalRemark, setApprovalRemark] = useState("");
+      const [approvalLoading, setApprovalLoading] = useState(false);
+      const [approvalStatus, setApprovalStatus] = useState("");
+      const [reviewedAt, setReviewedAt] = useState("");
+    
+      // --- FETCH REPORT WHEN OPENED IN VIEW MODE (from notification) ---
+      useEffect(() => {
+        if (!id) return;
+    
+        const fetchReport = async () => {
+          try {
+            const res = await axios.get(
+              `${API_BASE_URL}/api/get-single-maintenance-report/hydraulic/${id}/`
+            );
+            
+            if (res.data.success) {
+              const data = res.data.data || {};
+              const meta = data.metaData || {};
+    
+              setMetaData({
+                machineName: meta.machineName || 'CNC',
+                date: meta.date || '',
+                machineNo: meta.machineNo || '',
+                location: meta.location || '',
+                specification: meta.specification || '',
+                maintenancePersonnel: meta.maintenancePersonnel || '',
+                preparedBy: meta.preparedBy || '',
+                checkedBy: meta.checkedBy || '',
+              });
+    
+              const rows = Array.isArray(data.tableData) ? data.tableData : [];
+              setTableData(
+                rows.length
+                  ? rows.map((row, index) => ({
+                      id: row.sr_no || index + 1,
+                      point: row.check_point || '',
+                      parameter: row.checking_parameter || '',
+                      method: row.checking_method || '',
+                      before: row.before_maintenance || '',
+                      after: row.after_maintenance || '',
+                      remarks: row.remarks || '',
+                    }))
+                  : initialChecklist
+              );
+    
+              setApprovalRemark(data.approval_remarks || "");
+              setApprovalStatus(data.approval_status || "");
+              setReviewedAt(data.approved_or_rejected_at || "");
+            } else {
+              errorAlert(res.data.error || "Failed to load CNC Check Sheet.");
+            }
+          } catch (err) {
+            console.error("Error loading Check Sheet:", err);
+            errorAlert(err.response?.data?.error || "Failed to load CNC Check Sheet.");
+          }
+        };
+    
+        fetchReport();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [id]);
+
   // --- HANDLERS ---
   const handleMetaChange = (e) =>
     setMetaData({ ...metaData, [e.target.name]: e.target.value });
@@ -125,138 +196,172 @@ const HydraulicMaintenanceForm = () => {
   };
 
   const formatBackendError = (result) => {
-    if (!result) return "Unable to save record.";
-    if (typeof result === "string") return result;
-    if (result.message) return result.message;
-    if (result.error) return result.error;
-    if (result.errors) {
-      if (typeof result.errors === "string") return result.errors;
-      return Object.entries(result.errors)
-        .map(
-          ([field, messages]) =>
-            `${field}: ${
-              Array.isArray(messages) ? messages.join(", ") : messages
-            }`,
-        )
-        .join("\n");
-    }
-    return JSON.stringify(result);
+  if (!result) return 'Unable to save record.';
+  if (typeof result === 'string') return result;
+  if (result.message) return result.message;
+  if (result.error) return result.error;
+  if (result.errors) {
+    if (typeof result.errors === 'string') return result.errors;
+    return Object.entries(result.errors)
+      .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+      .join('\n');
+  }
+  return JSON.stringify(result);
+};
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  // 1. Debugging line: Look at your browser console to see the exact keys inside metaData
+  console.log("Current Form MetaData State:", metaData);
+
+  // 2. Defensive Client-side validation
+  // This safely checks both camelCase and snake_case variations just in case your input fields use either.
+  const machineNo = metaData.machineNo || metaData.machine_no;
+  const location = metaData.location;
+  const maintenancePersonnel = metaData.maintenancePersonnel || metaData.maintenance_personnel;
+  const preparedBy = metaData.preparedBy || metaData.prepared_by;
+  const checkedBy = metaData.checkedBy || metaData.checked_by;
+
+  if (!machineNo || !location || !maintenancePersonnel || !preparedBy || !checkedBy) {
+    warningAlert("Please fill all required fields in General Information and Signatures.");
+    return;
+  }
+
+  // Check if any checklist row is incomplete
+  const incompleteRow = tableData.findIndex(row => !row.before || !row.after);
+  if (incompleteRow !== -1) {
+    warningAlert(`Please complete Before/After status for row ${incompleteRow + 1}`);
+    return;
+  }
+   const currentUser = localStorage.getItem("username") || "Unknown User";
+
+  // 3. Structuring the payload matching the Hydraulic machine JSON model
+  const payload = {
+    machine_name: metaData.machineName || metaData.machine_name || "HYDRAULIC MACHINE",
+    machine_no: machineNo,
+    date: metaData.date,
+    location: location,
+    specification: metaData.specification,
+    maintenance_personnel: maintenancePersonnel,
+    prepared_by: currentUser,
+    checked_by: currentUser, 
+    checkpoints: tableData.map((row, index) => ({
+      sr_no: index + 1,
+      check_point: row.point,
+      checking_parameter: row.parameter,
+      checking_method: row.method,
+      before_maintenance: row.before,
+      after_maintenance: row.after,
+      remarks: row.remarks || "", 
+      username: currentUser
+    })),
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  try {
+    setIsSaving(true);
 
-    // 1. Debugging line: Look at your browser console to see the exact keys inside metaData
-    console.log("Current Form MetaData State:", metaData);
+    // 4. Requesting data save to the explicit Hydraulic API path
+    const response = await fetch(getApiUrl('/api/hydraulic-pm/save/'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
 
-    // 2. Defensive Client-side validation
-    // This safely checks both camelCase and snake_case variations just in case your input fields use either.
-    const machineNo = metaData.machineNo || metaData.machine_no;
-    const location = metaData.location;
-    const maintenancePersonnel =
-      metaData.maintenancePersonnel || metaData.maintenance_personnel;
-    const preparedBy = metaData.preparedBy || metaData.prepared_by;
-    const checkedBy = metaData.checkedBy || metaData.checked_by;
+    const result = await response.json().catch(() => ({}));
 
-    if (
-      !machineNo ||
-      !location ||
-      !maintenancePersonnel ||
-      !preparedBy ||
-      !checkedBy
-    ) {
-      alert(
-        "Please fill all required fields in General Information and Signatures.",
-      );
-      return;
+    // 5. Catching network failures or backend error payloads
+    if (!response.ok || result.success === false) {
+
+      console.error("Hydraulic machine PM save failed:", result);
+      throw new Error(formatBackendError(result) || `Request failed with status ${response.status}`);
     }
 
-    // Check if any checklist row is incomplete
-    const incompleteRow = tableData.findIndex(
-      (row) => !row.before || !row.after,
-    );
-    if (incompleteRow !== -1) {
-      alert(`Please complete Before/After status for row ${incompleteRow + 1}`);
-      return;
-    }
+    // 6. Triggering successful UI reset animation flows
+    setShowSuccess(true);
 
-    const currentUser = localStorage.getItem("username") || "Unknown User";
-    // 3. Structuring the payload matching the Hydraulic machine JSON model
-
-    const payload = {
-      machine_name:
-        metaData.machineName || metaData.machine_name || "HYDRAULIC MACHINE",
-      machine_no: machineNo,
-      date: metaData.date,
-      location: location,
-      specification: metaData.specification,
-      maintenance_personnel: maintenancePersonnel,
-      prepared_by: preparedBy,
-      checked_by: checkedBy,
-      username: currentUser,
-      department_name: `${location} (Maintenance)`,
-      checkpoints: tableData.map((row, index) => ({
-        sr_no: index + 1,
-        check_point: row.point,
-        checking_parameter: row.parameter,
-        checking_method: row.method,
-        before_maintenance: row.before,
-        after_maintenance: row.after,
-        remarks: row.remarks || "",
-        spare_used_remarks: row.remarks || "",
-      })),
-    };
-
-    try {
-      setIsSaving(true);
-
-      // 4. Requesting data save to the explicit Hydraulic API path
-      const response = await fetch(getApiUrl("/api/hydraulic-pm/save/"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json().catch(() => ({}));
-
-      // 5. Catching network failures or backend error payloads
-      if (!response.ok || result.success === false) {
-        const currentUser = localStorage.getItem("username") || "Unknown User";
-
-       
-        console.error("Hydraulic machine PM save failed:", result);
-        throw new Error(
-          formatBackendError(result) ||
-            `Request failed with status ${response.status}`,
-        );
-      }
-
-      // 6. Triggering successful UI reset animation flows
-      setShowSuccess(true);
-
-      setTimeout(() => {
-        setMetaData(initialMetaData);
-        setTableData(initialChecklist);
-        setShowSuccess(false);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }, 1500);
-    } catch (error) {
-      console.error("Failed to save hydraulic maintenance record:", error);
-      alert(`Failed to save hydraulic maintenance record: ${error.message}`);
-    } finally {
-      setIsSaving(false);
-    }
-  };
+    setTimeout(() => {
+      setMetaData(initialMetaData);
+      setTableData(initialChecklist);
+      setShowSuccess(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 1500);
+  } catch (error) {
+    console.error("Failed to save hydraulic maintenance record:", error);
+    errorAlert(`Failed to save hydraulic maintenance record: ${error.message}`);
+  } finally {
+    setIsSaving(false);
+  }
+};
 
   const handleReset = () => {
-    if (window.confirm("Are you sure you want to reset all fields?")) {
+    if (confirmAlert("Are you sure you want to reset all fields?")) {
       setMetaData(initialMetaData);
       setTableData(initialChecklist);
     }
   };
+
+    // --- APPROVE / REJECT HANDLERS (VIEW MODE) ---
+    const handleApprove = async () => {
+      try {
+        setApprovalLoading(true);
+        const currentUser = localStorage.getItem("username") || "Approver";
+        const res = await axios.post(`${API_BASE_URL}/api/approve-report/`, {
+          log_id: id,
+          approver_username: currentUser,
+          remarks: approvalRemark,
+        });
+  
+        successAlert(res.data?.message || "Report approved successfully.");
+        navigate("/notifications");
+      } catch (err) {
+        console.error("Approve error:", err);
+        errorAlert(err.response?.data?.error || "Approval failed.");
+      } finally {
+        setApprovalLoading(false);
+      }
+    };
+  
+    const handleReject = async () => {
+      if (!approvalRemark.trim()) {
+        warningAlert("Please enter remark before rejecting.");
+        return;
+      }
+  
+      try {
+        setApprovalLoading(true);
+        const currentUser = localStorage.getItem("username") || "Approver";
+        const res = await axios.post(`${API_BASE_URL}/api/reject-report/`, {
+          log_id: id,
+          approver_username: currentUser,
+          remarks: approvalRemark,
+        });
+  
+        successAlert(res.data?.message || "Report rejected successfully.");
+        navigate("/notifications");
+      } catch (err) {
+        console.error("Reject error:", err);
+        errorAlert(err.response?.data?.error || "Reject failed.");
+      } finally {
+        setApprovalLoading(false);
+      }
+    };
+  
+    const isAlreadyReviewed =
+      approvalStatus &&
+      (approvalStatus.toLowerCase().includes("approved") ||
+        approvalStatus.toLowerCase().includes("rejected"));
+  
+    const goBack = () => {
+      if (isViewMode) {
+        navigate('/notifications');
+        return;
+      }
+      navigate('/Maintenance/Machine/weekly');
+    };
 
   return (
     <div
@@ -463,6 +568,39 @@ const HydraulicMaintenanceForm = () => {
             Complete maintenance checklist and tracking system
           </p>
         </div>
+
+
+          {isViewMode && (
+          <div className="px-3 px-md-4 pt-3">
+            <span className="badge px-3 py-2 d-inline-block text-primary" style={{ backgroundColor: '#eff6ff', border: '1px solid #93c5fd', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Review Mode
+            </span>
+          </div>
+        )}
+
+        {isViewMode && approvalStatus && (
+          <div className="px-3 px-md-4 pt-3">
+            <div className="d-flex flex-column flex-sm-row justify-content-between gap-2 p-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+              <div>
+                <div className="form-label mb-0">Current Status</div>
+                <div className="fw-bold" style={{
+                  color: approvalStatus.toLowerCase().includes('approved') ? '#16a34a'
+                    : approvalStatus.toLowerCase().includes('rejected') ? '#dc2626'
+                    : '#d97706'
+                }}>
+                  {approvalStatus}
+                </div>
+              </div>
+              {reviewedAt && (
+                <div>
+                  <div className="form-label mb-0">Reviewed At</div>
+                  <div className="fw-bold text-dark">{reviewedAt}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
 
         <div className="card-body p-3 p-md-4">
           <form onSubmit={handleSubmit}>
@@ -784,7 +922,7 @@ const HydraulicMaintenanceForm = () => {
               {/* Checked By */}
               <div className="fw-bold" style={{ color: "#495057" }}>
                 Checked By
-                <input
+                 <input
                   type="text"
                   name="checkedBy"
                   className="form-control mt-1"
@@ -797,6 +935,7 @@ const HydraulicMaintenanceForm = () => {
             </div>
 
             {/* --- ACTION BUTTONS --- */}
+            {!isViewMode && (
             <div className="d-flex flex-column flex-sm-row justify-content-end gap-3 mt-4 pt-3 no-print border-top">
               <button
                 type="button"
@@ -812,11 +951,54 @@ const HydraulicMaintenanceForm = () => {
                 className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
                 disabled={isSaving}
               >
-                <i className="bi bi-floppy me-2"></i>{" "}
-                {isSaving ? "Saving..." : "Save Record"}
+                <i className="bi bi-floppy me-2"></i> {isSaving ? "Saving..." : "Save Record"}
               </button>
             </div>
+            )}
           </form>
+           
+                   {/* APPROVAL / REJECTION SECTION (VIEW MODE ONLY) */}
+          {isViewMode && (
+            <div className="mt-4 pt-4 no-print" style={{ borderTop: '2px solid #1e293b' }}>
+              <label className="form-label">APPROVAL / REJECTION REMARK:</label>
+              <textarea
+                rows="3"
+                className="form-control"
+                value={approvalRemark}
+                onChange={(e) => setApprovalRemark(e.target.value)}
+                disabled={isAlreadyReviewed}
+                placeholder="Enter approval or rejection remark..."
+              />
+
+              {isAlreadyReviewed ? (
+                <div className="mt-3 p-3" style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+                  This report is already reviewed. No further action is required.
+                </div>
+              ) : (
+                <div className="d-flex flex-column-reverse flex-sm-row gap-3 justify-content-end mt-3">
+                  <button
+                    type="button"
+                    onClick={handleReject}
+                    disabled={approvalLoading}
+                    className="btn rounded-pill px-4 shadow-sm w-100 w-sm-auto text-white"
+                    style={{ background: '#ef4444', fontWeight: 600 }}
+                  >
+                    {approvalLoading ? 'Please wait...' : 'Reject'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApprove}
+                    disabled={approvalLoading}
+                    className="btn rounded-pill px-4 shadow-sm w-100 w-sm-auto text-white"
+                    style={{ background: '#10b981', fontWeight: 600 }}
+                  >
+                    {approvalLoading ? 'Please wait...' : 'Approve'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       </div>
 

@@ -1,8 +1,24 @@
+<<<<<<< Updated upstream
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { getApiUrl } from "../../../../config/api"; // <--- API Import added
 import axios from "axios";
+=======
+import React, { useState,useEffect } from 'react';
+import { useNavigate, useLocation ,useParams} from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { getApiUrl } from '../../../../config/api'; // <--- API Import added
+import {
+  successAlert,
+  errorAlert,
+  warningAlert,
+  infoAlert,
+  confirmAlert,
+} from "../../../../utils/alertUtils";
+import axios from "axios";
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+>>>>>>> Stashed changes
 
 const PowerPressPreventiveMaintenanceForm = () => {
   const navigate = useNavigate();
@@ -168,6 +184,73 @@ const PowerPressPreventiveMaintenanceForm = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [preparedBy, setPreparedBy] = useState("");
 
+<<<<<<< Updated upstream
+=======
+
+  
+    // --- APPROVAL / VIEW MODE STATE ---
+    const [approvalRemark, setApprovalRemark] = useState("");
+    const [approvalLoading, setApprovalLoading] = useState(false);
+    const [approvalStatus, setApprovalStatus] = useState("");
+    const [reviewedAt, setReviewedAt] = useState("");
+  
+    // --- FETCH REPORT WHEN OPENED IN VIEW MODE (from notification) ---
+    useEffect(() => {
+      if (!id) return;
+  
+      const fetchReport = async () => {
+        try {
+          const res = await axios.get(
+            `${API_BASE_URL}/api/get-single-maintenance-report/power-press-pm/${id}/`
+          );
+          
+          if (res.data.success) {
+            const data = res.data.data || {};
+            const meta = data.metaData || {};
+  
+            setMetaData({
+              machineName: meta.machineName || 'POWER PRESS',
+              date: meta.date || '',
+              machineNo: meta.machineNo || '',
+              location: meta.location || '',
+              specification: meta.specification || '',
+              maintenancePersonnel: meta.maintenancePersonnel || '',
+              preparedBy: meta.preparedBy || '',
+              checkedBy: meta.checkedBy || '',
+            });
+  
+            const rows = Array.isArray(data.tableData) ? data.tableData : [];
+            setTableData(
+              rows.length
+                ? rows.map((row, index) => ({
+                    id: row.sr_no || index + 1,
+                    point: row.check_point || '',
+                    parameter: row.checking_Method || '',
+                    method: row.checking_method || '',
+                    before: row.before_maintenance || '',
+                    after: row.after_maintenance || '',
+                    remarks: row.remarks || '',
+                  }))
+                : initialChecklist
+            );
+  
+            setApprovalRemark(data.approval_remarks || "");
+            setApprovalStatus(data.approval_status || "");
+            setReviewedAt(data.approved_or_rejected_at || "");
+          } else {
+            errorAlert(res.data.error || "Failed to load Power Press Check Sheet.");
+          }
+        } catch (err) {
+          console.error("Error loading Check Sheet:", err);
+          errorAlert(err.response?.data?.error || "Failed to load Power Press Check Sheet.");
+        }
+      };
+  
+      fetchReport();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
+
+>>>>>>> Stashed changes
   // --- HANDLERS ---
   const handleMetaChange = (e) =>
     setMetaData({ ...metaData, [e.target.name]: e.target.value });
@@ -213,13 +296,13 @@ const PowerPressPreventiveMaintenanceForm = () => {
     e.preventDefault();
 
     if (!metaData.machineName || !metaData.machineNo || !metaData.location) {
-      alert("Please fill all required fields in General Information.");
+      warningAlert("Please fill all required fields in General Information.");
       return;
     }
 
     for (let i = 0; i < tableData.length; i++) {
       if (!tableData[i].before || !tableData[i].after) {
-        alert(`Please complete the Before/After status for row ${i + 1}`);
+        infoAlert(`Please complete the Before/After status for row ${i + 1}`);
         return;
       }
     }
@@ -272,11 +355,11 @@ const PowerPressPreventiveMaintenanceForm = () => {
         }, 1500);
       } else {
         const errorMessage = await getErrorMessage(response);
-        alert("Failed to save data. Error: " + errorMessage);
+        errorAlert("Failed to save data. Error: " + errorMessage);
       }
     } catch (error) {
       console.error("Error saving data:", error);
-      alert("An error occurred while saving the data.");
+      errorAlert("An error occurred while saving the data.");
     } finally {
       setIsSubmitting(false);
     }
@@ -289,6 +372,69 @@ const PowerPressPreventiveMaintenanceForm = () => {
     }
   };
 
+<<<<<<< Updated upstream
+=======
+   // --- APPROVE / REJECT HANDLERS (VIEW MODE) ---
+    const handleApprove = async () => {
+      try {
+        setApprovalLoading(true);
+        const currentUser = localStorage.getItem("username") || "Approver";
+        const res = await axios.post(`${API_BASE_URL}/api/approve-report/`, {
+          log_id: id,
+          approver_username: currentUser,
+          remarks: approvalRemark,
+        });
+  
+        successAlert(res.data?.message || "Report approved successfully.");
+        navigate("/notifications");
+      } catch (err) {
+        console.error("Approve error:", err);
+        errorAlert(err.response?.data?.error || "Approval failed.");
+      } finally {
+        setApprovalLoading(false);
+      }
+    };
+  
+    const handleReject = async () => {
+      if (!approvalRemark.trim()) {
+        infoAlert("Please enter remark before rejecting.");
+        return;
+      }
+  
+      try {
+        setApprovalLoading(true);
+        const currentUser = localStorage.getItem("username") || "Approver";
+        const res = await axios.post(`${API_BASE_URL}/api/reject-report/`, {
+          log_id: id,
+          approver_username: currentUser,
+          remarks: approvalRemark,
+        });
+  
+        successAlert(res.data?.message || "Report rejected successfully.");
+        navigate("/notifications");
+      } catch (err) {
+        console.error("Reject error:", err);
+        errorAlert(err.response?.data?.error || "Reject failed.");
+      } finally {
+        setApprovalLoading(false);
+      }
+    };
+  
+    const isAlreadyReviewed =
+      approvalStatus &&
+      (approvalStatus.toLowerCase().includes("approved") ||
+        approvalStatus.toLowerCase().includes("rejected"));
+  
+    const goBack = () => {
+      if (isViewMode) {
+        navigate('/notifications');
+        return;
+      }
+      navigate('/Maintenance/Machine/weekly');
+    };
+
+
+>>>>>>> Stashed changes
   return (
     <div
       className="container-fluid py-3 py-md-4"

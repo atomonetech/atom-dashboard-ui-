@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  successAlert,
+  errorAlert,
+  warningAlert,
+  infoAlert,
+  confirmAlert,
+} from "../../../../../utils/alertUtils";
 
 const BOQualityPlan = () => {
     const navigate = useNavigate();
@@ -24,7 +31,7 @@ const BOQualityPlan = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         console.log("BOQP Data:", formData);
-        alert('✅ Bought Out Quality Plan Saved Successfully!');
+        successAlert('✅ Bought Out Quality Plan Saved Successfully!');
         handleForceReset();
     };
 

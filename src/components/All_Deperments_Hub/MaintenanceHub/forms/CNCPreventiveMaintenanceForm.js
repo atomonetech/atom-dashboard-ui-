@@ -1,10 +1,22 @@
-import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
-import axios from "axios";
+import React, { useState,useEffect } from 'react';
+import { useNavigate, useLocation,useParams } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import axios from 'axios';
+import {
+  successAlert,
+  errorAlert,
+  warningAlert,
+  infoAlert,
+  confirmAlert,
+} from "../../../../utils/alertUtils";
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 
 const CncPreventiveMaintenanceForm = () => {
   const navigate = useNavigate();
+   const { id } = useParams();
+    const isViewMode=Boolean(id);
   const location = useLocation();
 
   // --- COLLAPSIBLE STATE FOR CHECKLIST ---
@@ -146,6 +158,68 @@ const CncPreventiveMaintenanceForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [preparedBy, setPreparedBy] = useState("");
 
+    // --- APPROVAL / VIEW MODE STATE ---
+    const [approvalRemark, setApprovalRemark] = useState("");
+    const [approvalLoading, setApprovalLoading] = useState(false);
+    const [approvalStatus, setApprovalStatus] = useState("");
+    const [reviewedAt, setReviewedAt] = useState("");
+  
+    // --- FETCH REPORT WHEN OPENED IN VIEW MODE (from notification) ---
+    useEffect(() => {
+      if (!id) return;
+  
+      const fetchReport = async () => {
+        try {
+          const res = await axios.get(
+            `${API_BASE_URL}/api/get-single-maintenance-report/cnc/${id}/`
+          );
+          
+          if (res.data.success) {
+            const data = res.data.data || {};
+            const meta = data.metaData || {};
+  
+            setMetaData({
+              machineName: meta.machineName || 'CNC',
+              date: meta.date || '',
+              machineNo: meta.machineNo || '',
+              location: meta.location || '',
+              specification: meta.specification || '',
+              maintenancePersonnel: meta.maintenancePersonnel || '',
+              preparedBy: meta.preparedBy || '',
+              checkedBy: meta.checkedBy || '',
+            });
+  
+            const rows = Array.isArray(data.tableData) ? data.tableData : [];
+            setTableData(
+              rows.length
+                ? rows.map((row, index) => ({
+                    id: row.sr_no || index + 1,
+                    point: row.check_point || '',
+                    parameter: row.checking_Method || '',
+                    method: row.checking_method || '',
+                    before: row.before_maintenance || '',
+                    after: row.after_maintenance || '',
+                    remarks: row.remarks || '',
+                  }))
+                : initialChecklist
+            );
+  
+            setApprovalRemark(data.approval_remarks || "");
+            setApprovalStatus(data.approval_status || "");
+            setReviewedAt(data.approved_or_rejected_at || "");
+          } else {
+            errorAlert(res.data.error || "Failed to load CNC Check Sheet.");
+          }
+        } catch (err) {
+          console.error("Error loading Check Sheet:", err);
+          errorAlert(err.response?.data?.error || "Failed to load CNC Check Sheet.");
+        }
+      };
+  
+      fetchReport();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
+
   // --- HANDLERS ---
   const handleMetaChange = (e) =>
     setMetaData({ ...metaData, [e.target.name]: e.target.value });
@@ -197,20 +271,15 @@ const CncPreventiveMaintenanceForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (
-      !metaData.machineName ||
-      !metaData.machineNo ||
-      !metaData.location ||
-      !metaData.maintenancePersonnel
-    ) {
-      alert("Please fill all required fields in General Information.");
+    
+    if (!metaData.machineName || !metaData.machineNo || !metaData.location || !metaData.maintenancePersonnel) {
+     warningAlert("Please fill all required fields in General Information.");
       return;
     }
 
     for (let i = 0; i < tableData.length; i++) {
       if (!tableData[i].before || !tableData[i].after) {
-        alert(`Please complete Before/After status for row ${i + 1}`);
+        warningAlert(`Please complete Before/After status for row ${i + 1}`);
         return;
       }
     }
@@ -273,7 +342,7 @@ const CncPreventiveMaintenanceForm = () => {
       }, 1500);
     } catch (error) {
       console.error("Failed to save CNC maintenance record:", error);
-      alert(`Failed to save CNC maintenance record: ${error.message}`);
+      errorAlert(`Failed to save CNC maintenance record: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -285,6 +354,65 @@ const CncPreventiveMaintenanceForm = () => {
       setTableData(initialChecklist);
     }
   };
+  
+   // --- APPROVE / REJECT HANDLERS (VIEW MODE) ---
+    const handleApprove = async () => {
+      try {
+        setApprovalLoading(true);
+        const currentUser = localStorage.getItem("username") || "Approver";
+        const res = await axios.post(`${API_BASE_URL}/api/approve-report/`, {
+          log_id: id,
+          approver_username: currentUser,
+          remarks: approvalRemark,
+        });
+  
+        successAlert(res.data?.message || "Report approved successfully.");
+        navigate("/notifications");
+      } catch (err) {
+        console.error("Approve error:", err);
+        errorAlert(err.response?.data?.error || "Approval failed.");
+      } finally {
+        setApprovalLoading(false);
+      }
+    };
+  
+    const handleReject = async () => {
+      if (!approvalRemark.trim()) {
+        warningAlert("Please enter remark before rejecting.");
+        return;
+      }
+  
+      try {
+        setApprovalLoading(true);
+        const currentUser = localStorage.getItem("username") || "Approver";
+        const res = await axios.post(`${API_BASE_URL}/api/reject-report/`, {
+          log_id: id,
+          approver_username: currentUser,
+          remarks: approvalRemark,
+        });
+  
+        successAlert(res.data?.message || "Report rejected successfully.");
+        navigate("/notifications");
+      } catch (err) {
+        console.error("Reject error:", err);
+        errorAlert(err.response?.data?.error || "Reject failed.");
+      } finally {
+        setApprovalLoading(false);
+      }
+    };
+  
+    const isAlreadyReviewed =
+      approvalStatus &&
+      (approvalStatus.toLowerCase().includes("approved") ||
+        approvalStatus.toLowerCase().includes("rejected"));
+  
+    const goBack = () => {
+      if (isViewMode) {
+        navigate('/notifications');
+        return;
+      }
+      navigate('/Maintenance/Machine/weekly');
+    };
 
   return (
     <div

@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import {
+  successAlert,
+  errorAlert,
+  warningAlert,
+  infoAlert,
+  confirmAlert,
+} from "../../../../utils/alertUtils";
 
 const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
@@ -398,11 +405,11 @@ const DailyPowerPressChecksheet = () => {
           setApprovalStatus(data.approval_status || "");
           setReviewedAt(data.approved_or_rejected_at || "");
         } else {
-          alert(res.data.error || "Failed to load Daily Power Press Checksheet.");
+          errorAlert(res.data.error || "Failed to load Daily Power Press Checksheet.");
         }
       } catch (err) {
         console.error("Error loading Daily Power Press Checksheet:", err);
-        alert(
+        errorAlert(
           err.response?.data?.error ||
             "Failed to load Daily Power Press Checksheet.",
         );
@@ -444,14 +451,14 @@ const DailyPowerPressChecksheet = () => {
         setIsAddingNewOperator(false);
         setNewOperatorName("");
       } else {
-        alert(
+        errorAlert(
           "Failed to save operator: " +
             (result.message || result.error || "Unknown error"),
         );
       }
     } catch (error) {
       console.error("Error saving operator:", error);
-      alert("Network Error: Could not save operator to backend.");
+      errorAlert("Network Error: Could not save operator to backend.");
     } finally {
       setIsSavingOperator(false);
     }
@@ -500,12 +507,12 @@ const DailyPowerPressChecksheet = () => {
 
   const handleSubmit = async () => {
     if (!formReady) {
-      alert("Please fill in all required details before proceeding.");
+      warningAlert("Please fill in all required details before proceeding.");
       return;
     }
 
     if (!allDone) {
-      alert("Please complete all checkpoints before saving.");
+      warningAlert("Please complete all checkpoints before saving.");
       return;
     }
 
@@ -558,7 +565,7 @@ const DailyPowerPressChecksheet = () => {
 
       if (data.success || response.ok) {
         if (!data.log_id) {
-          alert(
+          infoAlert(
             "Checksheet saved, but log_id missing. Backend did not create notification log.",
           );
           return;
@@ -566,14 +573,14 @@ const DailyPowerPressChecksheet = () => {
 
         resetForm();
 
-        alert(`Daily Power Press Checksheet saved successfully. Log ID: ${data.log_id}`);
+        successAlert(`Daily Power Press Checksheet saved successfully. Log ID: ${data.log_id}`);
       } else {
         console.error("Backend Error:", data);
-        alert(`Data save nahi ho paya! Error: ${data.error || "Check console"}`);
+        errorAlert(`Data does not save Error: ${data.error || "Check console"}`);
       }
     } catch (error) {
       console.error("Network Error:", error);
-      alert("Server se connect nahi ho paya! Backend IP aur connection check karo.");
+      errorAlert("Server connection failed please check ip.");
     } finally {
       setIsSubmitting(false);
     }
@@ -591,11 +598,11 @@ const DailyPowerPressChecksheet = () => {
         remarks: approvalRemark,
       });
 
-      alert(res.data?.message || "Report approved successfully.");
+      successAlert(res.data?.message || "Report approved successfully.");
       navigate("/notifications");
     } catch (err) {
       console.error("Approve error:", err);
-      alert(err.response?.data?.error || "Approval failed.");
+      errorAlert(err.response?.data?.error || "Approval failed.");
     } finally {
       setApprovalLoading(false);
     }
@@ -603,7 +610,7 @@ const DailyPowerPressChecksheet = () => {
 
   const handleReject = async () => {
     if (!approvalRemark.trim()) {
-      alert("Please enter remark before rejecting.");
+      warningAlert("Please enter remark before rejecting.");
       return;
     }
 
@@ -618,11 +625,11 @@ const DailyPowerPressChecksheet = () => {
         remarks: approvalRemark,
       });
 
-      alert(res.data?.message || "Report rejected successfully.");
+      successAlert(res.data?.message || "Report rejected successfully.");
       navigate("/notifications");
     } catch (err) {
       console.error("Reject error:", err);
-      alert(err.response?.data?.error || "Reject failed.");
+      errorAlert(err.response?.data?.error || "Reject failed.");
     } finally {
       setApprovalLoading(false);
     }

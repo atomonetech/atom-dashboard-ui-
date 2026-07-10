@@ -5,6 +5,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import {
+  successAlert,
+  errorAlert,
+  warningAlert,
+  infoAlert,
+  confirmAlert,
+} from "../../../../utils/alertUtils";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
@@ -248,11 +255,11 @@ const PokaYokeChecksheet = () => {
             setChecklist(loadedChecks);
           }
         } else {
-          alert(response.data?.error || "Report data not found.");
+          errorAlert(response.data?.error || "Report data not found.");
         }
       } catch (error) {
         console.error("❌ Poka Yoke view fetch error:", error);
-        alert(
+        errorAlert(
           error.response?.data?.error ||
             "❌ Could not load Poka Yoke report data.",
         );
@@ -353,7 +360,7 @@ const PokaYokeChecksheet = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        alert("✅ Daily Poka Yoke Checksheet successfully saved!");
+        successAlert("✅ Daily Poka Yoke Checksheet successfully saved!");
 
         setExistingDataList((prev) => [
           {
@@ -369,11 +376,11 @@ const PokaYokeChecksheet = () => {
 
         resetForm();
       } else {
-        alert("❌ Backend Error: " + (result.error || "Data save nahi hua."));
+        errorAlert("❌ Backend Error: " + (result.error || "Data save nahi hua."));
       }
     } catch (error) {
       console.error("Network Error:", error);
-      alert("❌ Server se connect nahi ho paaya.");
+      errorAlert("❌ Server se connect nahi ho paaya.");
     } finally {
       setIsSubmitting(false);
     }
@@ -391,11 +398,11 @@ const PokaYokeChecksheet = () => {
         remarks: approvalRemark,
       });
 
-      alert(res.data?.message || "Report approved successfully.");
+      successAlert(res.data?.message || "Report approved successfully.");
       navigate("/notifications");
     } catch (err) {
       console.error("Approve error:", err);
-      alert(err.response?.data?.error || "Approval failed.");
+      errorAlert(err.response?.data?.error || "Approval failed.");
     } finally {
       setApprovalLoading(false);
     }
@@ -403,7 +410,7 @@ const PokaYokeChecksheet = () => {
 
   const handleReject = async () => {
     if (!approvalRemark.trim()) {
-      alert("Please enter remark before rejecting.");
+      warningAlert("Please enter remark before rejecting.");
       return;
     }
 
@@ -418,11 +425,11 @@ const PokaYokeChecksheet = () => {
         remarks: approvalRemark,
       });
 
-      alert(res.data?.message || "Report rejected successfully.");
+      successAlert(res.data?.message || "Report rejected successfully.");
       navigate("/notifications");
     } catch (err) {
       console.error("Reject error:", err);
-      alert(err.response?.data?.error || "Reject failed.");
+      errorAlert(err.response?.data?.error || "Reject failed.");
     } finally {
       setApprovalLoading(false);
     }

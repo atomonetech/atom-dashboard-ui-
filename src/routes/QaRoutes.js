@@ -129,19 +129,26 @@ const QaRoutes = () => {
             <Route path="monthly/copq" element={<CopqGuideline />} />
             <Route path="monthly/customer-req" element={<CustomerRequirement />} />
             <Route path="monthly/complaint-reg" element={<CustomerComplaintRegister/>}/>
+            <Route path="view-report/customer-complaint/:id" element={<CustomerComplaintRegister />} />
+
             <Route path="monthly/gauge-validation" element={<GaugeValidationReport />} />
             <Route path="monthly/suggestions" element={<ImprovementSuggestion />} />
             <Route path="monthly/layout-report" element={<LayoutInspectionReport />} />
+              <Route path="view-report/layout-inspection/:id" element={<LayoutInspectionReport />} />
             <Route path="monthly/mom" element={<MinutesOfMeetings />} />
+             <Route path="view-report/mom/:id" element={<MinutesOfMeetings />} />
             <Route path="monthly/msa-report" element={<MsaReport />} />
             <Route path="monthly/pareto-analysis" element={<ParetoAnalysis />} />
             <Route path="monthly/process-audit" element={<ProcessAuditChecksheet />} />
             <Route path="monthly/cp-cpk" element={<ProcessCapabilityStudy />} />
             <Route path="monthly/product-audit" element={<ProductAuditChecksheet />} />
+            <Route path="view-report/product-audit-plan/:id" element={<ProductAuditChecksheet />} />
             <Route path="monthly/supplier-list" element={<SupplierPartList />} />
             <Route path="monthly/warranty-reg" element={<WarrantyClaimRegister />} />
+              <Route path="view-report/warranty-claim/:id" element={<WarrantyClaimRegister />} />
             <Route path="monthly/work-instruction" element={<WorkInstruction />} />
             <Route path="monthly/customer-satisfaction" element={<CustomerSatisfactionCard/>}/>
+            <Route path="view-report/customer-satisfaction/:id" element={<CustomerSatisfactionCard />} />
              <Route path="monthly/visual-std" element={<VisualInspectionStandard/>}/>
 
 

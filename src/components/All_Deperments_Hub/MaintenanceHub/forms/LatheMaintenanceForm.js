@@ -1,11 +1,21 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
-import { getApiUrl } from "../../../../config/api";
+import React, { useState,useEffect } from 'react';
+import { useNavigate,useParams } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { getApiUrl } from '../../../../config/api';
+import {
+  successAlert,
+  errorAlert,
+  warningAlert,
+  infoAlert,
+  confirmAlert,
+} from "../../../../utils/alertUtils";
 import axios from "axios";
+const API_BASE_URL=`${process.env.REACT_APP_API_URL || "http://localhost:8000"}`;
 
 const LatheMaintenanceForm = () => {
   const navigate = useNavigate();
+   const { id } = useParams(); // Get the ID from the URL
+    const isViewMode=Boolean(id);
 
   // --- COLLAPSIBLE STATE ---
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
@@ -115,6 +125,69 @@ const LatheMaintenanceForm = () => {
   const [tableData, setTableData] = useState(initialChecklist);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+   // --- APPROVAL / VIEW MODE STATE ---
+          const [approvalRemark, setApprovalRemark] = useState("");
+          const [approvalLoading, setApprovalLoading] = useState(false);
+          const [approvalStatus, setApprovalStatus] = useState("");
+          const [reviewedAt, setReviewedAt] = useState("");
+        
+          // --- FETCH REPORT WHEN OPENED IN VIEW MODE (from notification) ---
+          useEffect(() => {
+            if (!id) return;
+        
+            const fetchReport = async () => {
+              try {
+                const res = await axios.get(
+                  `${API_BASE_URL}/api/get-single-maintenance-report/lathe/${id}/`
+                );
+                
+                if (res.data.success) {
+                  const data = res.data.data || {};
+                  const meta = data.metaData || {};
+        
+                  setMetaData({
+                    machineName: meta.machineName || 'Dip Molding Machine', // Default value if not provided
+                    date: meta.date || '',
+                    machineNo: meta.machineNo || '',
+                    location: meta.location || '',
+                    specification: meta.specification || '',
+                    maintenancePersonnel: meta.maintenancePersonnel || '',
+                    preparedBy: meta.preparedBy || '',
+                    checkedBy: meta.checkedBy || '',
+                  });
+        
+                  const rows = Array.isArray(data.tableData) ? data.tableData : [];
+                  setTableData(
+                    rows.length
+                      ? rows.map((row, index) => ({
+                          id: row.sr_no || index + 1,
+                          point: row.point || '',
+                          parameter: row.parameter || '',
+                          method: row.method || '',
+                          before: row.before || '',
+                          after: row.after || '',
+                          remarks: row.remarks || '',
+                        }))
+                      : initialChecklist
+                  );
+        
+                  setApprovalRemark(data.approval_remarks || "");
+                  setApprovalStatus(data.approval_status || "");
+                  setReviewedAt(data.approved_or_rejected_at || "");
+                } else {
+                  errorAlert(res.data.error || "Failed to load Dip Molding Check Sheet.");
+                }
+              } catch (err) {
+                console.error("Error loading Check Sheet:", err);
+                errorAlert(err.response?.data?.error || "Failed to load Dip Molding Check Sheet.");
+              }
+            };
+        
+            fetchReport();
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+          }, [id]);
+
+
   // --- HANDLERS ---
   const handleMetaChange = (e) =>
     setMetaData({ ...metaData, [e.target.name]: e.target.value });
@@ -132,7 +205,7 @@ const LatheMaintenanceForm = () => {
 
     // Validation
     if (!metaData.machineNo || !metaData.location || !metaData.preparedBy) {
-      alert("Please fill required fields.");
+      warningAlert("Please fill required fields.");
       return;
     }
 
@@ -174,28 +247,80 @@ const LatheMaintenanceForm = () => {
       );
 
       if (response.ok) {
-        const currentUser = localStorage.getItem("username") || "Unknown User";
-
-        alert("✨ Lathe record saved successfully!");
+        successAlert("✨ Lathe record saved successfully!");
         setMetaData(initialMetaData);
         setTableData(initialChecklist);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         const errorData = await response.json();
-        alert(
-          "Failed to save data. Error: " +
-            (errorData.error
-              ? JSON.stringify(errorData.error)
-              : "Unknown Error"),
-        );
+        errorAlert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
       }
     } catch (error) {
       console.error("Error saving data:", error);
-      alert("An error occurred while saving the data.");
+      errorAlert("An error occurred while saving the data.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+   // --- APPROVE / REJECT HANDLERS (VIEW MODE) ---
+        const handleApprove = async () => {
+          try {
+            setApprovalLoading(true);
+            const currentUser = localStorage.getItem("username") || "Approver";
+            const res = await axios.post(`${API_BASE_URL}/api/approve-report/`, {
+              log_id: id,
+              approver_username: currentUser,
+              remarks: approvalRemark,
+            });
+      
+            successAlert(res.data?.message || "Report approved successfully.");
+            navigate("/notifications");
+          } catch (err) {
+            console.error("Approve error:", err);
+            errorAlert(err.response?.data?.error || "Approval failed.");
+          } finally {
+            setApprovalLoading(false);
+          }
+        };
+      
+        const handleReject = async () => {
+          if (!approvalRemark.trim()) {
+            infoAlert("Please enter remark before rejecting.");
+            return;
+          }
+      
+          try {
+            setApprovalLoading(true);
+            const currentUser = localStorage.getItem("username") || "Approver";
+            const res = await axios.post(`${API_BASE_URL}/api/reject-report/`, {
+              log_id: id,
+              approver_username: currentUser,
+              remarks: approvalRemark,
+            });
+      
+            successAlert(res.data?.message || "Report rejected successfully.");
+            navigate("/notifications");
+          } catch (err) {
+            console.error("Reject error:", err);
+            errorAlert(err.response?.data?.error || "Reject failed.");
+          } finally {
+            setApprovalLoading(false);
+          }
+        };
+      
+        const isAlreadyReviewed =
+          approvalStatus &&
+          (approvalStatus.toLowerCase().includes("approved") ||
+            approvalStatus.toLowerCase().includes("rejected"));
+      
+        const goBack = () => {
+          if (isViewMode) {
+            navigate('/notifications');
+            return;
+          }
+          navigate('/Maintenance/Machine/weekly');
+        };
 
   return (
     <div

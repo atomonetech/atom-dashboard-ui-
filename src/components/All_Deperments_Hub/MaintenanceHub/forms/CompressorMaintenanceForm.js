@@ -1,13 +1,23 @@
-import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useState,useEffect } from "react";
+import { useNavigate, useLocation,useParams} from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 // Dhyan dein: Apna API config path apne folder structure ke hisaab se adjust kar lena
 import { getApiUrl } from "../../../../config/api";
+import {
+  successAlert,
+  errorAlert,
+  warningAlert,
+  infoAlert,
+  confirmAlert,
+} from "../../../../utils/alertUtils";
 import axios from "axios";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 const CompressorMaintenanceForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { id } = useParams(); // Get the ID from the URL if present
+  const isViewMode=Boolean(id); // If ID is present, we are in view mode
 
   // --- COLLAPSIBLE STATE FOR CHECKLIST ---
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
@@ -17,69 +27,13 @@ const CompressorMaintenanceForm = () => {
 
   // --- FIXED HYDRAULIC CHECKLIST DATA WITH PRE-DEFINED CHECKING METHODS ---
   const initialChecklist = [
-    {
-      id: 1,
-      point: "Clean the machine by cloth",
-      parameter: "Dust free",
-      method: "Visual",
-      before: "",
-      after: "",
-      remarks: "",
-    },
-    {
-      id: 2,
-      point: "Check the oil level",
-      parameter: "Should be proper",
-      method: "By spanner",
-      before: "",
-      after: "",
-      remarks: "",
-    },
-    {
-      id: 3,
-      point: "Check the air filter",
-      parameter: "Should be proper condition",
-      method: "By spanner",
-      before: "",
-      after: "",
-      remarks: "",
-    },
-    {
-      id: 4,
-      point: "Check the air receiver",
-      parameter: "Should be cleaned",
-      method: "Visual",
-      before: "",
-      after: "",
-      remarks: "",
-    },
-    {
-      id: 5,
-      point: "Check any abnormal sound",
-      parameter: "No abnormal sound",
-      method: "Visual",
-      before: "",
-      after: "",
-      remarks: "",
-    },
-    {
-      id: 6,
-      point: "Check nut & bolt",
-      parameter: "Should be tight",
-      method: "By Spanner/ allen key",
-      before: "",
-      after: "",
-      remarks: "",
-    },
-    {
-      id: 7,
-      point: "Check loose wiring",
-      parameter: "Should be tight",
-      method: "By plier/ spanner",
-      before: "",
-      after: "",
-      remarks: "",
-    },
+    { id: 1, point: "Clean the machine by cloth", parameter: "Dust free", method: "Visual", before: '', after: '', remarks: '' },
+    { id: 2, point: "Check the oil level", parameter: "Should be proper", method: "By spanner", before: '', after: '', remarks: '' },
+    { id: 3, point: "Check the air filter", parameter: "Should be proper condition", method: "By spanner", before: '', after: '', remarks: '' },
+    { id: 4, point: "Check the air receiver", parameter: "Should be cleaned", method: "Visual", before: '', after: '', remarks: '' },
+    { id: 5, point: "Check any abnormal sound", parameter: "No abnormal sound", method: "Visual", before: '', after: '', remarks: '' },
+    { id: 6, point: "Check nut & bolt", parameter: "Should be tight", method: "By Spanner/ allen key", before: '', after: '', remarks: '' },
+    { id: 7, point: "Check loose wiring", parameter: "Should be tight", method: "By plier/ spanner", before: '', after: '', remarks: '' }
   ];
 
   // --- INITIAL STATES (For Resetting) ---
@@ -91,13 +45,76 @@ const CompressorMaintenanceForm = () => {
     specification: "",
     maintenancePersonnel: "",
     preparedBy: "", // Added to save signatures
-    checkedBy: "", // Added to save signatures
+    checkedBy: ""   // Added to save signatures
   };
 
   // --- COMPONENT STATE ---
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+        // --- APPROVAL / VIEW MODE STATE ---
+        const [approvalRemark, setApprovalRemark] = useState("");
+        const [approvalLoading, setApprovalLoading] = useState(false);
+        const [approvalStatus, setApprovalStatus] = useState("");
+        const [reviewedAt, setReviewedAt] = useState("");
+      
+        // --- FETCH REPORT WHEN OPENED IN VIEW MODE (from notification) ---
+        useEffect(() => {
+          if (!id) return;
+      
+          const fetchReport = async () => {
+            try {
+              const res = await axios.get(
+                `${API_BASE_URL}/api/get-single-maintenance-report/compressor/${id}/`
+              );
+              
+              if (res.data.success) {
+                const data = res.data.data || {};
+                const meta = data.metaData || {};
+      
+                setMetaData({
+                  machineName: meta.machineName || 'Compressor Machine', // Default value if not provided
+                  date: meta.date || '',
+                  machineNo: meta.machineNo || '',
+                  location: meta.location || '',
+                  specification: meta.specification || '',
+                  maintenancePersonnel: meta.maintenancePersonnel || '',
+                  preparedBy: meta.preparedBy || '',
+                  checkedBy: meta.checkedBy || '',
+                });
+      
+                const rows = Array.isArray(data.tableData) ? data.tableData : [];
+                setTableData(
+                  rows.length
+                    ? rows.map((row, index) => ({
+                        id: row.sr_no || index + 1,
+                        point: row.point || '',
+                        parameter: row.parameter || '',
+                        method: row.method || '',
+                        before: row.before || '',
+                        after: row.after || '',
+                        remarks: row.remarks || '',
+                      }))
+                    : initialChecklist
+                );
+      
+                setApprovalRemark(data.approval_remarks || "");
+                setApprovalStatus(data.approval_status || "");
+                setReviewedAt(data.approved_or_rejected_at || "");
+              } else {
+                errorAlert(res.data.error || "Failed to load Compressor Check Sheet.");
+              }
+            } catch (err) {
+              console.error("Error loading Check Sheet:", err);
+              errorAlert(err.response?.data?.error || "Failed to load Compressor Check Sheet.");
+            }
+          };
+      
+          fetchReport();
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [id]);
+  
 
   // --- HANDLERS ---
   const handleMetaChange = (e) =>
@@ -132,73 +149,55 @@ const CompressorMaintenanceForm = () => {
       !metaData.location ||
       !metaData.maintenancePersonnel
     ) {
-      alert("Please fill all required fields in General Information.");
+      warningAlert("Please fill all required fields in General Information.");
       return;
     }
 
     for (let i = 0; i < tableData.length; i++) {
       if (!tableData[i].before || !tableData[i].after) {
-        alert(`Please complete Before/After status for row ${i + 1}`);
+        warningAlert(`Please complete Before/After status for row ${i + 1}`);
         return;
       }
     }
 
     setIsSubmitting(true);
     const currentUser = localStorage.getItem("username") || "Unknown User";
+
     const payload = {
-      machine_name: metaData.machineName,
+      machineName: metaData.machineName,
       date: metaData.date,
-      machine_no: metaData.machineNo,
+      machineNo: metaData.machineNo,
       location: metaData.location,
       specification: metaData.specification,
-      maintenance_personnel: metaData.maintenancePersonnel,
-      prepared_by: metaData.preparedBy,
-      checked_by: metaData.checkedBy,
-      username: currentUser,
-      department_name: `${metaData.location} (Maintenance)`,
-      checkpoints: tableData.map((row, index) => ({
-        sr_no: index + 1,
-        check_point: row.point,
-        checking_parameter: row.parameter,
-        checking_method: row.method,
-        before_maintenance: row.before,
-        after_maintenance: row.after,
-        remarks: row.remarks || "",
-        spare_used_remarks: row.remarks || "",
-      })),
+      maintenancePersonnel: metaData.maintenancePersonnel,
+      preparedBy: metaData.preparedBy,
+      checkedBy: metaData.checkedBy,
+      tableData: tableData,
+      username: currentUser
     };
 
     try {
-      const response = await fetch(
-        getApiUrl("/api/compressor-maintenance/save/"),
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
+      const response = await fetch(getApiUrl('/api/compressor-maintenance/save/'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      );
+        body: JSON.stringify(payload)
+      });
 
       if (response.ok) {
-        const currentUser = localStorage.getItem("username") || "Unknown User";
-
-        alert("Success! Compressor Maintenance record has been saved.");
+         
+        successAlert("Success! Compressor Maintenance record has been saved.");
         setMetaData(initialMetaData);
         setTableData(initialChecklist);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         const errorData = await response.json();
-        alert(
-          "Failed to save data. Error: " +
-            (errorData.error
-              ? JSON.stringify(errorData.error)
-              : "Unknown Error"),
-        );
+        errorAlert("Failed to save data. Error: " + (errorData.error ? JSON.stringify(errorData.error) : 'Unknown Error'));
       }
     } catch (error) {
       console.error("Error saving data:", error);
-      alert("An error occurred while saving the data.");
+      errorAlert("An error occurred while saving the data.");
     } finally {
       setIsSubmitting(false);
     }
@@ -210,6 +209,65 @@ const CompressorMaintenanceForm = () => {
       setTableData(initialChecklist);
     }
   };
+
+    // --- APPROVE / REJECT HANDLERS (VIEW MODE) ---
+    const handleApprove = async () => {
+      try {
+        setApprovalLoading(true);
+        const currentUser = localStorage.getItem("username") || "Approver";
+        const res = await axios.post(`${API_BASE_URL}/api/approve-report/`, {
+          log_id: id,
+          approver_username: currentUser,
+          remarks: approvalRemark,
+        });
+  
+        successAlert(res.data?.message || "Report approved successfully.");
+        navigate("/notifications");
+      } catch (err) {
+        console.error("Approve error:", err);
+        errorAlert(err.response?.data?.error || "Approval failed.");
+      } finally {
+        setApprovalLoading(false);
+      }
+    };
+  
+    const handleReject = async () => {
+      if (!approvalRemark.trim()) {
+        warningAlert("Please enter remark before rejecting.");
+        return;
+      }
+  
+      try {
+        setApprovalLoading(true);
+        const currentUser = localStorage.getItem("username") || "Approver";
+        const res = await axios.post(`${API_BASE_URL}/api/reject-report/`, {
+          log_id: id,
+          approver_username: currentUser,
+          remarks: approvalRemark,
+        });
+  
+        successAlert(res.data?.message || "Report rejected successfully.");
+        navigate("/notifications");
+      } catch (err) {
+        console.error("Reject error:", err);
+        errorAlert(err.response?.data?.error || "Reject failed.");
+      } finally {
+        setApprovalLoading(false);
+      }
+    };
+  
+    const isAlreadyReviewed =
+      approvalStatus &&
+      (approvalStatus.toLowerCase().includes("approved") ||
+        approvalStatus.toLowerCase().includes("rejected"));
+  
+    const goBack = () => {
+      if (isViewMode) {
+        navigate('/notifications');
+        return;
+      }
+      navigate('/Maintenance/Machine/weekly');
+    };
 
   return (
     <div
@@ -303,58 +361,27 @@ const CompressorMaintenanceForm = () => {
       `}</style>
 
       {/* --- TOP BACK BUTTON --- */}
-      <div
-        className="mx-auto mb-3 no-print animate-fade-in px-2"
-        style={{ maxWidth: "1200px" }}
-      >
-        <button
+      <div className="mx-auto mb-3 no-print animate-fade-in px-2" style={{ maxWidth: '1200px' }}>
+        <button 
           className="btn btn-outline-custom rounded-pill"
-          onClick={() => navigate("/Maintenance/Machine/weekly")}
-          style={{ fontSize: "0.85rem" }}
+          onClick={() => navigate('/Maintenance/Machine/weekly')}
+          style={{ fontSize: '0.85rem' }}
         >
           ← Back to Weekly Hub
         </button>
       </div>
 
       {/* Header Panel */}
-      <div
-        className="teal-card mx-auto mb-4 p-3 p-md-4 d-flex justify-content-between align-items-center"
-        style={{
-          maxWidth: "1200px",
-          borderTop: "6px solid #14b8a6",
-          background: "white",
-          borderRadius: "20px",
-          boxShadow: "0 4px 20px rgba(13, 148, 136, 0.08)",
-        }}
-      >
+      <div className="teal-card mx-auto mb-4 p-3 p-md-4 d-flex justify-content-between align-items-center" style={{ maxWidth: '1200px', borderTop: '6px solid #14b8a6', background: 'white', borderRadius: '20px', boxShadow: '0 4px 20px rgba(13, 148, 136, 0.08)' }}>
         <div>
-          <h3
-            className="fw-bold mb-1 fs-5 fs-md-3"
-            style={{ color: "#115e59" }}
-          >
-            COMPRESSOR MAINTENANCE
-          </h3>
-          <span
-            className="badge rounded-pill"
-            style={{
-              backgroundColor: "#ccfbf1",
-              color: "#0f766e",
-              padding: "8px 15px",
-            }}
-          >
-            Form: AOT-F-PM-01 | Weekly
-          </span>
+          <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#115e59' }}>COMPRESSOR MAINTENANCE</h3>
+          <span className="badge rounded-pill" style={{ backgroundColor: '#ccfbf1', color: '#0f766e', padding: '8px 15px' }}>Form: AOT-F-PM-01 | Weekly</span>
         </div>
       </div>
 
       <div
         className="white-card mx-auto animate-fade-in"
-        style={{
-          maxWidth: "1200px",
-          background: "white",
-          borderRadius: "20px",
-          boxShadow: "0 4px 20px rgba(13, 148, 136, 0.08)",
-        }}
+        style={{ maxWidth: "1200px", background: 'white', borderRadius: '20px', boxShadow: '0 4px 20px rgba(13, 148, 136, 0.08)' }}
       >
         <div
           className="p-3 p-md-4"
@@ -374,6 +401,37 @@ const CompressorMaintenanceForm = () => {
             Complete maintenance checklist and tracking system
           </p>
         </div>
+
+         {isViewMode && (
+          <div className="px-3 px-md-4 pt-3">
+            <span className="badge px-3 py-2 d-inline-block text-primary" style={{ backgroundColor: '#eff6ff', border: '1px solid #93c5fd', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Review Mode
+            </span>
+          </div>
+        )}
+
+        {isViewMode && approvalStatus && (
+          <div className="px-3 px-md-4 pt-3">
+            <div className="d-flex flex-column flex-sm-row justify-content-between gap-2 p-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+              <div>
+                <div className="form-label mb-0">Current Status</div>
+                <div className="fw-bold" style={{
+                  color: approvalStatus.toLowerCase().includes('approved') ? '#16a34a'
+                    : approvalStatus.toLowerCase().includes('rejected') ? '#dc2626'
+                    : '#d97706'
+                }}>
+                  {approvalStatus}
+                </div>
+              </div>
+              {reviewedAt && (
+                <div>
+                  <div className="form-label mb-0">Reviewed At</div>
+                  <div className="fw-bold text-dark">{reviewedAt}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="card-body p-3 p-md-4">
           <form onSubmit={handleSubmit}>
@@ -465,17 +523,13 @@ const CompressorMaintenanceForm = () => {
             <div
               className="collapse-header d-flex justify-content-between align-items-center mb-3 text-slate-700"
               onClick={() => setIsChecklistOpen(!isChecklistOpen)}
-              style={{ cursor: "pointer" }}
+              style={{ cursor: 'pointer' }}
             >
               <div>
                 <span className="fw-bold">Checklist Items </span>
-                <span className="badge-count bg-secondary text-white px-2 py-1 rounded-circle">
-                  {tableData.length}
-                </span>
+                <span className="badge-count bg-secondary text-white px-2 py-1 rounded-circle">{tableData.length}</span>
                 <small className="text-muted ms-2 d-none d-md-inline-block">
-                  {isChecklistOpen
-                    ? "▼ Click to collapse"
-                    : "▶ Click to expand"}
+                  {isChecklistOpen ? "▼ Click to collapse" : "▶ Click to expand"}
                 </small>
               </div>
               <span style={{ color: "#10b981", fontWeight: "bold" }}>
@@ -489,9 +543,7 @@ const CompressorMaintenanceForm = () => {
                   <table className="table clean-table align-middle mb-0">
                     <thead>
                       <tr>
-                        <th style={{ width: "4%" }} className="text-center">
-                          #
-                        </th>
+                        <th style={{ width: "4%" }} className="text-center">#</th>
                         <th style={{ width: "35%" }}>Check Point</th>
                         <th style={{ width: "20%" }}>Checking Parameter</th>
                         <th style={{ width: "15%" }}>Checking Method</th>
@@ -512,9 +564,7 @@ const CompressorMaintenanceForm = () => {
                             {row.point}
                           </td>
                           <td>
-                            <span className="mobile-label">
-                              Checking Parameter
-                            </span>
+                            <span className="mobile-label">Checking Parameter</span>
                             {row.parameter}
                           </td>
                           <td>
@@ -522,55 +572,39 @@ const CompressorMaintenanceForm = () => {
                             <div className="method-badge">{row.method}</div>
                           </td>
                           <td>
-                            <span className="mobile-label required-field">
-                              Before Maint.
-                            </span>
+                            <span className="mobile-label required-field">Before Maint.</span>
                             <select
                               className="form-select border-1 bg-light shadow-sm w-100"
                               value={row.before}
-                              onChange={(e) =>
-                                handleBeforeChange(row.id, e.target.value)
-                              }
+                              onChange={(e) => handleBeforeChange(row.id, e.target.value)}
                               required
                             >
                               {statusOptions.map((opt, i) => (
-                                <option key={i} value={opt}>
-                                  {opt || "Select..."}
-                                </option>
+                                <option key={i} value={opt}>{opt || "Select..."}</option>
                               ))}
                             </select>
                           </td>
                           <td>
-                            <span className="mobile-label required-field">
-                              After Maint.
-                            </span>
+                            <span className="mobile-label required-field">After Maint.</span>
                             <select
                               className="form-select border-1 bg-light shadow-sm w-100"
                               value={row.after}
-                              onChange={(e) =>
-                                handleAfterChange(row.id, e.target.value)
-                              }
+                              onChange={(e) => handleAfterChange(row.id, e.target.value)}
                               required
                             >
                               {statusOptions.map((opt, i) => (
-                                <option key={i} value={opt}>
-                                  {opt || "Select..."}
-                                </option>
+                                <option key={i} value={opt}>{opt || "Select..."}</option>
                               ))}
                             </select>
                           </td>
                           <td>
-                            <span className="mobile-label">
-                              Remarks / Spares
-                            </span>
+                            <span className="mobile-label">Remarks / Spares</span>
                             <input
                               type="text"
                               className="form-control border-1 bg-light shadow-sm w-100"
                               placeholder="Add remarks..."
                               value={row.remarks}
-                              onChange={(e) =>
-                                handleRemarksChange(row.id, e.target.value)
-                              }
+                              onChange={(e) => handleRemarksChange(row.id, e.target.value)}
                             />
                           </td>
                         </tr>
@@ -583,28 +617,23 @@ const CompressorMaintenanceForm = () => {
 
             <div
               className="d-flex flex-wrap align-items-center justify-content-between p-3 rounded-3 mb-4"
-              style={{
-                backgroundColor: "#f8f9fa",
-                border: "1px dashed #dee2e6",
-              }}
+              style={{ backgroundColor: "#f8f9fa", border: "1px dashed #dee2e6" }}
             >
               <div className="fw-bold" style={{ color: "#495057" }}>
                 Prepared By
-                <input
-                  type="text"
-                  className="form-control mt-1"
+                <input 
+                  type="text" 
+                  className="form-control mt-1" 
                   name="preparedBy"
                   value={metaData.preparedBy}
                   onChange={handleMetaChange}
-                  placeholder="Name"
+                  placeholder="Name" 
                   required
                 />
               </div>
 
               <div className="d-flex align-items-center gap-4">
-                <span className="fw-bold" style={{ color: "#495057" }}>
-                  Legends:
-                </span>
+                <span className="fw-bold" style={{ color: "#495057" }}>Legends:</span>
                 <div className="d-flex align-items-center gap-2">
                   <input type="checkbox" checked readOnly />
                   <span style={{ color: "#495057" }}>Good</span>
@@ -621,18 +650,19 @@ const CompressorMaintenanceForm = () => {
 
               <div className="fw-bold" style={{ color: "#495057" }}>
                 Checked By
-                <input
-                  type="text"
-                  className="form-control mt-1"
+                 <input 
+                  type="text" 
+                  className="form-control mt-1" 
                   name="checkedBy"
                   value={metaData.checkedBy}
                   onChange={handleMetaChange}
-                  placeholder="Name"
+                  placeholder="Name" 
                 />
               </div>
             </div>
 
             {/* --- ACTION BUTTONS --- */}
+            {!isViewMode && (
             <div className="d-flex flex-column flex-sm-row justify-content-end gap-3 mt-4 pt-3 no-print border-top">
               <button
                 type="button"
@@ -647,11 +677,51 @@ const CompressorMaintenanceForm = () => {
                 disabled={isSubmitting}
                 className="btn btn-primary-custom rounded-pill px-5 shadow-sm w-100 w-sm-auto"
               >
-                <i className="bi bi-floppy me-2"></i>{" "}
-                {isSubmitting ? "Submitting..." : "Save Record"}
+                <i className="bi bi-floppy me-2"></i> {isSubmitting ? 'Submitting...' : 'Save Record'}
               </button>
             </div>
+            )}
           </form>
+            {isViewMode && (
+            <div className="mt-4 pt-4 no-print" style={{ borderTop: '2px solid #1e293b' }}>
+              <label className="form-label">APPROVAL / REJECTION REMARK:</label>
+              <textarea
+                rows="3"
+                className="form-control"
+                value={approvalRemark}
+                onChange={(e) => setApprovalRemark(e.target.value)}
+                disabled={isAlreadyReviewed}
+                placeholder="Enter approval or rejection remark..."
+              />
+
+              {isAlreadyReviewed ? (
+                <div className="mt-3 p-3" style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+                  This report is already reviewed. No further action is required.
+                </div>
+              ) : (
+                <div className="d-flex flex-column-reverse flex-sm-row gap-3 justify-content-end mt-3">
+                  <button
+                    type="button"
+                    onClick={handleReject}
+                    disabled={approvalLoading}
+                    className="btn rounded-pill px-4 shadow-sm w-100 w-sm-auto text-white"
+                    style={{ background: '#ef4444', fontWeight: 600 }}
+                  >
+                    {approvalLoading ? 'Please wait...' : 'Reject'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApprove}
+                    disabled={approvalLoading}
+                    className="btn rounded-pill px-4 shadow-sm w-100 w-sm-auto text-white"
+                    style={{ background: '#10b981', fontWeight: 600 }}
+                  >
+                    {approvalLoading ? 'Please wait...' : 'Approve'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

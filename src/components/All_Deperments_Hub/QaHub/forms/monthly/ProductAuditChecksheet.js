@@ -1,13 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useNavigate,useParams } from 'react-router-dom';
+import {
+  successAlert,
+  errorAlert,
+  warningAlert,
+  infoAlert,
+  confirmAlert,
+} from "../../../../../utils/alertUtils";
 
 import { getApiUrl } from '../../../../../config/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
 const ProductAuditPlan = () => {
     const navigate = useNavigate();
+    const { id } = useParams();
+    const isViewMode = Boolean(id); // Determine if it's view mode based on the presence of an ID
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [partList, setPartList] = useState([]);
+     // --- APPROVAL / VIEW MODE STATE ---
+        const [approvalRemark, setApprovalRemark] = useState("");
+        const [approvalLoading, setApprovalLoading] = useState(false);
+        const [approvalStatus, setApprovalStatus] = useState("");
+        const [reviewedAt, setReviewedAt] = useState("");
 
     const initialFormHeader = {
         docNo: 'AOT-F-QA-08',
@@ -45,6 +63,63 @@ const ProductAuditPlan = () => {
         fetchParts();
     }, []);
 
+  useEffect(() => {
+    const fetchAuditPlan = async () => {
+      if (!id) return; // Skip if creating a new record
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/get-single-report/product-audit-plan/${id}/`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        // 1. Parse the JSON
+        const result = await response.json();
+        
+        // 2. Safely extract the inner "data" object!
+        const data = result.data || {};
+
+        // 3. Map API response to the Header state
+        setHeaderData({
+          docNo: data.doc_no || 'AOT-F-QA-08',
+          revNo: data.rev_no || '00',
+          date: data.date || '',
+          planYear: data.plan_year || '2025-2026',
+          preparedBy: data.prepared_by || '',
+          approvedBy: data.approved_by || ''
+        });
+
+        // 4. Map the nested rows array
+        if (data.rows && Array.isArray(data.rows)) {
+          const mappedRows = data.rows.map(row => ({
+            partName: row.part_name || '',
+            partNumber: row.part_no || '',
+            model: row.model_name || '',
+            monthStatus: row.month_status || '',
+            statusMark: row.status_mark || ''
+          }));
+          setAuditRows(mappedRows);
+        }
+
+      } catch (err) {
+        console.error("Error fetching form data:", err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAuditPlan();
+  }, [id]);
     const addRow = () => setAuditRows([...auditRows, { ...initialRow }]);
 
     // Updated removeRow to use index
@@ -123,19 +198,67 @@ const ProductAuditPlan = () => {
             });
 
             if (response.ok) {
-                alert("Success! Product Audit Plan Submitted and Form Reset.");
+                successAlert("Success! Product Audit Plan Submitted and Form Reset.");
                 setHeaderData({ ...initialFormHeader, date: new Date().toISOString().split('T')[0] });
                 setAuditRows([{ ...initialRow }]);
             } else {
-                alert('Failed to submit plan.');
+                errorAlert('Failed to submit plan.');
             }
         } catch (error) {
             console.error('Submission Error:', error);
-            alert('An error occurred while saving data.');
+            errorAlert('An error occurred while saving data.');
         } finally {
             setIsSubmitting(false);
         }
     };
+       // --- APPROVE / REJECT HANDLERS ---
+        const handleApprove = async () => {
+            try {
+                setApprovalLoading(true);
+                const currentUser = localStorage.getItem("username") || "Approver";
+                const res = await axios.post(`${API_BASE_URL}/api/approve-report/`, {
+                    log_id: id,
+                    approver_username: currentUser,
+                    remarks: approvalRemark,
+                });
+    
+                successAlert(res.data?.message || "Report approved successfully.");
+                navigate("/qa-hub/monthly");
+            } catch (err) {
+                console.error("Approve error:", err);
+                errorAlert(err.response?.data?.error || "Approval failed.");
+            } finally {
+                setApprovalLoading(false);
+            }
+        };
+    
+        const handleReject = async () => {
+            if (!approvalRemark.trim()) {
+                warningAlert("Please enter a remark before rejecting.");
+                return;
+            }
+    
+            try {
+                setApprovalLoading(true);
+                const currentUser = localStorage.getItem("username") || "Approver";
+                const res = await axios.post(`${API_BASE_URL}/api/reject-report/`, {
+                    log_id: id,
+                    approver_username: currentUser,
+                    remarks: approvalRemark,
+                });
+    
+                successAlert(res.data?.message || "Report rejected successfully.");
+                navigate("/qa-hub/monthly");
+            } catch (err) {
+                console.error("Reject error:", err);
+                errorAlert(err.response?.data?.error || "Reject failed.");
+            } finally {
+                setApprovalLoading(false);
+            }
+        };
+    
+        const isAlreadyReviewed = approvalStatus && (approvalStatus.toLowerCase().includes("approved") || approvalStatus.toLowerCase().includes("rejected"));
+    
 
     return (
         <div className="min-h-screen bg-[#fff1f2] font-sans text-slate-900 pb-12 flex flex-col items-center">
@@ -262,11 +385,44 @@ const ProductAuditPlan = () => {
                             </div>
                         </div>
 
+
                         <div className="flex justify-center md:justify-end pt-4">
                             <button type="submit" disabled={isSubmitting} className={`px-12 py-4 bg-gradient-to-r from-[#ec4899] to-[#be185d] text-white rounded-xl font-black text-[11px] tracking-[0.2em] shadow-xl hover:scale-105 active:scale-[0.95] transition-all ${isSubmitting ? 'opacity-50' : ''}`}>
                                 {isSubmitting ? 'SAVING DATA...' : 'FINALIZE AUDIT PLAN'}
                             </button>
                         </div>
+                          {/* APPROVAL UI BLOCK (Only visible in View Mode) */}
+                    {isViewMode && (
+                        <div className="bg-white rounded shadow-xl overflow-hidden border border-white p-6 md:p-8 mt-6">
+                            <h3 className="font-black text-slate-800 uppercase text-sm tracking-widest mb-4 border-b pb-2">Approval / Rejection Action</h3>
+                            
+                            <label className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Remark</label>
+                            <textarea
+                                rows="3"
+                                className="w-full px-4 py-3 mt-2 bg-slate-50 border border-slate-200 rounded focus:border-blue-400 outline-none transition-all text-sm font-medium resize-none disabled:bg-slate-100"
+                                value={approvalRemark}
+                                onChange={(e) => setApprovalRemark(e.target.value)}
+                                disabled={isAlreadyReviewed}
+                                placeholder="Enter approval or rejection remark..."
+                            />
+
+                            {isAlreadyReviewed ? (
+                                <div className="mt-4 p-4 bg-slate-100 border border-slate-200 rounded font-medium text-slate-600 text-sm flex justify-between items-center">
+                                    <span>This report was <b>{approvalStatus}</b>.</span>
+                                    {reviewedAt && <span className="text-xs text-slate-400">{reviewedAt}</span>}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col sm:flex-row gap-4 justify-end mt-4">
+                                    <button type="button" onClick={handleReject} disabled={approvalLoading} className="px-8 py-3 bg-red-500 text-white rounded font-black uppercase text-xs tracking-widest hover:bg-red-600 transition disabled:opacity-50">
+                                        {approvalLoading ? 'Wait...' : 'Reject'}
+                                    </button>
+                                    <button type="button" onClick={handleApprove} disabled={approvalLoading} className="px-8 py-3 bg-green-500 text-white rounded font-black uppercase text-xs tracking-widest hover:bg-green-600 transition disabled:opacity-50">
+                                        {approvalLoading ? 'Wait...' : 'Approve'}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     </form>
                 </motion.div>
             </div>

@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useParams } from 'react-router-dom';
+
 import { getApiUrl } from '../../../../../config/api'; 
 import axios from "axios";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+
+
 
 const LayoutInspectionReport = () => {
     const navigate = useNavigate();
+    const { id } = useParams();
+    const isViewMode = Boolean(id); // Determine if we are in view mode based on the presence of an ID
 
     const emptyInspection = {
         parameters: '',
@@ -34,23 +40,92 @@ const LayoutInspectionReport = () => {
     const [formData, setFormData] = useState(initialFormState);
     const [partList, setPartList] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+       // --- APPROVAL / VIEW MODE STATE ---
+        const [approvalRemark, setApprovalRemark] = useState("");
+        const [approvalLoading, setApprovalLoading] = useState(false);
+        const [approvalStatus, setApprovalStatus] = useState("");
+        const [reviewedAt, setReviewedAt] = useState("");
+        const username = localStorage.getItem("username") || "Unknown User";
 
-    useEffect(() => {
-        const today = new Date().toISOString().split('T')[0];
-        setFormData(prev => ({ ...prev, date: today }));
+     useEffect(() => {
+           if (!isViewMode) {
+               const today = new Date().toISOString().split('T')[0];
+               setFormData(prev => ({ ...prev, date: today }));
+           }
+   
+           const fetchParts = async () => {
+               try {
+                   const res = await fetch(getApiUrl('/api/master-dropdown/?filter=all_parts'));
+                   if (!res.ok) throw new Error("Network response was not ok");
+                   
+                   const data = await res.json();
+                   const uniqueParts = [...new Set(data.map(item => Array.isArray(item) ? item[0] : item))].filter(Boolean);
+                   setPartList(uniqueParts);
+               } catch (error) {
+                   console.error("Failed to fetch parts:", error);
+               }
+           };
+           fetchParts();
+       }, [isViewMode]);
 
-        const fetchParts = async () => {
+useEffect(() => {
+        if (!id) return;
+
+        const fetchReport = async () => {
             try {
-                const res = await fetch(getApiUrl(`/api/master-dropdown/?filter=all_parts`));
-                const data = await res.json();
-                const uniqueParts = [...new Set(data.map(item => Array.isArray(item) ? item[0] : item))].filter(Boolean);
-                setPartList(uniqueParts);
-            } catch (error) {
-                console.error("Failed to fetch parts:", error);
+                // IMPORTANT: Change this URL to match your actual backend GET route
+                const res = await axios.get(`${API_BASE_URL}/api/get-single-report/layout-inspection-view/${id}/`);
+                
+                if (res.data.success) {
+                    const data = res.data.data || {};
+                     const parts = data.part_name_no.split(" - ");
+                       const extractedName = parts[0].trim();
+                        const extractedNo = parts[1] ? parts[1].trim() : "";
+                    // Map the snake_case backend response to your camelCase state
+                    setFormData({
+                        partName: extractedName,
+                        partNo: extractedNo,
+                        model: data.model_name || '',
+                        customer: data.customer_name || '',
+                        date: data.inspection_date || '',
+                        sampleSize: data.sample_size || '',
+                        preparedBy: data.prepared_by || '',
+                        verifiedBy: data.verified_by || '',
+                        username:username || '',
+                        
+                        // Map the inspections array safely
+                        inspections: data.inspections && data.inspections.length > 0 
+                            ? data.inspections.map(item => ({
+                                parameters: item.parameters || '',
+                                specNominal: item.spec_nominal || '',
+                                tolerance: item.tolerance || '',
+                                inspectionMethod: item.inspection_method || '',
+                                sample1: item.sample_1 || '',
+                                sample2: item.sample_2 || '',
+                                sample3: item.sample_3 || '',
+                                sample4: item.sample_4 || '',
+                                sample5: item.sample_5 || '',
+                                remarks: item.remarks || ''
+                            }))
+                            : [emptyInspection] // Fallback if array is missing
+                    });
+
+                    // (Optional) If you are using your standard approval states:
+                    // setApprovalStatus(data.approval_status || "");
+                    // setApprovalRemark(data.approval_remarks || "");
+                    
+                } else {
+                    alert(res.data.error || "Failed to load the Inspection Report.");
+                }
+            } catch (err) {
+                console.error("Error loading Report:", err);
+                alert(err.response?.data?.error || "Failed to load the Inspection Report.");
             }
         };
-        fetchParts();
-    }, []);
+
+        fetchReport();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
 
     const handleChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
@@ -97,39 +172,77 @@ const LayoutInspectionReport = () => {
     };
 
     const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            const response = await fetch(getApiUrl(`/api/layout-inspection/`), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
 
-  const currentUser = localStorage.getItem("username") || "Unknown User";
+            if (response.ok) {
+                 
+                alert('Layout Inspection Report Submitted Successfully!');
+                const today = new Date().toISOString().split('T')[0];
+                setFormData({ ...initialFormState, date: today });
+            } else {
+                alert('Failed to submit. Please check network or backend logs.');
+            }
+        } catch (error) {
+            console.error('Submission Error:', error);
+            alert('An error occurred while sending data to the server.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-  const payload = {
-    ...formData,
-    username: currentUser,
-    department_name: "QA",
-  };
+      const handleApprove = async () => {
+        try {
+            setApprovalLoading(true);
+            const currentUser = localStorage.getItem("username") || "Approver";
+            const res = await axios.post(`${API_BASE_URL}/api/approve-report/`, {
+                log_id: id,
+                approver_username: currentUser,
+                remarks: approvalRemark,
+            });
 
-  try {
-    const response = await fetch(getApiUrl(`/api/layout-inspection/`), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+            alert(res.data?.message || "Report approved successfully.");
+            navigate("/qa-hub/monthly");
+        } catch (err) {
+            console.error("Approve error:", err);
+            alert(err.response?.data?.error || "Approval failed.");
+        } finally {
+            setApprovalLoading(false);
+        }
+    };
 
-    if (response.ok) {
-      alert("Layout Inspection Report Submitted Successfully!");
-      const today = new Date().toISOString().split("T")[0];
-      setFormData({ ...initialFormState, date: today });
-    } else {
-      const errorData = await response.json();
-      alert("Failed to submit: " + JSON.stringify(errorData));
-    }
-  } catch (error) {
-    console.error("Submission Error:", error);
-    alert("An error occurred while sending data to the server.");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    const handleReject = async () => {
+        if (!approvalRemark.trim()) {
+            alert("Please enter a remark before rejecting.");
+            return;
+        }
+
+        try {
+            setApprovalLoading(true);
+            const currentUser = localStorage.getItem("username") || "Approver";
+            const res = await axios.post(`${API_BASE_URL}/api/reject-report/`, {
+                log_id: id,
+                approver_username: currentUser,
+                remarks: approvalRemark,
+            });
+
+            alert(res.data?.message || "Report rejected successfully.");
+            navigate("/qa-hub/monthly");
+        } catch (err) {
+            console.error("Reject error:", err);
+            alert(err.response?.data?.error || "Reject failed.");
+        } finally {
+            setApprovalLoading(false);
+        }
+    };
+
+    const isAlreadyReviewed = approvalStatus && (approvalStatus.toLowerCase().includes("approved") || approvalStatus.toLowerCase().includes("rejected"));
 
     return (
         <div className="min-h-screen bg-[#fcfcfc] text-slate-700 font-sans pb-24 md:pb-12">
@@ -144,6 +257,39 @@ const LayoutInspectionReport = () => {
                     </div>
                 </div>
             </div>
+
+                
+          {isViewMode && (
+          <div className="px-3 px-md-4 pt-3">
+            <span className="badge px-3 py-2 d-inline-block text-primary" style={{ backgroundColor: '#eff6ff', border: '1px solid #93c5fd', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Review Mode
+            </span>
+          </div>
+        )}
+
+        {isViewMode && approvalStatus && (
+          <div className="px-3 px-md-4 pt-3">
+            <div className="d-flex flex-column flex-sm-row justify-content-between gap-2 p-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+              <div>
+                <div className="form-label mb-0">Current Status</div>
+                <div className="fw-bold" style={{
+                  color: approvalStatus.toLowerCase().includes('approved') ? '#16a34a'
+                    : approvalStatus.toLowerCase().includes('rejected') ? '#dc2626'
+                    : '#d97706'
+                }}>
+                  {approvalStatus}
+                </div>
+              </div>
+              {reviewedAt && (
+                <div>
+                  <div className="form-label mb-0">Reviewed At</div>
+                  <div className="fw-bold text-dark">{reviewedAt}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
 
             <div className="max-w-6xl mx-auto px-4 md:px-6 -mt-16 md:-mt-20">
                 <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
@@ -269,7 +415,7 @@ const LayoutInspectionReport = () => {
                             </div>
                         </div>
                     </div>
-
+                    {!isViewMode && (
                     <div className="bg-white/90 backdrop-blur-md fixed md:sticky bottom-0 md:bottom-6 left-0 right-0 md:rounded-3xl border-t md:border border-white shadow-2xl p-4 flex flex-row gap-3 justify-between items-center z-30">
                         <button type="button" onClick={() => navigate('/qa-hub/monthly')} className="flex items-center gap-2 px-4 md:px-6 py-2 text-slate-400 font-bold hover:text-red-500 transition-all text-sm">
                             <i className="bi bi-x-circle text-lg"></i> <span className="hidden sm:inline">Exit</span>
@@ -284,8 +430,50 @@ const LayoutInspectionReport = () => {
                             </button>
                         </div>
                     </div>
+                    )}
                 </form>
+                {isViewMode && (
+            <div className="mt-4 pt-4 no-print" style={{ borderTop: '2px solid #1e293b' }}>
+              <label className="form-label">APPROVAL / REJECTION REMARK:</label>
+              <textarea
+                rows="3"
+                className="form-control"
+                value={approvalRemark}
+                onChange={(e) => setApprovalRemark(e.target.value)}
+                disabled={isAlreadyReviewed}
+                placeholder="Enter approval or rejection remark..."
+              />
+
+              {isAlreadyReviewed ? (
+                <div className="mt-3 p-3" style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+                  This report is already reviewed. No further action is required.
+                </div>
+              ) : (
+                <div className="d-flex flex-column-reverse flex-sm-row gap-3 justify-content-end mt-3">
+                  <button
+                    type="button"
+                    onClick={handleReject}
+                    disabled={approvalLoading}
+                    className="btn rounded-pill px-4 shadow-sm w-100 w-sm-auto text-white"
+                    style={{ background: '#ef4444', fontWeight: 600 }}
+                  >
+                    {approvalLoading ? 'Please wait...' : 'Reject'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApprove}
+                    disabled={approvalLoading}
+                    className="btn rounded-pill px-4 shadow-sm w-100 w-sm-auto text-white"
+                    style={{ background: '#10b981', fontWeight: 600 }}
+                  >
+                    {approvalLoading ? 'Please wait...' : 'Approve'}
+                  </button>
+                </div>
+              )}
             </div>
+          )}
+            </div>
+            
         </div>
     );
 };

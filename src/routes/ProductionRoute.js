@@ -14,6 +14,7 @@ import TipChangeMonitorForm from '../components/All_Deperments_Hub/ProductionHub
 import FourMChangeDisplay from '../components/All_Deperments_Hub/ProductionHub/forms/daily/FourMChangeDisplay';
 import FourMSummarySheet from '../components/All_Deperments_Hub/ProductionHub/forms/daily/FourMSummarySheet';
 import FourMInformatinSheet from '../components/All_Deperments_Hub/ProductionHub/forms/daily/FourMInformatinSheet';
+import ForMChangeInfoPrint from '../components/All_Deperments_Hub/ProductionHub/Views/daily/ForMChangeInfoPrint';
 // --- DAILY VIEWS (PRINTS) ---
 import DailyProdprint from '../components/All_Deperments_Hub/ProductionHub/Views/daily/DailyProdprint';
 import BinTrollingprint from '../components/All_Deperments_Hub/ProductionHub/Views/daily/BinTrollingprint';
@@ -24,6 +25,10 @@ import TipChangeMonitorprint from '../components/All_Deperments_Hub/ProductionHu
 
 //--- Monthly Form ---
 import MonthlyProdPlanForm from '../components/All_Deperments_Hub/ProductionHub/forms/monthly/MonthlyProdPlanForm';
+import MonthlyProdPlanPrint from '../components/All_Deperments_Hub/ProductionHub/Views/Monthly/MonthlyProdPlanPrint'
+ import MonthlyProcessValidationPrint from  '../components/All_Deperments_Hub/ProductionHub/Views/Monthly/MonthlyProcessValidationPrint'
+ import PreventiveMaintenancePrint from '../components/All_Deperments_Hub/ProductionHub/Views/Monthly/PreventiveMaintenancePrint'
+ import OperatorObservancePlanPrint from '../components/All_Deperments_Hub/ProductionHub/Views/Monthly/OperatorObservancePlanPrint'
 import ProcessValidationForm from '../components/All_Deperments_Hub/ProductionHub/forms/monthly/ProcessValidationForm';
 import WelderQualificationForm from '../components/All_Deperments_Hub/ProductionHub/forms/monthly/WelderQualTigMigForm';
 import ProjectionWelderForm from '../components/All_Deperments_Hub/ProductionHub/forms/monthly/ProjectionWelderForm';
@@ -67,15 +72,22 @@ const ProductionRoutes = () => {
       <Route path="daily/4M-Change-Display-Board" element={<FourMChangeDisplay />} />
       <Route path="daily/4M-Summary-Sheet" element={<FourMSummarySheet />} />
       <Route path="daily/4m-Information-Sheet" element={<FourMInformatinSheet/>} />
+       <Route path="daily/Information-Sheet-Report" element={<ForMChangeInfoPrint/>} />
       
       {/* --- MONTHLY ROUTES --- */}
       <Route path="monthly/Monthly-Prod-Plan-Form" element={<MonthlyProdPlanForm />} />
+     <Route path="monthly/Monthly-Prod-Plan-Report" element={<MonthlyProdPlanPrint />} />
+     
       <Route path="monthly/Process-Validation-Form" element={<ProcessValidationForm />} />
+      <Route path="monthly/Process-Validation-Report" element={<MonthlyProcessValidationPrint />} />
+      
       <Route path="monthly/Welder-Qual-TIG-MIG-Form" element={<WelderQualificationForm />} />
       <Route path="monthly/Welder-Qual-Proj-Form" element={<ProjectionWelderForm />} />
       <Route path="monthly/Welder-Qual-Spot-Form" element={<SpotWelderForm />} />
       <Route path="monthly/PM-Checklist-MHE-Form" element={<PreventiveMaintChecklist />} />
+       <Route path="monthly/PM-Report" element={<PreventiveMaintenancePrint />} />
       <Route path="monthly/Operator-Observance-Plan" element={<OperatorObservancePlan />} />
+      <Route path="monthly/Operator-Observance-Report" element={<OperatorObservancePlanPrint />} />
       <Route path="monthly/Operator-Observance-Check-Form" element={<OperatorObservanceChecklistForm />} />
 
       {/* --- YEARLY ROUTES --- */}

@@ -25,6 +25,7 @@
     "framer-motion": "^12.23.24",
     "grapesjs": "^0.22.14",
     "handsontable": "^16.2.0",
+    "html-to-image": "^1.11.13",
     "jquery": "^3.7.1",
     "lucide-react": "^0.555.0",
     "motion": "^12.23.24",

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 
 const atomone = '/logo1.jpg';
 
-// Mahino ka array bahar nikal liya hai taki dono jagah use ho sake
 const MONTH_NAMES = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
 
 const S5_DATA = [
@@ -32,7 +31,7 @@ const S5_DATA = [
 ];
 
 const getDaysInMonth = (monthName, year) => {
-  if (!monthName || !year) return 31; // Agar blank hai toh default 31 days banenge
+  if (!monthName || !year) return 31; 
   const mIndex = MONTH_NAMES.indexOf(monthName.toUpperCase());
   if (mIndex === -1) return 31;
   return new Date(year, mIndex + 1, 0).getDate();
@@ -42,22 +41,17 @@ const Operator5sprint = ({ area = "P.Shop & Parking area" }) => {
   const navigate = useNavigate();
   const filterRef = useRef(null);
 
-  // Current date setup taki filter menu mein aaj ka month/year default dikhe
   const currentDate = new Date();
   const currentMonthName = MONTH_NAMES[currentDate.getMonth()];
   const currentYearStr = currentDate.getFullYear().toString();
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  
-  // Filter Dropdown ki initial values
   const [filterMonth, setFilterMonth] = useState(currentMonthName);
   const [filterYear, setFilterYear] = useState(currentYearStr);
   
-  // ✅ Table ki actual values (Initially Blank/Khali set ki gayi hain)
   const [appliedMonth, setAppliedMonth] = useState("");
   const [appliedYear, setAppliedYear] = useState("");
 
-  // ✅ Agar applied values khali hain, toh table by default 31 days ki banegi
   const daysCount = (appliedMonth && appliedYear) ? getDaysInMonth(appliedMonth, parseInt(appliedYear)) : 31;
   const daysArray = Array.from({ length: daysCount }, (_, i) => i + 1);
 
@@ -77,20 +71,21 @@ const Operator5sprint = ({ area = "P.Shop & Parking area" }) => {
     setIsFilterOpen(false);
   };
 
-  const TH = 'border border-black font-bold text-center align-middle bg-[#f5f5f5] text-black px-1 py-1 text-[10px] uppercase';
-  const TD = 'border border-black text-center align-middle bg-white px-1 py-1 text-black text-[10px] uppercase';
-  const InfoLabel = 'border border-black font-bold bg-[#f5f5f5] text-[10px] px-2 py-1 text-left uppercase';
-  const InfoValue = 'border border-black font-semibold bg-white text-[10px] px-2 py-1 text-center uppercase';
+  const TH = 'border border-black font-bold text-center align-middle bg-[#f5f5f5] text-black px-0.5 py-0.5 text-[9px] print:text-[7.5px] uppercase leading-tight break-words';
+  const TD = 'border border-black text-center align-middle bg-white px-0.5 py-0.5 text-black text-[9px] print:text-[7.5px] uppercase leading-tight break-words';
+  const InfoLabel = 'border border-black font-bold bg-[#f5f5f5] text-[9px] print:text-[7.5px] px-1 py-0.5 text-left uppercase break-words';
+  const InfoValue = 'border border-black font-semibold bg-white text-[9px] print:text-[7.5px] px-1 py-0.5 text-center uppercase break-words';
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] p-4 text-black overflow-auto">
+    <div className="min-h-screen bg-[#e0e0e0] p-4 text-black flex flex-col items-center print:min-h-0 print:p-0 print:bg-white print:block">
 
-      {/* Action Buttons & Filter UI */}
-      <div className="flex justify-end gap-3 mb-4 print:hidden">
-        <button onClick={() => navigate("/production-hub")} className="bg-[#607d8b] text-white px-4 py-2 rounded font-bold text-sm">Back</button>
+      <div className="flex justify-end gap-3 mb-4 print:hidden w-full max-w-[297mm]">
+        <button onClick={() => navigate("/production-hub")} className="bg-[#607d8b] hover:bg-[#4d646f] text-white px-4 py-2 rounded font-bold text-sm transition-colors">
+          <i className="bi bi-arrow-left-circle-fill"></i> Back
+        </button>
 
         <div className="relative" ref={filterRef}>
-          <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="bg-[#3b5998] text-white px-4 py-2 rounded font-bold text-sm">
+          <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="bg-[#3b5998] hover:bg-[#2d4373] text-white px-4 py-2 rounded font-bold text-sm transition-colors">
             <i className="bi bi-funnel-fill"></i> Filter Month/Year
           </button>
 
@@ -112,62 +107,90 @@ const Operator5sprint = ({ area = "P.Shop & Parking area" }) => {
                   ))}
                 </select>
               </div>
-              <button onClick={handleApplyFilter} className="w-full bg-[#4285F4] text-white py-2 rounded text-sm font-bold">Apply Changes</button>
+              <button onClick={handleApplyFilter} className="w-full bg-[#4285F4] text-white py-2 rounded text-sm font-bold hover:bg-[#3367d6] transition-colors">
+                Apply Changes
+              </button>
             </div>
           )}
         </div>
 
-        <button onClick={() => window.print()} className="bg-[#4CAF50] text-white px-4 py-2 rounded font-bold text-sm">Print</button>
+        <button onClick={() => window.print()} className="bg-[#4CAF50] hover:bg-[#43a047] text-white px-4 py-2 rounded font-bold text-sm transition-colors">
+          <i className="bi bi-printer-fill"></i> Print
+        </button>
       </div>
 
       <style>{`
         @media print {
-          @page { size: A3 landscape; margin: 5mm; }
-          body { -webkit-print-color-adjust: exact !important; }
+          @page { 
+            size: auto; 
+            margin: 5mm; 
+          }
+          body { 
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important;
+            background-color: white;
+            margin: 0;
+            padding: 0;
+          }
+          
+          /* Apply the full-page stretch to BOTH Landscape and Portrait */
+          .print-a4-container {
+            height: 97vh !important; /* Stretches the table to fill 97% of the paper height */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            margin: 0 auto !important; 
+            page-break-inside: avoid;
+          }
+
+          /* Ensures the table itself forces its rows to distribute the extra height evenly */
+          table {
+            height: 100% !important;
+          }
         }
       `}</style>
 
-      <div className="bg-white mx-auto shadow-lg w-[420mm] h-[297mm] box-border p-[4mm] print:w-full print:h-[100vh] flex flex-col">
-        <table className="w-full h-full border-collapse table-fixed border border-black">
+      {/* Added 'print-a4-container' class here, and removed conflicting Tailwind print height classes */}
+      <div className="print-a4-container bg-white shadow-lg font-sans mx-auto w-[297mm] h-[210mm] box-border p-[5mm] print:w-full print:max-w-full print:p-[2mm] print:m-0 print:shadow-none flex flex-col justify-between">
+        
+        <table className="w-full h-full border-collapse table-fixed border-2 border-black">
           <colgroup>
             <col className="w-[5%]" />
             <col className="w-[25%]" />
-            {/* ✅ Only daysCount columns */}
             {daysArray.map((_, i) => (
               <col key={i} style={{ width: `${70.0 / daysCount}%` }} />
             ))}
           </colgroup>
 
-          <thead>
-            <tr>
-              <th colSpan={2} rowSpan={3} className="border border-black p-2">
-                <img src={atomone} alt="ATOM ONE" className="max-h-[50px] mx-auto" />
+          <thead className="table-header-group">
+            <tr className="h-[25px] print:h-[20px]">
+              <th colSpan={2} rowSpan={3} className="border border-black p-1 align-middle text-center bg-white">
+                <img src={atomone} alt="ATOM ONE" className="max-h-[30px] print:max-h-[25px] max-w-full block mx-auto object-contain" />
               </th>
-              <th colSpan={daysCount - 8} rowSpan={3} className="border border-black text-center">
-                <h1 className="text-2xl font-bold uppercase">Daily 5S Check Sheet</h1>
+              <th colSpan={daysCount - 8} rowSpan={3} className="border border-black text-center align-middle bg-white">
+                <h1 className="text-xl print:text-base font-bold uppercase tracking-wide m-0 text-black">Daily 5S Check Sheet</h1>
               </th>
               <th colSpan={4} className={InfoLabel}>Doc. No.</th>
               <th colSpan={4} className={InfoValue}>AOT-F-5S-01</th>
             </tr>
-            <tr>
+            <tr className="h-[20px] print:h-[16px]">
               <th colSpan={4} className={InfoLabel}>Rev. No.</th>
               <th colSpan={4} className={InfoValue}>1</th>
             </tr>
-            <tr>
+            <tr className="h-[20px] print:h-[16px]">
               <th colSpan={4} className={InfoLabel}>Date</th>
               <th colSpan={4} className={InfoValue}>01/04/2024</th>
             </tr>
 
-            <tr>
+            <tr className="h-[20px] print:h-[16px]">
               <th className={TH}>Area:</th>
-              <th className="border border-black px-2 text-left text-[10px]">{area}</th>
+              <th className="border border-black px-2 py-0.5 text-left text-[9px] print:text-[7.5px] font-bold uppercase">{area}</th>
               <th colSpan={7} className={TH}>Date ---&gt;</th>
-              {/* ✅ Applied values khali honge toh yahan sirf "Year:" aur "Month:" dikhega */}
               <th colSpan={8} className={TH}>Year: {appliedYear}</th>
               <th colSpan={daysCount - 15} className={TH}>Month: {appliedMonth}</th>
             </tr>
 
-            <tr>
+            <tr className="h-[22px] print:h-[16px]">
               <th colSpan={2} className={TH}>Activity / Days</th>
               {daysArray.map((day) => (
                 <th key={day} className={TH}>{day}</th>
@@ -178,14 +201,13 @@ const Operator5sprint = ({ area = "P.Shop & Parking area" }) => {
           <tbody>
             {S5_DATA.map((section) => (
               section.points.map((point, idx) => (
-                <tr key={`${section.s}-${idx}`}>
+                <tr key={`${section.s}-${idx}`} className="h-[20px] print:h-[5mm]">
                   {idx === 0 && (
-                    <td rowSpan={section.points.length} className={`${TD} font-bold bg-gray-50 text-sm`}>
+                    <td rowSpan={section.points.length} className={`${TD} font-extrabold bg-[#f5f5f5] text-[10px] print:text-[8px]`}>
                       {section.s}
                     </td>
                   )}
-                  <td className={`${TD} text-left px-2 font-medium`}>{point}</td>
-                  {/* ✅ Only daysCount cells */}
+                  <td className={`${TD} text-left px-1.5 font-medium leading-[1.2]`}>{point}</td>
                   {daysArray.map((day) => (
                     <td key={day} className={TD}></td>
                   ))}
@@ -193,31 +215,30 @@ const Operator5sprint = ({ area = "P.Shop & Parking area" }) => {
               ))
             ))}
 
-            <tr>
-              <td colSpan={2} className={`${TH} text-left pl-2`}>Day Wise "5S" Maintain Responsibility</td>
+            <tr className="h-[20px] print:h-[5mm]">
+              <td colSpan={2} className={`${TH} text-left pl-2 font-bold`}>Day Wise "5S" Maintain Responsibility</td>
               {daysArray.map((day) => (
                 <td key={day} className={TD}></td>
               ))}
             </tr>
           </tbody>
 
-          <tfoot>
-            <tr>
+          <tfoot className="table-footer-group">
+            <tr className="h-[18px] print:h-[4.5mm]">
               <td className={TH}>Monday</td>
               <td className={TD}></td>
-              {/* ✅ Remarks colspan = daysCount */}
-              <td colSpan={daysCount} rowSpan={7} className="border border-black p-2 align-top text-left font-bold text-sm">
+              <td colSpan={daysCount} rowSpan={7} className="border-t-[2px] border-black p-2 align-top text-left font-bold text-[10px] print:text-[8px] uppercase bg-white">
                 REMARKS -
               </td>
             </tr>
-            <tr><td className={TH}>Tuesday</td><td className={TD}></td></tr>
-            <tr><td className={TH}>Wednesday</td><td className={TD}></td></tr>
-            <tr><td className={TH}>Thursday</td><td className={TD}></td></tr>
-            <tr><td className={TH}>Friday</td><td className={TD}></td></tr>
-            <tr><td className={TH}>Saturday</td><td className={TD}></td></tr>
-            <tr>
-              <td className={TH}>5S Monitoring By:</td>
-              <td className={TD}></td>
+            <tr className="h-[18px] print:h-[4.5mm]"><td className={TH}>Tuesday</td><td className={TD}></td></tr>
+            <tr className="h-[18px] print:h-[4.5mm]"><td className={TH}>Wednesday</td><td className={TD}></td></tr>
+            <tr className="h-[18px] print:h-[4.5mm]"><td className={TH}>Thursday</td><td className={TD}></td></tr>
+            <tr className="h-[18px] print:h-[4.5mm]"><td className={TH}>Friday</td><td className={TD}></td></tr>
+            <tr className="h-[18px] print:h-[4.5mm]"><td className={TH}>Saturday</td><td className={TD}></td></tr>
+            <tr className="h-[22px] print:h-[5.5mm]">
+              <td className={`${TH} bg-white border-b-2 border-l-2`}>5S Monitoring By:</td>
+              <td className={`${TD} border-b-2`}></td>
             </tr>
           </tfoot>
         </table>

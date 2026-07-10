@@ -1,6 +1,6 @@
 // ============================================================
 //  ForMChangeRecordPrint.js
-//  4M Change Record Sheet — Multi-Page Ready (A3 Landscape)
+//  4M Change Record Sheet — Multi-Page Ready (A3/A4 Adaptive)
 //  Expanded Upper Table | Empty Outline Circles | Compressed Lower Table
 // ============================================================
 
@@ -51,8 +51,9 @@ const ForMChangeRecordPrint = ({
   const displayMonthYear = `${monthNames[month - 1]} ${year}`;
 
   // ── Common Tailwind Classes ──
-  const TH = 'border border-black font-bold text-center align-middle bg-white text-black px-1 py-1 text-[10px] leading-tight';
-  const TDLOWER = 'border border-black text-center align-middle bg-white px-0 py-0 text-black text-[10px] h-[18px] print:h-[5.5mm]'; // Added default height directly to TD
+  const TH = 'border border-black font-bold text-center align-middle bg-white text-black px-1 py-1 text-[10px] leading-tight break-words';
+  // Removed print:h-[5.5mm] so the browser can stretch the rows dynamically
+  const TDLOWER = 'border border-black text-center align-middle bg-white px-0 py-0 text-black text-[10px] h-[18px] break-words'; 
   const V_TEXT = '[writing-mode:vertical-rl] transform rotate-180 text-center mx-auto whitespace-nowrap py-0.5';
 
   // Helper to render the colored/empty circle inside a cell
@@ -63,14 +64,14 @@ const ForMChangeRecordPrint = ({
     return (
       <td key={`${category}-${day}`} className="border border-black text-center align-middle p-0">
         <div className="w-full h-full flex items-center justify-center">
-          <div className={`w-[28px] h-[28px] print:w-[32px] print:h-[32px] rounded-full border-[2px] ${circleColorClass}`}></div>
+          <div className={`w-[28px] h-[28px] print:w-[24px] print:h-[24px] rounded-full border-[2px] ${circleColorClass}`}></div>
         </div>
       </td>
     );
   };
 
   // Logic to ensure table structure remains by padding with empty rows
-  const MIN_ROWS = 6; // Hamesha kam se kam 6 rows dikhengi
+  const MIN_ROWS = 6; 
   const tableDataToRender = [...(detailData || [])];
   
   while (tableDataToRender.length < MIN_ROWS) {
@@ -82,7 +83,7 @@ const ForMChangeRecordPrint = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] p-4 text-black flex flex-col items-center">
+    <div className="min-h-screen bg-[#e0e0e0] p-4 text-black flex flex-col items-center print:min-h-0 print:p-0 print:bg-white print:block">
       
       {/* ── Top Bar (Buttons) ── */}
       <div className="flex justify-end items-center gap-3 mb-3 print:hidden w-full max-w-[420mm]">
@@ -101,13 +102,37 @@ const ForMChangeRecordPrint = ({
 
       <style>{`
         @media print {
-          @page { size: A3 landscape; margin: 5mm; }
-          body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: white; }
+          @page { 
+            size: auto; 
+            margin: 5mm; 
+          }
+          body { 
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important; 
+            background-color: white; 
+            margin: 0;
+            padding: 0;
+          }
+
+          /* Apply the full-page stretch */
+          .print-a3-container {
+            height: 97vh !important; 
+            display: flex;
+            flex-direction: column;
+            margin: 0 auto !important; 
+            page-break-inside: avoid;
+          }
+
+          /* Forces the lower table to stretch and fill all remaining vertical space */
+          .stretch-table {
+            height: 100% !important;
+          }
         }
       `}</style>
 
-      {/* ── Main A3 Print Container ── */}
-      <div className="bg-white font-sans w-[420mm] h-[297mm] box-border p-[4mm] print:w-full print:h-[100vh] print:p-0 print:m-0 print:shadow-none flex flex-col">
+      {/* ── Main Print Container ── */}
+      {/* Replaced hardcoded print:h-[100vh] with the fluid print-a3-container */}
+      <div className="print-a3-container bg-white font-sans w-[420mm] h-[297mm] box-border p-[4mm] print:w-full print:max-w-full print:p-[2mm] print:m-0 print:shadow-none flex flex-col">
         
         <div className="border-[2px] border-black flex flex-col h-full">
           
@@ -120,13 +145,13 @@ const ForMChangeRecordPrint = ({
             </colgroup>
             <tbody>
               <tr>
-                <td className="border-b border-r border-black p-2 align-middle text-center h-[50px]">
-                  <img src={atomone} alt="ATOM ONE" className="max-h-[45px] max-w-full block mx-auto object-contain" />
+                <td className="border-b border-r border-black p-2 align-middle text-center h-[50px] print:h-[12mm]">
+                  <img src={atomone} alt="ATOM ONE" className="max-h-[40px] print:max-h-[30px] max-w-full block mx-auto object-contain" />
                 </td>
                 <td className="border-b border-r border-black text-center align-middle">
-                  <h1 className="text-[30px] font-bold tracking-[1px] m-0 text-black">4M Change Record Sheet</h1>
+                  <h1 className="text-[30px] print:text-[22px] font-bold tracking-[1px] m-0 text-black">4M Change Record Sheet</h1>
                 </td>
-                <td className="border-b border-black text-left align-middle text-[12px] font-semibold">
+                <td className="border-b border-black text-left align-middle text-[12px] print:text-[10px] font-semibold">
                   <div className="border-b border-black p-1">Doc No: AOT-F-4M-05</div>
                   <div className="border-b border-black p-1">Rev. No.: 01</div>
                   <div className="p-1">Date: 01.11.22</div>
@@ -146,69 +171,70 @@ const ForMChangeRecordPrint = ({
               <col className="w-[15%]" />
             </colgroup>
             <tbody>
-              <tr className="h-[30px]">
-                <td rowSpan={2} className={`${TH} border-r text-[12px]`}>S.No</td>
-                <td rowSpan={2} className={`${TH} border-r text-[12px]`}>Category of Change</td>
-                <td colSpan={daysInMonth} className={`${TH} border-r text-[16px]`}>Month/Year:- <strong>{displayMonthYear}</strong></td>
-                <td rowSpan={2} className={`${TH} text-[14px]`}>LEGEND</td>
+              <tr className="h-[30px] print:h-[8mm]">
+                <td rowSpan={2} className={`${TH} border-r text-[12px] print:text-[10px]`}>S.No</td>
+                <td rowSpan={2} className={`${TH} border-r text-[12px] print:text-[10px]`}>Category of Change</td>
+                <td colSpan={daysInMonth} className={`${TH} border-r text-[16px] print:text-[12px]`}>Month/Year:- <strong>{displayMonthYear}</strong></td>
+                <td rowSpan={2} className={`${TH} text-[14px] print:text-[12px]`}>LEGEND</td>
               </tr>
-              <tr className="h-[25px]">
+              <tr className="h-[25px] print:h-[6mm]">
                 {daysArray.map(day => (
-                  <td key={`day-head-${day}`} className={`${TH} border-r border-t text-[12px] font-bold`}>{day}</td>
+                  <td key={`day-head-${day}`} className={`${TH} border-r border-t text-[12px] print:text-[9px] font-bold`}>{day}</td>
                 ))}
               </tr>
 
-              <tr className="h-[90px] print:h-[24mm]">
-                <td className={`${TH} font-bold text-[14px]`}>1</td>
-                <td className={`${TH} font-bold text-[14px]`}>MAN</td>
+              <tr className="h-[60px] print:h-[16mm]">
+                <td className={`${TH} font-bold text-[14px] print:text-[11px]`}>1</td>
+                <td className={`${TH} font-bold text-[14px] print:text-[11px]`}>MAN</td>
                 {daysArray.map(day => renderCircleCell('MAN', day))}
-                <td className={`${TH} text-left px-5`}>
-                  <div className="flex items-center justify-between w-[80%] mx-auto">
-                    <span className="font-bold text-[12px]">NO CHANGE</span>
+                <td className={`${TH} text-left px-5 print:px-2`}>
+                  <div className="flex items-center justify-between w-[80%] print:w-[90%] mx-auto">
+                    <span className="font-bold text-[12px] print:text-[10px]">NO CHANGE</span>
                     <div className="w-[24px] h-[24px] rounded-full border-[2px] border-[#00b050] bg-[#00b050]"></div>
                   </div>
                 </td>
               </tr>
 
-              <tr className="h-[90px] print:h-[24mm]">
-                <td className={`${TH} font-bold text-[14px]`}>2</td>
-                <td className={`${TH} font-bold text-[14px]`}>MACHINE</td>
+              <tr className="h-[60px] print:h-[16mm]">
+                <td className={`${TH} font-bold text-[14px] print:text-[11px]`}>2</td>
+                <td className={`${TH} font-bold text-[14px] print:text-[11px]`}>MACHINE</td>
                 {daysArray.map(day => renderCircleCell('MACHINE', day))}
-                <td className={`${TH} text-left px-5`}>
-                  <div className="flex items-center justify-between w-[80%] mx-auto">
-                    <span className="font-bold text-[12px]">CHANGE</span>
+                <td className={`${TH} text-left px-5 print:px-2`}>
+                  <div className="flex items-center justify-between w-[80%] print:w-[90%] mx-auto">
+                    <span className="font-bold text-[12px] print:text-[10px]">CHANGE</span>
                     <div className="w-[24px] h-[24px] rounded-full border-[2px] border-[#ff3333] bg-[#ff3333]"></div>
                   </div>
                 </td>
               </tr>
 
-              <tr className="h-[90px] print:h-[24mm]">
-                <td className={`${TH} font-bold text-[14px]`}>3</td>
-                <td className={`${TH} font-bold text-[14px]`}>MATERIAL</td>
+              <tr className="h-[60px] print:h-[16mm]">
+                <td className={`${TH} font-bold text-[14px] print:text-[11px]`}>3</td>
+                <td className={`${TH} font-bold text-[14px] print:text-[11px]`}>MATERIAL</td>
                 {daysArray.map(day => renderCircleCell('MATERIAL', day))}
-                <td className={`${TH} text-left px-5`}>
-                  <div className="flex items-center justify-between w-[80%] mx-auto">
-                    <span className="font-bold text-[12px]">NO PLAN</span>
+                <td className={`${TH} text-left px-5 print:px-2`}>
+                  <div className="flex items-center justify-between w-[80%] print:w-[90%] mx-auto">
+                    <span className="font-bold text-[12px] print:text-[10px]">NO PLAN</span>
                     <div className="w-[24px] h-[24px] rounded-full border-[2px] border-black bg-white"></div>
                   </div>
                 </td>
               </tr>
 
-              <tr className="h-[90px] print:h-[24mm]">
-                <td className={`${TH} font-bold text-[14px]`}>4</td>
-                <td className={`${TH} font-bold text-[14px]`}>METHOD</td>
+              <tr className="h-[60px] print:h-[16mm]">
+                <td className={`${TH} font-bold text-[14px] print:text-[11px]`}>4</td>
+                <td className={`${TH} font-bold text-[14px] print:text-[11px]`}>METHOD</td>
                 {daysArray.map(day => renderCircleCell('METHOD', day))}
                 <td className={`${TH}`}></td>
               </tr>
             </tbody>
           </table>
 
-          {/* ================= LOWER TABLE (SMALLER) ================= */}
-          <div className="text-center font-bold text-[12px] py-0.5 border-b-[2px] border-black bg-[#f0f0f0]">
+          {/* ================= LOWER TABLE (SMALLER / STRETCHES) ================= */}
+          <div className="text-center font-bold text-[12px] print:text-[10px] py-0.5 border-b-[2px] border-black bg-[#f0f0f0]">
             4M Change Detail
           </div>
 
-          <table className="w-full border-collapse table-fixed flex-grow">
+          {/* Added stretch-table class here */}
+          <table className="w-full stretch-table border-collapse table-fixed flex-grow">
             <colgroup>
               <col className="w-[6%]" />
               <col className="w-[5%]" />
@@ -252,7 +278,6 @@ const ForMChangeRecordPrint = ({
             </thead>
             
             <tbody>
-              {/* Data dynamically render hoga, aur empty items pad ho jayenge */}
               {tableDataToRender.map((row, i) => (
                 <tr key={i}>
                   <td className={TDLOWER}>{row.date || '\u00A0'}</td>

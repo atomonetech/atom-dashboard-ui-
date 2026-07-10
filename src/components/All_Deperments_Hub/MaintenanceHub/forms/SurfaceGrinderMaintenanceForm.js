@@ -1,7 +1,21 @@
+<<<<<<< Updated upstream
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { getApiUrl } from "../../../../config/api";
+=======
+import React, { useState,useEffect } from 'react';
+import { useNavigate,useParams } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { getApiUrl } from '../../../../config/api';
+import {
+  successAlert,
+  errorAlert,
+  warningAlert,
+  infoAlert,
+  confirmAlert,
+} from "../../../../utils/alertUtils";
+>>>>>>> Stashed changes
 import axios from "axios";
 
 const SurfaceGrinderMaintenanceForm = () => {
@@ -111,8 +125,74 @@ const SurfaceGrinderMaintenanceForm = () => {
   const [tableData, setTableData] = useState(initialChecklist);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+<<<<<<< Updated upstream
   const handleMetaChange = (e) =>
     setMetaData({ ...metaData, [e.target.name]: e.target.value });
+=======
+   // --- APPROVAL / VIEW MODE STATE ---
+        const [approvalRemark, setApprovalRemark] = useState("");
+        const [approvalLoading, setApprovalLoading] = useState(false);
+        const [approvalStatus, setApprovalStatus] = useState("");
+        const [reviewedAt, setReviewedAt] = useState("");
+      
+        // --- FETCH REPORT WHEN OPENED IN VIEW MODE (from notification) ---
+        useEffect(() => {
+          if (!id) return;
+      
+          const fetchReport = async () => {
+            try {
+              const res = await axios.get(
+                `${API_BASE_URL}/api/get-single-maintenance-report/surface-grinder/${id}/`
+              );
+              
+              if (res.data.success) {
+                const data = res.data.data || {};
+                const meta = data.metaData || {};
+      
+                setMetaData({
+                  machineName: meta.machineName || 'Surface Grinder Machine', // Default value if not provided
+                  date: meta.date || '',
+                  machineNo: meta.machineNo || '',
+                  location: meta.location || '',
+                  specification: meta.specification || '',
+                  maintenancePersonnel: meta.maintenancePersonnel || '',
+                  preparedBy: meta.preparedBy || '',
+                  checkedBy: meta.checkedBy || '',
+                });
+      
+                const rows = Array.isArray(data.tableData) ? data.tableData : [];
+                setTableData(
+                  rows.length
+                    ? rows.map((row, index) => ({
+                        id: row.sr_no || index + 1,
+                        point: row.point || '',
+                        parameter: row.parameter || '',
+                        method: row.method || '',
+                        before: row.before || '',
+                        after: row.after || '',
+                        remarks: row.remarks || '',
+                      }))
+                    : initialChecklist
+                );
+      
+                setApprovalRemark(data.approval_remarks || "");
+                setApprovalStatus(data.approval_status || "");
+                setReviewedAt(data.approved_or_rejected_at || "");
+              } else {
+                errorAlert(res.data.error || "Failed to load Surface Grinder Check Sheet.");
+              }
+            } catch (err) {
+              console.error("Error loading Check Sheet:", err);
+              errorAlert(err.response?.data?.error || "Failed to load Surface Grinder Check Sheet.");
+            }
+          };
+      
+          fetchReport();
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [id]);
+
+  const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
+>>>>>>> Stashed changes
   const handleTableChange = (id, field, value) => {
     setTableData(
       tableData.map((row) =>
@@ -124,7 +204,7 @@ const SurfaceGrinderMaintenanceForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!metaData.machineNo || !metaData.location || !metaData.preparedBy) {
-      alert("Please fill required fields.");
+      warningAlert("Please fill required fields.");
       return;
     }
 
@@ -167,8 +247,12 @@ const SurfaceGrinderMaintenanceForm = () => {
       );
 
       if (response.ok) {
+<<<<<<< Updated upstream
         const currentUser = localStorage.getItem("username") || "Unknown User";
         alert("✨ Grinder record saved successfully!");
+=======
+        successAlert("✨ Grinder record saved successfully!");
+>>>>>>> Stashed changes
         setMetaData(initialMetaData);
         setTableData(initialChecklist);
         window.scrollTo({ top: 0, behavior: "smooth" });
