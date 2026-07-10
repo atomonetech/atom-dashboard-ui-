@@ -1,9 +1,3 @@
-<<<<<<< Updated upstream
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
-import { getApiUrl } from "../../../../config/api";
-=======
 import React, { useState,useEffect } from 'react';
 import { useNavigate,useParams } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -15,11 +9,13 @@ import {
   infoAlert,
   confirmAlert,
 } from "../../../../utils/alertUtils";
->>>>>>> Stashed changes
 import axios from "axios";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 const SurfaceGrinderMaintenanceForm = () => {
   const navigate = useNavigate();
+   const { id } = useParams();
+    const isViewMode=Boolean(id);
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
   const statusOptions = ["", "Ok", "Not Ok", "N/A"];
 
@@ -125,10 +121,6 @@ const SurfaceGrinderMaintenanceForm = () => {
   const [tableData, setTableData] = useState(initialChecklist);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-<<<<<<< Updated upstream
-  const handleMetaChange = (e) =>
-    setMetaData({ ...metaData, [e.target.name]: e.target.value });
-=======
    // --- APPROVAL / VIEW MODE STATE ---
         const [approvalRemark, setApprovalRemark] = useState("");
         const [approvalLoading, setApprovalLoading] = useState(false);
@@ -192,7 +184,6 @@ const SurfaceGrinderMaintenanceForm = () => {
         }, [id]);
 
   const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
->>>>>>> Stashed changes
   const handleTableChange = (id, field, value) => {
     setTableData(
       tableData.map((row) =>
@@ -247,12 +238,7 @@ const SurfaceGrinderMaintenanceForm = () => {
       );
 
       if (response.ok) {
-<<<<<<< Updated upstream
-        const currentUser = localStorage.getItem("username") || "Unknown User";
-        alert("✨ Grinder record saved successfully!");
-=======
         successAlert("✨ Grinder record saved successfully!");
->>>>>>> Stashed changes
         setMetaData(initialMetaData);
         setTableData(initialChecklist);
         window.scrollTo({ top: 0, behavior: "smooth" });

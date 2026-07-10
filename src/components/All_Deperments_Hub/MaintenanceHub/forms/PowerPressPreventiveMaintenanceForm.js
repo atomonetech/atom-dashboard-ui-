@@ -1,10 +1,3 @@
-<<<<<<< Updated upstream
-import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
-import { getApiUrl } from "../../../../config/api"; // <--- API Import added
-import axios from "axios";
-=======
 import React, { useState,useEffect } from 'react';
 import { useNavigate, useLocation ,useParams} from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -18,10 +11,11 @@ import {
 } from "../../../../utils/alertUtils";
 import axios from "axios";
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
->>>>>>> Stashed changes
 
 const PowerPressPreventiveMaintenanceForm = () => {
   const navigate = useNavigate();
+   const { id } = useParams();
+    const isViewMode=Boolean(id);
   const location = useLocation();
 
   // --- COLLAPSIBLE STATE FOR CHECKLIST ---
@@ -184,8 +178,6 @@ const PowerPressPreventiveMaintenanceForm = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [preparedBy, setPreparedBy] = useState("");
 
-<<<<<<< Updated upstream
-=======
 
   
     // --- APPROVAL / VIEW MODE STATE ---
@@ -250,7 +242,6 @@ const PowerPressPreventiveMaintenanceForm = () => {
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
->>>>>>> Stashed changes
   // --- HANDLERS ---
   const handleMetaChange = (e) =>
     setMetaData({ ...metaData, [e.target.name]: e.target.value });
@@ -372,8 +363,6 @@ const PowerPressPreventiveMaintenanceForm = () => {
     }
   };
 
-<<<<<<< Updated upstream
-=======
    // --- APPROVE / REJECT HANDLERS (VIEW MODE) ---
     const handleApprove = async () => {
       try {
@@ -434,7 +423,6 @@ const PowerPressPreventiveMaintenanceForm = () => {
     };
 
 
->>>>>>> Stashed changes
   return (
     <div
       className="container-fluid py-3 py-md-4"
