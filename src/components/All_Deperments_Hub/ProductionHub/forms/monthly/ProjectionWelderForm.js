@@ -2,10 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../../../../../config/api';
-import axios from 'axios';
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
+
 
 const ProjectionWelderForm = () => {
     const navigate = useNavigate();
@@ -13,20 +10,20 @@ const ProjectionWelderForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [welderPhoto, setWelderPhoto] = useState(null);
 
-    
+
     const [formData, setFormData] = useState({
-        wpsNo: '', 
-        date: '', 
-        weldingProcess: '', 
-        baseMetal: '', 
-        baseMetalThickness: '', 
-        machineNo: '', 
-        welderName: '', 
-        conductedBy: '', 
+        wpsNo: '',
+        date: '',
+        weldingProcess: '',
+        baseMetal: '',
+        baseMetalThickness: '',
+        machineNo: '',
+        welderName: '',
+        conductedBy: '',
         verifiedBy: ''
     });
 
-    
+
     const [trials, setTrials] = useState([
         { squeeze: '', weld: '', hold: '', off: '', current: '', pressure: '', torque: '', visual: '' }
     ]);
@@ -52,12 +49,12 @@ const ProjectionWelderForm = () => {
         }
     };
 
-    
+
     const addRow = () => {
         setTrials([...trials, { squeeze: '', weld: '', hold: '', off: '', current: '', pressure: '', torque: '', visual: '' }]);
     };
 
-    
+
     const removeRow = (index) => {
         if (trials.length > 1) {
             setTrials(trials.filter((_, i) => i !== index));
@@ -67,9 +64,19 @@ const ProjectionWelderForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        
+
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
         try {
-            const payload = { ...formData, trials, welderPhoto };
+            const payload = {
+                ...formData,
+                trials,
+                welderPhoto,
+
+                username: currentUser,
+                department_name: "Production",
+            };
+
             const response = await fetch(getApiUrl('/api/save-projection-welder/'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -77,21 +84,10 @@ const ProjectionWelderForm = () => {
             });
 
             if (response.ok) {
-                  const currentUser = localStorage.getItem("username") || "Unknown User";
-
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "projection welder Report", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
                 alert("Projection Welder Qualification Saved Successfully!");
-                // Optional: reset form state here
             } else {
-                alert("Failed to save data.");
+                const errorData = await response.json();
+                alert("Failed to save data: " + JSON.stringify(errorData));
             }
         } catch (error) {
             console.error("Error saving data:", error);
@@ -104,13 +100,13 @@ const ProjectionWelderForm = () => {
     return (
         <div className="min-h-screen bg-[#fffafa] font-sans text-slate-900 pb-24 flex flex-col items-center">
             <div className="w-full max-w-6xl px-4 mt-8">
-                
+
                 <div className="flex justify-start mb-6">
-                    <button 
+                    <button
                         onClick={() => navigate(-1)}
                         className="group flex items-center gap-2 px-8 py-4 bg-white border border-red-200 text-slate-800 rounded-none hover:bg-red-50 transition-all shadow-sm font-bold text-sm active:scale-95"
                     >
-                        <i className="bi bi-arrow-left text-[#fa3535]"></i> 
+                        <i className="bi bi-arrow-left text-[#fa3535]"></i>
                         Back to Hub
                     </button>
                 </div>
@@ -126,17 +122,17 @@ const ProjectionWelderForm = () => {
 
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white shadow-2xl border-x border-b border-red-50 overflow-hidden">
                     <form onSubmit={handleSubmit} className="p-6 md:p-12 space-y-10">
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-b border-slate-50 pb-8">
                             <InputField label="REF. WPS NO." name="wpsNo" value={formData.wpsNo} onChange={handleInputChange} />
                             <InputField label="DATE" name="date" value={formData.date} onChange={handleInputChange} type="date" />
                         </div>
 
                         <div className="bg-white p-2">
-                            <InputField 
-                                label="Welding Process" 
+                            <InputField
+                                label="Welding Process"
                                 name="weldingProcess"
-                                value={formData.weldingProcess} 
+                                value={formData.weldingProcess}
                                 onChange={handleInputChange}
                             />
                         </div>
@@ -144,10 +140,10 @@ const ProjectionWelderForm = () => {
                         <div className="space-y-4 bg-red-50/20 p-8 border border-red-100">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <InputField label="1. Base Metal (to be weld)" name="baseMetal" value={formData.baseMetal} onChange={handleInputChange} />
-                                
+
                                 {/* Base Metal Thickness Field Updated */}
                                 <InputField label="2. Base Metal Thickness" name="baseMetalThickness" value={formData.baseMetalThickness} onChange={handleInputChange} />
-                                
+
                                 <InputField label="3. Machine No." name="machineNo" value={formData.machineNo} onChange={handleInputChange} />
                                 <div className="flex flex-col gap-2 justify-end">
                                     <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">4. Test Results</label>
@@ -175,9 +171,9 @@ const ProjectionWelderForm = () => {
                                             <th className="p-2 border-r border-slate-700">Weld Time</th>
                                             <th className="p-2 border-r border-slate-700">Hold Time</th>
                                             <th className="p-2 border-r border-slate-700">Off Time</th>
-                                            <th rowSpan="2" className="p-2 border-r border-slate-700 bg-slate-900">Current<br/>(Amp, KA)</th>
-                                            <th rowSpan="2" className="p-2 border-r border-slate-700 bg-slate-900">Air Pressure<br/>(Bar)</th>
-                                            <th rowSpan="2" className="p-2 border-r border-slate-700">Torque Test<br/>(Kgfm)</th>
+                                            <th rowSpan="2" className="p-2 border-r border-slate-700 bg-slate-900">Current<br />(Amp, KA)</th>
+                                            <th rowSpan="2" className="p-2 border-r border-slate-700 bg-slate-900">Air Pressure<br />(Bar)</th>
+                                            <th rowSpan="2" className="p-2 border-r border-slate-700">Torque Test<br />(Kgfm)</th>
                                             <th rowSpan="2" className="p-2 border-r border-slate-700">Visual Inspection</th>
                                             <th rowSpan="2" className="p-2 w-16">Action</th>
                                         </tr>
@@ -222,8 +218,8 @@ const ProjectionWelderForm = () => {
                                         "Herewith, we certify that, based on above observation, welder is <span className="text-[#fa3535] underline decoration-2 underline-offset-4">Qualified / Not Qualified</span> to carry out Projection Welding Process."
                                     </p>
                                 </div>
-                                
-                                <div 
+
+                                <div
                                     className="w-44 h-52 border-2 border-dashed border-red-200 flex flex-col items-center justify-center bg-white hover:bg-red-50 transition-all cursor-pointer overflow-hidden group shadow-inner"
                                     onClick={() => fileInputRef.current.click()}
                                 >
@@ -241,12 +237,11 @@ const ProjectionWelderForm = () => {
                         </div>
 
                         <div className="flex justify-end pt-4">
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 disabled={isSubmitting}
-                                className={`px-20 py-6 rounded-none font-black text-white text-sm uppercase tracking-[0.3em] transition-all shadow-xl active:scale-[0.98] ${
-                                    isSubmitting ? 'bg-slate-300' : 'bg-gradient-to-r from-[#fa3535] to-[#b31d1d] hover:shadow-red-200'
-                                }`}
+                                className={`px-20 py-6 rounded-none font-black text-white text-sm uppercase tracking-[0.3em] transition-all shadow-xl active:scale-[0.98] ${isSubmitting ? 'bg-slate-300' : 'bg-gradient-to-r from-[#fa3535] to-[#b31d1d] hover:shadow-red-200'
+                                    }`}
                             >
                                 {isSubmitting ? 'PROCESSING...' : 'SAVE QUALIFICATION REPORT'}
                             </button>
@@ -261,8 +256,8 @@ const ProjectionWelderForm = () => {
 const InputField = ({ label, type = "text", placeholder, name, value, onChange }) => (
     <div className="flex flex-col gap-2.5">
         <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">{label}</label>
-        <input 
-            type={type} 
+        <input
+            type={type}
             name={name}
             value={value}
             onChange={onChange}

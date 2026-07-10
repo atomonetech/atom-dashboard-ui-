@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../../../../../config/api';
-import axios from 'axios';
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
+
 const getItemText = (item) => {
     if (!item) return "";
     return typeof item === 'string' ? item : (item.name || item.operation || item.part_name || "");
@@ -24,13 +21,13 @@ const sortArrayAlphabetically = (arr) => {
 const OperatorObservanceCheckSheet = () => {
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
+
     // Header date state
     const [currentDate, setCurrentDate] = useState('');
 
     // Master Dropdown States
     const [partsList, setPartsList] = useState([]);
-    const [operationsList, setOperationsList] = useState([]); 
+    const [operationsList, setOperationsList] = useState([]);
     const [selectedModel, setSelectedModel] = useState('');
 
     useEffect(() => {
@@ -49,7 +46,7 @@ const OperatorObservanceCheckSheet = () => {
                 const response = await fetch(getApiUrl('/api/master-dropdown/?filter=all_parts'));
                 if (response.ok) {
                     const data = await response.json();
-                    setPartsList(sortArrayAlphabetically(data)); 
+                    setPartsList(sortArrayAlphabetically(data));
                 }
             } catch (error) {
                 console.error("Error fetching parts:", error);
@@ -62,15 +59,15 @@ const OperatorObservanceCheckSheet = () => {
     // Handle Part Selection (Autofill Model AND Fetch Operations)
     const handlePartChange = async (e) => {
         const partName = e.target.value;
-        
+
         try {
             const response = await fetch(getApiUrl(`/api/master-dropdown/?filter=model_by_part&part=${encodeURIComponent(partName)}`));
             if (response.ok) {
                 const data = await response.json();
                 if (data && data.length > 0) {
-                    setSelectedModel(data[0] || ''); 
+                    setSelectedModel(data[0] || '');
                 } else {
-                    setSelectedModel(''); 
+                    setSelectedModel('');
                 }
             }
         } catch (error) {
@@ -82,7 +79,7 @@ const OperatorObservanceCheckSheet = () => {
             const response = await fetch(getApiUrl(`/api/master-dropdown/?filter=operations_by_part&part=${encodeURIComponent(partName)}`));
             if (response.ok) {
                 const data = await response.json();
-                setOperationsList(sortArrayAlphabetically(data || [])); 
+                setOperationsList(sortArrayAlphabetically(data || []));
             }
         } catch (error) {
             console.error("Error fetching operations:", error);
@@ -141,13 +138,18 @@ const OperatorObservanceCheckSheet = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        
+
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
         const formElements = Object.fromEntries(new FormData(e.target).entries());
-        
+
         const payload = {
             ...formElements,
             partOperation: `${formElements.partName} / ${formElements.operation}`,
-            formData: formData // CHANGED: Backend expects data.get('formData')
+            formData: formData,
+
+            username: currentUser,
+            department_name: "Production",
         };
 
         try {
@@ -160,26 +162,23 @@ const OperatorObservanceCheckSheet = () => {
             });
 
             if (response.ok) {
-                   const currentUser = localStorage.getItem("username") || "Unknown User";
-
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "Operator Observance Checklist Report", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
-
                 alert("Observance Data Saved Successfully!");
-                e.target.reset(); 
-                setSelectedModel(''); 
+                e.target.reset();
+                setSelectedModel('');
                 setOperationsList([]);
-                // Reset table state
-                setFormData(initialPoints.map((text, i) => ({ id: i + 1, task: text, response: '', training: false, effect: '', remarks: '' })));
+                setFormData(
+                    initialPoints.map((text, i) => ({
+                        id: i + 1,
+                        task: text,
+                        response: '',
+                        training: false,
+                        effect: '',
+                        remarks: '',
+                    }))
+                );
             } else {
-                alert("Failed to save observance data.");
+                const errorData = await response.json();
+                alert("Failed to save observance data: " + JSON.stringify(errorData));
             }
         } catch (error) {
             console.error("Error saving data:", error);
@@ -191,9 +190,9 @@ const OperatorObservanceCheckSheet = () => {
 
     return (
         <div className="min-h-screen bg-[#fff8f5] font-sans text-slate-900 pb-12 flex flex-col items-center">
-            
+
             <div className="w-full max-w-7xl px-3 md:px-6 mt-6 md:mt-8">
-                
+
                 {/* --- Back Button --- */}
                 <div className="flex justify-start mb-4">
                     <button onClick={() => navigate(-1)} className="group flex items-center gap-2 px-4 py-2 bg-white border border-orange-100 text-slate-800 rounded-lg hover:bg-orange-50 transition-all shadow-sm font-bold text-xs active:scale-95">
@@ -214,16 +213,16 @@ const OperatorObservanceCheckSheet = () => {
                         AtomOne Quality Systems | Doc No: AOT-F-TR-07
                     </p>
                 </div>
-                
+
                 {/* --- Main Form Card --- */}
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-b-[2rem] shadow-2xl border-x border-b border-orange-50 overflow-hidden">
                     <form onSubmit={handleSubmit} className="p-4 md:p-10 space-y-10">
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 bg-orange-50/50 rounded-3xl border border-orange-100 shadow-inner">
-                            
+
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">Part Name <span className="text-red-500">*</span></label>
-                                <select 
+                                <select
                                     name="partName"
                                     required
                                     defaultValue=""
@@ -233,7 +232,7 @@ const OperatorObservanceCheckSheet = () => {
                                     <option value="" disabled>-- Select Part --</option>
                                     {partsList.map((part, index) => (
                                         <option key={index} value={part[0]}>
-                                            {part[0]} 
+                                            {part[0]}
                                         </option>
                                     ))}
                                 </select>
@@ -241,7 +240,7 @@ const OperatorObservanceCheckSheet = () => {
 
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">Operation <span className="text-red-500">*</span></label>
-                                <select 
+                                <select
                                     name="operation"
                                     required
                                     defaultValue=""
@@ -258,7 +257,7 @@ const OperatorObservanceCheckSheet = () => {
 
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">Model</label>
-                                <input 
+                                <input
                                     type="text"
                                     name="model"
                                     value={selectedModel}
@@ -303,9 +302,9 @@ const OperatorObservanceCheckSheet = () => {
                                                     <td className="p-4 text-center font-black text-slate-900 text-xs">#{idx + 1}</td>
                                                     <td className="p-2">
                                                         {row.isCustom ? (
-                                                            <input 
-                                                                type="text" 
-                                                                placeholder="Enter custom check point..." 
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Enter custom check point..."
                                                                 className="w-full p-2 bg-white border border-orange-200 rounded-lg text-xs font-bold text-[#ff6924] outline-none"
                                                                 value={row.task}
                                                                 onChange={(e) => handleRowChange(row.id, 'task', e.target.value)}
@@ -315,9 +314,9 @@ const OperatorObservanceCheckSheet = () => {
                                                         )}
                                                     </td>
                                                     <td className="p-2 text-center">
-                                                        <select 
-                                                            value={row.response} 
-                                                            onChange={(e) => handleRowChange(row.id, 'response', e.target.value)} 
+                                                        <select
+                                                            value={row.response}
+                                                            onChange={(e) => handleRowChange(row.id, 'response', e.target.value)}
                                                             className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-black uppercase outline-none focus:border-[#ff6924] cursor-pointer"
                                                         >
                                                             <option value="">-</option>
@@ -326,17 +325,17 @@ const OperatorObservanceCheckSheet = () => {
                                                         </select>
                                                     </td>
                                                     <td className="p-2 text-center">
-                                                        <input 
-                                                            type="checkbox" 
-                                                            checked={row.training} 
-                                                            onChange={(e) => handleRowChange(row.id, 'training', e.target.checked)} 
-                                                            className="w-4 h-4 accent-[#ff6924] cursor-pointer" 
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={row.training}
+                                                            onChange={(e) => handleRowChange(row.id, 'training', e.target.checked)}
+                                                            className="w-4 h-4 accent-[#ff6924] cursor-pointer"
                                                         />
                                                     </td>
                                                     <td className="p-2 text-center">
-                                                        <select 
-                                                            value={row.effect} 
-                                                            onChange={(e) => handleRowChange(row.id, 'effect', e.target.value)} 
+                                                        <select
+                                                            value={row.effect}
+                                                            onChange={(e) => handleRowChange(row.id, 'effect', e.target.value)}
                                                             className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-black uppercase outline-none focus:border-[#ff6924] cursor-pointer"
                                                         >
                                                             <option value="">-</option>
@@ -346,12 +345,12 @@ const OperatorObservanceCheckSheet = () => {
                                                         </select>
                                                     </td>
                                                     <td className="p-2">
-                                                        <input 
-                                                            type="text" 
-                                                            value={row.remarks} 
-                                                            onChange={(e) => handleRowChange(row.id, 'remarks', e.target.value)} 
-                                                            placeholder="Notes..." 
-                                                            className="w-full bg-transparent border-b border-slate-100 focus:border-[#ff6924] outline-none text-xs p-1 italic" 
+                                                        <input
+                                                            type="text"
+                                                            value={row.remarks}
+                                                            onChange={(e) => handleRowChange(row.id, 'remarks', e.target.value)}
+                                                            placeholder="Notes..."
+                                                            className="w-full bg-transparent border-b border-slate-100 focus:border-[#ff6924] outline-none text-xs p-1 italic"
                                                         />
                                                     </td>
                                                     <td className="p-2 text-center">
@@ -377,8 +376,8 @@ const OperatorObservanceCheckSheet = () => {
 
                         {/* 4. Submit Button */}
                         <div className="flex justify-center md:justify-end pt-2 pb-2">
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 disabled={isSubmitting}
                                 className={`px-12 py-3.5 bg-gradient-to-r from-[#ff6924] to-[#e65100] text-white rounded-xl font-black text-[11px] tracking-[0.2em] shadow-xl hover:scale-105 active:scale-[0.95] transition-all ${isSubmitting ? 'opacity-50' : ''}`}
                             >
@@ -397,13 +396,13 @@ const InputField = ({ label, type = "text", name, placeholder, defaultValue, req
         <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">
             {label} {required && <span className="text-red-500">*</span>}
         </label>
-        <input 
-            type={type} 
+        <input
+            type={type}
             name={name}
-            placeholder={placeholder} 
-            defaultValue={defaultValue} 
+            placeholder={placeholder}
+            defaultValue={defaultValue}
             required={required}
-            className="w-full p-3 bg-white border border-slate-200 focus:border-[#ff6924] rounded-xl outline-none transition-all font-bold text-xs text-slate-700 shadow-sm" 
+            className="w-full p-3 bg-white border border-slate-200 focus:border-[#ff6924] rounded-xl outline-none transition-all font-bold text-xs text-slate-700 shadow-sm"
         />
     </div>
 );

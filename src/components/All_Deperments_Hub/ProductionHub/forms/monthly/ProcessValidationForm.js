@@ -5,13 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../../../../../config/api';
 import axios from 'axios';
 
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
 
 const ProcessValidationForm = () => {
     const navigate = useNavigate();
-    
+
     const initialState = {
         validationDate: '',
         revalidationDate: '',
@@ -23,7 +20,7 @@ const ProcessValidationForm = () => {
         fixtureNo: '',
         operators: ['', '', '', ''],
         parameters: Array(8).fill({ spec: '', unit: '', remark: '' }),
-        trials: Array(8).fill({ p1:'', p2:'', p3:'', p4:'', p5:'', p6:'', p7:'', p8:'', specified:'', observed:'', decision:'' }),
+        trials: Array(8).fill({ p1: '', p2: '', p3: '', p4: '', p5: '', p6: '', p7: '', p8: '', specified: '', observed: '', decision: '' }),
         finalParams: Array(7).fill({ spec: '', min: '', max: '', remark: '' }),
         conclusion: 'Based on above trials, existing process parameter on control plan are ok, following process parameters are finalised & accordingly control plan is changed.',
         preparedBy: '',
@@ -53,30 +50,28 @@ const ProcessValidationForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        
+
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
+        const payload = {
+            ...formData,
+            username: currentUser,
+            department_name: "Production",
+        };
+
         try {
             const response = await fetch(getApiUrl('/api/save-process-validation/'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(payload)
             });
 
             if (response.ok) {
-                  const currentUser = localStorage.getItem("username") || "Unknown User";
-                
-                        try {
-                          await axios.post(API_LOG, {
-                            username: currentUser,
-                            report_name: "Process Validation Form", // Yahan hardcode kar diya form ka naam
-                          });
-                          console.log("Activity log successfully saved!");
-                        } catch (logError) {
-                          console.error("Activity log save karne mein error aayi:", logError);
-                        }
                 alert("Success! Complete Process Validation Report Saved.");
-                setFormData(initialState); 
+                setFormData(initialState);
             } else {
-                alert("Failed to save report.");
+                const errorData = await response.json();
+                alert("Failed to save report: " + JSON.stringify(errorData));
             }
         } catch (error) {
             console.error("Error saving data:", error);
@@ -88,9 +83,9 @@ const ProcessValidationForm = () => {
 
     return (
         <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-900 pb-20 flex flex-col items-center">
-            
+
             <div className="w-full max-w-5xl px-4 mt-10">
-                
+
                 <div className="flex justify-start mb-4">
                     <button onClick={() => navigate(-1)} className="flex items-center gap-2 px-8 py-4 bg-white border border-slate-200 rounded-none font-bold text-sm shadow-sm active:scale-95">
                         <i className="bi bi-chevron-left text-[#13ba82]"></i> Back
@@ -108,7 +103,7 @@ const ProcessValidationForm = () => {
 
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white shadow-2xl border-x border-b border-slate-100 overflow-hidden">
                     <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-12">
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <InputField label="Validation Date" name="validationDate" value={formData.validationDate} onChange={handleInputChange} type="date" />
                             <InputField label="Next Re-validation Due" name="revalidationDate" value={formData.revalidationDate} onChange={handleInputChange} type="date" />
@@ -124,7 +119,7 @@ const ProcessValidationForm = () => {
                             <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest mb-4 block">M/C Operators</label>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {formData.operators?.map((op, i) => (
-                                    <input key={i} value={op} onChange={(e) => handleOperatorChange(i, e.target.value)} placeholder={`Operator ${i+1}`} className="p-3 bg-white border border-slate-200 rounded-none text-xs font-bold outline-none focus:border-[#13ba82] shadow-sm" />
+                                    <input key={i} value={op} onChange={(e) => handleOperatorChange(i, e.target.value)} placeholder={`Operator ${i + 1}`} className="p-3 bg-white border border-slate-200 rounded-none text-xs font-bold outline-none focus:border-[#13ba82] shadow-sm" />
                                 ))}
                             </div>
                         </div>
@@ -144,7 +139,7 @@ const ProcessValidationForm = () => {
                                     <tbody className="divide-y divide-slate-50">
                                         {formData.parameters?.map((param, i) => (
                                             <tr key={i} className="hover:bg-emerald-50/30">
-                                                <td className="p-3 text-center font-bold text-[#13ba82]">P{i+1}</td>
+                                                <td className="p-3 text-center font-bold text-[#13ba82]">P{i + 1}</td>
                                                 <td className="p-2"><input value={param.spec} onChange={(e) => handleArrayChange('parameters', i, 'spec', e.target.value)} className="w-full p-2 bg-slate-50/50 rounded-none outline-none focus:bg-white border border-transparent focus:border-emerald-100" /></td>
                                                 <td className="p-2"><input value={param.unit} onChange={(e) => handleArrayChange('parameters', i, 'unit', e.target.value)} className="w-full p-2 bg-slate-50/50 rounded-none outline-none focus:bg-white border border-transparent focus:border-emerald-100" /></td>
                                                 <td className="p-2"><input value={param.remark} onChange={(e) => handleArrayChange('parameters', i, 'remark', e.target.value)} className="w-full p-2 bg-slate-50/50 rounded-none outline-none focus:bg-white border border-transparent focus:border-emerald-100" /></td>
@@ -167,7 +162,7 @@ const ProcessValidationForm = () => {
                                             <th rowSpan="2" className="p-2 border border-slate-700 text-[8px]">Decision</th>
                                         </tr>
                                         <tr className="bg-slate-700">
-                                            {[1,2,3,4,5,6,7,8].map(n => <th key={n} className="p-1 border border-slate-600">P{n}</th>)}
+                                            {[1, 2, 3, 4, 5, 6, 7, 8].map(n => <th key={n} className="p-1 border border-slate-600">P{n}</th>)}
                                             <th className="p-1 border border-slate-600">Spec</th>
                                             <th className="p-1 border border-slate-600">Obs</th>
                                         </tr>
@@ -175,7 +170,7 @@ const ProcessValidationForm = () => {
                                     <tbody className="divide-y divide-slate-100">
                                         {formData.trials?.map((trial, i) => (
                                             <tr key={i} className="hover:bg-emerald-50/50">
-                                                <td className="p-2 border-r border-slate-100 font-bold bg-slate-50/50">{i+1}</td>
+                                                <td className="p-2 border-r border-slate-100 font-bold bg-slate-50/50">{i + 1}</td>
                                                 {['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'specified', 'observed', 'decision'].map((field, n) => (
                                                     <td key={n} className="p-1 border-r border-slate-100">
                                                         <input value={trial[field]} onChange={(e) => handleArrayChange('trials', i, field, e.target.value)} className="w-full text-center bg-transparent outline-none focus:bg-white rounded-none" />
@@ -190,11 +185,11 @@ const ProcessValidationForm = () => {
 
                         <div className="space-y-2">
                             <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Final Conclusion</label>
-                            <textarea 
+                            <textarea
                                 name="conclusion"
                                 value={formData.conclusion}
                                 onChange={handleInputChange}
-                                rows="3" 
+                                rows="3"
                                 className="w-full p-4 bg-slate-50 border border-slate-200 rounded-none text-sm font-semibold outline-none focus:border-[#13ba82] focus:bg-white shadow-inner"
                             />
                         </div>
@@ -215,7 +210,7 @@ const ProcessValidationForm = () => {
                                     <tbody className="divide-y divide-slate-50">
                                         {formData.finalParams?.map((param, i) => (
                                             <tr key={i}>
-                                                <td className="p-3 text-center font-bold text-emerald-600">P{i+1}</td>
+                                                <td className="p-3 text-center font-bold text-emerald-600">P{i + 1}</td>
                                                 <td className="p-2"><input value={param.spec} onChange={(e) => handleArrayChange('finalParams', i, 'spec', e.target.value)} className="w-full p-2 bg-slate-50/50 rounded-none outline-none focus:bg-white border border-transparent focus:border-emerald-100" /></td>
                                                 <td className="p-2 w-24"><input value={param.min} onChange={(e) => handleArrayChange('finalParams', i, 'min', e.target.value)} className="w-full p-2 bg-white border border-slate-100 rounded-none outline-none text-center font-bold text-emerald-600" /></td>
                                                 <td className="p-2 w-24"><input value={param.max} onChange={(e) => handleArrayChange('finalParams', i, 'max', e.target.value)} className="w-full p-2 bg-white border border-slate-100 rounded-none outline-none text-center font-bold text-emerald-600" /></td>

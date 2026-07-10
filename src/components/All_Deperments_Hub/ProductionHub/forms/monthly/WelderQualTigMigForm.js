@@ -3,9 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../../../../../config/api';
 import axios from 'axios';
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
+
 
 const WelderQualificationForm = () => {
     const navigate = useNavigate();
@@ -15,29 +13,29 @@ const WelderQualificationForm = () => {
 
     // UPDATED: 'thickness' changed to 'baseMetalThickness'
     const [formData, setFormData] = useState({
-        wpsNo: '', 
-        testingDate: '', 
-        weldingProcess: '', 
-        machineNo: '', 
-        baseMetal: '', 
-        baseMetalThickness: '', 
-        baseMetalSize: '', 
-        weldingPosition: '', 
-        fillerMaterial: '', 
-        fillerMaterialSize: '', 
-        shieldingGas: '', 
-        wireFeedSpeed: '', 
-        visualTest: '', 
-        defectSelect: '', 
-        strengthTest: '', 
-        rootBend: '', 
-        faceBend: '', 
-        welderName: '', 
-        conductedBy: '', 
+        wpsNo: '',
+        testingDate: '',
+        weldingProcess: '',
+        machineNo: '',
+        baseMetal: '',
+        baseMetalThickness: '',
+        baseMetalSize: '',
+        weldingPosition: '',
+        fillerMaterial: '',
+        fillerMaterialSize: '',
+        shieldingGas: '',
+        wireFeedSpeed: '',
+        visualTest: '',
+        defectSelect: '',
+        strengthTest: '',
+        rootBend: '',
+        faceBend: '',
+        welderName: '',
+        conductedBy: '',
         verifiedBy: ''
     });
 
-    
+
     const [trials, setTrials] = useState([
         { currRange: '', currActual: '', voltRange: '', voltActual: '', gasRange: '', gasActual: '', depositThickness: '', defect: '' }
     ]);
@@ -65,12 +63,12 @@ const WelderQualificationForm = () => {
         }
     };
 
-    
+
     const addRow = () => {
         setTrials([...trials, { currRange: '', currActual: '', voltRange: '', voltActual: '', gasRange: '', gasActual: '', depositThickness: '', defect: '' }]);
     };
 
-    
+
     const removeRow = (index) => {
         if (trials.length > 1) {
             setTrials(trials.filter((_, i) => i !== index));
@@ -80,9 +78,19 @@ const WelderQualificationForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        
+
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
         try {
-            const payload = { ...formData, trials, welderPhoto };
+            const payload = {
+                ...formData,
+                trials,
+                welderPhoto,
+
+                username: currentUser,
+                department_name: "Production",
+            };
+
             const response = await fetch(getApiUrl('/api/save-tig-mig-welder/'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -90,20 +98,10 @@ const WelderQualificationForm = () => {
             });
 
             if (response.ok) {
-                const currentUser = localStorage.getItem("username") || "Unknown User";
-                
-                        try {
-                          await axios.post(API_LOG, {
-                            username: currentUser,
-                            report_name: "Welder Qualification test Form", // Yahan hardcode kar diya form ka naam
-                          });
-                          console.log("Activity log successfully saved!");
-                        } catch (logError) {
-                          console.error("Activity log save karne mein error aayi:", logError);
-                        }
                 alert("Welder Qualification Test Saved Successfully!");
             } else {
-                alert("Failed to save data.");
+                const errorData = await response.json();
+                alert("Failed to save data: " + JSON.stringify(errorData));
             }
         } catch (error) {
             console.error("Error saving data:", error);
@@ -116,13 +114,13 @@ const WelderQualificationForm = () => {
     return (
         <div className="min-h-screen bg-[#fffcf9] font-sans text-slate-900 pb-24 flex flex-col items-center">
             <div className="w-full max-w-6xl px-4 mt-8">
-                
+
                 <div className="flex justify-start mb-6">
-                    <button 
+                    <button
                         onClick={() => navigate(-1)}
                         className="group flex items-center gap-2 px-8 py-4 bg-white border border-orange-200 text-slate-800 rounded-none hover:bg-orange-50 transition-all shadow-sm font-bold text-sm active:scale-95"
                     >
-                        <i className="bi bi-arrow-left text-orange-500 transition-transform group-hover:-translate-x-1"></i> 
+                        <i className="bi bi-arrow-left text-orange-500 transition-transform group-hover:-translate-x-1"></i>
                         Back to Hub
                     </button>
                 </div>
@@ -138,7 +136,7 @@ const WelderQualificationForm = () => {
 
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white shadow-2xl border-x border-b border-orange-50 overflow-hidden">
                     <form onSubmit={handleSubmit} className="p-8 md:p-14 space-y-12">
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             <InputField label="REF. WPS NO." name="wpsNo" value={formData.wpsNo} onChange={handleInputChange} placeholder="e.g. WPS-09" />
                             <InputField label="Testing Date" name="testingDate" value={formData.testingDate} onChange={handleInputChange} type="date" />
@@ -152,10 +150,10 @@ const WelderQualificationForm = () => {
                                     <div className="w-1.5 h-4 bg-orange-400"></div> Welding Details
                                 </h3>
                                 <InputField label="Base Metal (to be weld)" name="baseMetal" value={formData.baseMetal} onChange={handleInputChange} />
-                                
+
                                 {/* Base Metal Thickness Field Updated */}
                                 <InputField label="Base Metal Thickness" name="baseMetalThickness" value={formData.baseMetalThickness} onChange={handleInputChange} />
-                                
+
                                 <InputField label="Base Metal Size" name="baseMetalSize" value={formData.baseMetalSize} onChange={handleInputChange} />
                                 <InputField label="Welding position" name="weldingPosition" value={formData.weldingPosition} onChange={handleInputChange} />
                             </div>
@@ -185,7 +183,7 @@ const WelderQualificationForm = () => {
                                             <th colSpan="2" className="p-2 border-r border-slate-700">Current (Amp)</th>
                                             <th colSpan="2" className="p-2 border-r border-slate-700">Voltage (Volt)</th>
                                             <th colSpan="2" className="p-2 border-r border-slate-700">Gas Flow (L/m)</th>
-                                            <th rowSpan="2" className="p-2 border-r border-slate-700">Weld Deposit<br/>Thickness</th>
+                                            <th rowSpan="2" className="p-2 border-r border-slate-700">Weld Deposit<br />Thickness</th>
                                             <th rowSpan="2" className="p-2 border-r border-slate-700">Defect</th>
                                             <th rowSpan="2" className="p-2 w-16">Action</th>
                                         </tr>
@@ -219,7 +217,7 @@ const WelderQualificationForm = () => {
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                             <div className="lg:col-span-8 space-y-5 bg-slate-50 p-8 border border-slate-100 shadow-inner">
                                 <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-4">Test Result on Sample</h3>
-                                
+
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 bg-white border border-slate-100">
                                     <span className="text-[11px] font-bold text-slate-600 uppercase">1) Visual Test</span>
                                     <select name="visualTest" value={formData.visualTest} onChange={handleInputChange} className="bg-slate-50 border-none text-[10px] font-black uppercase px-4 py-2 focus:ring-1 focus:ring-orange-400">
@@ -261,9 +259,9 @@ const WelderQualificationForm = () => {
                                     </select>
                                 </div>
                             </div>
-                            
+
                             <div className="lg:col-span-4 flex flex-col items-center justify-center p-8 border-2 border-dashed border-orange-200 bg-orange-50/20 group hover:bg-orange-50 transition-all cursor-pointer overflow-hidden"
-                                onClick={() => fileInputRef.current.click()} 
+                                onClick={() => fileInputRef.current.click()}
                             >
                                 {welderPhoto ? (
                                     <img src={welderPhoto} alt="Welder" className="w-full h-32 object-cover shadow-md" />
@@ -274,12 +272,12 @@ const WelderQualificationForm = () => {
                                         <p className="text-[9px] text-orange-700 font-bold mt-1">(Click to select)</p>
                                     </>
                                 )}
-                                <input 
-                                    type="file" 
-                                    ref={fileInputRef} 
-                                    className="hidden" 
-                                    accept="image/*" 
-                                    onChange={handlePhotoChange} 
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={handlePhotoChange}
                                 />
                             </div>
                         </div>
@@ -293,12 +291,11 @@ const WelderQualificationForm = () => {
                         </div>
 
                         <div className="flex justify-center md:justify-end pt-4">
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 disabled={isSubmitting}
-                                className={`px-20 py-6 rounded-none font-black text-white text-sm uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] ${
-                                    isSubmitting ? 'bg-slate-300' : 'bg-[#ea580c] hover:bg-orange-600 hover:shadow-orange-200 shadow-orange-100'
-                                }`}
+                                className={`px-20 py-6 rounded-none font-black text-white text-sm uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] ${isSubmitting ? 'bg-slate-300' : 'bg-[#ea580c] hover:bg-orange-600 hover:shadow-orange-200 shadow-orange-100'
+                                    }`}
                             >
                                 {isSubmitting ? 'SAVING...' : 'SAVE QUALIFICATION TEST'}
                             </button>
@@ -313,8 +310,8 @@ const WelderQualificationForm = () => {
 const InputField = ({ label, type = "text", placeholder, name, value, onChange }) => (
     <div className="flex flex-col gap-2">
         <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">{label}</label>
-        <input 
-            type={type} 
+        <input
+            type={type}
             name={name}
             value={value}
             onChange={onChange}

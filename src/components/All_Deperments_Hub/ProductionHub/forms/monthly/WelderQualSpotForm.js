@@ -2,11 +2,6 @@ import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { getApiUrl } from "../../../../../config/api";
-import axios from "axios";
-
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
 
 const SpotWelderForm = () => {
   const navigate = useNavigate();
@@ -87,8 +82,18 @@ const SpotWelderForm = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    const currentUser = localStorage.getItem("username") || "Unknown User";
+
     try {
-      const payload = { ...formData, trials, welderPhoto };
+      const payload = {
+        ...formData,
+        trials,
+        welderPhoto,
+
+        username: currentUser,
+        department_name: "Production",
+      };
+
       const response = await fetch(getApiUrl("/api/save-spot-welder/"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -96,20 +101,10 @@ const SpotWelderForm = () => {
       });
 
       if (response.ok) {
-        const currentUser = localStorage.getItem("username") || "Unknown User";
-
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "Welder Qualification Report", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
         alert("Spot Welder Qualification Report Saved Successfully!");
       } else {
-        alert("Failed to save data. Please check backend connection.");
+        const errorData = await response.json();
+        alert("Failed to save data: " + JSON.stringify(errorData));
       }
     } catch (error) {
       console.error("Error saving data:", error);
@@ -437,11 +432,10 @@ const SpotWelderForm = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`px-20 py-6 rounded-none font-black text-white text-sm uppercase tracking-[0.3em] transition-all shadow-xl active:scale-[0.98] ${
-                  isSubmitting
+                className={`px-20 py-6 rounded-none font-black text-white text-sm uppercase tracking-[0.3em] transition-all shadow-xl active:scale-[0.98] ${isSubmitting
                     ? "bg-slate-300"
                     : "bg-gradient-to-r from-[#0b26f5] to-[#051485] hover:shadow-blue-200 shadow-blue-100"
-                }`}
+                  }`}
               >
                 {isSubmitting ? "PROCESSING..." : "SAVE QUALIFICATION REPORT"}
               </button>

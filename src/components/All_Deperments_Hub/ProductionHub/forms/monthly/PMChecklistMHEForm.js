@@ -3,9 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { getApiUrl } from '../../../../../config/api';
 import axios from 'axios';
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
+
 
 const PreventiveMaintChecklist = () => {
     const navigate = useNavigate();
@@ -33,8 +31,8 @@ const PreventiveMaintChecklist = () => {
                 const url = getApiUrl('/api/master-dropdown/?filter=all_parts');
                 console.log("Fetching from URL:", url); // Check karo ki URL sahi ban raha hai ya nahi
 
-                const response = await fetch(url); 
-                
+                const response = await fetch(url);
+
                 if (response.ok) {
                     const data = await response.json();
                     console.log("Backend Response Data:", data); // Check karo ki backend kya bhej raha hai
@@ -67,8 +65,8 @@ const PreventiveMaintChecklist = () => {
 
     // Handle changes inside the checklist table
     const handleCheckPointChange = (id, field, value) => {
-        setCheckPoints(prevCheckPoints => 
-            prevCheckPoints.map(item => 
+        setCheckPoints(prevCheckPoints =>
+            prevCheckPoints.map(item =>
                 item.id === id ? { ...item, [field]: value } : item
             )
         );
@@ -77,11 +75,17 @@ const PreventiveMaintChecklist = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        
+
+        const currentUser = localStorage.getItem("username") || "Unknown User";
+
         const formObj = Object.fromEntries(new FormData(e.target).entries());
+
         const payload = {
             ...formObj,
-            checkPoints: checkPoints // Sahi populated array backend ko bhejenge
+            checkPoints: checkPoints,
+
+            username: currentUser,
+            department_name: "Production",
         };
 
         try {
@@ -94,23 +98,19 @@ const PreventiveMaintChecklist = () => {
             });
 
             if (response.ok) {
-                  const currentUser = localStorage.getItem("username") || "Unknown User";
-
-        try {
-          await axios.post(API_LOG, {
-            username: currentUser,
-            report_name: "PM Checklist Report", // Yahan hardcode kar diya form ka naam
-          });
-          console.log("Activity log successfully saved!");
-        } catch (logError) {
-          console.error("Activity log save karne mein error aayi:", logError);
-        }
                 alert("Checklist Saved Successfully!");
-                // Form reset karne ke sath state bhi wapas default pe laani hogi
                 e.target.reset();
-                setCheckPoints(checkPoints.map(cp => ({ ...cp, doneOn: "", status: "Ok", remarks: "" })));
+                setCheckPoints(
+                    checkPoints.map(cp => ({
+                        ...cp,
+                        doneOn: "",
+                        status: "Ok",
+                        remarks: "",
+                    }))
+                );
             } else {
-                alert("Failed to save checklist data.");
+                const errorData = await response.json();
+                alert("Failed to save checklist data: " + JSON.stringify(errorData));
             }
         } catch (error) {
             console.error("Error saving data:", error);
@@ -122,16 +122,16 @@ const PreventiveMaintChecklist = () => {
 
     return (
         <div className="min-h-screen bg-[#f0f9ff] font-sans text-slate-900 pb-10 flex flex-col items-center">
-            
+
             <div className="w-full max-w-6xl px-3 md:px-6 mt-6 md:mt-8">
-                
+
                 {/* --- Back Button --- */}
                 <div className="flex justify-start mb-4">
-                    <button 
+                    <button
                         onClick={() => navigate(-1)}
                         className="group flex items-center gap-2 px-4 py-2 bg-white border border-cyan-100 text-slate-800 rounded-lg hover:bg-cyan-50 transition-all shadow-sm font-bold text-xs active:scale-95"
                     >
-                        <i className="bi bi-arrow-left text-[#06b6d4]"></i> 
+                        <i className="bi bi-arrow-left text-[#06b6d4]"></i>
                         Back
                     </button>
                 </div>
@@ -153,15 +153,15 @@ const PreventiveMaintChecklist = () => {
                 {/* --- Main Form Card --- */}
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-b-3xl shadow-xl border-x border-b border-cyan-50 overflow-hidden">
                     <form onSubmit={handleSubmit} className="p-4 md:p-10 space-y-8">
-                        
+
                         {/* 1. Equipment Identification Row */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 border-b border-slate-50 pb-6">
-                            
+
                             {/* DYNAMIC DROPDOWN FOR PART INFO (Name match with Django: partName) */}
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">Part Name / No.</label>
-                                <select 
-                                    name="partName" 
+                                <select
+                                    name="partName"
                                     required
                                     defaultValue=""
                                     className="w-full p-3 bg-slate-50 border border-slate-200 focus:border-cyan-400 rounded-xl outline-none transition-all font-bold text-xs text-slate-700 shadow-sm focus:bg-white cursor-pointer appearance-none"
@@ -208,15 +208,15 @@ const PreventiveMaintChecklist = () => {
                                                 <td className="p-3 bg-slate-50/50 border-r text-slate-400">{item.id}</td>
                                                 <td className="p-3 border-r text-left text-slate-700">{item.task}</td>
                                                 <td className="p-2 border-r">
-                                                    <input 
-                                                        type="date" 
+                                                    <input
+                                                        type="date"
                                                         value={item.doneOn}
                                                         onChange={(e) => handleCheckPointChange(item.id, "doneOn", e.target.value)}
-                                                        className="w-full bg-transparent border-none outline-none text-[10px] text-cyan-700" 
+                                                        className="w-full bg-transparent border-none outline-none text-[10px] text-cyan-700"
                                                     />
                                                 </td>
                                                 <td className="p-2 border-r">
-                                                    <select 
+                                                    <select
                                                         value={item.status}
                                                         onChange={(e) => handleCheckPointChange(item.id, "status", e.target.value)}
                                                         className="w-full bg-slate-50 border border-slate-200 rounded p-1 text-[10px] font-black uppercase outline-none focus:border-cyan-400"
@@ -227,12 +227,12 @@ const PreventiveMaintChecklist = () => {
                                                     </select>
                                                 </td>
                                                 <td className="p-2">
-                                                    <input 
-                                                        type="text" 
+                                                    <input
+                                                        type="text"
                                                         value={item.remarks}
                                                         onChange={(e) => handleCheckPointChange(item.id, "remarks", e.target.value)}
-                                                        placeholder="Add notes..." 
-                                                        className="w-full bg-transparent border-none outline-none px-2 text-[10px] italic font-medium" 
+                                                        placeholder="Add notes..."
+                                                        className="w-full bg-transparent border-none outline-none px-2 text-[10px] italic font-medium"
                                                     />
                                                 </td>
                                             </tr>
@@ -256,12 +256,11 @@ const PreventiveMaintChecklist = () => {
 
                         {/* 4. Professional Small Submit Button */}
                         <div className="flex justify-center md:justify-end pt-2 pb-2">
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 disabled={isSubmitting}
-                                className={`px-10 py-3 rounded-xl font-black text-white text-[10px] tracking-[0.2em] transition-all shadow-lg active:scale-[0.95] ${
-                                    isSubmitting ? 'bg-slate-300' : 'bg-gradient-to-r from-[#06b6d4] to-[#0891b2] hover:shadow-cyan-200 shadow-cyan-100'
-                                }`}
+                                className={`px-10 py-3 rounded-xl font-black text-white text-[10px] tracking-[0.2em] transition-all shadow-lg active:scale-[0.95] ${isSubmitting ? 'bg-slate-300' : 'bg-gradient-to-r from-[#06b6d4] to-[#0891b2] hover:shadow-cyan-200 shadow-cyan-100'
+                                    }`}
                             >
                                 {isSubmitting ? 'SAVING...' : 'CONFIRM CHECKLIST'}
                             </button>
@@ -276,8 +275,8 @@ const PreventiveMaintChecklist = () => {
 const InputField = ({ label, type = "text", name, placeholder, defaultValue }) => (
     <div className="flex flex-col gap-1.5">
         <label className="text-[10px] font-black text-slate-800 uppercase tracking-widest ml-1">{label}</label>
-        <input 
-            type={type} 
+        <input
+            type={type}
             name={name}
             placeholder={placeholder}
             defaultValue={defaultValue}
