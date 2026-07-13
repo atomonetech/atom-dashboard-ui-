@@ -92,35 +92,90 @@ const MachineRoutes = () => {
         path="weekly/preventive-cnc"
         element={<CncPreventiveMaintenanceForm />}
       />
+       <Route
+        path="view-report/cnc/:id"
+        element={<CncPreventiveMaintenanceForm />}
+      />
+
       <Route path="weekly/preventive-powerpress" element={<PowerPressForm />} />
+       <Route
+        path="view-report/power-press-pm/:id"
+        element={<PowerPressForm />}
+      />
+
       <Route
         path="weekly/preventive-mig"
+        element={<HydraulicMaintenanceForm />}
+      />
+       <Route
+        path="view-report/hydraulic-pm/:id"
         element={<HydraulicMaintenanceForm />}
       />
       <Route
         path="weekly/projection-welding"
         element={<ProjectionWeldingMaintenanceForm />}
       />
+      <Route
+        path="view-report/projection-welding/:id"
+        element={<ProjectionWeldingMaintenanceForm />}
+      />
+
       <Route path="weekly/vmm" element={<VMMMaintenanceForm />} />
+      <Route
+        path="view-report/vmm/:id"
+        element={<VMMMaintenanceForm />}
+      />
       <Route path="weekly/tig" element={<TIGMaintenanceForm />} />
+       <Route
+        path="view-report/tig-welding-maintenance/:id"
+        element={<TIGMaintenanceForm />}
+      />
       <Route
         path="weekly/spot-welding"
         element={<SpotWeldingMaintenanceForm />}
       />
+       <Route
+        path="view-report/spot-welding-maintenance/:id"
+        element={<SpotWeldingMaintenanceForm />}
+      />
       <Route path="weekly/compressor" element={<CompressorMaintenanceForm />} />
+         <Route
+        path="view-report/compressor-maintenance/:id"
+        element={<CompressorMaintenanceForm />}
+      />
       {/* ✅ NEW MACHINE ROUTES ADDED HERE: */}
       <Route path="weekly/lathe" element={<LatheMaintenanceForm />} />
+      <Route
+        path="view-report/lathe-machine-maintenance/:id"
+        element={<LatheMaintenanceForm />}
+      />
       <Route path="weekly/drill" element={<DrillMachineMaintenanceForm />} />
       <Route
+        path="view-report/vertical-drill-maintenance/:id"
+        element={<DrillMachineMaintenanceForm />}
+      />
+      <Route
         path="weekly/surface-grinder"
+        element={<SurfaceGrinderMaintenanceForm />}
+      />
+      <Route
+        path="view-report/surface-grinder/:id"
         element={<SurfaceGrinderMaintenanceForm />}
       />
       <Route
         path="weekly/belt-grinder"
         element={<BeltGrinderMaintenanceForm />}
       />
+       <Route
+        path="view-report/belt-grinder/:id"
+        element={<BeltGrinderMaintenanceForm />}
+      />
       <Route
         path="weekly/base-grinder"
+        element={<BaseGrinderMaintenanceForm />}
+      />
+       <Route
+        path="view-report/base-grinder/:id"
         element={<BaseGrinderMaintenanceForm />}
       />
       <Route
@@ -132,20 +187,43 @@ const MachineRoutes = () => {
         element={<PipeCuttingMaintenanceForm />}
       />
       <Route
+        path="view-report/pipe-cutting/:id"
+        element={<PipeCuttingMaintenanceForm />}
+      />
+    
+      <Route
         path="weekly/preventive-vibra"
+        element={<VibraMaintenanceForm />}
+      />
+       <Route
+        path="view-report/vibra/:id"
         element={<VibraMaintenanceForm />}
       />
       <Route
         path="weekly/preventive-molding"
         element={<DipMoldingMaintenanceForm />}
       />
+       <Route
+        path="view-report/dip-molding/:id"
+        element={<DipMoldingMaintenanceForm />}
+      />
+
       <Route
         path="weekly/preventive-press"
+        element={<ServoPressMaintenanceForm />}
+      />
+       <Route
+        path="view-report/servo-press/:id"
         element={<ServoPressMaintenanceForm />}
       />
       {/* Dynamic weekly route */}
       <Route
         path="weekly/preventive-:machineName"
+        element={<MachinePreventMainForm />}
+
+      />
+      <Route
+        path="view-report/preventive-maintenance/:id"
         element={<MachinePreventMainForm />}
       />
       {/* --- REPORT / PRINT ROUTES --- */}

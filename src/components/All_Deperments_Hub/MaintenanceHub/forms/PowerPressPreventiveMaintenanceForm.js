@@ -334,7 +334,7 @@ const PowerPressPreventiveMaintenanceForm = () => {
       });
 
       if (response.ok) {
-        const currentUser = localStorage.getItem("username") || "Unknown User";
+      
 
         setShowSuccess(true);
 
@@ -618,6 +618,30 @@ const PowerPressPreventiveMaintenanceForm = () => {
             AOT-F-MM-03 | Complete maintenance checklist and tracking system
           </p>
         </div>
+         
+         
+         {isViewMode && approvalStatus && (
+          <div className="px-3 px-md-4 pt-3">
+            <div className="d-flex flex-column flex-sm-row justify-content-between gap-2 p-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+              <div>
+                <div className="form-label mb-0">Current Status</div>
+                <div className="fw-bold" style={{
+                  color: approvalStatus.toLowerCase().includes('approved') ? '#16a34a'
+                    : approvalStatus.toLowerCase().includes('rejected') ? '#dc2626'
+                    : '#d97706'
+                }}>
+                  {approvalStatus}
+                </div>
+              </div>
+              {reviewedAt && (
+                <div>
+                  <div className="form-label mb-0">Reviewed At</div>
+                  <div className="fw-bold text-dark">{reviewedAt}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="card-body p-3 p-md-4">
           <form onSubmit={handleSubmit}>
@@ -879,13 +903,7 @@ const PowerPressPreventiveMaintenanceForm = () => {
                 </span>
               </div>
             </div>
-
-            {/* --- ACTION BUTTONS --- */}
-            <div
-              className="d-flex flex-column flex-sm-row justify-content-end gap-3 mt-4 pt-3 no-print border-top"
-              style={{ borderTopColor: "#f3f4f6" }}
-            >
-              <div className="flex flex-col">
+            <div className="flex flex-col">
                 <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
                   Prepared By
                 </label>
@@ -894,9 +912,17 @@ const PowerPressPreventiveMaintenanceForm = () => {
                   value={preparedBy}
                   onChange={(e) => setPreparedBy(e.target.value)}
                   placeholder="Enter name"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm w-full sm:w-64"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-yellow-600 text-sm w-full sm:w-64"
                 />
               </div>
+
+            {/* --- ACTION BUTTONS --- */}
+            {!isViewMode &&(
+            <div
+              className="d-flex flex-column flex-sm-row justify-content-end gap-3 mt-4 pt-3 no-print border-top"
+              style={{ borderTopColor: "#f3f4f6" }}
+            >
+              
               <button
                 type="button"
                 className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto"
@@ -919,7 +945,48 @@ const PowerPressPreventiveMaintenanceForm = () => {
                 {isSubmitting ? "Saving..." : "Save Record"}
               </button>
             </div>
+            )}
           </form>
+           {isViewMode && (
+            <div className="mt-4 pt-4 no-print" style={{ borderTop: '2px solid #1e293b' }}>
+              <label className="form-label">APPROVAL / REJECTION REMARK:</label>
+              <textarea
+                rows="3"
+                className="form-control"
+                value={approvalRemark}
+                onChange={(e) => setApprovalRemark(e.target.value)}
+                disabled={isAlreadyReviewed}
+                placeholder="Enter approval or rejection remark..."
+              />
+
+              {isAlreadyReviewed ? (
+                <div className="mt-3 p-3" style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+                  This report is already reviewed. No further action is required.
+                </div>
+              ) : (
+                <div className="d-flex flex-column-reverse flex-sm-row gap-3 justify-content-end mt-3">
+                  <button
+                    type="button"
+                    onClick={handleReject}
+                    disabled={approvalLoading}
+                    className="btn rounded-pill px-4 shadow-sm w-100 w-sm-auto text-white"
+                    style={{ background: '#ef4444', fontWeight: 600 }}
+                  >
+                    {approvalLoading ? 'Please wait...' : 'Reject'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApprove}
+                    disabled={approvalLoading}
+                    className="btn rounded-pill px-4 shadow-sm w-100 w-sm-auto text-white"
+                    style={{ background: '#10b981', fontWeight: 600 }}
+                  >
+                    {approvalLoading ? 'Please wait...' : 'Approve'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

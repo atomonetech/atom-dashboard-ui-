@@ -1,15 +1,23 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState,useEffect } from 'react';
+import { useNavigate, useLocation,useParams } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { getApiUrl } from '../../../../config/api'; // <--- API Import added
-import axios from "axios";
-const API_LOG = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api/log-report/`;
+import {
+  successAlert,
+  errorAlert,
+  warningAlert,
+  infoAlert,
+  confirmAlert,
+} from "../../../../../src/utils/alertUtils";
+import axios from 'axios';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 
 
 const MachinePreventMainForm = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+        const isViewMode=Boolean(id);
   const location = useLocation();
 
   const [isChecklistOpen, setIsChecklistOpen] = useState(true);
@@ -48,6 +56,70 @@ const MachinePreventMainForm = () => {
 
   const [metaData, setMetaData] = useState(initialMetaData);
   const [tableData, setTableData] = useState(initialChecklist); 
+
+  
+    // --- APPROVAL / VIEW MODE STATE ---
+    const [approvalRemark, setApprovalRemark] = useState("");
+    const [approvalLoading, setApprovalLoading] = useState(false);
+    const [approvalStatus, setApprovalStatus] = useState("");
+    const [reviewedAt, setReviewedAt] = useState("");
+  
+    // --- FETCH REPORT WHEN OPENED IN VIEW MODE (from notification) ---
+    useEffect(() => {
+      if (!id) return;
+  
+      const fetchReport = async () => {
+        try {
+          const res = await axios.get(
+            `${API_BASE_URL}/api/get-single-maintenance-report/preventive-maintenance/${id}/`
+          );
+          
+          if (res.data.success) {
+            const data = res.data.data || {};
+            const meta = data.metaData || {};
+  
+            setMetaData({
+              machineName: meta.machineName || 'PROJECTION WELDING',
+              date: meta.date || '',
+              machineNo: meta.machineNo || '',
+              location: meta.location || '',
+              specification: meta.specification || '',
+              maintenancePersonnel: meta.maintenancePersonnel || '',
+              preparedBy: meta.preparedBy || '',
+              checkedBy: meta.checkedBy || '',
+             
+            });
+  
+            const rows = Array.isArray(data.tableData) ? data.tableData : [];
+            setTableData(
+              rows.length
+                ? rows.map((row, index) => ({
+                    id: row.sr_no || index + 1,
+                    point: row.check_point || '',
+                    parameter: row.checking_parameter || '',
+                    method: row.checking_method || '',
+                    before: row.before_maintenance || '',
+                    after: row.after_maintenance || '',
+                    remarks: row.remarks || '',
+                  }))
+                : initialChecklist
+            );
+  
+            setApprovalRemark(data.approval_remarks || "");
+            setApprovalStatus(data.approval_status || "");
+            setReviewedAt(data.approved_or_rejected_at || "");
+          } else {
+            errorAlert(res.data.error || "Failed to load Projection weld Check Sheet.");
+          }
+        } catch (err) {
+          console.error("Error loading Check Sheet:", err);
+          errorAlert(err.response?.data?.error || "Failed to load Projection Check Sheet.");
+        }
+      };
+  
+      fetchReport();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
 
   const handleMetaChange = (e) => setMetaData({ ...metaData, [e.target.name]: e.target.value });
   
@@ -172,6 +244,64 @@ const MachinePreventMainForm = () => {
     return 'method-badge';
   };
 
+   const handleApprove = async () => {
+      try {
+        setApprovalLoading(true);
+        const currentUser = localStorage.getItem("username") || "Approver";
+        const res = await axios.post(`${API_BASE_URL}/api/approve-report/`, {
+          log_id: id,
+          approver_username: currentUser,
+          remarks: approvalRemark,
+        });
+  
+        successAlert(res.data?.message || "Report approved successfully.");
+        navigate("/notifications");
+      } catch (err) {
+        console.error("Approve error:", err);
+        errorAlert(err.response?.data?.error || "Approval failed.");
+      } finally {
+        setApprovalLoading(false);
+      }
+    };
+  
+    const handleReject = async () => {
+      if (!approvalRemark.trim()) {
+        infoAlert("Please enter remark before rejecting.");
+        return;
+      }
+  
+      try {
+        setApprovalLoading(true);
+        const currentUser = localStorage.getItem("username") || "Approver";
+        const res = await axios.post(`${API_BASE_URL}/api/reject-report/`, {
+          log_id: id,
+          approver_username: currentUser,
+          remarks: approvalRemark,
+        });
+  
+        successAlert(res.data?.message || "Report rejected successfully.");
+        navigate("/notifications");
+      } catch (err) {
+        console.error("Reject error:", err);
+        errorAlert(err.response?.data?.error || "Reject failed.");
+      } finally {
+        setApprovalLoading(false);
+      }
+    };
+  
+    const isAlreadyReviewed =
+      approvalStatus &&
+      (approvalStatus.toLowerCase().includes("approved") ||
+        approvalStatus.toLowerCase().includes("rejected"));
+  
+    const goBack = () => {
+      if (isViewMode) {
+        navigate('/notifications');
+        return;
+      }
+      navigate('/Maintenance/Machine/weekly');
+    };
+
   return (
     <div className="container-fluid py-3 py-md-4" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       <style>{`
@@ -226,6 +356,29 @@ const MachinePreventMainForm = () => {
           <h3 className="fw-bold mb-1 fs-5 fs-md-3" style={{ color: '#e91e63' }}>Machine Preventive Maintenance</h3>
           <p className="text-muted mb-0" style={{ fontSize: '0.85rem' }}>Complete maintenance checklist and tracking system</p>
         </div>
+
+         {isViewMode && approvalStatus && (
+          <div className="px-3 px-md-4 pt-3">
+            <div className="d-flex flex-column flex-sm-row justify-content-between gap-2 p-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+              <div>
+                <div className="form-label mb-0">Current Status</div>
+                <div className="fw-bold" style={{
+                  color: approvalStatus.toLowerCase().includes('approved') ? '#16a34a'
+                    : approvalStatus.toLowerCase().includes('rejected') ? '#dc2626'
+                    : '#d97706'
+                }}>
+                  {approvalStatus}
+                </div>
+              </div>
+              {reviewedAt && (
+                <div>
+                  <div className="form-label mb-0">Reviewed At</div>
+                  <div className="fw-bold text-dark">{reviewedAt}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="card-body p-3 p-md-4">
           <form onSubmit={handleSubmit}>
@@ -319,9 +472,7 @@ const MachinePreventMainForm = () => {
               <div className="d-flex align-items-center gap-2"><span className="w-4 h-4 rounded-circle" style={{ width: '14px', height: '14px', backgroundColor: '#f59e0b', borderRadius: '50%' }}></span><span className="text-sm fw-medium" style={{ color: '#495057' }}>Ng (No Good)</span></div>
             </div>
 
-            <div className="d-flex flex-column flex-sm-row justify-content-end gap-3 mt-4 pt-3 no-print border-top">
-                {/* Prepared By */}
-  <div className="flex flex-col">
+              <div className="flex flex-col">
     <label className="text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
       Prepared By
     </label>
@@ -333,6 +484,10 @@ const MachinePreventMainForm = () => {
       className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-pink-600 w-full sm:w-64"
     />
   </div>
+       {!isViewMode && (
+            <div className="d-flex flex-column flex-sm-row justify-content-end gap-3 mt-4 pt-3 no-print border-top">
+                {/* Prepared By */}
+
               <button 
                 type="button" 
                 className="btn btn-light rounded-pill px-4 shadow-sm w-100 w-sm-auto" 
@@ -345,7 +500,48 @@ const MachinePreventMainForm = () => {
                 <i className="bi bi-floppy me-2"></i> Save Record
               </button>
             </div>
+       )}
           </form>
+           {isViewMode && (
+            <div className="mt-4 pt-4 no-print" style={{ borderTop: '2px solid #1e293b' }}>
+              <label className="form-label">APPROVAL / REJECTION REMARK:</label>
+              <textarea
+                rows="3"
+                className="form-control"
+                value={approvalRemark}
+                onChange={(e) => setApprovalRemark(e.target.value)}
+                disabled={isAlreadyReviewed}
+                placeholder="Enter approval or rejection remark..."
+              />
+
+              {isAlreadyReviewed ? (
+                <div className="mt-3 p-3" style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+                  This report is already reviewed. No further action is required.
+                </div>
+              ) : (
+                <div className="d-flex flex-column-reverse flex-sm-row gap-3 justify-content-end mt-3">
+                  <button
+                    type="button"
+                    onClick={handleReject}
+                    disabled={approvalLoading}
+                    className="btn rounded-pill px-4 shadow-sm w-100 w-sm-auto text-white"
+                    style={{ background: '#ef4444', fontWeight: 600 }}
+                  >
+                    {approvalLoading ? 'Please wait...' : 'Reject'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApprove}
+                    disabled={approvalLoading}
+                    className="btn rounded-pill px-4 shadow-sm w-100 w-sm-auto text-white"
+                    style={{ background: '#10b981', fontWeight: 600 }}
+                  >
+                    {approvalLoading ? 'Please wait...' : 'Approve'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

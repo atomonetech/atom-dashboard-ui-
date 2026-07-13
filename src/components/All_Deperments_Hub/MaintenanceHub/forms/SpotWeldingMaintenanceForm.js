@@ -367,7 +367,7 @@ const SpotWeldingMaintenanceForm = () => {
 
       
           {isViewMode && (
-          <div className="px-3 px-md-4 pt-3">
+          <div className="px-3 mx-auto px-md-4 pt-3"  style={{ maxWidth: '1200px',  }} >
             <span className="badge px-3 py-2 d-inline-block text-primary" style={{ backgroundColor: '#eff6ff', border: '1px solid #93c5fd', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Review Mode
             </span>
@@ -375,7 +375,7 @@ const SpotWeldingMaintenanceForm = () => {
         )}
 
         {isViewMode && approvalStatus && (
-          <div className="px-3 px-md-4 pt-3">
+          <div className="px-3 mx-auto  px-md-4 pt-3"  style={{ maxWidth: '1200px',  }} >
             <div className="d-flex flex-column flex-sm-row justify-content-between gap-2 p-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
               <div>
                 <div className="form-label mb-0">Current Status</div>

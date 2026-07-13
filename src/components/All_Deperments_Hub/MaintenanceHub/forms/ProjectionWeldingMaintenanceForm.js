@@ -84,6 +84,7 @@ const ProjectionWeldingMaintenanceForm = () => {
             maintenancePersonnel: meta.maintenancePersonnel || '',
             preparedBy: meta.preparedBy || '',
             checkedBy: meta.checkedBy || '',
+           
           });
 
           const rows = Array.isArray(data.tableData) ? data.tableData : [];
@@ -167,8 +168,8 @@ const currentUser = localStorage.getItem("username") || "Unknown User";
       location: metaData.location,
       specification: metaData.specification,
       maintenance_personnel: metaData.maintenancePersonnel,
-      prepared_by: metaData.preparedBy,
-      checked_by: metaData.checkedBy,
+      prepared_by:  currentUser,
+      checked_by: currentUser,
       checkpoints: tableData.map((row, index) => ({
         sr_no: index + 1,
         check_point: row.point,

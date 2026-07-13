@@ -1,6 +1,7 @@
 import React, { useState,useEffect } from 'react';
 import { useNavigate,useParams } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+
 import { getApiUrl } from '../../../../config/api';
 import {
   successAlert,
@@ -140,10 +141,10 @@ const DrillMachineMaintenanceForm = () => {
                     ? rows.map((row, index) => ({
                         id: row.sr_no || index + 1,
                         point: row.point || '',
-                        parameter: row.parameter || '',
-                        method: row.method || '',
-                        before: row.before || '',
-                        after: row.after || '',
+                        parameter: row.checking_parameter || '',
+                        method: row.checking_method || '',
+                        before: row.before_maintenance || '',
+                        after: row.after_maintenance || '',
                         remarks: row.remarks || '',
                       }))
                     : initialChecklist
@@ -220,9 +221,8 @@ const DrillMachineMaintenanceForm = () => {
       );
 
       if (response.ok) {
-        const currentUser = localStorage.getItem("username") || "Unknown User";
-
-        alert("✨ Drill record saved successfully!");
+       
+        successAlert("✨ Drill record saved successfully!");
         setMetaData(initialMetaData);
         setTableData(initialChecklist);
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -371,6 +371,36 @@ const DrillMachineMaintenanceForm = () => {
             </div>
           </div>
         </div>
+        {isViewMode && (
+          <div className="px-3 mx-auto px-md-4 pt-3"  style={{ maxWidth: '1200px',  }} >
+            <span className="badge px-3 py-2 d-inline-block text-primary" style={{ backgroundColor: '#eff6ff', border: '1px solid #93c5fd', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Review Mode
+            </span>
+          </div>
+        )}
+
+        {isViewMode && approvalStatus && (
+          <div className="px-3 mx-auto  px-md-4 pt-3"  style={{ maxWidth: '1200px',  }} >
+            <div className="d-flex flex-column flex-sm-row justify-content-between gap-2 p-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+              <div>
+                <div className="form-label mb-0">Current Status</div>
+                <div className="fw-bold" style={{
+                  color: approvalStatus.toLowerCase().includes('approved') ? '#16a34a'
+                    : approvalStatus.toLowerCase().includes('rejected') ? '#dc2626'
+                    : '#d97706'
+                }}>
+                  {approvalStatus}
+                </div>
+              </div>
+              {reviewedAt && (
+                <div>
+                  <div className="form-label mb-0">Reviewed At</div>
+                  <div className="fw-bold text-dark">{reviewedAt}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="card-body p-4">
           <form onSubmit={handleSubmit}>
@@ -560,7 +590,7 @@ const DrillMachineMaintenanceForm = () => {
                 />
               </div>
             </div>
-
+         {!isViewMode &&(
             <div className="text-end mt-4">
               <button
                 type="submit"
@@ -570,7 +600,48 @@ const DrillMachineMaintenanceForm = () => {
                 {isSubmitting ? "Submitting..." : "Save Drill Record"}
               </button>
             </div>
+         )}
           </form>
+           {isViewMode && (
+            <div className="mt-4 pt-4 no-print" style={{ borderTop: '2px solid #1e293b' }}>
+              <label className="form-label">APPROVAL / REJECTION REMARK:</label>
+              <textarea
+                rows="3"
+                className="form-control"
+                value={approvalRemark}
+                onChange={(e) => setApprovalRemark(e.target.value)}
+                disabled={isAlreadyReviewed}
+                placeholder="Enter approval or rejection remark..."
+              />
+
+              {isAlreadyReviewed ? (
+                <div className="mt-3 p-3" style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '8px', fontWeight: 600, color: '#334155', fontSize: '0.9rem' }}>
+                  This report is already reviewed. No further action is required.
+                </div>
+              ) : (
+                <div className="d-flex flex-column-reverse flex-sm-row gap-3 justify-content-end mt-3">
+                  <button
+                    type="button"
+                    onClick={handleReject}
+                    disabled={approvalLoading}
+                    className="btn rounded-pill px-4 shadow-sm w-100 w-sm-auto text-white"
+                    style={{ background: '#ef4444', fontWeight: 600 }}
+                  >
+                    {approvalLoading ? 'Please wait...' : 'Reject'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApprove}
+                    disabled={approvalLoading}
+                    className="btn rounded-pill px-4 shadow-sm w-100 w-sm-auto text-white"
+                    style={{ background: '#10b981', fontWeight: 600 }}
+                  >
+                    {approvalLoading ? 'Please wait...' : 'Approve'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

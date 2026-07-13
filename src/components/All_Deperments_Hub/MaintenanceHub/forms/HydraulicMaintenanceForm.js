@@ -244,8 +244,8 @@ const handleSubmit = async (e) => {
     location: location,
     specification: metaData.specification,
     maintenance_personnel: maintenancePersonnel,
-    prepared_by: currentUser,
-    checked_by: currentUser, 
+    prepared_by: metaData.preparedBy,
+    checked_by: metaData.checkedBy, 
     checkpoints: tableData.map((row, index) => ({
       sr_no: index + 1,
       check_point: row.point,

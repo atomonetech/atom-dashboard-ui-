@@ -29,6 +29,7 @@ import MonthlyProdPlanPrint from '../components/All_Deperments_Hub/ProductionHub
  import MonthlyProcessValidationPrint from  '../components/All_Deperments_Hub/ProductionHub/Views/Monthly/MonthlyProcessValidationPrint'
  import PreventiveMaintenancePrint from '../components/All_Deperments_Hub/ProductionHub/Views/Monthly/PreventiveMaintenancePrint'
  import OperatorObservancePlanPrint from '../components/All_Deperments_Hub/ProductionHub/Views/Monthly/OperatorObservancePlanPrint'
+ import OperatorObservanceCheckSheetPrint from '../components/All_Deperments_Hub/ProductionHub/Views/Monthly/OperatorObservanceCheckSheetPrint'
 import ProcessValidationForm from '../components/All_Deperments_Hub/ProductionHub/forms/monthly/ProcessValidationForm';
 import WelderQualificationForm from '../components/All_Deperments_Hub/ProductionHub/forms/monthly/WelderQualTigMigForm';
 import ProjectionWelderForm from '../components/All_Deperments_Hub/ProductionHub/forms/monthly/ProjectionWelderForm';
@@ -89,6 +90,7 @@ const ProductionRoutes = () => {
       <Route path="monthly/Operator-Observance-Plan" element={<OperatorObservancePlan />} />
       <Route path="monthly/Operator-Observance-Report" element={<OperatorObservancePlanPrint />} />
       <Route path="monthly/Operator-Observance-Check-Form" element={<OperatorObservanceChecklistForm />} />
+       <Route path="monthly/Operator-Observance-checksheet" element={<OperatorObservanceCheckSheetPrint />} />
 
       {/* --- YEARLY ROUTES --- */}
       <Route path="yearly/Plant-Capacity-Form" element={<PlantCapacityForm />} />
