@@ -1450,7 +1450,7 @@ export default function LandingPage() {
         </div>
 
         {/* Navigation */}
-        <nav className="relative z-10 flex items-center justify-between px-6 sm:px-8 md:px-12 py-4 md:py-5 bg-[var(--nav-bg)] backdrop-blur-xl border-b border-[var(--border)]">
+        <nav className="relative z-10 flex items-center justify-between px-6 sm:px-8 md:px-12 py-2 md:py-3 bg-[var(--nav-bg)] backdrop-blur-xl border-b border-[var(--border)]">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}

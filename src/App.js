@@ -23,9 +23,9 @@ import { UserProvider } from "./context/UserContext";
 import Auth from "./components/Auth";
 import Dashboard from "./components/Dashboard";
 import AssignMachine from "./components/AssignMachine";
-import IdleCase from "./components/IdleCase";
+// import IdleCase from "./components/IdleCase";
 import MachineAssignments from "./components/MachineAssignments";
-import IdleReportsList from "./components/IdleReportsList";
+// import IdleReportsList from "./components/IdleReportsList";
 import MachinesStatus from "./components/MachinesStatus";
 import Plant2Live from "./components/Plant2Live";
 import Plant1Live from "./components/Plant1Live";
@@ -361,7 +361,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
+            {/* <Route
               path="/idle-case"
               element={
                 <ProtectedRoute adminOnly={true}>
@@ -376,7 +376,7 @@ function App() {
                   <IdleReportsList onLogout={handleLogout} />
                 </ProtectedRoute>
               }
-            />
+            /> */}
 
             {/* 🔥 SPECIFIC PLANT ROUTES (Maha Important Fix) 🔥 */}
             <Route

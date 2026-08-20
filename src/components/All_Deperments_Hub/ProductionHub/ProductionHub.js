@@ -406,7 +406,7 @@ const ProductionHub = () => {
                     display: flex; 
                     justify-content: space-between; 
                     align-items: center; 
-                    padding: 0 2rem; 
+                    padding: 15px 2rem; 
                     box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
                     z-index: 1000; 
                     gap: 15px; 
@@ -416,7 +416,7 @@ const ProductionHub = () => {
                     color: #3b82f6; 
                     margin: 0; 
                     cursor: pointer; 
-                    font-size: 1.4rem; 
+                    font-size: 1.3rem; 
                     display: flex; 
                     align-items: center; 
                 }
@@ -431,17 +431,17 @@ const ProductionHub = () => {
                 /* --- Header Section (Clean Style) --- */
                 .hub-header { 
                     text-align: center; 
-                    padding: 40px 20px 24px; 
+                    padding: 15px 20px 10px; 
                 }
                 .hub-header h1 { 
-                    font-size: 2.4rem; 
+                    font-size: 2.1rem; 
                     font-weight: 900; 
                     color: #3b82f6; 
-                    margin-bottom: 8px; 
+                    margin-bottom: 4px; 
                 }
                 .hub-header p { 
                     color: #64748b; 
-                    font-size: 1rem; 
+                    font-size: 0.95rem; 
                     max-width: 600px; 
                     margin: 0 auto; 
                 }
