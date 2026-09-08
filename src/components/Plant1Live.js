@@ -848,10 +848,79 @@
 //   );
 // }
 // src/components/Plant1Live.js - UPDATED TO MATCH PLANT 2 FEATURES (WEBSOCKET, ADVANCED IDLE METRICS, SHIFT SUMMARY & HISTORY)
+// src/components/Plant1Live.js - UPDATED TO MATCH PLANT 2 FEATURES + RESPONSIVE UI & MACHINE INFO
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9000";
+
+// =================================================================================
+// MACHINE COMPANY & CAPACITY MAPPING FOR PLANT 1
+// =================================================================================
+const MACHINE_SPECS = {
+  1: { company: "SNX", capacity: 63 },
+  2: { company: "SNX", capacity: 63 },
+  3: { company: "SNX", capacity: 63 },
+  4: { company: "SNX", capacity: 63 },
+  5: { company: "ISGEC", capacity: 160 },
+  6: { company: "ISGEC", capacity: 160 },
+  7: { company: "SNX", capacity: 63 },
+  8: { company: "SNX", capacity: 63 },
+  9: { company: "SNX", capacity: 110 },
+  10: { company: "SNX", capacity: 63 },
+  11: { company: "SNX", capacity: 110 },
+  12: { company: "SNX", capacity: 63 },
+  13: { company: "SNX", capacity: 63 },
+  14: { company: "SNX", capacity: 63 },
+  15: { company: "SNX", capacity: 63 },
+  16: { company: "SNX", capacity: 63 },
+  17: { company: "SNX", capacity: 110 },
+  18: { company: "SNX", capacity: 110 },
+  19: { company: "SNX", capacity: 110 },
+  20: { company: "SNX", capacity: 110 },
+  21: { company: "ISGEC", capacity: 160 },
+  22: { company: "ISGEC", capacity: 160 },
+  23: { company: "ISGEC", capacity: 160 },
+  24: { company: "SNX", capacity: 110 },
+  25: { company: "SNX", capacity: 110 },
+  26: { company: "ISGEC", capacity: 63 },
+  27: { company: "ISGEC", capacity: 63 },
+  28: { company: "ISGEC", capacity: 63 },
+  29: { company: "ISGEC", capacity: 63 },
+  30: { company: "ISGEC", capacity: 63 },
+  31: { company: "ISGEC", capacity: 63 },
+  32: { company: "ISGEC", capacity: 63 },
+  33: { company: "ISGEC", capacity: 63 },
+  34: { company: "ISGEC", capacity: 63 },
+  35: { company: "ISGEC", capacity: 63 },
+  36: { company: "SNX", capacity: 110 },
+  37: { company: "SNX", capacity: 110 },
+  38: { company: "SNX", capacity: 110 },
+  39: { company: "SNX", capacity: 110 },
+  40: { company: "ISGEC", capacity: 110 },
+  41: { company: "ISGEC", capacity: 110 },
+  42: { company: "ISGEC", capacity: 110 },
+  43: { company: "ISGEC", capacity: 110 },
+  44: { company: "ISGEC", capacity: 110 },
+  45: { company: "ISGEC", capacity: 110 },
+  46: { company: "ISGEC", capacity: 63 },
+  47: { company: "ISGEC", capacity: 63 },
+  48: { company: "ISGEC", capacity: 63 },
+  49: { company: "ISGEC", capacity: 63 },
+  50: { company: "ISGEC", capacity: 110 },
+  51: { company: "ISGEC", capacity: 110 },
+  52: { company: "ISGEC", capacity: 110 },
+  53: { company: "ISGEC", capacity: 110 },
+  54: { company: "ISGEC", capacity: 63 },
+  55: { company: "ISGEC", capacity: 63 },
+  56: { company: "ISGEC", capacity: 63 },
+  57: { company: "ISGEC", capacity: 63 }
+};
+
+const getMachineSpec = (machineNo) => {
+  const num = parseInt(String(machineNo).replace(/\D/g, ''), 10);
+  return MACHINE_SPECS[num] || { company: 'N/A', capacity: 'N/A' };
+};
 
 // =================================================================================
 // IDLE REASONS & ICONS DATA
@@ -1172,32 +1241,16 @@ export default function Plant1Live() {
     return machine?.machine_on ? "Online Ideal" : "Offline Ideal";
   };
 
-  // ==========================================================
-  // LOWER IDEAL BOX
-
-  //
-  // OFFLINE:
-  //   saved OFFLINE ideal + current OFFLINE TIMER
-  //
-  // ONLINE and OFFLINE never mix.
-  // ==========================================================
-
   const getStoredIdealSeconds = (machine) => {
     if (!machine) return 0;
-
-    // Machine ON -> ONLINE history
     if (machine.machine_on) {
       return Number(machine.stored_online_ideal_shift || 0);
     }
-
-    // Machine OFF -> OFFLINE history
     return Number(machine.stored_offline_ideal_shift || 0);
   };
 
   const getCurrentIdealSeconds = (machine, currentLiveSeconds = 0) => {
     if (!machine) return 0;
-
-    // Running machine has no CURRENT Ideal.
     if (machine.is_producing) {
       return 0;
     }
@@ -1206,38 +1259,16 @@ export default function Plant1Live() {
       .trim()
       .toUpperCase();
 
-    // ========================================================
-    // ONLINE IDLE
-    //
-    // ONLINE is NOT hour-split.
-    // Therefore use full current physical ONLINE event.
-    // ========================================================
-
     if (machine.machine_on && apiMode === "ONLINE") {
       return Math.max(0, Number(machine.live_ideal_time || 0));
     }
 
-    // ========================================================
-    // OFFLINE
-    //
-    // Previous completed hours already exist in stored DB total.
-    // Therefore use ONLY current-hour open tail.
-    // ========================================================
-
     if (!machine.machine_on) {
-      // Backend current-hour OFFLINE time
       const apiLiveOffline =
         apiMode === "OFFLINE"
           ? Math.max(0, Number(machine.live_ideal_hour_time || 0))
           : 0;
-
-      // Frontend OFFLINE TIMER
-      // This is already running every second.
       const frontendLiveOffline = Math.max(0, Number(currentLiveSeconds || 0));
-
-      // Use whichever is latest.
-      // DO NOT ADD both because they represent
-      // the same current OFFLINE period.
       return Math.max(apiLiveOffline, frontendLiveOffline);
     }
 
@@ -1246,17 +1277,6 @@ export default function Plant1Live() {
 
   const getVisibleIdealSeconds = (machine, currentLiveSeconds = 0) => {
     if (!machine) return 0;
-
-    // ========================================================
-    // OFFLINE - FINAL DIRECT CALCULATION
-    //
-    // IMPORTANT:
-    // Use EXACT SAME timer which is displayed in
-    // the big OFFLINE TIMER box.
-    //
-    // Lower Offline Ideal =
-    // Stored Offline Ideal + Current Offline Timer
-    // ========================================================
 
     if (!machine.machine_on) {
       const storedOfflineSeconds = Math.max(
@@ -1272,12 +1292,7 @@ export default function Plant1Live() {
       return storedOfflineSeconds + currentOfflineSeconds;
     }
 
-    // ========================================================
-    // ONLINE - KEEP EXISTING WORKING LOGIC UNCHANGED
-    // ========================================================
-
     const stored = getStoredIdealSeconds(machine);
-
     const current = getCurrentIdealSeconds(machine, currentLiveSeconds);
 
     return Math.max(0, stored + current);
@@ -1285,17 +1300,9 @@ export default function Plant1Live() {
 
   const getVisibleIdealDisplay = (machine, currentLiveSeconds = 0) => {
     const totalSeconds = getVisibleIdealSeconds(machine, currentLiveSeconds);
-
     if (totalSeconds <= 0) {
       return "0 sec";
     }
-
-    // Below card:
-    // seconds nahi dikhane hain.
-    //
-    // 48 sec       -> 0 min
-    // 12m 27s      -> 12 min
-    // 3h 07m 48s   -> 3 hr 7 min
     return formatIdealDuration(totalSeconds, true);
   };
 
@@ -1477,10 +1484,6 @@ export default function Plant1Live() {
 
           const liveData = response.data || {};
 
-          // =====================================================
-          // 1. IDLE/OFFLINE REASON UPDATED
-          // Another user filled the reason
-          // =====================================================
           if (liveData.event_type === "idle_reason_updated") {
             const machineNo = liveData.machine_no;
 
@@ -1491,7 +1494,6 @@ export default function Plant1Live() {
               [machineNo]: liveData.reason_state || "IDLE",
             }));
 
-            // Keep machine object consistent too
             setMachines((prevMachines) =>
               prevMachines.map((machine) =>
                 sameMachine(machine.machine_no, machineNo)
@@ -1517,10 +1519,6 @@ export default function Plant1Live() {
             return;
           }
 
-          // =====================================================
-          // 2. IDEAL REPORT SUBMITTED FROM IdleCase.js
-          // Do NOT treat this as COUNT data
-          // =====================================================
           if (liveData.event_type === "ideal_report_updated") {
             const machineNo = liveData.machine_no;
 
@@ -1535,8 +1533,6 @@ export default function Plant1Live() {
                   ? "OFFLINE"
                   : "IDLE";
 
-              // IMPORTANT:
-              // Every browser gets Submitted status immediately.
               setReasonLoggedStates((prev) => ({
                 ...prev,
                 [machineNo]: submittedState,
@@ -1576,9 +1572,6 @@ export default function Plant1Live() {
             return;
           }
 
-          // =====================================================
-          // 3. NORMAL MQTT / COUNT UPDATE
-          // =====================================================
           const liveMachineNo = liveData.machine_no;
 
           if (liveMachineNo === undefined || liveMachineNo === null) {
@@ -1915,9 +1908,6 @@ export default function Plant1Live() {
 
       // ============================================================
       // 2. CURRENT MACHINE MODE
-      //
-      // machine ON but no production = ONLINE Ideal
-      // machine OFF = OFFLINE Ideal
       // ============================================================
 
       const currentMode = selectedMachine.machine_on ? "ONLINE" : "OFFLINE";
@@ -1929,15 +1919,6 @@ export default function Plant1Live() {
 
       // ============================================================
       // 3. GET NOTIFICATIONS
-      //
-      // IMPORTANT:
-      // Dashboard old closed pending events ko use nahi karega.
-      //
-      // Current active notification:
-      // created_at = NULL
-      //
-      // Final architecture:
-      // Notification ID == Ideal Event ID
       // ============================================================
 
       const notificationResponse = await fetch(
@@ -1968,8 +1949,6 @@ export default function Plant1Live() {
       const allNotifications = Array.isArray(notificationData.data)
         ? notificationData.data
         : [];
-
-      console.log("🔔 ALL MACHINE NOTIFICATIONS:", allNotifications);
 
       // ============================================================
       // 4. FIND ONLY CURRENT ACTIVE EVENT
@@ -2009,8 +1988,6 @@ export default function Plant1Live() {
         );
       });
 
-      console.log("🎯 CURRENT ACTIVE NOTIFICATION:", currentNotifications);
-
       // ============================================================
       // 5. CURRENT EVENT MUST EXIST
       // ============================================================
@@ -2023,18 +2000,11 @@ export default function Plant1Live() {
         );
       }
 
-      // ============================================================
-      // CURRENT EVENT SELECTION
-      // Old stale OPEN events DB me reh sakte hain.
-      // Dashboard always latest PENDING event choose karega.
-      // ============================================================
-
       const sortedCurrentNotifications = [...currentNotifications].sort(
         (a, b) => {
           const timeA = a.idle_started_at
             ? new Date(a.idle_started_at).getTime()
             : 0;
-
           const timeB = b.idle_started_at
             ? new Date(b.idle_started_at).getTime()
             : 0;
@@ -2042,41 +2012,18 @@ export default function Plant1Live() {
           if (timeB !== timeA) {
             return timeB - timeA;
           }
-
           return Number(b.id || 0) - Number(a.id || 0);
         },
       );
 
       const currentNotification = sortedCurrentNotifications[0];
-
-      console.log(
-        "🎯 PLANT 1 SELECTED CURRENT NOTIFICATION:",
-        currentNotification,
-      );
-
-      if (currentNotifications.length > 1) {
-        console.warn(
-          "⚠️ Old active-looking notifications ignored:",
-          currentNotifications.filter((n) => n.id !== currentNotification.id),
-        );
-      }
-
-      // ============================================================
-      // SAME ID:
-      //
-      // Notification ID == Ideal Event ID
-      // ============================================================
-
       const eventId = currentNotification.id;
-
-      console.log("✅ CURRENT IDEAL EVENT:", eventId, currentNotification);
 
       // ============================================================
       // 6. OPERATOR + TOOL AUTO FILL
       // ============================================================
 
       let operatorName = "Auto Operator";
-
       let toolName = "Unknown Tool";
 
       try {
@@ -2093,7 +2040,6 @@ export default function Plant1Live() {
 
         if (autoData.success) {
           operatorName = autoData.operator_name || "Auto Operator";
-
           toolName = autoData.tool_id || "Unknown Tool";
         }
       } catch (autoError) {
@@ -2106,32 +2052,16 @@ export default function Plant1Live() {
 
       const payload = {
         plant_no: 1,
-
         machine_no: selectedMachine.machine_no,
-
         operator_name: operatorName,
-
         tool_name: toolName,
-
-        // IMPORTANT:
-        // Backend field = reason_category
         reason_category: finalCategory,
-
         specific_reason: idleSubReason,
-
         remark: finalRemarks,
-
-        // Notification ID == Ideal ID
         notification_id: eventId,
-
         ideal_mode: currentMode,
-
-        // Tells backend that current OPEN event
-        // is being filled from Plant dashboard.
         submission_source: "PLANT_DASHBOARD",
       };
-
-      console.log("📤 CURRENT IDLE REASON SUBMIT:", eventId, payload);
 
       // ============================================================
       // 8. SUBMIT EXACT IDEAL EVENT
@@ -2141,20 +2071,15 @@ export default function Plant1Live() {
         `${API_BASE}/api/ideal-reports/${eventId}/submit/`,
         {
           method: "POST",
-
           headers: {
             "Content-Type": "application/json",
-
             Authorization: `Bearer ${token}`,
           },
-
           body: JSON.stringify(payload),
         },
       );
 
       const data = await response.json();
-
-      console.log("📥 IDEAL REASON RESPONSE:", response.status, data);
 
       if (response.status === 401) {
         throw new Error("Session expired. Please login again.");
@@ -2173,11 +2098,8 @@ export default function Plant1Live() {
       // 9. SUCCESS
       // ============================================================
 
-      console.log("✅ CURRENT IDLE REASON SUBMITTED:", data);
-
       setReasonLoggedStates((prev) => ({
         ...prev,
-
         [selectedMachine.machine_no]:
           currentMode === "OFFLINE" ? "OFFLINE" : "IDLE",
       }));
@@ -2189,12 +2111,8 @@ export default function Plant1Live() {
 
       window.dispatchEvent(new Event("notificationCountRefresh"));
 
-      // alert(
-      //   "Idle reason submitted successfully."
-      // );
     } catch (err) {
       console.error("❌ Error logging reason:", err);
-
       alert(`Reason could not be saved: ${err.message}`);
     } finally {
       setIsSubmittingReason(false);
@@ -2450,6 +2368,9 @@ export default function Plant1Live() {
           const showIdlePulse = !isCurrentlyLunch && !machine.is_producing;
           const hasLoggedReason = reasonLoggedStates[machine.machine_no];
 
+          // 👇 GET MACHINE SPEC FOR DISPLAY IN GRID
+          const spec = getMachineSpec(machine.machine_no);
+
           return (
             <div
               key={machine.machine_no}
@@ -2477,6 +2398,7 @@ export default function Plant1Live() {
                   marginBottom: "16px",
                 }}
               >
+                {/* 👇 GRID HEADER CHANGED AS REQUESTED */}
                 <div
                   style={{
                     fontSize: "24px",
@@ -2487,7 +2409,21 @@ export default function Plant1Live() {
                     gap: "8px",
                   }}
                 >
-                  Machine {machine.machine_no}
+                  PP-{String(machine.machine_no).padStart(2, '0')}
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: "#fbbf24",
+                      fontWeight: "800",
+                      padding: "4px 8px",
+                      background: "rgba(245, 158, 11, 0.1)",
+                      border: "1px solid rgba(245, 158, 11, 0.3)",
+                      borderRadius: "6px",
+                      marginLeft: "6px",
+                    }}
+                  >
+                    {spec.company !== "N/A" ? spec.company : "N/A"}
+                  </span>
                 </div>
                 <div
                   style={{
@@ -2861,852 +2797,184 @@ export default function Plant1Live() {
         })}
       </div>
 
-      {/* MODAL POPUP */}
+      {/* MODAL POPUP - ENTIRELY REPLACED WITH TXT RESPONSIVE COMPONENT */}
       {selectedMachine && (
-        <div
-          onClick={closeModal}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(2, 6, 23, 0.85)",
-            backdropFilter: "blur(8px)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1000,
-            padding: "20px",
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: "#0f172a",
-              borderRadius: "24px",
-              padding: 0,
-              maxWidth: "800px",
-              width: "100%",
-              maxHeight: "90vh",
-              overflowY: "auto",
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8)",
-              border: `1px solid rgba(255,255,255,0.1)`,
-            }}
-          >
-            <div
-              style={{
-                padding: "30px",
-                background: `linear-gradient(135deg, ${getMachineColor(
-                  selectedMachine,
-                )} 0%, #0f172a 150%)`,
-                borderTopLeftRadius: "24px",
-                borderTopRightRadius: "24px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "20px" }}
-                >
-                  <div
-                    style={{
-                      fontSize: "32px",
-                      fontWeight: "900",
-                      color: "white",
-                    }}
-                  >
-                    Machine {selectedMachine.machine_no}
+        <div onClick={closeModal} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(2, 6, 23, 0.85)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: 'clamp(10px, 2vw, 20px)' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: '#0f172a', borderRadius: '20px', padding: 0, maxWidth: '800px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)', border: `1px solid rgba(255,255,255,0.1)` }}>
+            <div style={{ padding: 'clamp(14px, 3vw, 30px)', background: `linear-gradient(135deg, ${getMachineColor(selectedMachine)} 0%, #0f172a 150%)`, borderTopLeftRadius: '20px', borderTopRightRadius: '20px' }}>
+              
+              {/* FIXED RESPONSIVE HEADER START */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'clamp(8px, 2vw, 15px)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 10px)', flexWrap: 'wrap', flex: 1 }}>
+                  
+                  <div style={{ fontSize: 'clamp(18px, 5vw, 32px)', fontWeight: '900', color: 'white', wordBreak: 'break-word' }}>
+                    PP-{String(selectedMachine.machine_no).trim().padStart(2, '0')}
                   </div>
-                  {!showHistoryView && (
-                    <div
-                      style={{
-                        padding: "8px 20px",
-                        backgroundColor: "rgba(0,0,0,0.3)",
-                        color: "white",
-                        borderRadius: "30px",
-                        fontWeight: "800",
-                      }}
-                    >
-                      {getMachineStatus(selectedMachine)}
-                    </div>
-                  )}
-                  <div
-                    title={
-                      showHistoryView
-                        ? "Back to Dashboard"
-                        : "View Timeline History"
-                    }
-                    style={{
-                      position: "relative",
-                      cursor: "pointer",
-                      padding: "10px 15px",
-                      backgroundColor: showHistoryView
-                        ? "#10b981"
-                        : "rgba(0,0,0,0.3)",
-                      color: "white",
-                      borderRadius: "30px",
-                      fontWeight: "700",
-                      border: "1px solid rgba(255,255,255,0.1)",
-                      transition: "all 0.2s",
-                      display: "flex",
-                      gap: "8px",
-                      alignItems: "center",
-                    }}
-                    onClick={toggleHistoryView}
-                  >
-                    <span style={{ fontSize: "18px" }}>
-                      {showHistoryView ? "🔙" : "📅"}
+                  
+                  {!showHistoryView && <div style={{ padding: 'clamp(4px, 1vw, 8px) clamp(10px, 2vw, 20px)', fontSize: 'clamp(10px, 2.5vw, 14px)', backgroundColor: 'rgba(0,0,0,0.3)', color: 'white', borderRadius: '30px', fontWeight: '800', whiteSpace: 'nowrap' }}>{getMachineStatus(selectedMachine)}</div>}
+                  <div title={showHistoryView ? "Back to Dashboard" : "View Timeline History"} style={{ position: 'relative', cursor: 'pointer', padding: 'clamp(4px, 1vw, 10px) clamp(10px, 2vw, 15px)', fontSize: 'clamp(10px, 2.5vw, 14px)', backgroundColor: showHistoryView ? '#10b981' : 'rgba(0,0,0,0.3)', color: 'white', borderRadius: '30px', fontWeight: '700', border: '1px solid rgba(255,255,255,0.1)', transition: 'all 0.2s', display: 'flex', gap: '6px', alignItems: 'center', whiteSpace: 'nowrap' }} onClick={toggleHistoryView}>
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      {showHistoryView ? (
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+                      ) : (
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+                      )}
                     </span>
                     <span>{showHistoryView ? "Live View" : "History"}</span>
                   </div>
                 </div>
-                <button
-                  onClick={closeModal}
-                  style={{
-                    background: "rgba(0,0,0,0.3)",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "50%",
-                    width: "44px",
-                    height: "44px",
-                    fontSize: "24px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  ×
-                </button>
+                <button onClick={closeModal} style={{ background: 'rgba(0,0,0,0.3)', color: 'white', border: 'none', borderRadius: '50%', width: 'clamp(28px, 5vw, 44px)', height: 'clamp(28px, 5vw, 44px)', fontSize: 'clamp(16px, 4vw, 24px)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
               </div>
+              {/* FIXED RESPONSIVE HEADER END */}
+
             </div>
 
             {showHistoryView ? (
-              <div style={{ padding: "30px" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "24px",
-                    gap: "15px",
-                    flexWrap: "wrap",
-                  }}
-                >
+              <div style={{ padding: 'clamp(14px, 3vw, 30px)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'clamp(12px, 3vw, 24px)', gap: '12px', flexWrap: 'wrap' }}>
                   <div>
-                    <h2 style={{ margin: 0, color: "#f8fafc" }}>
-                      Shift Wise History
-                    </h2>
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        color: "#94a3b8",
-                        marginTop: "6px",
-                      }}
-                    >
-                      Lunch: 12:45 PM - 01:15 PM
-                    </div>
+                    <h2 style={{ margin: 0, color: '#f8fafc', fontSize: 'clamp(15px, 4vw, 24px)' }}>Shift Wise History</h2>
+                    <div style={{ fontSize: 'clamp(9px, 2vw, 12px)', color: '#94a3b8', marginTop: '4px' }}>Lunch: 12:15 PM - 12:45 PM | Shift A End: 08:00 PM</div>
                   </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "10px",
-                      alignItems: "center",
-                    }}
-                  >
-                    <select
-                      value={historyShift}
-                      onChange={(e) => {
-                        setHistoryShift(e.target.value);
-                        fetchMachineHistory(
-                          selectedMachine.machine_no,
-                          historyDate,
-                          e.target.value,
-                        );
-                      }}
-                      style={{
-                        padding: "10px 15px",
-                        borderRadius: "8px",
-                        border: "1px solid rgba(255,255,255,0.2)",
-                        background: "#1e293b",
-                        color: "white",
-                        fontFamily: "inherit",
-                        fontWeight: "bold",
-                      }}
-                    >
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <select value={historyShift} onChange={(e) => { setHistoryShift(e.target.value); fetchMachineHistory(selectedMachine.machine_no, historyDate, e.target.value); }} style={{ padding: 'clamp(6px, 1.5vw, 10px) clamp(8px, 2vw, 15px)', fontSize: 'clamp(11px, 2.5vw, 14px)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: '#1e293b', color: 'white', fontFamily: 'inherit', fontWeight: 'bold' }}>
                       <option value="A">Shift A</option>
                       <option value="B">Shift B</option>
                       <option value="ALL">Full Day</option>
                     </select>
-                    <input
-                      type="date"
-                      value={historyDate}
-                      onChange={(e) => {
-                        setHistoryDate(e.target.value);
-                        fetchMachineHistory(
-                          selectedMachine.machine_no,
-                          e.target.value,
-                          historyShift,
-                        );
-                      }}
-                      style={{
-                        padding: "10px 15px",
-                        borderRadius: "8px",
-                        border: "1px solid rgba(255,255,255,0.2)",
-                        background: "#1e293b",
-                        color: "white",
-                        fontFamily: "inherit",
-                        fontWeight: "bold",
-                      }}
-                    />
+                    <input type="date" value={historyDate} onChange={(e) => { setHistoryDate(e.target.value); fetchMachineHistory(selectedMachine.machine_no, e.target.value, historyShift); }} style={{ padding: 'clamp(6px, 1.5vw, 10px) clamp(8px, 2vw, 15px)', fontSize: 'clamp(11px, 2.5vw, 14px)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: '#1e293b', color: 'white', fontFamily: 'inherit', fontWeight: 'bold' }} />
                   </div>
                 </div>
                 {historyError ? (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      padding: "50px",
-                      background: "rgba(239, 68, 68, 0.1)",
-                      borderRadius: "16px",
-                      border: "1px dashed rgba(239, 68, 68, 0.3)",
-                    }}
-                  >
-                    <div style={{ fontSize: "40px", marginBottom: "10px" }}>
-                      ⚠️
-                    </div>
-                    <h3 style={{ color: "#ef4444", margin: 0 }}>
-                      API Connection Error
-                    </h3>
-                    <p style={{ color: "#fca5a5", fontSize: "14px" }}>
-                      {historyError}
-                    </p>
-                  </div>
+                  <div style={{ textAlign: 'center', padding: 'clamp(20px, 5vw, 50px)', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '16px', border: '1px dashed rgba(239, 68, 68, 0.3)' }}><div style={{ fontSize: 'clamp(24px, 6vw, 40px)', marginBottom: '10px' }}>⚠️</div><h3 style={{ color: '#ef4444', margin: 0, fontSize: 'clamp(14px, 3vw, 18px)' }}>API Connection Error</h3><p style={{ color: '#fca5a5', fontSize: 'clamp(11px, 2.5vw, 14px)' }}>{historyError}</p></div>
                 ) : historyLoading ? (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      padding: "50px",
-                      color: "#94a3b8",
-                    }}
-                  >
-                    <div
-                      className="loader"
-                      style={{
-                        margin: "0 auto 20px",
-                        border: "3px solid rgba(255,255,255,0.1)",
-                        borderTop: "3px solid #10b981",
-                        borderRadius: "50%",
-                        width: "40px",
-                        height: "40px",
-                        animation: "spin 1s linear infinite",
-                      }}
-                    ></div>
-                    Loading Shift History...
-                  </div>
-                ) : historyData.length === 0 &&
-                  historyHourlySummary.length === 0 ? (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      padding: "50px",
-                      background: "rgba(255,255,255,0.02)",
-                      borderRadius: "16px",
-                      border: "1px dashed rgba(255,255,255,0.05)",
-                    }}
-                  >
-                    <div style={{ fontSize: "40px", marginBottom: "10px" }}>
-                      📭
-                    </div>
-                    <h3 style={{ color: "#94a3b8", margin: 0 }}>
-                      No Events Found
-                    </h3>
-                    <p style={{ color: "#64748b", fontSize: "14px" }}>
-                      There are no recorded events for this machine on{" "}
-                      {historyDate}
-                    </p>
-                  </div>
+                  <div style={{ textAlign: 'center', padding: 'clamp(20px, 5vw, 50px)', color: '#94a3b8', fontSize: 'clamp(12px, 3vw, 14px)' }}><div className="loader" style={{ margin: '0 auto 15px', border: '3px solid rgba(255,255,255,0.1)', borderTop: '3px solid #10b981', borderRadius: '50%', width: 'clamp(24px, 5vw, 40px)', height: 'clamp(24px, 5vw, 40px)', animation: 'spin 1s linear infinite' }}></div>Loading Shift History...</div>
+                ) : historyData.length === 0 && historyHourlySummary.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: 'clamp(20px, 5vw, 50px)', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.05)' }}><div style={{ fontSize: 'clamp(24px, 6vw, 40px)', marginBottom: '10px' }}>📭</div><h3 style={{ color: '#94a3b8', margin: 0, fontSize: 'clamp(14px, 3vw, 18px)' }}>No Events Found</h3><p style={{ color: '#64748b', fontSize: 'clamp(11px, 2.5vw, 14px)' }}>There are no recorded events for this machine on {historyDate}</p></div>
                 ) : (
                   <>
                     {historySummary && (
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns:
-                            "repeat(auto-fit, minmax(145px, 1fr))",
-                          gap: "12px",
-                          marginBottom: "20px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            padding: "14px",
-                            background: "rgba(16,185,129,0.08)",
-                            border: "1px solid rgba(16,185,129,0.2)",
-                            borderRadius: "12px",
-                            textAlign: "center",
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontSize: "10px",
-                              color: "#94a3b8",
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            Production
-                          </div>
-                          <div
-                            style={{
-                              fontSize: "24px",
-                              color: "#10b981",
-                              fontWeight: "900",
-                            }}
-                          >
-                            {historySummary.production?.total_count || 0}
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            padding: "14px",
-                            background: "rgba(245,158,11,0.08)",
-                            border: "1px solid rgba(245,158,11,0.2)",
-                            borderRadius: "12px",
-                            textAlign: "center",
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontSize: "10px",
-                              color: "#94a3b8",
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            Online Ideal
-                          </div>
-                          <div
-                            style={{
-                              fontSize: "16px",
-                              color: "#f59e0b",
-                              fontWeight: "900",
-                            }}
-                          >
-                            {historySummary.ideal?.online_ideal_display ||
-                              "0 sec"}
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            padding: "14px",
-                            background: "rgba(100,116,139,0.12)",
-                            border: "1px solid rgba(100,116,139,0.25)",
-                            borderRadius: "12px",
-                            textAlign: "center",
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontSize: "10px",
-                              color: "#94a3b8",
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            Offline Ideal
-                          </div>
-                          <div
-                            style={{
-                              fontSize: "16px",
-                              color: "#cbd5e1",
-                              fontWeight: "900",
-                            }}
-                          >
-                            {historySummary.ideal?.offline_ideal_display ||
-                              "0 sec"}
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            padding: "14px",
-                            background: "rgba(59,130,246,0.08)",
-                            border: "1px solid rgba(59,130,246,0.2)",
-                            borderRadius: "12px",
-                            textAlign: "center",
-                          }}
-                        >
-                          <div
-                            style={{
-                              fontSize: "10px",
-                              color: "#94a3b8",
-                              textTransform: "uppercase",
-                            }}
-                          >
-                            Total Ideal
-                          </div>
-                          <div
-                            style={{
-                              fontSize: "16px",
-                              color: "#60a5fa",
-                              fontWeight: "900",
-                            }}
-                          >
-                            {historySummary.ideal?.total_ideal_display ||
-                              "0 sec"}
-                          </div>
-                        </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 'clamp(8px, 2vw, 12px)', marginBottom: 'clamp(15px, 3vw, 20px)' }}>
+                        <div style={{ padding: 'clamp(8px, 2vw, 14px)', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '10px', textAlign: 'center' }}><div style={{ fontSize: 'clamp(8px, 2vw, 10px)', color: '#94a3b8', textTransform: 'uppercase' }}>Production</div><div style={{ fontSize: 'clamp(16px, 4vw, 24px)', color: '#10b981', fontWeight: '900' }}>{historySummary.production?.total_count || 0}</div></div>
+                        <div style={{ padding: 'clamp(8px, 2vw, 14px)', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '10px', textAlign: 'center' }}><div style={{ fontSize: 'clamp(8px, 2vw, 10px)', color: '#94a3b8', textTransform: 'uppercase' }}>Online Ideal</div><div style={{ fontSize: 'clamp(12px, 3vw, 16px)', color: '#f59e0b', fontWeight: '900' }}>{historySummary.ideal?.online_ideal_display || '0 sec'}</div></div>
+                        <div style={{ padding: 'clamp(8px, 2vw, 14px)', background: 'rgba(100,116,139,0.12)', border: '1px solid rgba(100,116,139,0.25)', borderRadius: '10px', textAlign: 'center' }}><div style={{ fontSize: 'clamp(8px, 2vw, 10px)', color: '#94a3b8', textTransform: 'uppercase' }}>Offline Ideal</div><div style={{ fontSize: 'clamp(12px, 3vw, 16px)', color: '#cbd5e1', fontWeight: '900' }}>{historySummary.ideal?.offline_ideal_display || '0 sec'}</div></div>
+                        <div style={{ padding: 'clamp(8px, 2vw, 14px)', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '10px', textAlign: 'center' }}><div style={{ fontSize: 'clamp(8px, 2vw, 10px)', color: '#94a3b8', textTransform: 'uppercase' }}>Total Ideal</div><div style={{ fontSize: 'clamp(12px, 3vw, 16px)', color: '#60a5fa', fontWeight: '900' }}>{historySummary.ideal?.total_ideal_display || '0 sec'}</div></div>
                       </div>
                     )}
 
                     {historyMachineMeta && (
-                      <div
-                        style={{
-                          padding: "14px 16px",
-                          background: "rgba(2,6,23,0.35)",
-                          border: "1px solid rgba(255,255,255,0.05)",
-                          borderRadius: "12px",
-                          marginBottom: "20px",
-                          display: "grid",
-                          gridTemplateColumns:
-                            "repeat(auto-fit, minmax(150px, 1fr))",
-                          gap: "10px",
-                        }}
-                      >
-                        <div>
-                          <span style={{ color: "#64748b", fontSize: "11px" }}>
-                            Customer
-                          </span>
-                          <div style={{ fontWeight: "800", color: "#fff" }}>
-                            {historyMachineMeta.customer_name ||
-                              historyMachineMeta.customer ||
-                              "N/A"}
-                          </div>
-                        </div>
-                        <div>
-                          <span style={{ color: "#64748b", fontSize: "11px" }}>
-                            Model
-                          </span>
-                          <div style={{ fontWeight: "800", color: "#fff" }}>
-                            {historyMachineMeta.model_name ||
-                              historyMachineMeta.model ||
-                              "N/A"}
-                          </div>
-                        </div>
-                        <div>
-                          <span style={{ color: "#64748b", fontSize: "11px" }}>
-                            Part Name
-                          </span>
-                          <div style={{ fontWeight: "800", color: "#fff" }}>
-                            {historyMachineMeta.part_name || "N/A"}
-                          </div>
-                        </div>
-                        <div>
-                          <span style={{ color: "#64748b", fontSize: "11px" }}>
-                            Part Number
-                          </span>
-                          <div style={{ fontWeight: "800", color: "#fff" }}>
-                            {historyMachineMeta.part_number || "N/A"}
-                          </div>
-                        </div>
-                        <div>
-                          <span style={{ color: "#64748b", fontSize: "11px" }}>
-                            Tool Name
-                          </span>
-                          <div style={{ fontWeight: "800", color: "#fff" }}>
-                            {historyMachineMeta.tool_name || "N/A"}
-                          </div>
-                        </div>
-                        <div>
-                          <span style={{ color: "#64748b", fontSize: "11px" }}>
-                            Tool ID
-                          </span>
-                          <div
-                            style={{
-                              fontWeight: "800",
-                              color: "#10b981",
-                              wordBreak: "break-all",
-                            }}
-                          >
-                            {historyMachineMeta.tool_id ||
-                              historyMachineMeta.epc ||
-                              "N/A"}
-                          </div>
-                        </div>
-                        <div>
-                          <span style={{ color: "#64748b", fontSize: "11px" }}>
-                            Latest Shut Height
-                          </span>
-                          <div style={{ fontWeight: "800", color: "#fbbf24" }}>
-                            {historyMachineMeta.shut_height || "N/A"}
-                          </div>
-                        </div>
+                      <div style={{ padding: 'clamp(10px, 2vw, 14px) clamp(12px, 2vw, 16px)', background: 'rgba(2,6,23,0.35)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', marginBottom: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>
+                        <div><span style={{ color: '#64748b', fontSize: 'clamp(9px, 2vw, 11px)' }}>Customer</span><div style={{ fontWeight: '800', color: '#fff' }}>{historyMachineMeta.customer_name || historyMachineMeta.customer || 'N/A'}</div></div>
+                        <div><span style={{ color: '#64748b', fontSize: 'clamp(9px, 2vw, 11px)' }}>Model</span><div style={{ fontWeight: '800', color: '#fff' }}>{historyMachineMeta.model_name || historyMachineMeta.model || 'N/A'}</div></div>
+                        <div><span style={{ color: '#64748b', fontSize: 'clamp(9px, 2vw, 11px)' }}>Part Name</span><div style={{ fontWeight: '800', color: '#fff' }}>{historyMachineMeta.part_name || 'N/A'}</div></div>
+                        <div><span style={{ color: '#64748b', fontSize: 'clamp(9px, 2vw, 11px)' }}>Part Number</span><div style={{ fontWeight: '800', color: '#fff' }}>{historyMachineMeta.part_number || 'N/A'}</div></div>
+                        <div><span style={{ color: '#64748b', fontSize: 'clamp(9px, 2vw, 11px)' }}>Tool Name</span><div style={{ fontWeight: '800', color: '#fff' }}>{historyMachineMeta.tool_name || 'N/A'}</div></div>
+                        <div><span style={{ color: '#64748b', fontSize: 'clamp(9px, 2vw, 11px)' }}>Tool ID</span><div style={{ fontWeight: '800', color: '#10b981', wordBreak: 'break-all' }}>{historyMachineMeta.tool_id || historyMachineMeta.epc || 'N/A'}</div></div>
+                        <div><span style={{ color: '#64748b', fontSize: 'clamp(9px, 2vw, 11px)' }}>Latest Shut Height</span><div style={{ fontWeight: '800', color: '#fbbf24' }}>{historyMachineMeta.shut_height || 'N/A'}</div></div>
                       </div>
                     )}
 
-                    <h3 style={{ margin: "0 0 14px 0", color: "#f8fafc" }}>
-                      Hourly Shift Story
-                    </h3>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "14px",
-                        marginBottom: "30px",
-                      }}
-                    >
-                      {historyHourlySummary.map((hour, index) => (
-                        <div
-                          key={index}
-                          style={{
-                            background: "rgba(15,23,42,0.72)",
-                            border: "1px solid rgba(255,255,255,0.07)",
-                            borderRadius: "16px",
-                            padding: "16px",
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              gap: "10px",
-                              flexWrap: "wrap",
-                              marginBottom: "12px",
-                            }}
-                          >
-                            <div
-                              style={{ fontWeight: "900", color: "#f8fafc" }}
-                            >
-                              🕒 {hour.bucket_start_display} -{" "}
-                              {hour.bucket_end_display}
+                    <h3 style={{ margin: '0 0 12px 0', color: '#f8fafc', fontSize: 'clamp(14px, 3.5vw, 18px)' }}>Hourly Shift Story</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+                      {historyHourlySummary.map((hour, index) => {
+                        
+                        const combinedEvents = [];
+                        (hour.ideal_segments || []).forEach(seg => combinedEvents.push({ type: 'IDEAL', timeStr: seg.start_time, data: seg }));
+                        (hour.on_off_events || []).forEach(ev => combinedEvents.push({ type: 'ON_OFF', timeStr: ev.time, data: ev }));
+                        (hour.tool_changes || []).forEach(ev => combinedEvents.push({ type: 'TOOL_CHANGE', timeStr: ev.time, data: ev }));
+                        (hour.shut_height_changes || []).forEach(ev => combinedEvents.push({ type: 'SHUT_HEIGHT_CHANGE', timeStr: ev.time, data: ev }));
+
+                        const parseTimeToSeconds = (tStr) => {
+                          if (!tStr) return 0;
+                          const match = tStr.match(/(\d+):(\d+):?(\d+)?\s*(AM|PM)/i);
+                          if (!match) return 0;
+                          let [_, h, m, s, modifier] = match;
+                          h = parseInt(h, 10);
+                          if (h === 12) h = 0;
+                          if (modifier && modifier.toUpperCase() === 'PM') h += 12;
+                          return h * 3600 + parseInt(m, 10) * 60 + parseInt(s || 0, 10);
+                        };
+
+                        combinedEvents.sort((a, b) => {
+                          const timeA = parseTimeToSeconds(a.timeStr);
+                          const timeB = parseTimeToSeconds(b.timeStr);
+                          
+                          if (Math.abs(timeA - timeB) <= 2) {
+                            const priority = { 'ON_OFF': 1, 'TOOL_CHANGE': 2, 'SHUT_HEIGHT_CHANGE': 3, 'IDEAL': 4 };
+                            return (priority[a.type] || 5) - (priority[b.type] || 5);
+                          }
+                          return timeA - timeB;
+                        });
+
+                        return (
+                          <div key={index} style={{ background: 'rgba(15,23,42,0.72)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: 'clamp(10px, 2.5vw, 16px)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                              <div style={{ fontWeight: '900', color: '#f8fafc', fontSize: 'clamp(12px, 3vw, 16px)' }}>🕒 {hour.bucket_start_display} - {hour.bucket_end_display}</div>
+                              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', fontSize: 'clamp(9px, 2.5vw, 12px)', fontWeight: '800' }}>
+                                <span style={{ color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '4px 8px', borderRadius: '999px' }}>Count: {hour.count || 0}</span>
+                                <span style={{ color: '#f59e0b', background: 'rgba(245,158,11,0.1)', padding: '4px 8px', borderRadius: '999px' }}>Online: {hour.online_ideal_display || '0 sec'}</span>
+                                <span style={{ color: '#cbd5e1', background: 'rgba(100,116,139,0.18)', padding: '4px 8px', borderRadius: '999px' }}>Offline: {hour.offline_ideal_display || '0 sec'}</span>
+                              </div>
                             </div>
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: "8px",
-                                flexWrap: "wrap",
-                                fontSize: "12px",
-                                fontWeight: "800",
-                              }}
-                            >
-                              <span
-                                style={{
-                                  color: "#10b981",
-                                  background: "rgba(16,185,129,0.1)",
-                                  padding: "5px 9px",
-                                  borderRadius: "999px",
-                                }}
-                              >
-                                Count: {hour.count || 0}
-                              </span>
-                              <span
-                                style={{
-                                  color: "#f59e0b",
-                                  background: "rgba(245,158,11,0.1)",
-                                  padding: "5px 9px",
-                                  borderRadius: "999px",
-                                }}
-                              >
-                                Online: {hour.online_ideal_display || "0 sec"}
-                              </span>
-                              <span
-                                style={{
-                                  color: "#cbd5e1",
-                                  background: "rgba(100,116,139,0.18)",
-                                  padding: "5px 9px",
-                                  borderRadius: "999px",
-                                }}
-                              >
-                                Offline: {hour.offline_ideal_display || "0 sec"}
-                              </span>
+
+                            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              {combinedEvents.map((item, i) => {
+                                if (item.type === 'IDEAL') {
+                                  const seg = item.data;
+                                  return (
+                                    <div key={i} style={{ padding: '8px', background: seg.mode === 'OFFLINE' ? 'rgba(100,116,139,0.12)' : 'rgba(245,158,11,0.08)', borderLeft: `3px solid ${seg.mode === 'OFFLINE' ? '#64748b' : '#f59e0b'}`, borderRadius: '6px' }}>
+                                      <div style={{ color: '#e2e8f0', fontWeight: '800', fontSize: 'clamp(11px, 2.5vw, 13px)' }}>{seg.mode} Ideal: {seg.start_time} → {seg.end_time} ({seg.bucket_overlap_display || seg.duration_display})</div>
+                                      <div style={{ color: '#94a3b8', fontSize: 'clamp(9px, 2vw, 12px)', marginTop: '2px' }}>Reason: {seg.reason || 'Uncategorized'} / {seg.specific_reason || 'Reason Not Provided'} {seg.remark ? ` | ${seg.remark}` : ''}</div>
+                                    </div>
+                                  );
+                                }
+                                if (item.type === 'ON_OFF') {
+                                  return <div key={i} style={{ color: '#cbd5e1', fontSize: 'clamp(10px, 2.5vw, 13px)', padding: '3px 0' }}>{eventIcons[item.data.type] || '📌'} {item.data.time} - {item.data.title}: {item.data.details}</div>;
+                                }
+                                if (item.type === 'TOOL_CHANGE' || item.type === 'SHUT_HEIGHT_CHANGE') {
+                                  const ev = item.data;
+                                  return (
+                                    <div key={i} style={{ color: '#93c5fd', fontSize: 'clamp(10px, 2.5vw, 13px)', padding: '3px 0' }}>
+                                      {item.type === 'TOOL_CHANGE' ? '⚙️' : '🔧'} {ev.time} - {ev.details}
+                                      {(ev.part_name || ev.part_number || ev.model_name || ev.tool_name) && (
+                                        <div style={{ marginTop: '2px', color: '#cbd5e1', fontSize: 'clamp(9px, 2vw, 12px)' }}>
+                                          {ev.customer_name || ev.customer || 'N/A'} | {ev.model_name || ev.model || 'N/A'} | {ev.part_name || 'N/A'} | Part No: {ev.part_number || 'N/A'} | Tool: {ev.tool_name || 'N/A'}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })}
                             </div>
                           </div>
-
-                          {(hour.ideal_segments || []).length > 0 && (
-                            <div style={{ marginTop: "10px" }}>
-                              <div
-                                style={{
-                                  fontSize: "11px",
-                                  color: "#94a3b8",
-                                  fontWeight: "800",
-                                  marginBottom: "6px",
-                                  textTransform: "uppercase",
-                                }}
-                              >
-                                Ideal Segments
-                              </div>
-                              {(hour.ideal_segments || []).map((seg, i) => (
-                                <div
-                                  key={i}
-                                  style={{
-                                    padding: "9px 10px",
-                                    background:
-                                      seg.mode === "OFFLINE"
-                                        ? "rgba(100,116,139,0.12)"
-                                        : "rgba(245,158,11,0.08)",
-                                    borderLeft: `3px solid ${
-                                      seg.mode === "OFFLINE"
-                                        ? "#64748b"
-                                        : "#f59e0b"
-                                    }`,
-                                    borderRadius: "8px",
-                                    marginBottom: "6px",
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      color: "#e2e8f0",
-                                      fontWeight: "800",
-                                      fontSize: "13px",
-                                    }}
-                                  >
-                                    {seg.mode} Ideal: {seg.start_time} →{" "}
-                                    {seg.end_time} (
-                                    {seg.bucket_overlap_display ||
-                                      seg.duration_display}
-                                    )
-                                  </div>
-                                  <div
-                                    style={{
-                                      color: "#94a3b8",
-                                      fontSize: "12px",
-                                      marginTop: "3px",
-                                    }}
-                                  >
-                                    Reason: {seg.reason || "Uncategorized"} /{" "}
-                                    {seg.specific_reason ||
-                                      "Reason Not Provided"}{" "}
-                                    {seg.remark ? ` | ${seg.remark}` : ""}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {(hour.on_off_events || []).length > 0 && (
-                            <div style={{ marginTop: "10px" }}>
-                              <div
-                                style={{
-                                  fontSize: "11px",
-                                  color: "#94a3b8",
-                                  fontWeight: "800",
-                                  marginBottom: "6px",
-                                  textTransform: "uppercase",
-                                }}
-                              >
-                                Machine ON/OFF
-                              </div>
-                              {(hour.on_off_events || []).map((ev, i) => (
-                                <div
-                                  key={i}
-                                  style={{
-                                    color: "#cbd5e1",
-                                    fontSize: "13px",
-                                    marginBottom: "4px",
-                                  }}
-                                >
-                                  {eventIcons[ev.type] || "📌"} {ev.time} -{" "}
-                                  {ev.title}: {ev.details}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {((hour.tool_changes || []).length > 0 ||
-                            (hour.shut_height_changes || []).length > 0) && (
-                            <div style={{ marginTop: "10px" }}>
-                              <div
-                                style={{
-                                  fontSize: "11px",
-                                  color: "#94a3b8",
-                                  fontWeight: "800",
-                                  marginBottom: "6px",
-                                  textTransform: "uppercase",
-                                }}
-                              >
-                                Tool / Shut Height Changes
-                              </div>
-                              {(hour.tool_changes || []).map((ev, i) => (
-                                <div
-                                  key={`tool-${i}`}
-                                  style={{
-                                    color: "#93c5fd",
-                                    fontSize: "13px",
-                                    marginBottom: "6px",
-                                  }}
-                                >
-                                  ⚙️ {ev.time} - {ev.details}
-                                  {(ev.part_name ||
-                                    ev.part_number ||
-                                    ev.model_name ||
-                                    ev.tool_name) && (
-                                    <div
-                                      style={{
-                                        marginTop: "3px",
-                                        color: "#cbd5e1",
-                                        fontSize: "12px",
-                                      }}
-                                    >
-                                      {ev.customer_name || ev.customer || "N/A"}{" "}
-                                      | {ev.model_name || ev.model || "N/A"} |{" "}
-                                      {ev.part_name || "N/A"} | Part No:{" "}
-                                      {ev.part_number || "N/A"} | Tool:{" "}
-                                      {ev.tool_name || "N/A"}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                              {(hour.shut_height_changes || []).map((ev, i) => (
-                                <div
-                                  key={`sh-${i}`}
-                                  style={{
-                                    color: "#93c5fd",
-                                    fontSize: "13px",
-                                    marginBottom: "6px",
-                                  }}
-                                >
-                                  🔧 {ev.time} - {ev.details}
-                                  {(ev.part_name ||
-                                    ev.part_number ||
-                                    ev.model_name ||
-                                    ev.tool_name) && (
-                                    <div
-                                      style={{
-                                        marginTop: "3px",
-                                        color: "#cbd5e1",
-                                        fontSize: "12px",
-                                      }}
-                                    >
-                                      {ev.customer_name || ev.customer || "N/A"}{" "}
-                                      | {ev.model_name || ev.model || "N/A"} |{" "}
-                                      {ev.part_name || "N/A"} | Part No:{" "}
-                                      {ev.part_number || "N/A"} | Tool:{" "}
-                                      {ev.tool_name || "N/A"}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
-                    <h3 style={{ margin: "0 0 14px 0", color: "#f8fafc" }}>
-                      Full Timeline
-                    </h3>
+                    <h3 style={{ margin: '0 0 12px 0', color: '#f8fafc', fontSize: 'clamp(14px, 3.5vw, 18px)' }}>Full Timeline</h3>
                     <div className="timeline-container">
                       <div className="timeline-line"></div>
                       {historyData.map((event, index) => {
-                        const isOff =
-                          event.type === "OFF" ||
-                          event.type === "IDEAL_OFFLINE";
-                        const isChange =
-                          String(event.type).includes("CHANGE") ||
-                          event.type === "TOOL_CHANGE" ||
-                          event.type === "SHUT_HEIGHT_CHANGE";
-                        const isIdeal = String(event.type).startsWith("IDEAL");
-                        const color = isOff
-                          ? "#64748b"
-                          : isChange
-                          ? "#3b82f6"
-                          : isIdeal
-                          ? "#f59e0b"
-                          : "#10b981";
+                        const isOff = event.type === 'OFF' || event.type === 'IDEAL_OFFLINE';
+                        const isChange = String(event.type).includes('CHANGE') || event.type === 'TOOL_CHANGE' || event.type === 'SHUT_HEIGHT_CHANGE';
+                        const isIdeal = String(event.type).startsWith('IDEAL');
+                        const color = isOff ? '#64748b' : isChange ? '#3b82f6' : isIdeal ? '#f59e0b' : '#10b981';
                         return (
                           <div key={index} className="timeline-item">
-                            <div
-                              className="timeline-icon"
-                              style={{ borderColor: color }}
-                            >
-                              {eventIcons[event.type] || "📌"}
-                            </div>
-                            <div
-                              className="timeline-content"
-                              style={{ borderLeft: `3px solid ${color}` }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  marginBottom: "8px",
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    fontWeight: "bold",
-                                    color: color,
-                                    fontSize: "16px",
-                                  }}
-                                >
-                                  {event.title || event.type.replace(/_/g, " ")}
-                                </span>
-                                <span
-                                  style={{
-                                    color: "#94a3b8",
-                                    fontSize: "14px",
-                                    background: "rgba(0,0,0,0.3)",
-                                    padding: "4px 10px",
-                                    borderRadius: "20px",
-                                  }}
-                                >
-                                  {event.time}
-                                </span>
+                            <div className="timeline-icon" style={{ borderColor: color }}>{eventIcons[event.type] || '📌'}</div>
+                            <div className="timeline-content" style={{ borderLeft: `3px solid ${color}`, padding: 'clamp(8px, 2vw, 12px)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', flexWrap: 'wrap', gap: '5px' }}>
+                                <span style={{ fontWeight: 'bold', color: color, fontSize: 'clamp(12px, 3vw, 16px)' }}>{event.title || event.type.replace(/_/g, ' ')}</span>
+                                <span style={{ color: '#94a3b8', fontSize: 'clamp(10px, 2.5vw, 14px)', background: 'rgba(0,0,0,0.3)', padding: '2px 8px', borderRadius: '15px' }}>{event.time}</span>
                               </div>
-                              <div
-                                style={{
-                                  color: "#e2e8f0",
-                                  fontSize: "14px",
-                                  lineHeight: "1.5",
-                                }}
-                              >
-                                {event.details ||
-                                  (isOff
-                                    ? "Machine detected as Offline/No Signal"
-                                    : "Machine Power/Signal Restored")}
-                              </div>
-                              {(event.part_name ||
-                                event.part_number ||
-                                event.model_name ||
-                                event.tool_name) && (
-                                <div
-                                  style={{
-                                    marginTop: "8px",
-                                    padding: "8px 10px",
-                                    borderRadius: "8px",
-                                    background: "rgba(59,130,246,0.08)",
-                                    color: "#cbd5e1",
-                                    fontSize: "12px",
-                                  }}
-                                >
-                                  <b style={{ color: "#93c5fd" }}>TID Map:</b>{" "}
-                                  {event.customer_name ||
-                                    event.customer ||
-                                    "N/A"}{" "}
-                                  | {event.model_name || event.model || "N/A"} |{" "}
-                                  {event.part_name || "N/A"} | Part No:{" "}
-                                  {event.part_number || "N/A"} | Tool:{" "}
-                                  {event.tool_name || "N/A"}
+                              <div style={{ color: '#e2e8f0', fontSize: 'clamp(11px, 2.5vw, 14px)', lineHeight: '1.4' }}>{event.details || (isOff ? 'Machine detected as Offline/No Signal' : 'Machine Power/Signal Restored')}</div>
+                              {(event.part_name || event.part_number || event.model_name || event.tool_name) && (
+                                <div style={{ marginTop: '6px', padding: '6px 8px', borderRadius: '6px', background: 'rgba(59,130,246,0.08)', color: '#cbd5e1', fontSize: 'clamp(9px, 2vw, 12px)' }}>
+                                  <b style={{ color: '#93c5fd' }}>TID Map:</b> {event.customer_name || event.customer || 'N/A'} | {event.model_name || event.model || 'N/A'} | {event.part_name || 'N/A'} | Part No: {event.part_number || 'N/A'} | Tool: {event.tool_name || 'N/A'}
                                 </div>
                               )}
-                              <div
-                                style={{
-                                  fontSize: "11px",
-                                  color: "#64748b",
-                                  marginTop: "10px",
-                                  display: "flex",
-                                  gap: "15px",
-                                  flexWrap: "wrap",
-                                }}
-                              >
-                                <span>Shift: {event.shift}</span>
-                                <span>
-                                  System Time:{" "}
-                                  {event.system_time || event.raw_time}
-                                </span>
-                              </div>
+                              <div style={{ fontSize: 'clamp(9px, 2vw, 11px)', color: '#64748b', marginTop: '8px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}><span>Shift: {event.shift}</span><span>System Time: {event.system_time || event.raw_time}</span></div>
                             </div>
                           </div>
                         );
@@ -3716,793 +2984,142 @@ export default function Plant1Live() {
                 )}
               </div>
             ) : (
-              <div
-                style={{
-                  padding: "30px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "24px",
-                }}
-              >
+              <div style={{ padding: 'clamp(14px, 3vw, 30px)', display: 'flex', flexDirection: 'column', gap: 'clamp(12px, 3vw, 24px)' }}>
+
                 {!selectedMachine.is_producing && (
-                  <div
-                    style={{
-                      background:
-                        "linear-gradient(145deg, rgba(245, 158, 11, 0.08), rgba(2, 6, 23, 0.8))",
-                      padding: "24px",
-                      borderRadius: "20px",
-                      border: "1px solid rgba(245, 158, 11, 0.2)",
-                      boxShadow: "inset 0 0 30px rgba(245, 158, 11, 0.05)",
-                    }}
-                  >
-                    <h3
-                      style={{
-                        margin: "0 0 24px 0",
-                        color: "#fbbf24",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                        fontSize: "20px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          background: "rgba(245, 158, 11, 0.2)",
-                          width: "36px",
-                          height: "36px",
-                          borderRadius: "10px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          boxShadow: "0 0 15px rgba(245, 158, 11, 0.3)",
-                        }}
-                      >
-                        <i
-                          className="bi bi-exclamation-triangle-fill"
-                          style={{ fontSize: "18px" }}
-                        ></i>
-                      </div>
+                  <div style={{ background: 'linear-gradient(145deg, rgba(245, 158, 11, 0.08), rgba(2, 6, 23, 0.8))', padding: 'clamp(12px, 3vw, 24px)', borderRadius: '16px', border: '1px solid rgba(245, 158, 11, 0.2)', boxShadow: 'inset 0 0 20px rgba(245, 158, 11, 0.05)' }}>
+                    <h3 style={{ margin: '0 0 16px 0', color: '#fbbf24', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', fontSize: 'clamp(14px, 3.5vw, 20px)' }}>
+                      <div style={{ background: 'rgba(245, 158, 11, 0.2)', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 10px rgba(245, 158, 11, 0.3)' }}><i className="bi bi-exclamation-triangle-fill" style={{ fontSize: '14px' }}></i></div>
                       Log Downtime Reason
-                      <span
-                        style={{
-                          fontSize: "12px",
-                          padding: "4px 10px",
-                          borderRadius: "6px",
-                          background: selectedMachine.machine_on
-                            ? "rgba(16, 185, 129, 0.2)"
-                            : "rgba(239, 68, 68, 0.2)",
-                          color: selectedMachine.machine_on
-                            ? "#34d399"
-                            : "#fca5a5",
-                          border: `1px solid ${
-                            selectedMachine.machine_on
-                              ? "rgba(16, 185, 129, 0.4)"
-                              : "rgba(239, 68, 68, 0.4)"
-                          }`,
-                          marginLeft: "auto",
-                        }}
-                      >
-                        {selectedMachine.machine_on
-                          ? "ONLINE (IDLE)"
-                          : "OFFLINE"}
+                      <span style={{ fontSize: 'clamp(9px, 2vw, 12px)', padding: '3px 8px', borderRadius: '4px', background: selectedMachine.machine_on ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: selectedMachine.machine_on ? '#34d399' : '#fca5a5', border: `1px solid ${selectedMachine.machine_on ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`, marginLeft: 'auto' }}>
+                        {selectedMachine.machine_on ? 'ONLINE (IDLE)' : 'OFFLINE'}
                       </span>
                     </h3>
 
                     {!reasonLoggedStates[selectedMachine.machine_no] ? (
                       <>
-                        <div style={{ marginBottom: "16px" }}>
-                          <label
-                            style={{
-                              fontSize: "11px",
-                              color: "#fcd34d",
-                              fontWeight: "800",
-                              textTransform: "uppercase",
-                              marginBottom: "8px",
-                              display: "block",
-                              letterSpacing: "1.5px",
-                            }}
-                          >
-                            1. Select Category
-                          </label>
-                          <CustomDropdown
-                            value={idleCategory}
-                            placeholder="-- Choose Category --"
-                            icon={true}
-                            options={Object.keys(IDLE_REASONS)}
-                            onChange={(val) => {
-                              setIdleCategory(val);
-                              if (val !== "Other") setCustomCategory("");
-                              if (val === "Other") {
-                                setIdleSubReason("Other");
-                              } else {
-                                setIdleSubReason("");
-                              }
-                              setIdleRemarks("");
-                            }}
-                          />
+                        <div style={{ marginBottom: '12px' }}>
+                          <label style={{ fontSize: 'clamp(9px, 2vw, 11px)', color: '#fcd34d', fontWeight: '800', textTransform: 'uppercase', marginBottom: '6px', display: 'block', letterSpacing: '1px' }}>1. Select Category</label>
+                          <CustomDropdown value={idleCategory} placeholder="-- Choose Category --" icon={true} options={Object.keys(IDLE_REASONS)} onChange={(val) => { setIdleCategory(val); if (val !== 'Other') setCustomCategory(''); if (val === 'Other') { setIdleSubReason('Other'); } else { setIdleSubReason(''); } setIdleRemarks(''); }} />
                         </div>
 
-                        {idleCategory === "Other" && (
-                          <div
-                            style={{
-                              marginBottom: "16px",
-                              animation:
-                                "slideDownDropdown 0.3s ease-out forwards",
-                            }}
-                          >
-                            <label
-                              style={{
-                                fontSize: "11px",
-                                color: "#10b981",
-                                fontWeight: "800",
-                                textTransform: "uppercase",
-                                marginBottom: "8px",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "5px",
-                                letterSpacing: "1.5px",
-                              }}
-                            >
-                              <i className="bi bi-pencil-square"></i> Please
-                              Specify Custom Category
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="Type custom category name..."
-                              value={customCategory}
-                              onChange={(e) =>
-                                setCustomCategory(e.target.value)
-                              }
-                              style={{
-                                width: "100%",
-                                padding: "14px 18px",
-                                borderRadius: "12px",
-                                background: "rgba(16, 185, 129, 0.05)",
-                                color: "#fff",
-                                border: "1px solid rgba(16, 185, 129, 0.4)",
-                                boxShadow: "inset 0 2px 10px rgba(0,0,0,0.2)",
-                                fontSize: "14px",
-                                outline: "none",
-                              }}
-                            />
+                        {idleCategory === 'Other' && (
+                          <div style={{ marginBottom: '12px', animation: 'slideDownDropdown 0.3s ease-out forwards' }}>
+                            <label style={{ fontSize: 'clamp(9px, 2vw, 11px)', color: '#10b981', fontWeight: '800', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px', letterSpacing: '1px' }}><i className="bi bi-pencil-square"></i> Please Specify Custom Category</label>
+                            <input type="text" placeholder="Type custom category name..." value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.05)', color: '#fff', border: '1px solid rgba(16, 185, 129, 0.4)', fontSize: 'clamp(11px, 2.5vw, 14px)', outline: 'none' }} />
                           </div>
                         )}
 
                         {idleCategory && (
-                          <div
-                            style={{
-                              marginBottom: "16px",
-                              animation:
-                                "slideDownDropdown 0.3s ease-out forwards",
-                            }}
-                          >
-                            <label
-                              style={{
-                                fontSize: "11px",
-                                color: "#fcd34d",
-                                fontWeight: "800",
-                                textTransform: "uppercase",
-                                marginBottom: "8px",
-                                display: "block",
-                                letterSpacing: "1.5px",
-                              }}
-                            >
-                              2. Specific Reason
-                            </label>
-                            <CustomDropdown
-                              value={idleSubReason}
-                              placeholder="-- Choose Reason --"
-                              icon={false}
-                              options={IDLE_REASONS[idleCategory]}
-                              onChange={(val) => {
-                                setIdleSubReason(val);
-                                if (val !== "Other") setIdleRemarks("");
-                              }}
-                            />
+                          <div style={{ marginBottom: '12px', animation: 'slideDownDropdown 0.3s ease-out forwards' }}>
+                            <label style={{ fontSize: 'clamp(9px, 2vw, 11px)', color: '#fcd34d', fontWeight: '800', textTransform: 'uppercase', marginBottom: '6px', display: 'block', letterSpacing: '1px' }}>2. Specific Reason</label>
+                            <CustomDropdown value={idleSubReason} placeholder="-- Choose Reason --" icon={false} options={IDLE_REASONS[idleCategory]} onChange={(val) => { setIdleSubReason(val); if (val !== 'Other') setIdleRemarks(''); }} />
                           </div>
                         )}
 
-                        {idleSubReason === "Other" && (
-                          <div
-                            style={{
-                              marginBottom: "24px",
-                              animation:
-                                "slideDownDropdown 0.3s ease-out forwards",
-                            }}
-                          >
-                            <label
-                              style={{
-                                fontSize: "11px",
-                                color: "#10b981",
-                                fontWeight: "800",
-                                textTransform: "uppercase",
-                                marginBottom: "8px",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "5px",
-                                letterSpacing: "1.5px",
-                              }}
-                            >
-                              <i className="bi bi-pencil-square"></i>{" "}
-                              {idleCategory === "Other"
-                                ? "3. Please Specify Exact Issue"
-                                : "3. Please Specify Reason"}
-                            </label>
-                            <textarea
-                              rows="2"
-                              placeholder="Type the exact issue here..."
-                              value={idleRemarks}
-                              onChange={(e) => setIdleRemarks(e.target.value)}
-                              style={{
-                                width: "100%",
-                                padding: "14px 18px",
-                                borderRadius: "12px",
-                                background: "rgba(16, 185, 129, 0.05)",
-                                color: "#fff",
-                                border: "1px solid rgba(16, 185, 129, 0.4)",
-                                boxShadow: "inset 0 2px 10px rgba(0,0,0,0.2)",
-                                fontSize: "14px",
-                                outline: "none",
-                                resize: "vertical",
-                              }}
-                            />
+                        {idleSubReason === 'Other' && (
+                          <div style={{ marginBottom: '16px', animation: 'slideDownDropdown 0.3s ease-out forwards' }}>
+                            <label style={{ fontSize: 'clamp(9px, 2vw, 11px)', color: '#10b981', fontWeight: '800', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px', letterSpacing: '1px' }}><i className="bi bi-pencil-square"></i> {idleCategory === 'Other' ? '3. Please Specify Exact Issue' : '3. Please Specify Reason'}</label>
+                            <textarea rows="2" placeholder="Type the exact issue here..." value={idleRemarks} onChange={(e) => setIdleRemarks(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.05)', color: '#fff', border: '1px solid rgba(16, 185, 129, 0.4)', fontSize: 'clamp(11px, 2.5vw, 14px)', outline: 'none', resize: 'vertical' }} />
                           </div>
                         )}
 
-                        <button
-                          onClick={handleReasonSubmit}
-                          disabled={isSubmittingReason || !isFormValid}
-                          style={{
-                            width: "100%",
-                            padding: "16px",
-                            borderRadius: "16px",
-                            marginTop: "10px",
-                            background: !isFormValid
-                              ? "rgba(255,255,255,0.05)"
-                              : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-                            color: !isFormValid ? "#475569" : "#fff",
-                            border: !isFormValid
-                              ? "1px dashed rgba(255,255,255,0.1)"
-                              : "none",
-                            fontWeight: "900",
-                            fontSize: "16px",
-                            letterSpacing: "1px",
-                            textTransform: "uppercase",
-                            cursor: !isFormValid ? "not-allowed" : "pointer",
-                            transition: "all 0.3s ease",
-                            boxShadow: isFormValid
-                              ? "0 10px 25px rgba(245, 158, 11, 0.5)"
-                              : "none",
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            gap: "10px",
-                          }}
-                        >
-                          {isSubmittingReason ? (
-                            <>
-                              <div
-                                className="loader"
-                                style={{
-                                  width: "20px",
-                                  height: "20px",
-                                  border: "3px solid rgba(255,255,255,0.3)",
-                                  borderTop: "3px solid #fff",
-                                  borderRadius: "50%",
-                                  animation: "spin 1s linear infinite",
-                                }}
-                              ></div>{" "}
-                              Submitting...
-                            </>
-                          ) : (
-                            <>
-                              <i className="bi bi-floppy-fill"></i> Save Reason
-                            </>
-                          )}
+                        <button onClick={handleReasonSubmit} disabled={isSubmittingReason || !isFormValid} style={{ width: '100%', padding: 'clamp(10px, 2.5vw, 16px)', borderRadius: '10px', marginTop: '6px', background: (!isFormValid) ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: (!isFormValid) ? '#475569' : '#fff', border: (!isFormValid) ? '1px dashed rgba(255,255,255,0.1)' : 'none', fontWeight: '800', fontSize: 'clamp(12px, 3vw, 16px)', letterSpacing: '1px', textTransform: 'uppercase', cursor: (!isFormValid) ? 'not-allowed' : 'pointer', transition: 'all 0.3s ease', boxShadow: (isFormValid) ? '0 6px 15px rgba(245, 158, 11, 0.4)' : 'none', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                          {isSubmittingReason ? <><div className="loader" style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid #fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div> Submitting...</> : <><i className="bi bi-floppy-fill"></i> Save</>}
                         </button>
                       </>
                     ) : (
-                      <div
-                        style={{
-                          textAlign: "center",
-                          padding: "10px",
-                          color: "#10b981",
-                          fontWeight: "bold",
-                          fontSize: "14px",
-                        }}
-                      >
-                        ✅ Reason has been successfully recorded for this
-                        session. It will reset when the machine starts running
-                        again.
-                      </div>
+                      <div style={{ textAlign: 'center', padding: '10px', color: '#10b981', fontWeight: 'bold', fontSize: 'clamp(10px, 2.5vw, 14px)' }}>✅ Reason has been successfully recorded for this session. It will reset when the machine starts running again.</div>
                     )}
                   </div>
                 )}
 
                 {isCurrentlyLunch && !selectedMachine.is_producing && (
-                  <div
-                    style={{
-                      background: "rgba(59, 130, 246, 0.15)",
-                      border: "1px solid rgba(96, 165, 250, 0.4)",
-                      color: "#93c5fd",
-                      padding: "16px",
-                      borderRadius: "12px",
-                      textAlign: "center",
-                      fontWeight: "800",
-                      letterSpacing: "2px",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      gap: "10px",
-                      textTransform: "uppercase",
-                      animation: "lunchBannerPulse 3s infinite",
-                    }}
-                  >
-                    <span style={{ fontSize: "24px" }}>🍽️</span>{" "}
-                    <span style={{ fontSize: "18px" }}>LUNCH TIME BREAK</span>
+                  <div style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(96, 165, 250, 0.4)', color: '#93c5fd', padding: '12px', borderRadius: '10px', textAlign: 'center', fontWeight: '800', letterSpacing: '1px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', textTransform: 'uppercase', animation: 'lunchBannerPulse 3s infinite' }}>
+                    <span style={{ fontSize: 'clamp(16px, 4vw, 24px)' }}>🍽️</span> <span style={{ fontSize: 'clamp(12px, 3vw, 18px)' }}>LUNCH TIME BREAK</span>
                   </div>
                 )}
 
-                <div
-                  style={{
-                    backgroundColor: "#1e293b",
-                    padding: "20px",
-                    borderRadius: "12px",
-                    border: "1px solid rgba(255,255,255,0.05)",
-                  }}
-                >
-                  <h3
-                    style={{
-                      margin: "0 0 16px 0",
-                      color: "#10b981",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <span>⏱️</span> Live Session Timings
-                  </h3>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fit, minmax(200px, 1fr))",
-                      gap: "15px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        padding: "16px",
-                        background: "rgba(16, 185, 129, 0.1)",
-                        borderRadius: "12px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontSize: "12px", color: "#94a3b8" }}>
-                          Machine Turned ON
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "20px",
-                            fontWeight: "700",
-                            color: "#34d399",
-                          }}
-                        >
-                          {selectedMachine.on_since || "--:--"}
-                        </div>
-                      </div>
-                      <div style={{ textAlign: "right" }}>
-                        <div
-                          style={{
-                            fontSize: "20px",
-                            fontWeight: "700",
-                            color: "#34d399",
-                          }}
-                        >
-                          {selectedMachine.on_duration_minutes || 0}
-                        </div>
-                        <div style={{ fontSize: "10px", color: "#94a3b8" }}>
-                          minutes ago
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        padding: "16px",
-                        background: "rgba(59, 130, 246, 0.1)",
-                        borderRadius: "12px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontSize: "12px", color: "#94a3b8" }}>
-                          First Count Received
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "20px",
-                            fontWeight: "700",
-                            color: "#60a5fa",
-                          }}
-                        >
-                          {selectedMachine.first_count_at || "--:--"}
-                        </div>
-                      </div>
-                      <div style={{ textAlign: "right" }}>
-                        <div
-                          style={{
-                            fontSize: "20px",
-                            fontWeight: "700",
-                            color: "#60a5fa",
-                          }}
-                        >
-                          {selectedMachine.time_to_first_count || 0}
-                        </div>
-                        <div style={{ fontSize: "10px", color: "#94a3b8" }}>
-                          min delay
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        padding: "16px",
-                        background: "rgba(245, 158, 11, 0.1)",
-                        borderRadius: "12px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontSize: "12px", color: "#94a3b8" }}>
-                          Last Count This Hour
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "20px",
-                            fontWeight: "700",
-                            color: "#fbbf24",
-                          }}
-                        >
-                          {selectedMachine.last_activity || "Never"}
-                        </div>
-                      </div>
-                      <div style={{ textAlign: "right" }}>
-                        <div
-                          style={{
-                            fontSize: "16px",
-                            fontWeight: "700",
-                            color: "#fbbf24",
-                          }}
-                        >
-                          {selectedMachine.current_hour_count} counts
-                        </div>
-                      </div>
-                    </div>
+                <div style={{ backgroundColor: '#1e293b', padding: 'clamp(12px, 3vw, 20px)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <h3 style={{ margin: '0 0 12px 0', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'clamp(14px, 3.5vw, 18px)' }}><span>⏱️</span> Live Session Timings</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+                    <div style={{ padding: 'clamp(10px, 2.5vw, 16px)', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '10px', display: 'flex', justifyContent: 'space-between' }}><div><div style={{ fontSize: 'clamp(9px, 2vw, 12px)', color: '#94a3b8' }}>Machine Turned ON</div><div style={{ fontSize: 'clamp(14px, 4vw, 20px)', fontWeight: '700', color: '#34d399' }}>{selectedMachine.on_since || '--:--'}</div></div><div style={{ textAlign: 'right' }}><div style={{ fontSize: 'clamp(14px, 4vw, 20px)', fontWeight: '700', color: '#34d399' }}>{selectedMachine.on_duration_minutes || 0}</div><div style={{ fontSize: 'clamp(8px, 2vw, 10px)', color: '#94a3b8' }}>minutes ago</div></div></div>
+                    <div style={{ padding: 'clamp(10px, 2.5vw, 16px)', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '10px', display: 'flex', justifyContent: 'space-between' }}><div><div style={{ fontSize: 'clamp(9px, 2vw, 12px)', color: '#94a3b8' }}>First Count Received</div><div style={{ fontSize: 'clamp(14px, 4vw, 20px)', fontWeight: '700', color: '#60a5fa' }}>{selectedMachine.first_count_at || '--:--'}</div></div><div style={{ textAlign: 'right' }}><div style={{ fontSize: 'clamp(14px, 4vw, 20px)', fontWeight: '700', color: '#60a5fa' }}>{selectedMachine.time_to_first_count || 0}</div><div style={{ fontSize: 'clamp(8px, 2vw, 10px)', color: '#94a3b8' }}>min delay</div></div></div>
+                    <div style={{ padding: 'clamp(10px, 2.5vw, 16px)', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '10px', display: 'flex', justifyContent: 'space-between' }}><div><div style={{ fontSize: 'clamp(9px, 2vw, 12px)', color: '#94a3b8' }}>Last Count This Hour</div><div style={{ fontSize: 'clamp(14px, 4vw, 20px)', fontWeight: '700', color: '#fbbf24' }}>{selectedMachine.last_activity || 'Never'}</div></div><div style={{ textAlign: 'right' }}><div style={{ fontSize: 'clamp(13px, 3.5vw, 16px)', fontWeight: '700', color: '#fbbf24' }}>{selectedMachine.current_hour_count} counts</div></div></div>
                   </div>
-                  <div
-                    style={{
-                      marginTop: "16px",
-                      padding: "16px",
-                      background: "rgba(2, 6, 23, 0.4)",
-                      borderRadius: "8px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <span style={{ color: "#94a3b8" }}>Status</span>
-                    <span
-                      style={{
-                        fontWeight: "bold",
-                        color: selectedMachine.is_producing
-                          ? "#10b981"
-                          : "#f59e0b",
-                      }}
-                    >
-                      {selectedMachine.is_producing
-                        ? "✅ Currently Producing"
-                        : "⚠️ Idle / Offline"}
+                  <div style={{ marginTop: '12px', padding: 'clamp(8px, 2vw, 16px)', background: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(11px, 2.5vw, 14px)' }}><span style={{ color: '#94a3b8' }}>Status</span><span style={{ fontWeight: 'bold', color: selectedMachine.is_producing ? '#10b981' : '#f59e0b' }}>{selectedMachine.is_producing ? '✅ Currently Producing' : '⚠️ Idle / Offline'}</span></div>
+                </div>
+                
+                <div style={{ textAlign: 'center', padding: 'clamp(16px, 4vw, 30px)', background: 'linear-gradient(145deg, #1e293b, #0f172a)', borderRadius: '16px', border: `1px solid rgba(255,255,255,0.05)`, boxShadow: `inset 0 4px 20px rgba(0,0,0,0.5)` }}><div style={{ fontSize: 'clamp(10px, 2.5vw, 14px)', color: '#94a3b8', marginBottom: '4px', fontWeight: '700', textTransform: 'uppercase' }}>Current Hour Production</div><div style={{ fontSize: 'clamp(28px, 8vw, 72px)', fontWeight: '900', color: getMachineColor(selectedMachine), textShadow: `0 0 20px ${getMachineColor(selectedMachine)}40`, lineHeight: '1' }}>{selectedMachine.current_hour_count || 0}</div><div style={{ fontSize: 'clamp(9px, 2vw, 12px)', color: '#64748b', marginTop: '6px' }}>Resets every hour at XX:00:00</div></div>
+                
+                <div style={{ backgroundColor: '#1e293b', padding: 'clamp(12px, 3vw, 20px)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <h3 style={{ margin: '0 0 12px 0', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'clamp(14px, 3.5vw, 18px)' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>Customer Information</span>
+                  </h3>
+                  <div style={{ display: 'grid', gap: '8px', fontSize: 'clamp(11px, 2.5vw, 14px)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px)', backgroundColor: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px' }}><span style={{ color: '#94a3b8' }}>Customer</span><span style={{ fontWeight: 'bold', color: '#fff' }}>{selectedMachine.tool_customer || 'N/A'}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px)', backgroundColor: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px' }}><span style={{ color: '#94a3b8' }}>Model</span><span style={{ fontWeight: 'bold', color: '#fff' }}>{selectedMachine.tool_model || 'N/A'}</span></div>
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: '#1e293b', padding: 'clamp(12px, 3vw, 20px)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <h3 style={{ margin: '0 0 12px 0', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'clamp(14px, 3.5vw, 18px)' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                    </svg>
+                    <span>Tool Information</span>
+                  </h3>
+                  <div style={{ display: 'grid', gap: '8px', fontSize: 'clamp(11px, 2.5vw, 14px)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px)', backgroundColor: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px' }}><span style={{ color: '#94a3b8' }}>Part Name</span><span style={{ fontWeight: 'bold', color: '#fff', textAlign: 'right' }}>{selectedMachine.tool_part_name || 'N/A'}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px)', backgroundColor: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px' }}><span style={{ color: '#94a3b8' }}>Tool Name</span><span style={{ fontWeight: 'bold', color: '#fff', textAlign: 'right' }}>{selectedMachine.tool_name || 'N/A'}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px)', backgroundColor: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px' }}><span style={{ color: '#94a3b8' }}>Part Number</span><span style={{ fontWeight: 'bold', color: '#fff', textAlign: 'right' }}>{selectedMachine.tool_part_number || 'N/A'}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px)', backgroundColor: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px' }}><span style={{ color: '#94a3b8' }}>Shut Height</span><span style={{ fontWeight: 'bold', color: '#fff' }}>{formatShutHeightDisplay(selectedMachine.shut_height)}</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px)', backgroundColor: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px' }}><span style={{ color: '#94a3b8' }}>Tool ID</span><span style={{ fontWeight: 'bold', color: '#10b981', wordBreak: 'break-all', textAlign: 'right', maxWidth: '60%' }}>{selectedMachine.tool_id || selectedMachine.current_tool_id || 'N/A'}</span></div>
+                  </div>
+                </div>
+
+              {/* MACHINE INFORMATION SECTION WITH DYNAMIC MAP */}
+              <div style={{ backgroundColor: '#1e293b', padding: 'clamp(12px, 3vw, 20px)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <h3 style={{ margin: '0 0 12px 0', color: '#fcd34d', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'clamp(14px, 3.5vw, 18px)' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path>
+                    <path d="M17 18h1"></path>
+                    <path d="M12 18h1"></path>
+                    <path d="M7 18h1"></path>
+                  </svg>
+                  <span>Machine Information</span>
+                </h3>
+                <div style={{ display: 'grid', gap: '8px', fontSize: 'clamp(11px, 2.5vw, 14px)' }}>
+                  
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px)', backgroundColor: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px' }}>
+                    <span style={{ color: '#94a3b8' }}>Machine Company</span>
+                    <span style={{ fontWeight: 'bold', color: '#fff', textAlign: 'right' }}>
+                      {getMachineSpec(selectedMachine.machine_no).company}
                     </span>
                   </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px)', backgroundColor: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px' }}>
+                    <span style={{ color: '#94a3b8' }}>Machine Capacity</span>
+                    <span style={{ fontWeight: 'bold', color: '#fcd34d', textAlign: 'right' }}>
+                      {getMachineSpec(selectedMachine.machine_no).capacity !== 'N/A' ? `${getMachineSpec(selectedMachine.machine_no).capacity} TON` : 'N/A TON'}
+                    </span>
+                  </div>
+
                 </div>
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "30px",
-                    background: "linear-gradient(145deg, #1e293b, #0f172a)",
-                    borderRadius: "20px",
-                    border: `1px solid rgba(255,255,255,0.05)`,
-                    marginTop: "24px",
-                    boxShadow: `inset 0 4px 20px rgba(0,0,0,0.5)`,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "14px",
-                      color: "#94a3b8",
-                      marginBottom: "8px",
-                      fontWeight: "700",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Current Hour Production
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "72px",
-                      fontWeight: "900",
-                      color: getMachineColor(selectedMachine),
-                      textShadow: `0 0 30px ${getMachineColor(
-                        selectedMachine,
-                      )}40`,
-                      lineHeight: "1",
-                    }}
-                  >
-                    {selectedMachine.current_hour_count || 0}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      color: "#64748b",
-                      marginTop: "10px",
-                    }}
-                  >
-                    Resets every hour at XX:00:00
-                  </div>
+              </div>
+
+                {/* FIXED RESPONSIVE BOTTOM GRID START */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '10px' }}>
+                  <div style={{ padding: 'clamp(12px, 3vw, 20px) 10px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}><div style={{ fontSize: 'clamp(9px, 2vw, 11px)', color: '#64748b', letterSpacing: '1px', marginBottom: '6px' }}>LAST HOUR</div><div style={{ fontSize: 'clamp(16px, 4vw, 36px)', fontWeight: '800', color: '#f8fafc' }}>{selectedMachine.last_hour_count || 0}</div></div>
+                  <div style={{ padding: 'clamp(12px, 3vw, 20px) 10px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}><div style={{ fontSize: 'clamp(9px, 2vw, 11px)', color: '#64748b', letterSpacing: '1px', marginBottom: '6px' }}>CUMULATIVE</div><div style={{ fontSize: 'clamp(16px, 4vw, 36px)', fontWeight: '800', color: '#10b981', wordBreak: 'break-word' }}>{selectedMachine.cumulative_count || 0}</div></div>
+                  <div style={{ padding: 'clamp(12px, 3vw, 20px) 10px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}><div style={{ fontSize: 'clamp(9px, 2vw, 11px)', color: '#64748b', letterSpacing: '1px', marginBottom: '6px', whiteSpace: 'nowrap' }}>{getVisibleIdealMode(selectedMachine)} IDEAL</div><div style={{ fontSize: 'clamp(14px, 3.5vw, 30px)', fontWeight: '800', color: '#f59e0b' }}>{getVisibleIdealDisplay(selectedMachine, liveIdleSeconds[selectedMachine.machine_no] || 0)}</div></div>
                 </div>
-                <div
-                  style={{
-                    backgroundColor: "#1e293b",
-                    padding: "20px",
-                    borderRadius: "12px",
-                    border: "1px solid rgba(255,255,255,0.05)",
-                    marginTop: "24px",
-                  }}
-                >
-                  <h3
-                    style={{
-                      margin: "0 0 16px 0",
-                      color: "#3b82f6",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <span>👤</span> Customer Information
-                  </h3>
-                  <div style={{ display: "grid", gap: "10px" }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "12px 16px",
-                        backgroundColor: "rgba(2, 6, 23, 0.4)",
-                        borderRadius: "8px",
-                      }}
-                    >
-                      <span style={{ color: "#94a3b8" }}>Customer</span>
-                      <span style={{ fontWeight: "bold", color: "#fff" }}>
-                        {selectedMachine.tool_customer || "N/A"}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "12px 16px",
-                        backgroundColor: "rgba(2, 6, 23, 0.4)",
-                        borderRadius: "8px",
-                      }}
-                    >
-                      <span style={{ color: "#94a3b8" }}>Model</span>
-                      <span style={{ fontWeight: "bold", color: "#fff" }}>
-                        {selectedMachine.tool_model || "N/A"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  style={{
-                    backgroundColor: "#1e293b",
-                    padding: "20px",
-                    borderRadius: "12px",
-                    border: "1px solid rgba(255,255,255,0.05)",
-                    marginTop: "24px",
-                  }}
-                >
-                  <h3
-                    style={{
-                      margin: "0 0 16px 0",
-                      color: "#10b981",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <span>🔧</span> Tool Information
-                  </h3>
-                  <div style={{ display: "grid", gap: "10px" }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "12px 16px",
-                        backgroundColor: "rgba(2, 6, 23, 0.4)",
-                        borderRadius: "8px",
-                      }}
-                    >
-                      <span style={{ color: "#94a3b8" }}>Part Name</span>
-                      <span style={{ fontWeight: "bold", color: "#fff" }}>
-                        {selectedMachine.tool_part_name || "N/A"}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "12px 16px",
-                        backgroundColor: "rgba(2, 6, 23, 0.4)",
-                        borderRadius: "8px",
-                      }}
-                    >
-                      <span style={{ color: "#94a3b8" }}>Tool Name</span>
-                      <span style={{ fontWeight: "bold", color: "#fff" }}>
-                        {selectedMachine.tool_name || "N/A"}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "12px 16px",
-                        backgroundColor: "rgba(2, 6, 23, 0.4)",
-                        borderRadius: "8px",
-                      }}
-                    >
-                      <span style={{ color: "#94a3b8" }}>Part Number</span>
-                      <span style={{ fontWeight: "bold", color: "#fff" }}>
-                        {selectedMachine.tool_part_number || "N/A"}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "12px 16px",
-                        backgroundColor: "rgba(2, 6, 23, 0.4)",
-                        borderRadius: "8px",
-                      }}
-                    >
-                      <span style={{ color: "#94a3b8" }}>Shut Height</span>
-                      <span style={{ fontWeight: "bold", color: "#fff" }}>
-                        {formatShutHeightDisplay(selectedMachine.shut_height)}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        padding: "12px 16px",
-                        backgroundColor: "rgba(2, 6, 23, 0.4)",
-                        borderRadius: "8px",
-                      }}
-                    >
-                      <span style={{ color: "#94a3b8" }}>Tool ID</span>
-                      <span
-                        style={{
-                          fontWeight: "bold",
-                          color: "#10b981",
-                          wordBreak: "break-all",
-                        }}
-                      >
-                        {selectedMachine.tool_id ||
-                          selectedMachine.current_tool_id ||
-                          "N/A"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr",
-                    gap: "15px",
-                    marginTop: "24px",
-                  }}
-                >
-                  <div
-                    style={{
-                      padding: "20px",
-                      background: "rgba(255,255,255,0.02)",
-                      borderRadius: "16px",
-                      border: "1px solid rgba(255,255,255,0.05)",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "11px",
-                        color: "#64748b",
-                        letterSpacing: "1px",
-                        marginBottom: "10px",
-                      }}
-                    >
-                      LAST HOUR
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "36px",
-                        fontWeight: "800",
-                        color: "#f8fafc",
-                      }}
-                    >
-                      {selectedMachine.last_hour_count || 0}
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      padding: "20px",
-                      background: "rgba(255,255,255,0.02)",
-                      borderRadius: "16px",
-                      border: "1px solid rgba(255,255,255,0.05)",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "11px",
-                        color: "#64748b",
-                        letterSpacing: "1px",
-                        marginBottom: "10px",
-                      }}
-                    >
-                      CUMULATIVE
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "36px",
-                        fontWeight: "800",
-                        color: "#10b981",
-                      }}
-                    >
-                      {selectedMachine.cumulative_count || 0}
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      padding: "20px",
-                      background: "rgba(255,255,255,0.02)",
-                      borderRadius: "16px",
-                      border: "1px solid rgba(255,255,255,0.05)",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "11px",
-                        color: "#64748b",
-                        letterSpacing: "1px",
-                        marginBottom: "10px",
-                      }}
-                    >
-                      {getVisibleIdealMode(selectedMachine)} IDEAL
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "30px",
-                        fontWeight: "800",
-                        color: "#f59e0b",
-                      }}
-                    >
-                      {getVisibleIdealDisplay(
-                        selectedMachine,
-                        liveIdleSeconds[selectedMachine.machine_no] || 0,
-                      )}
-                    </div>
-                  </div>
-                </div>
+                {/* FIXED RESPONSIVE BOTTOM GRID END */}
+
               </div>
             )}
           </div>
