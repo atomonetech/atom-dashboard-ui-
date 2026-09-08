@@ -750,12 +750,21 @@ export default function Notifications() {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [machineNotifications, setMachineNotifications] = useState([]);
+  const [nowTick, setNowTick] = useState(Date.now());
   // Sync theme with global layout
   const [theme, setTheme] = useState(() => {
     if (typeof window === "undefined") return "light";
     return window.localStorage.getItem("atomone-theme") || "light";
   });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNowTick(Date.now());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const observer = new MutationObserver((mutations) => {
@@ -796,6 +805,59 @@ export default function Notifications() {
     );
   };
 
+  const formatIdleDuration = (notif) => {
+    if (!notif?.idle_started_at) {
+      return "00:00";
+    }
+
+    const start = new Date(notif.idle_started_at).getTime();
+
+    // Active event:
+    // idle_ended_at NULL -> timer continuously chalega.
+    //
+    // Closed but reason pending:
+    // idle_ended_at available -> timer wahi freeze hoga.
+    const end = notif.idle_ended_at
+      ? new Date(notif.idle_ended_at).getTime()
+      : nowTick;
+
+    if (
+      Number.isNaN(start) ||
+      Number.isNaN(end) ||
+      end < start
+    ) {
+      return "00:00";
+    }
+
+    const totalSeconds = Math.floor(
+      (end - start) / 1000
+    );
+
+    const hours = Math.floor(
+      totalSeconds / 3600
+    );
+
+    const minutes = Math.floor(
+      (totalSeconds % 3600) / 60
+    );
+
+    const seconds =
+      totalSeconds % 60;
+
+    if (hours > 0) {
+      return (
+        `${String(hours).padStart(2, "0")}:` +
+        `${String(minutes).padStart(2, "0")}:` +
+        `${String(seconds).padStart(2, "0")}`
+      );
+    }
+
+    return (
+      `${String(minutes).padStart(2, "0")}:` +
+      `${String(seconds).padStart(2, "0")}`
+    );
+  };
+
   const fetchNotifications = async (showLoader = false) => {
     if (showLoader) {
       setLoading(true);
@@ -821,19 +883,100 @@ export default function Notifications() {
     }
   };
 
+  const fetchMachineNotifications = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        setMachineNotifications([]);
+        return;
+      }
+
+      const res = await fetch(
+        `${API_BASE}/api/my-notifications/`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await res.json();
+
+      let pendingMachineNotifications = [];
+
+      if (
+        res.ok &&
+        data.success &&
+        Array.isArray(data.data)
+      ) {
+
+        // =====================================================
+        // 1. Only machine idle notifications
+        // =====================================================
+
+        const machineOnly = data.data.filter(
+          (notif) =>
+            notif.notification_type === "IDLE_REASON"
+        );
+
+        // IMPORTANT:
+        // Har unfilled physical idle event show hoga.
+        // Same machine ke old pending event ko newer event hide nahi karega.
+        pendingMachineNotifications =
+          machineOnly
+            .filter(
+              (notif) =>
+                notif.status === "PENDING"
+            )
+            .sort(
+              (a, b) =>
+                new Date(b.idle_started_at || b.created_at) -
+                new Date(a.idle_started_at || a.created_at)
+            );
+      }
+
+      setMachineNotifications(
+        pendingMachineNotifications
+      );
+
+      console.log(
+        "🔔 Pending machine notifications:",
+        pendingMachineNotifications.length
+      );
+
+    } catch (err) {
+      console.error(
+        "❌ Machine notifications fetch failed:",
+        err
+      );
+
+      setMachineNotifications([]);
+    }
+  };
+
   useEffect(() => {
     if (!currentUser) {
       setLoading(false);
       return;
     }
 
+    // Existing QA / report notifications
     fetchNotifications(true);
 
+    // New machine idle notifications
+    fetchMachineNotifications();
+
     const interval = setInterval(() => {
+
       fetchNotifications(false);
+
+      fetchMachineNotifications();
+
     }, 10000);
 
     return () => clearInterval(interval);
+
   }, [currentUser]);
 
   const parseNotification = (notif = {}) => {
@@ -922,8 +1065,73 @@ export default function Notifications() {
     reportLogId
       ? navigate(targetUrl)
       : alert(
-          "Report log id missing. Please check backend notification response.",
-        );
+        "Report log id missing. Please check backend notification response.",
+      );
+  };
+
+  const handleOpenMachine = (notif) => {
+
+    // =====================================================
+    // CASE 1:
+    // Event abhi physically active hai.
+    // Open exact machine on Plant Live page.
+    // =====================================================
+
+    if (!notif.idle_ended_at) {
+
+      const plantRoute =
+        notif.plant_location === "Plant 1"
+          ? "/plant1-live"
+          : "/plant2-live";
+
+      navigate(plantRoute, {
+        state: {
+          autoOpenMachine: notif.machine_no,
+          notificationEventKey: notif.event_key,
+          notificationMode: notif.ideal_mode,
+        },
+      });
+
+      return;
+    }
+
+
+    // =====================================================
+    // CASE 2:
+    // Event already closed/running changed,
+    // but reason is still PENDING.
+    // Send user to Idle Case.
+    // =====================================================
+
+    navigate("/idle-case", {
+      state: {
+        fromIdleNotification: true,
+
+        notificationId: notif.id,
+
+        idealEventId:
+          notif.ideal_event_id || notif.id,
+          
+        eventKey: notif.event_key,
+
+        plant:
+          notif.plant_location === "Plant 1"
+            ? "1"
+            : "2",
+
+        machineNo:
+          String(notif.machine_no),
+
+        idealMode:
+          notif.ideal_mode,
+
+        idleStartedAt:
+          notif.idle_started_at,
+
+        idleEndedAt:
+          notif.idle_ended_at,
+      },
+    });
   };
 
   return (
@@ -951,7 +1159,7 @@ export default function Notifications() {
                 transition={{ delay: 0.2 }}
                 className="text-[var(--text-soft)] mt-2 font-medium"
               >
-                Action required for submitted reports across all Hubs
+                Action required for machine events and submitted reports
               </motion.p>
             </div>
 
@@ -967,86 +1175,271 @@ export default function Notifications() {
           </div>
 
           <div className="space-y-4">
+
             {loading ? (
+
               <div className="text-[var(--accent)] text-center py-10 font-bold animate-pulse">
                 Loading Live Alerts...
               </div>
-            ) : notifications.length === 0 ? (
+
+            ) : notifications.length === 0 &&
+              machineNotifications.length === 0 ? (
+
               <div className="text-[var(--text-muted)] text-center py-10 text-lg font-medium">
                 📭 No active notifications. All caught up!
               </div>
+
             ) : (
-              notifications.map((notif, index) => {
-                const { submittedBy, reportType } = parseNotification(notif);
-                const fallbackRoute = getFallbackRoute(notif);
+              <>
 
-                const title =
-                  notif.title ||
-                  notif.notification_title ||
-                  fallbackRoute.title ||
-                  "Report Approval Required";
+                {/* =====================================================
+                    MACHINE IDLE / OFFLINE NOTIFICATIONS
+                ===================================================== */}
 
-                return (
-                  <motion.div
-                    key={notif.id || index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Card className="group border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[var(--card-shadow)] hover:border-[var(--card-hover-border)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] rounded-xl transition-all duration-300">
-                      <div className="p-5">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h3 className="font-bold text-[var(--text-main)] text-[16px]">
-                              {reportType}
-                            </h3>
+                {machineNotifications.map((notif, index) => {
 
-                            <p className="text-xs text-[var(--text-soft)] font-medium mt-1">
-                              {title}
-                            </p>
-                          </div>
+                  const isOffline =
+                    notif.ideal_mode === "OFFLINE";
 
-                          <span className="text-[11px] px-2.5 py-1 rounded-md bg-[var(--badge-bg)] text-[var(--badge-text)] font-bold tracking-wide uppercase">
-                            Pending
-                          </span>
-                        </div>
+                  return (
+                    <motion.div
+                      key={`machine-${notif.id}`}
+                      initial={{
+                        opacity: 0,
+                        x: -20,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        x: 0,
+                      }}
+                      transition={{
+                        delay: index * 0.03,
+                      }}
+                    >
 
-                        <p className="mt-3 text-sm text-[var(--text-soft)] font-medium">
-                          Submitted by
-                          <span className="text-[var(--text-main)] ml-1 font-bold">
-                            {submittedBy}
-                          </span>
-                        </p>
+                      <Card className="group border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[var(--card-shadow)] hover:border-[var(--card-hover-border)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] rounded-xl transition-all duration-300">
 
-                        <div className="mt-4 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-[var(--accent)]" />
-                            <span className="text-sm font-medium text-[var(--text-dim)]">
-                              {formatTimeAgo(
-                                notif.time ||
-                                  notif.created_at ||
-                                  notif.createdAt,
-                              )}
+                        <div className="p-5">
+
+                          <div className="flex justify-between items-start gap-4">
+
+                            <div>
+
+                              <h3 className="font-bold text-[var(--text-main)] text-[16px] flex flex-wrap items-center gap-2">
+
+                                <span>
+                                  {notif.plant_location}
+                                  {" • "}
+                                  Machine M-{notif.machine_no}
+                                </span>
+
+                                <span
+                                  className="text-[12px] px-2 py-1 rounded-md border border-[var(--card-border)] text-[var(--accent)]"
+                                >
+                                  ⏱ {formatIdleDuration(notif)}
+                                </span>
+
+                              </h3>
+
+                              <p className="text-sm text-[var(--text-soft)] font-medium mt-1">
+
+                                {notif.idle_ended_at
+                                  ? "Idle event ended — reason still required"
+                                  : isOffline
+                                    ? "Machine is Offline — reason required"
+                                    : "Machine is Online Idle — reason required"}
+
+                              </p>
+
+                            </div>
+
+                            <span className="text-[11px] px-2.5 py-1 rounded-md bg-[var(--badge-bg)] text-[var(--badge-text)] font-bold tracking-wide uppercase">
+
+                              Pending
+
                             </span>
+
                           </div>
 
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewReport(notif);
-                            }}
-                            size="sm"
-                            className="h-9 rounded-lg bg-[var(--btn-bg)] text-[var(--btn-text)] border border-[var(--btn-border)] hover:bg-[var(--btn-hover-bg)] transition-all font-semibold cursor-pointer shadow-sm"
-                          >
-                            View Report →
-                          </Button>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+
+                            <span className="text-xs px-2 py-1 rounded-md bg-[var(--badge-bg)] text-[var(--badge-text)] font-semibold">
+
+                              {isOffline
+                                ? "Offline"
+                                : "Online Idle"}
+
+                            </span>
+
+                            <span className="text-xs px-2 py-1 rounded-md border border-[var(--card-border)] text-[var(--text-soft)]">
+
+                              Reason Required
+
+                            </span>
+
+                          </div>
+
+
+                          <div className="mt-4 flex items-center justify-between gap-4">
+
+                            <div className="flex items-center gap-2">
+
+                              <Clock className="w-4 h-4 text-[var(--accent)]" />
+
+                              <span className="text-sm font-medium text-[var(--text-dim)]">
+
+                                {formatTimeAgo(
+                                  notif.created_at
+                                )}
+
+                              </span>
+
+                            </div>
+
+
+                            <Button
+                              onClick={() =>
+                                handleOpenMachine(notif)
+                              }
+                              size="sm"
+                              className="h-9 rounded-lg bg-[var(--btn-bg)] text-[var(--btn-text)] border border-[var(--btn-border)] hover:bg-[var(--btn-hover-bg)] transition-all font-semibold cursor-pointer shadow-sm"
+                            >
+
+                              {notif.idle_ended_at
+                                ? "Fill Idle Reason →"
+                                : "Open Machine →"}
+
+                            </Button>
+
+                          </div>
+
                         </div>
-                      </div>
-                    </Card>
-                  </motion.div>
-                );
-              })
+
+                      </Card>
+
+                    </motion.div>
+                  );
+                })}
+
+
+                {/* =====================================================
+                    EXISTING QA / PRODUCTION / MAINTENANCE REPORTS
+                ===================================================== */}
+
+                {notifications.map((notif, index) => {
+
+                  const {
+                    submittedBy,
+                    reportType,
+                  } = parseNotification(notif);
+
+                  const fallbackRoute =
+                    getFallbackRoute(notif);
+
+                  const title =
+                    notif.title ||
+                    notif.notification_title ||
+                    fallbackRoute.title ||
+                    "Report Approval Required";
+
+                  return (
+                    <motion.div
+                      key={`report-${notif.id || index}`}
+                      initial={{
+                        opacity: 0,
+                        x: -20,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        x: 0,
+                      }}
+                      transition={{
+                        delay: index * 0.03,
+                      }}
+                    >
+
+                      <Card className="group border border-[var(--card-border)] bg-[var(--card-bg)] shadow-[var(--card-shadow)] hover:border-[var(--card-hover-border)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] rounded-xl transition-all duration-300">
+
+                        <div className="p-5">
+
+                          <div className="flex justify-between items-center">
+
+                            <div>
+
+                              <h3 className="font-bold text-[var(--text-main)] text-[16px]">
+                                {reportType}
+                              </h3>
+
+                              <p className="text-xs text-[var(--text-soft)] font-medium mt-1">
+                                {title}
+                              </p>
+
+                            </div>
+
+                            <span className="text-[11px] px-2.5 py-1 rounded-md bg-[var(--badge-bg)] text-[var(--badge-text)] font-bold tracking-wide uppercase">
+                              Pending
+                            </span>
+
+                          </div>
+
+
+                          <p className="mt-3 text-sm text-[var(--text-soft)] font-medium">
+
+                            Submitted by
+
+                            <span className="text-[var(--text-main)] ml-1 font-bold">
+                              {submittedBy}
+                            </span>
+
+                          </p>
+
+
+                          <div className="mt-4 flex items-center justify-between">
+
+                            <div className="flex items-center gap-2">
+
+                              <Clock className="w-4 h-4 text-[var(--accent)]" />
+
+                              <span className="text-sm font-medium text-[var(--text-dim)]">
+
+                                {formatTimeAgo(
+                                  notif.time ||
+                                  notif.created_at ||
+                                  notif.createdAt
+                                )}
+
+                              </span>
+
+                            </div>
+
+
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewReport(notif);
+                              }}
+                              size="sm"
+                              className="h-9 rounded-lg bg-[var(--btn-bg)] text-[var(--btn-text)] border border-[var(--btn-border)] hover:bg-[var(--btn-hover-bg)] transition-all font-semibold cursor-pointer shadow-sm"
+                            >
+
+                              View Report →
+
+                            </Button>
+
+                          </div>
+
+                        </div>
+
+                      </Card>
+
+                    </motion.div>
+                  );
+                })}
+
+              </>
             )}
+
           </div>
         </div>
       </div>

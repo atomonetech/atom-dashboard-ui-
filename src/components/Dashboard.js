@@ -78,8 +78,8 @@ const Dashboard = ({ onLogout }) => {
 
   // Dashboard data states
   const [totalMachines, setTotalMachines] = useState(57);
-  const [runningMachines, setRunningMachines] = useState(41);
-  const [totalProduction, setTotalProduction] = useState(15420);
+  const [runningMachines, setRunningMachines] = useState('loading...');
+  const [totalProduction, setTotalProduction] = useState('loading...');
 
   // Header states
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -174,8 +174,8 @@ const Dashboard = ({ onLogout }) => {
       console.log('✅ Live Data - Plant 1: 41/57');
     } else {
       setRunningMachines(17);
-      setTotalMachines(26);
-      console.log('✅ Live Data - Plant 2: 17/26');
+      setTotalMachines(46);
+      console.log('✅ Live Data - Plant 2: 17/46');
     }
   }, [selectedPlant]);
 
@@ -382,7 +382,7 @@ const Dashboard = ({ onLogout }) => {
           setTotalMachines(57);
         } else {
           setRunningMachines(17);
-          setTotalMachines(26);
+          setTotalMachines(46);
         }
 
         const data = await getDashboardData({
@@ -887,7 +887,7 @@ const Dashboard = ({ onLogout }) => {
                           {label === 'Plant' && (
                             <>
                               <option value="plant1_data">Plant 1 (57 Machines)</option>
-                              <option value="plant2_data">Plant 2 (26 Machines)</option>
+                              <option value="plant2_data">Plant 2 (46 Machines)</option>
                             </>
                           )}
                           {label === 'Date' && availableDates.slice(0, 30).map(date => (

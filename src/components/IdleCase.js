@@ -493,7 +493,7 @@
 //           <p style={styles.subtitle}>Submit Machine Idle Status Report</p>
 //         </div>
 //         <div style={styles.headerButtons}>
-//           <button 
+//           <button
 //             style={styles.dashboardBtn}
 //             onClick={handleDashboard}
 //             onMouseOver={(e) => e.target.style.backgroundColor = '#6d28d9'}
@@ -540,20 +540,20 @@
 //               {/* Operator */}
 //               <div style={styles.fieldGroup}>
 //                 <label style={styles.label}>Operator</label>
-//                 <input 
+//                 <input
 //                   style={{...styles.input, ...styles.inputReadonly}}
-//                   value={operator} 
-//                   readOnly 
+//                   value={operator}
+//                   readOnly
 //                 />
 //               </div>
 
 //               {/* Tool Name */}
 //               <div style={styles.fieldGroup}>
 //                 <label style={styles.label}>Tool Name</label>
-//                 <input 
+//                 <input
 //                   style={{...styles.input, ...styles.inputReadonly}}
-//                   value={tool} 
-//                   readOnly 
+//                   value={tool}
+//                   readOnly
 //                   placeholder="Auto-filled from database"
 //                 />
 //               </div>
@@ -581,7 +581,7 @@
 //             </div>
 
 //             {/* Submit Button */}
-//             <button 
+//             <button
 //               type="submit"
 //               style={{
 //                 ...styles.submitBtn,
@@ -607,8 +607,8 @@
 //       </div>
 
 //       {/* Error Toast */}
-//       <div 
-//         id="error-toast" 
+//       <div
+//         id="error-toast"
 //         style={{...styles.toast, ...styles.errorToast}}
 //       >
 //         Error Saving Idle Report!
@@ -617,140 +617,355 @@
 //   );
 // }
 
-
-
-
-
-
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import Sidebar from './Sidebar';
+import { useNavigate, useLocation } from "react-router-dom";
+import Sidebar from "./Sidebar";
 
 // ✅ Simple icons
-import {
-  FaWrench,
-  FaCog,
-  FaCalendarCheck,
-  FaSyncAlt,
-  FaBoxOpen,
-  FaExclamationTriangle,
-  FaIndustry,
-  FaUser,
-  FaTools
-} from 'react-icons/fa';
+import { FaCog, FaExclamationTriangle, FaIndustry } from "react-icons/fa";
 
-const API_BASE = "http://127.0.0.1:9000/api";
+const API_BASE = "http://127.0.0.1:8000/api";
+
+// ============================================================
+// SAME IDLE REASONS AS PLANT 1 LIVE
+// ============================================================
+
+const IDLE_REASONS = {
+  "Tool Breakdown": [
+    "Overload / Wrong Parameters",
+    "Material Hardness",
+    "Coolant Issue",
+    "Improper Clamping",
+    "Wear and Tear",
+    "Other",
+  ],
+
+  "Machine Breakdown": [
+    "Electrical/Electronic Failure",
+    "Motor / Drive Trip",
+    "Mechanical Failure",
+    "Hydraulic / Pneumatic Issue",
+    "Software / CNC Error",
+    "Other",
+  ],
+
+  "Machine Maintenance": [
+    "Lubrication / Oiling",
+    "Filter / Tank Cleaning",
+    "Preventive Maintenance (PM)",
+    "Adjustments & Tightening",
+    "Other",
+  ],
+
+  "Tool Maintenance": [
+    "Tool Sharpening / Grinding",
+    "Insert Rotation",
+    "Chip / Burr Clearing",
+    "Offset Adjustment",
+    "Other",
+  ],
+
+  "Tool Change": [
+    "Tool Life Reached",
+    "Operation Change",
+    "Tool Breakage Replacement",
+    "Other",
+  ],
+
+  "Material Shortage": [
+    "Delay from Store",
+    "Delay from Previous Process",
+    "Trolley / Forklift Unavailable",
+    "Material Hold by QC",
+    "Other",
+  ],
+
+  "Operator Unavailable": [
+    "Tea / Lunch Break",
+    "Shift Handover",
+    "Nature's Call",
+    "Gone to Store / Supervisor",
+    "Meeting / Training",
+    "Other",
+  ],
+
+  Other: ["Other"],
+};
+
+const CATEGORY_ICONS = {
+  "Tool Breakdown": "bi bi-hammer",
+  "Machine Breakdown": "bi bi-lightning-charge-fill",
+  "Machine Maintenance": "bi bi-gear-fill",
+  "Tool Maintenance": "bi bi-tools",
+  "Tool Change": "bi bi-arrow-repeat",
+  "Material Shortage": "bi bi-boxes",
+  "Operator Unavailable": "bi bi-person-x-fill",
+  Other: "bi bi-question-circle-fill",
+};
+
+// ============================================================
+// SAME PREMIUM DROPDOWN STYLE AS PLANT LIVE
+// ============================================================
+
+const CustomDropdown = ({ value, onChange, options, placeholder, icon }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div
+      ref={dropdownRef}
+      style={{
+        position: "relative",
+        width: "100%",
+      }}
+    >
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          width: "100%",
+          padding: "14px 18px",
+          borderRadius: "12px",
+          background: "#1e293b",
+          color: value ? "#f8fafc" : "#94a3b8",
+
+          border: `1px solid ${isOpen ? "#fcd34d" : "rgba(245, 158, 11, 0.4)"}`,
+
+          boxShadow: isOpen
+            ? "0 0 0 3px rgba(245, 158, 11, 0.15)"
+            : "0 4px 15px rgba(0,0,0,0.2)",
+
+          fontSize: "15px",
+          fontWeight: "600",
+          cursor: "pointer",
+
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+
+          transition: "all 0.3s ease",
+          userSelect: "none",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+          }}
+        >
+          {value && icon && CATEGORY_ICONS[value] && (
+            <i
+              className={CATEGORY_ICONS[value]}
+              style={{
+                color: "#fcd34d",
+              }}
+            />
+          )}
+
+          <span>{value || placeholder}</span>
+        </div>
+
+        <div
+          style={{
+            transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+
+            transition: "transform 0.3s ease",
+
+            color: isOpen ? "#fcd34d" : "#94a3b8",
+          }}
+        >
+          ▼
+        </div>
+      </div>
+
+      {isOpen && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            right: 0,
+
+            marginTop: "8px",
+
+            background: "#0f172a",
+
+            border: "1px solid rgba(255,255,255,0.1)",
+
+            borderRadius: "12px",
+
+            boxShadow: "0 10px 30px rgba(0,0,0,0.8)",
+
+            maxHeight: "250px",
+            overflowY: "auto",
+
+            zIndex: 9999,
+          }}
+        >
+          {options.map((opt, idx) => (
+            <div
+              key={opt}
+              onClick={() => {
+                onChange(opt);
+                setIsOpen(false);
+              }}
+              style={{
+                padding: "14px 18px",
+
+                cursor: "pointer",
+
+                fontSize: "14px",
+                fontWeight: "500",
+
+                color: value === opt ? "#fbbf24" : "#f8fafc",
+
+                background:
+                  value === opt ? "rgba(245,158,11,0.08)" : "transparent",
+
+                borderBottom:
+                  idx !== options.length - 1
+                    ? "1px solid rgba(255,255,255,0.05)"
+                    : "none",
+
+                transition: "all 0.2s ease",
+
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              {icon && CATEGORY_ICONS[opt] && (
+                <i
+                  className={CATEGORY_ICONS[opt]}
+                  style={{
+                    opacity: 0.7,
+                  }}
+                />
+              )}
+
+              {opt}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function IdleCase({ onLogout }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [machine, setMachine] = useState("");
   const [plant, setPlant] = useState("");
   const [operator, setOperator] = useState("Auto Operator");
   const [tool, setTool] = useState("");
-  const [reason, setReason] = useState("");
+  const [idleCategory, setIdleCategory] = useState("");
+  const [idleSubReason, setIdleSubReason] = useState("");
+  const [idleRemarks, setIdleRemarks] = useState("");
+  // const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [pendingEvents, setPendingEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState("");
   const [eventsLoading, setEventsLoading] = useState(false);
+  const [notificationContext, setNotificationContext] = useState(null);
 
   // Plant-wise machine mapping
   const plantMachines = {
-    "1": Array.from({ length: 57 }, (_, i) => i + 1),
-    "2": Array.from({ length: 26 }, (_, i) => i + 1)
+    1: Array.from({ length: 57 }, (_, i) => i + 1),
+    2: Array.from({ length: 46 }, (_, i) => i + 1),
   };
-
-
-  // Reason options with Icons
-  const reasonOptions = [
-    { value: "TOOL_BD", label: "Tool Breakdown", icon: FaWrench, color: "#ef4444" },
-    { value: "MC_BD", label: "Machine Breakdown", icon: FaCog, color: "#dc2626" },
-    { value: "MAINT", label: "Scheduled Maintenance", icon: FaCalendarCheck, color: "#f59e0b" },
-    { value: "CHANGEOVER", label: "Changeover", icon: FaSyncAlt, color: "#10b981" },
-    { value: "NO_MATERIAL", label: "Material Shortage", icon: FaBoxOpen, color: "#8b5cf6" },
-    { value: "QUALITY_ISSUE", label: "Quality Issue", icon: FaExclamationTriangle, color: "#f97316" }
-  ];
-
 
   // Success page styles
   const successStyles = {
     container: {
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      position: 'relative',
-      overflow: 'hidden'
+      minHeight: "100vh",
+      background:
+        "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      position: "relative",
+      overflow: "hidden",
     },
     content: {
-      textAlign: 'center',
-      color: 'white',
+      textAlign: "center",
+      color: "white",
       zIndex: 2,
-      animation: 'fadeInUp 0.8s ease-out'
+      animation: "fadeInUp 0.8s ease-out",
     },
     checkContainer: {
-      marginBottom: '30px',
-      display: 'flex',
-      justifyContent: 'center'
+      marginBottom: "30px",
+      display: "flex",
+      justifyContent: "center",
     },
     checkMark: {
-      filter: 'drop-shadow(0 0 20px rgba(6, 182, 212, 0.5))'
+      filter: "drop-shadow(0 0 20px rgba(6, 182, 212, 0.5))",
     },
     messageContainer: {
-      marginBottom: '40px'
+      marginBottom: "40px",
     },
     title: {
-      fontSize: '48px',
-      fontWeight: '800',
-      background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent',
-      backgroundClip: 'text',
-      marginBottom: '15px',
-      animation: 'titleGlow 0.8s ease-out 0.5s both'
+      fontSize: "48px",
+      fontWeight: "800",
+      background: "linear-gradient(135deg, #06b6d4, #0891b2)",
+      WebkitBackgroundClip: "text",
+      WebkitTextFillColor: "transparent",
+      backgroundClip: "text",
+      marginBottom: "15px",
+      animation: "titleGlow 0.8s ease-out 0.5s both",
     },
     subtitle: {
-      fontSize: '24px',
-      fontWeight: '600',
-      color: '#e2e8f0',
-      marginBottom: '20px',
-      animation: 'fadeIn 0.8s ease-out 0.7s both'
+      fontSize: "24px",
+      fontWeight: "600",
+      color: "#e2e8f0",
+      marginBottom: "20px",
+      animation: "fadeIn 0.8s ease-out 0.7s both",
     },
     description: {
-      fontSize: '18px',
-      color: '#94a3b8',
-      lineHeight: '1.6',
-      maxWidth: '600px',
-      margin: '0 auto',
-      animation: 'fadeIn 0.8s ease-out 0.9s both'
+      fontSize: "18px",
+      color: "#94a3b8",
+      lineHeight: "1.6",
+      maxWidth: "600px",
+      margin: "0 auto",
+      animation: "fadeIn 0.8s ease-out 0.9s both",
     },
     progressContainer: {
-      animation: 'fadeIn 0.8s ease-out 1.1s both'
+      animation: "fadeIn 0.8s ease-out 1.1s both",
     },
     progressBar: {
-      width: '350px',
-      height: '4px',
-      backgroundColor: 'rgba(255,255,255,0.2)',
-      borderRadius: '2px',
-      margin: '0 auto 15px',
-      overflow: 'hidden'
+      width: "350px",
+      height: "4px",
+      backgroundColor: "rgba(255,255,255,0.2)",
+      borderRadius: "2px",
+      margin: "0 auto 15px",
+      overflow: "hidden",
     },
     progressFill: {
-      height: '100%',
-      background: 'linear-gradient(90deg, #06b6d4, #0891b2)',
-      borderRadius: '2px',
-      animation: 'fillProgress 5s linear'
+      height: "100%",
+      background: "linear-gradient(90deg, #06b6d4, #0891b2)",
+      borderRadius: "2px",
+      animation: "fillProgress 5s linear",
     },
     progressText: {
-      fontSize: '16px',
-      color: '#94a3b8',
-      fontWeight: '500'
-    }
+      fontSize: "16px",
+      color: "#94a3b8",
+      fontWeight: "500",
+    },
   };
-
 
   // Auto-fill function
   const handleMachineChange = async (selectedMachine) => {
@@ -774,17 +989,24 @@ export default function IdleCase({ onLogout }) {
             plant: plant,
             machine_no: selectedMachine,
           },
-        }
+        },
       );
 
       if (pendingResponse.data.success) {
         const events = pendingResponse.data.pending_reports || [];
 
-        setPendingEvents(events);
+        const latestThreeEvents = [...events]
+          .sort(
+            (a, b) => new Date(b.ideal_start_at) - new Date(a.ideal_start_at),
+          )
+          .slice(0, 3);
 
-        // Automatically select if only one event exists
-        if (events.length === 1) {
-          setSelectedEventId(String(events[0].event_id));
+        setPendingEvents(latestThreeEvents);
+
+        if (latestThreeEvents.length === 1) {
+          setSelectedEventId(String(latestThreeEvents[0].event_id));
+        } else {
+          setSelectedEventId("");
         }
       }
     } catch (error) {
@@ -799,7 +1021,7 @@ export default function IdleCase({ onLogout }) {
     // Existing operator/tool auto-fill
     try {
       const response = await axios.get(
-        `${API_BASE}/machines/${selectedMachine}/auto-fill/`
+        `${API_BASE}/api/machines/${machine}/auto-fill/?plant=${plant}`,
       );
 
       if (response.data.success) {
@@ -817,6 +1039,300 @@ export default function IdleCase({ onLogout }) {
     }
   };
 
+  // ==========================================================
+  // OPEN IDLE CASE DIRECTLY FROM MACHINE NOTIFICATION
+  // ==========================================================
+
+  useEffect(() => {
+    const navState = location.state;
+
+    if (!navState?.fromIdleNotification) {
+      return;
+    }
+
+    const targetPlant = String(navState.plant || "");
+    const targetMachine = String(navState.machineNo || "");
+    const targetMode = String(navState.idealMode || "").toUpperCase();
+    const targetEventId = String(
+      navState.idealEventId || navState.notificationId || "",
+    );
+
+    if (!targetPlant || !targetMachine || !targetEventId) {
+      return;
+    }
+
+    console.log("🔔 OPENING IDLE CASE FROM NOTIFICATION:", navState);
+
+    setNotificationContext(navState);
+
+    // Automatically select exact Plant + Machine
+    setPlant(targetPlant);
+    setMachine(targetMachine);
+
+    // ==========================================================
+    // EXACT NOTIFICATION EVENT
+    //
+    // Notification already knows the exact Ideal DB event.
+    // Do NOT make the user search/select it again.
+    // ==========================================================
+
+    const startMs = navState.idleStartedAt
+      ? new Date(navState.idleStartedAt).getTime()
+      : null;
+
+    const endMs = navState.idleEndedAt
+      ? new Date(navState.idleEndedAt).getTime()
+      : null;
+
+    const durationSeconds =
+      startMs && endMs && endMs >= startMs
+        ? Math.floor((endMs - startMs) / 1000)
+        : 0;
+
+    const notificationEvent = {
+      event_id: targetEventId,
+
+      plant_location: targetPlant === "1" ? "Plant 1" : "Plant 2",
+
+      machine_no: targetMachine,
+
+      ideal_mode: targetMode,
+
+      ideal_start_at: navState.idleStartedAt,
+
+      ideal_end_at: navState.idleEndedAt,
+
+      duration_seconds: durationSeconds,
+
+      duration_minutes: Number((durationSeconds / 60).toFixed(2)),
+
+      report_status: "PENDING",
+    };
+
+    // Put exact event in dropdown
+    setPendingEvents([notificationEvent]);
+
+    // Auto-select exact event
+    setSelectedEventId(targetEventId);
+    setOperator("Auto Operator");
+    setTool("");
+    setIdleCategory("");
+    setIdleSubReason("");
+    setIdleRemarks("");
+
+    const loadNotificationEvent = async () => {
+      setEventsLoading(true);
+
+      try {
+        // ======================================================
+        // 1. GET CLOSED PENDING IDEAL EVENTS
+        // ======================================================
+
+        const pendingResponse = await axios.get(
+          `${API_BASE}/ideal-reports/pending/`,
+          {
+            params: {
+              plant: targetPlant,
+              machine_no: targetMachine,
+            },
+          },
+        );
+
+        if (pendingResponse.data.success) {
+          const allEvents = pendingResponse.data.pending_reports || [];
+
+          // IMPORTANT:
+
+          // ======================================================
+          // FIRST PRIORITY = EXACT IDEAL EVENT ID
+          // ======================================================
+
+          const exactById = allEvents.find(
+            (event) => String(event.event_id) === String(targetEventId),
+          );
+
+          if (exactById) {
+            console.log(
+              "✅ EXACT NOTIFICATION IDEAL EVENT FOUND BY ID:",
+              exactById,
+            );
+
+            setPendingEvents([exactById]);
+
+            setSelectedEventId(String(exactById.event_id));
+          } else {
+            // ====================================================
+            // IMPORTANT:
+            // Do NOT clear the notification event.
+            //
+            // Notification itself is already FK-linked to the
+            // exact Ideal event.
+            //
+            // Generic pending API may temporarily not expose the
+            // event because of grouping/filtering.
+            // ====================================================
+
+            console.warn(
+              "⚠️ Exact event not returned by pending list API. " +
+                "Keeping notification-linked Ideal event:",
+              targetEventId,
+            );
+          }
+          // Notification jis mode ki thi,
+          // sirf wahi event Idle Case me dikhao.
+          //
+          // ONLINE notification -> ONLINE Ideal
+          // OFFLINE notification -> OFFLINE Ideal
+
+          const sameModeEvents = allEvents.filter(
+            (event) =>
+              String(event.ideal_mode || "").toUpperCase() === targetMode,
+          );
+
+          // ======================================================
+          // MATCH EXACT NOTIFICATION TIME WITH IDEAL EVENT
+          // ======================================================
+
+          const targetStart = navState.idleStartedAt
+            ? new Date(navState.idleStartedAt).getTime()
+            : null;
+
+          const targetEnd = navState.idleEndedAt
+            ? new Date(navState.idleEndedAt).getTime()
+            : null;
+
+          let visibleEvents = [];
+          let exactEvent = null;
+
+          if (targetStart && targetEnd) {
+            const scoredEvents = sameModeEvents
+              .map((event) => {
+                const eventStart = new Date(event.ideal_start_at).getTime();
+
+                const eventEnd = new Date(event.ideal_end_at).getTime();
+
+                const startDiff = Math.abs(eventStart - targetStart);
+
+                const endDiff = Math.abs(eventEnd - targetEnd);
+
+                return {
+                  event,
+                  startDiff,
+                  endDiff,
+                  totalDiff: startDiff + endDiff,
+                };
+              })
+              .sort((a, b) => a.totalDiff - b.totalDiff);
+
+            // Maximum 10 second tolerance
+            // Notification and Ideal timestamps should normally match exactly.
+            exactEvent = scoredEvents.find(
+              (item) => item.startDiff <= 10000 && item.endDiff <= 10000,
+            );
+
+            if (exactEvent) {
+              // Exact notification event only
+              visibleEvents = [exactEvent.event];
+            } else {
+              // Safety fallback:
+              // only 3 nearest events show karo
+              visibleEvents = scoredEvents
+                .slice(0, 3)
+                .map((item) => item.event);
+            }
+          } else {
+            // No notification timing available:
+            // latest 3 pending events only
+            visibleEvents = [...sameModeEvents]
+              .sort(
+                (a, b) =>
+                  new Date(b.ideal_start_at) - new Date(a.ideal_start_at),
+              )
+              .slice(0, 3);
+          }
+
+          setPendingEvents(visibleEvents);
+
+          // Exact event मिला -> auto select
+          if (exactEvent) {
+            // ONLY exact time matched notification event
+            // automatically select hoga
+            setSelectedEventId(String(exactEvent.event.event_id));
+
+            console.log(
+              "✅ EXACT NOTIFICATION / IDEAL EVENT MATCH:",
+              exactEvent.event,
+            );
+          } else {
+            // IMPORTANT:
+            // Nearest event ko kabhi automatically select nahi karna.
+            // Otherwise old event galti se submit ho sakta hai.
+            setSelectedEventId("");
+
+            if (visibleEvents.length === 0) {
+              console.warn(
+                `⚠️ No matching ${targetMode} Ideal event found for M${targetMachine}`,
+              );
+            } else {
+              console.warn(
+                `⚠️ Exact Ideal event not found. Showing ${visibleEvents.length} nearest events only for verification.`,
+              );
+            }
+          }
+        }
+
+        // ======================================================
+        // 2. OPERATOR + TOOL AUTO FILL
+        // ======================================================
+
+        try {
+          const autoFillResponse = await axios.get(
+            `${API_BASE}/api/machines/${machine}/auto-fill/?plant=${plant}`,
+          );
+
+          if (autoFillResponse.data.success) {
+            setOperator(autoFillResponse.data.operator_name || "Auto Operator");
+
+            setTool(autoFillResponse.data.tool_id || "Unknown Tool");
+          } else {
+            setOperator("Auto Operator");
+            setTool("Unknown Tool");
+          }
+        } catch (autoFillError) {
+          console.error("Notification auto-fill error:", autoFillError);
+
+          setOperator("Auto Operator");
+          setTool("Unknown Tool");
+        }
+      } catch (error) {
+        console.error(
+          "❌ Pending-list verification failed. " +
+            "Keeping notification-linked Ideal event:",
+          error,
+        );
+
+        // IMPORTANT:
+        // DO NOT clear:
+        //
+        // setPendingEvents([])
+        // setSelectedEventId("")
+        //
+        // Exact notification event is already selected.
+      } finally {
+        setEventsLoading(false);
+
+        // Navigation state ek baar consume ho gaya.
+        // Refresh/re-render me dobara trigger nahi hoga.
+        navigate(location.pathname, {
+          replace: true,
+          state: {},
+        });
+      }
+    };
+
+    loadNotificationEvent();
+  }, [location.state, location.pathname, navigate]);
+
   useEffect(() => {
     if (!plant || !machine) {
       return;
@@ -824,17 +1340,12 @@ export default function IdleCase({ onLogout }) {
 
     // Local development only.
     // Production IP will be handled later.
-    const wsPlant =
-      plant === "1" ? "plant1" : "plant2";
+    const wsPlant = plant === "1" ? "plant1" : "plant2";
 
-    const socket = new WebSocket(
-      `ws://127.0.0.1:9000/ws/${wsPlant}/live/`
-    );
+    const socket = new WebSocket(`ws://127.0.0.1:8000/ws/${wsPlant}/live/`);
 
     socket.onopen = () => {
-      console.log(
-        `✅ Ideal Report WebSocket connected: ${wsPlant}`
-      );
+      console.log(`✅ Ideal Report WebSocket connected: ${wsPlant}`);
     };
 
     socket.onmessage = async (event) => {
@@ -842,105 +1353,89 @@ export default function IdleCase({ onLogout }) {
         const payload = JSON.parse(event.data);
 
         // Existing consumer may wrap the message.
-        const message =
-          payload.message ||
-          payload.data ||
-          payload;
+        const message = payload.message || payload.data || payload;
 
         // IMPORTANT:
         // Ignore normal COUNT/machine WebSocket updates.
-        if (
-          message.event_type !==
-          "ideal_report_updated"
-        ) {
+        if (message.event_type !== "ideal_report_updated") {
           return;
         }
 
-        console.log(
-          "📡 IDEAL REPORT UPDATE RECEIVED:",
-          message
-        );
+        console.log("📡 IDEAL REPORT UPDATE RECEIVED:", message);
 
         // If another machine was updated,
         // this page does not need to refetch.
-        if (
-          String(message.machine_no) !==
-          String(machine)
-        ) {
+        if (String(message.machine_no) !== String(machine)) {
           return;
         }
 
         // DB remains source of truth.
-        const response = await axios.get(
-          `${API_BASE}/ideal-reports/pending/`,
-          {
-            params: {
-              plant: plant,
-              machine_no: machine,
-            },
-          }
-        );
+        const response = await axios.get(`${API_BASE}/ideal-reports/pending/`, {
+          params: {
+            plant: plant,
+            machine_no: machine,
+          },
+        });
 
         if (response.data.success) {
-          const events =
-            response.data.pending_reports || [];
+          const allEvents = response.data.pending_reports || [];
+
+          // Notification se page open hua hai to
+          // same ONLINE/OFFLINE mode only
+          const modeFilteredEvents = notificationContext?.idealMode
+            ? allEvents.filter(
+                (event) =>
+                  String(event.ideal_mode || "").toUpperCase() ===
+                  String(notificationContext.idealMode).toUpperCase(),
+              )
+            : allEvents;
+
+          // UI me maximum 3 events only
+          const events = [...modeFilteredEvents]
+            .sort(
+              (a, b) => new Date(b.ideal_start_at) - new Date(a.ideal_start_at),
+            )
+            .slice(0, 3);
 
           setPendingEvents(events);
 
           // If Browser 2 had selected the event
           // that Browser 1 just submitted,
           // clear that old selection.
-          setSelectedEventId(
-            (currentEventId) => {
+          setSelectedEventId((currentEventId) => {
+            const stillExists = events.some(
+              (item) => String(item.event_id) === String(currentEventId),
+            );
 
-              const stillExists = events.some(
-                (item) =>
-                  String(item.event_id) ===
-                  String(currentEventId)
-              );
-
-              if (stillExists) {
-                return currentEventId;
-              }
-
-              // Auto-select if only one remains.
-              if (events.length === 1) {
-                return String(
-                  events[0].event_id
-                );
-              }
-
-              return "";
+            if (stillExists) {
+              return currentEventId;
             }
-          );
-        }
 
+            // Auto-select if only one remains.
+            if (events.length === 1) {
+              return String(events[0].event_id);
+            }
+
+            return "";
+          });
+        }
       } catch (error) {
-        console.error(
-          "Ideal Report WebSocket handling error:",
-          error
-        );
+        console.error("Ideal Report WebSocket handling error:", error);
       }
     };
 
     socket.onerror = (error) => {
-      console.error(
-        "❌ Ideal Report WebSocket error:",
-        error
-      );
+      console.error("❌ Ideal Report WebSocket error:", error);
     };
 
     socket.onclose = () => {
-      console.log(
-        `🔌 Ideal Report WebSocket disconnected: ${wsPlant}`
-      );
+      console.log(`🔌 Ideal Report WebSocket disconnected: ${wsPlant}`);
     };
 
     return () => {
       socket.close();
     };
-
-  }, [plant, machine]);
+  }, [plant, machine, notificationContext]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -949,11 +1444,28 @@ export default function IdleCase({ onLogout }) {
     const data = {
       plant_no: plant,
       machine_no: machine,
+
+      // Hidden auto-filled fields
       operator_name: operator,
       tool_name: tool,
-      reason: reason,
-    };
 
+      // NEW Plant Live style reason data
+      reason_category: idleCategory,
+      specific_reason: idleSubReason,
+
+      // Remark only when "Other" is selected
+      remark: idleSubReason === "Other" ? idleRemarks.trim() : "",
+
+      // Exact notification/event identity
+      notification_id:
+        notificationContext?.idealEventId ||
+        notificationContext?.notificationId ||
+        null,
+
+      event_key: notificationContext?.eventKey || null,
+
+      ideal_mode: notificationContext?.idealMode || null,
+    };
 
     try {
       if (!selectedEventId) {
@@ -962,12 +1474,23 @@ export default function IdleCase({ onLogout }) {
         return;
       }
 
+      const token = localStorage.getItem("access_token");
+
       const response = await axios.post(
         `${API_BASE}/ideal-reports/${selectedEventId}/submit/`,
-        data
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
 
       if (response.data.success) {
+        console.log("✅ IDLE CASE + NOTIFICATION SUBMITTED:", response.data);
+
+        // Sidebar notification badge immediately refresh
+        window.dispatchEvent(new Event("notificationCountRefresh"));
         setLoading(false);
         setShowSuccess(true);
 
@@ -976,21 +1499,39 @@ export default function IdleCase({ onLogout }) {
         }, 5000);
       } else {
         setLoading(false);
-        document.getElementById('error-toast').style.display = 'block';
+        document.getElementById("error-toast").style.display = "block";
         setTimeout(() => {
-          document.getElementById('error-toast').style.display = 'none';
+          document.getElementById("error-toast").style.display = "none";
         }, 3000);
       }
     } catch (error) {
-      console.error('Idle Report Error:', error);
+      const backendError =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "Unknown error";
+
+      console.error(
+        "❌ IDLE REPORT SUBMIT ERROR:",
+        backendError,
+        error.response?.data,
+      );
+
       setLoading(false);
-      document.getElementById('error-toast').style.display = 'block';
-      setTimeout(() => {
-        document.getElementById('error-toast').style.display = 'none';
-      }, 3000);
+
+      alert(`Idle Report Error:\n${backendError}`);
+
+      const toast = document.getElementById("error-toast");
+
+      if (toast) {
+        toast.style.display = "block";
+
+        setTimeout(() => {
+          toast.style.display = "none";
+        }, 3000);
+      }
     }
   };
-
 
   // Success Page
   if (showSuccess) {
@@ -1007,7 +1548,7 @@ export default function IdleCase({ onLogout }) {
                   stroke="#06b6d4"
                   strokeWidth="4"
                   fill="rgba(6, 182, 212, 0.1)"
-                  style={{ animation: 'scaleIn 0.6s ease-out' }}
+                  style={{ animation: "scaleIn 0.6s ease-out" }}
                 />
                 <path
                   d="M30 50L45 65L70 35"
@@ -1016,9 +1557,9 @@ export default function IdleCase({ onLogout }) {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   style={{
-                    strokeDasharray: '60',
-                    strokeDashoffset: '60',
-                    animation: 'drawCheck 0.8s ease-out 0.3s forwards'
+                    strokeDasharray: "60",
+                    strokeDashoffset: "60",
+                    animation: "drawCheck 0.8s ease-out 0.3s forwards",
                   }}
                 />
               </svg>
@@ -1029,10 +1570,24 @@ export default function IdleCase({ onLogout }) {
             <h1 style={successStyles.title}>Report Submitted Successfully!</h1>
             <h2 style={successStyles.subtitle}>Idle Case Recorded</h2>
             <p style={successStyles.description}>
-              <strong style={{ color: '#06b6d4' }}>Plant {plant}, Machine {machine}</strong> idle report submitted.
-              <br /><br />
-              Reason: <strong style={{ color: '#fbbf24' }}>{reasonOptions.find(r => r.value === reason)?.label}</strong>
-              <br /><br />
+              <strong style={{ color: "#06b6d4" }}>
+                Plant {plant}, Machine {machine}
+              </strong>{" "}
+              idle report submitted.
+              <br />
+              <br />
+              Reason:{" "}
+              <strong
+                style={{
+                  color: "#fbbf24",
+                }}
+              >
+                {idleCategory}
+                {" → "}
+                {idleSubReason}
+              </strong>
+              <br />
+              <br />
               Your report has been saved for analysis.
             </p>
           </div>
@@ -1041,7 +1596,9 @@ export default function IdleCase({ onLogout }) {
             <div style={successStyles.progressBar}>
               <div style={successStyles.progressFill}></div>
             </div>
-            <p style={successStyles.progressText}>Redirecting to dashboard in 5 seconds...</p>
+            <p style={successStyles.progressText}>
+              Redirecting to dashboard in 5 seconds...
+            </p>
           </div>
         </div>
 
@@ -1074,67 +1631,156 @@ export default function IdleCase({ onLogout }) {
     );
   }
 
+  const isIdleReasonValid =
+    idleCategory &&
+    idleSubReason &&
+    (idleSubReason !== "Other" || idleRemarks.trim() !== "");
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#1a202c' }}>
+    <div
+      style={{
+        display: "flex",
+        minHeight: "100vh",
+        backgroundColor: "#1a202c",
+      }}
+    >
       <Sidebar onLogout={onLogout} />
 
       {/* ✅ BIGGER WIDTH - 700px */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-        padding: '50px 40px',
-        minHeight: '100vh',
-        overflowY: 'auto'
-      }}>
-        <div style={{ width: '100%', maxWidth: '700px' }}>
-
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "flex-start",
+          padding: "50px 40px",
+          minHeight: "100vh",
+          overflowY: "auto",
+        }}
+      >
+        <div style={{ width: "100%", maxWidth: "700px" }}>
           {/* Header */}
-          <div style={{
-            marginBottom: '35px',
-            textAlign: 'center'
-          }}>
-            <h1 style={{
-              fontSize: '28px',
-              fontWeight: '700',
-              color: '#ffffff',
-              marginBottom: '8px',
-              letterSpacing: '-0.5px'
-            }}>
+          <div
+            style={{
+              marginBottom: "35px",
+              textAlign: "center",
+            }}
+          >
+            <h1
+              style={{
+                fontSize: "28px",
+                fontWeight: "700",
+                color: "#ffffff",
+                marginBottom: "8px",
+                letterSpacing: "-0.5px",
+              }}
+            >
               Idle Case Reporting
             </h1>
-            <p style={{
-              color: '#9ca3af',
-              fontSize: '14px',
-              fontWeight: '400'
-            }}>
+            <p
+              style={{
+                color: "#9ca3af",
+                fontSize: "14px",
+                fontWeight: "400",
+              }}
+            >
               Report machine idle status and downtime reason
             </p>
           </div>
 
           {/* Form Container */}
-          <div style={{
-            backgroundColor: '#374151',
-            borderRadius: '14px',
-            padding: '36px',
-            boxShadow: '0 4px 24px rgba(0, 0, 0, 0.25)'
-          }}>
-            <form onSubmit={handleSubmit}>
-              <div style={{ display: 'grid', gap: '24px' }}>
+          <div
+            style={{
+              backgroundColor: "#374151",
+              borderRadius: "14px",
+              padding: "36px",
+              boxShadow: "0 4px 24px rgba(0, 0, 0, 0.25)",
+            }}
+          >
+            {notificationContext && (
+              <div
+                style={{
+                  marginBottom: "24px",
+                  padding: "14px 16px",
+                  borderRadius: "10px",
+                  backgroundColor:
+                    notificationContext.idealMode === "OFFLINE"
+                      ? "rgba(239, 68, 68, 0.12)"
+                      : "rgba(245, 158, 11, 0.12)",
+                  border:
+                    notificationContext.idealMode === "OFFLINE"
+                      ? "1px solid rgba(239, 68, 68, 0.45)"
+                      : "1px solid rgba(245, 158, 11, 0.45)",
+                  color: "#e5e7eb",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "700",
+                    marginBottom: "6px",
+                  }}
+                >
+                  🔔 Pending Idle Notification
+                </div>
 
+                <div
+                  style={{
+                    fontSize: "13px",
+                    color: "#cbd5e1",
+                  }}
+                >
+                  Plant {notificationContext.plant}
+                  {" • "}
+                  Machine M-{notificationContext.machineNo}
+                  {" • "}
+                  <strong>
+                    {notificationContext.idealMode === "OFFLINE"
+                      ? "OFFLINE"
+                      : "ONLINE IDLE"}
+                  </strong>
+                </div>
+
+                {notificationContext.idleStartedAt && (
+                  <div
+                    style={{
+                      marginTop: "5px",
+                      fontSize: "12px",
+                      color: "#94a3b8",
+                    }}
+                  >
+                    Idle:{" "}
+                    {new Date(
+                      notificationContext.idleStartedAt,
+                    ).toLocaleTimeString("en-IN")}
+                    {notificationContext.idleEndedAt && (
+                      <>
+                        {" → "}
+                        {new Date(
+                          notificationContext.idleEndedAt,
+                        ).toLocaleTimeString("en-IN")}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit}>
+              <div style={{ display: "grid", gap: "24px" }}>
                 {/* Plant Selection */}
                 <div>
-                  <label style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#d1d5db',
-                    marginBottom: '10px'
-                  }}>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: "#d1d5db",
+                      marginBottom: "10px",
+                    }}
+                  >
                     <FaIndustry size={15} color="#9ca3af" />
                     Select Plant
                   </label>
@@ -1151,41 +1797,43 @@ export default function IdleCase({ onLogout }) {
                     }}
                     required
                     style={{
-                      width: '100%',
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #4b5563',
-                      borderRadius: '10px',
-                      padding: '13px 16px',
-                      color: '#e5e7eb',
-                      fontSize: '14px',
-                      outline: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      appearance: 'none',
+                      width: "100%",
+                      backgroundColor: "#1f2937",
+                      border: "1px solid #4b5563",
+                      borderRadius: "10px",
+                      padding: "13px 16px",
+                      color: "#e5e7eb",
+                      fontSize: "14px",
+                      outline: "none",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      appearance: "none",
                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'right 16px center'
+                      backgroundRepeat: "no-repeat",
+                      backgroundPosition: "right 16px center",
                     }}
-                    onFocus={(e) => e.target.style.borderColor = '#06b6d4'}
-                    onBlur={(e) => e.target.style.borderColor = '#4b5563'}
+                    onFocus={(e) => (e.target.style.borderColor = "#06b6d4")}
+                    onBlur={(e) => (e.target.style.borderColor = "#4b5563")}
                   >
                     <option value="">Choose Plant</option>
                     <option value="1">Plant 1 (57 Machines)</option>
-                    <option value="2">Plant 2 (26 Machines)</option>
+                    <option value="2">Plant 2 (46 Machines)</option>
                   </select>
                 </div>
 
                 {/* Machine Selection */}
                 <div>
-                  <label style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#d1d5db',
-                    marginBottom: '10px'
-                  }}>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: "#d1d5db",
+                      marginBottom: "10px",
+                    }}
+                  >
                     <FaCog size={15} color="#9ca3af" />
                     Machine Number
                   </label>
@@ -1195,28 +1843,35 @@ export default function IdleCase({ onLogout }) {
                     required
                     disabled={!plant}
                     style={{
-                      width: '100%',
-                      backgroundColor: plant ? '#1f2937' : '#4b5563',
-                      border: '1px solid #4b5563',
-                      borderRadius: '10px',
-                      padding: '13px 16px',
-                      color: plant ? '#e5e7eb' : '#9ca3af',
-                      fontSize: '14px',
-                      outline: 'none',
-                      cursor: plant ? 'pointer' : 'not-allowed',
-                      transition: 'all 0.2s ease',
-                      appearance: 'none',
-                      backgroundImage: plant ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 9L1 4h10z'/%3E%3C/svg%3E")` : 'none',
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'right 16px center'
+                      width: "100%",
+                      backgroundColor: plant ? "#1f2937" : "#4b5563",
+                      border: "1px solid #4b5563",
+                      borderRadius: "10px",
+                      padding: "13px 16px",
+                      color: plant ? "#e5e7eb" : "#9ca3af",
+                      fontSize: "14px",
+                      outline: "none",
+                      cursor: plant ? "pointer" : "not-allowed",
+                      transition: "all 0.2s ease",
+                      appearance: "none",
+                      backgroundImage: plant
+                        ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`
+                        : "none",
+                      backgroundRepeat: "no-repeat",
+                      backgroundPosition: "right 16px center",
                     }}
-                    onFocus={(e) => plant && (e.target.style.borderColor = '#06b6d4')}
-                    onBlur={(e) => e.target.style.borderColor = '#4b5563'}
+                    onFocus={(e) =>
+                      plant && (e.target.style.borderColor = "#06b6d4")
+                    }
+                    onBlur={(e) => (e.target.style.borderColor = "#4b5563")}
                   >
                     <option value="">Select Machine</option>
-                    {plant && plantMachines[plant].map(num => (
-                      <option key={num} value={num}>Machine {num}</option>
-                    ))}
+                    {plant &&
+                      plantMachines[plant].map((num) => (
+                        <option key={num} value={num}>
+                          Machine {num}
+                        </option>
+                      ))}
                   </select>
                 </div>
 
@@ -1242,9 +1897,7 @@ export default function IdleCase({ onLogout }) {
                     onChange={(e) => setSelectedEventId(e.target.value)}
                     required
                     disabled={
-                      !machine ||
-                      eventsLoading ||
-                      pendingEvents.length === 0
+                      !machine || eventsLoading || pendingEvents.length === 0
                     }
                     style={{
                       width: "100%",
@@ -1261,255 +1914,398 @@ export default function IdleCase({ onLogout }) {
                       {eventsLoading
                         ? "Loading Ideal events..."
                         : pendingEvents.length === 0
-                          ? "No pending Ideal event"
-                          : "Select Ideal Event"}
+                        ? "No pending Ideal event"
+                        : "Select Ideal Event"}
                     </option>
 
                     {pendingEvents.map((event) => (
-                      <option
-                        key={event.event_id}
-                        value={event.event_id}
-                      >
-                        Event #{event.event_id}
-                        {" - "}
-                        {event.duration_minutes} min
-                        {" - "}
+                      <option key={event.event_id} value={event.event_id}>
+                        {event.ideal_mode}
+                        {" | "}
                         {new Date(event.ideal_start_at).toLocaleTimeString(
                           "en-IN",
                           {
                             hour: "2-digit",
                             minute: "2-digit",
-                          }
+                            second: "2-digit",
+                          },
                         )}
-                        {" to "}
+                        {" → "}
                         {new Date(event.ideal_end_at).toLocaleTimeString(
                           "en-IN",
                           {
                             hour: "2-digit",
                             minute: "2-digit",
-                          }
+                            second: "2-digit",
+                          },
                         )}
+                        {" | "}
+                        {event.duration_minutes} min
+                        {" | #"}
+                        {event.event_id}
                       </option>
                     ))}
                   </select>
 
-                  {pendingEvents.length > 1 && (
+                  {selectedEventId && (
+                    <div
+                      style={{
+                        marginTop: "10px",
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        background: "rgba(16, 185, 129, 0.08)",
+                        border: "1px solid rgba(16, 185, 129, 0.25)",
+                        color: "#6ee7b7",
+                        fontSize: "12px",
+                        fontWeight: "600",
+                      }}
+                    >
+                      ✓ Ideal event selected — verify the start/end time above
+                    </div>
+                  )}
+
+                  {!selectedEventId && pendingEvents.length > 1 && (
                     <div
                       style={{
                         marginTop: "8px",
                         color: "#fbbf24",
-                        fontSize: "13px",
+                        fontSize: "12px",
                       }}
                     >
-                      {pendingEvents.length} pending Ideal events found.
-                      Select the exact event you want to submit.
+                      Exact automatic match was not found. Please choose one of
+                      the nearest
+                      {` ${pendingEvents.length} `}
+                      events by time.
                     </div>
                   )}
                 </div>
 
-                {/* Operator - Auto-filled */}
-                <div>
-                  <label style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#d1d5db',
-                    marginBottom: '10px'
-                  }}>
-                    <FaUser size={15} color="#9ca3af" />
-                    Operator Name
-                  </label>
-                  <input
-                    value={operator}
-                    onChange={(e) => setOperator(e.target.value)}
-                    placeholder="Enter Operator Name"
+                {/* =====================================================
+    SAME DOWNTIME REASON FORM AS PLANT LIVE
+===================================================== */}
+
+                <div
+                  style={{
+                    background:
+                      "linear-gradient(145deg, rgba(245,158,11,0.08), rgba(2,6,23,0.55))",
+
+                    padding: "24px",
+
+                    borderRadius: "18px",
+
+                    border: "1px solid rgba(245,158,11,0.25)",
+
+                    boxShadow: "inset 0 0 30px rgba(245,158,11,0.04)",
+                  }}
+                >
+                  {/* HEADER */}
+
+                  <div
                     style={{
-                      width: '100%',
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #4b5563',
-                      borderRadius: '10px',
-                      padding: '13px 16px',
-                      color: '#e5e7eb',
-                      fontSize: '14px',
-                      outline: 'none',
-                      cursor: 'text'
+                      display: "flex",
+                      alignItems: "center",
+                      marginBottom: "24px",
+                      gap: "12px",
                     }}
-                  />
-                </div>
+                  >
+                    <div
+                      style={{
+                        width: "36px",
+                        height: "36px",
+                        borderRadius: "10px",
 
-                {/* Tool - Auto-filled */}
-                <div>
-                  <label style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#d1d5db',
-                    marginBottom: '10px'
-                  }}>
-                    <FaTools size={15} color="#9ca3af" />
-                    Tool Name
-                  </label>
-                  <input
-                    value={tool}
-                    onChange={(e) => setTool(e.target.value)}
-                    placeholder="Enter Tool Name"
-                    style={{
-                      width: '100%',
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #4b5563',
-                      borderRadius: '10px',
-                      padding: '13px 16px',
-                      color: '#e5e7eb',
-                      fontSize: '14px',
-                      outline: 'none',
-                      cursor: 'text'
-                    }}
-                  />
-                </div>
+                        background: "rgba(245,158,11,0.18)",
 
-                {/* Idle Reason - 2 Column Grid */}
-                <div>
-                  <label style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: '#d1d5db',
-                    marginBottom: '12px'
-                  }}>
-                    <FaExclamationTriangle size={15} color="#9ca3af" />
-                    Idle Reason
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
-                    {reasonOptions.map((option) => {
-                      const Icon = option.icon;
-                      const isSelected = reason === option.value;
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
 
-                      return (
-                        <div
-                          key={option.value}
-                          onClick={() => setReason(option.value)}
-                          style={{
-                            backgroundColor: isSelected ? `${option.color}15` : '#1f2937',
-                            border: `2px solid ${isSelected ? option.color : '#4b5563'}`,
-                            borderRadius: '10px',
-                            padding: '14px',
-                            cursor: 'pointer',
-                            transition: 'all 0.25s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = option.color;
-                            e.currentTarget.style.backgroundColor = `${option.color}20`;
-                            e.currentTarget.style.transform = 'translateY(-2px)';
-                            e.currentTarget.style.boxShadow = `0 4px 12px ${option.color}40`;
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!isSelected) {
-                              e.currentTarget.style.borderColor = '#4b5563';
-                              e.currentTarget.style.backgroundColor = '#1f2937';
-                            } else {
-                              e.currentTarget.style.borderColor = option.color;
-                              e.currentTarget.style.backgroundColor = `${option.color}15`;
-                            }
-                            e.currentTarget.style.transform = 'translateY(0)';
-                            e.currentTarget.style.boxShadow = 'none';
-                          }}
-                        >
-                          <div style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '8px',
-                            backgroundColor: option.color,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}>
-                            <Icon size={16} color="#ffffff" />
-                          </div>
-                          <span style={{
-                            color: isSelected ? '#e5e7eb' : '#9ca3af',
-                            fontSize: '14px',
-                            fontWeight: isSelected ? '600' : '500',
-                            lineHeight: '1.4'
-                          }}>
-                            {option.label}
-                          </span>
-                        </div>
-                      );
-                    })}
+                        color: "#fbbf24",
+                      }}
+                    >
+                      ⚠
+                    </div>
+
+                    <div>
+                      <div
+                        style={{
+                          color: "#fbbf24",
+                          fontSize: "17px",
+                          fontWeight: "800",
+                        }}
+                      >
+                        Log Downtime Reason
+                      </div>
+
+                      <div
+                        style={{
+                          color: "#94a3b8",
+                          fontSize: "11px",
+                          marginTop: "2px",
+                        }}
+                      >
+                        Select the exact reason for this pending idle event
+                      </div>
+                    </div>
+
+                    {notificationContext && (
+                      <span
+                        style={{
+                          marginLeft: "auto",
+
+                          padding: "4px 9px",
+
+                          borderRadius: "6px",
+
+                          fontSize: "11px",
+                          fontWeight: "700",
+
+                          color:
+                            notificationContext.idealMode === "OFFLINE"
+                              ? "#fca5a5"
+                              : "#34d399",
+
+                          background:
+                            notificationContext.idealMode === "OFFLINE"
+                              ? "rgba(239,68,68,0.15)"
+                              : "rgba(16,185,129,0.15)",
+
+                          border:
+                            notificationContext.idealMode === "OFFLINE"
+                              ? "1px solid rgba(239,68,68,0.35)"
+                              : "1px solid rgba(16,185,129,0.35)",
+                        }}
+                      >
+                        {notificationContext.idealMode === "OFFLINE"
+                          ? "OFFLINE"
+                          : "ONLINE (IDLE)"}
+                      </span>
+                    )}
                   </div>
-                </div>
 
+                  {/* 1. CATEGORY */}
+
+                  <div
+                    style={{
+                      marginBottom: "18px",
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontSize: "11px",
+
+                        color: "#fcd34d",
+
+                        fontWeight: "800",
+
+                        textTransform: "uppercase",
+
+                        marginBottom: "8px",
+
+                        display: "block",
+
+                        letterSpacing: "1.5px",
+                      }}
+                    >
+                      1. Select Category
+                    </label>
+
+                    <CustomDropdown
+                      value={idleCategory}
+                      placeholder="-- Choose Category --"
+                      icon={true}
+                      options={Object.keys(IDLE_REASONS)}
+                      onChange={(value) => {
+                        setIdleCategory(value);
+
+                        // Category change =
+                        // old specific reason reset
+                        if (value === "Other") {
+                          setIdleSubReason("Other");
+                        } else {
+                          setIdleSubReason("");
+                        }
+
+                        setIdleRemarks("");
+                      }}
+                    />
+                  </div>
+
+                  {/* 2. SPECIFIC REASON */}
+
+                  {idleCategory && (
+                    <div
+                      style={{
+                        marginBottom: "18px",
+                      }}
+                    >
+                      <label
+                        style={{
+                          fontSize: "11px",
+
+                          color: "#fcd34d",
+
+                          fontWeight: "800",
+
+                          textTransform: "uppercase",
+
+                          marginBottom: "8px",
+
+                          display: "block",
+
+                          letterSpacing: "1.5px",
+                        }}
+                      >
+                        2. Specific Reason
+                      </label>
+
+                      <CustomDropdown
+                        value={idleSubReason}
+                        placeholder="-- Choose Reason --"
+                        icon={false}
+                        options={IDLE_REASONS[idleCategory] || []}
+                        onChange={(value) => {
+                          setIdleSubReason(value);
+
+                          if (value !== "Other") {
+                            setIdleRemarks("");
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* 3. REMARK ONLY FOR OTHER */}
+
+                  {idleSubReason === "Other" && (
+                    <div
+                      style={{
+                        marginBottom: "4px",
+                      }}
+                    >
+                      <label
+                        style={{
+                          fontSize: "11px",
+
+                          color: "#10b981",
+
+                          fontWeight: "800",
+
+                          textTransform: "uppercase",
+
+                          marginBottom: "8px",
+
+                          display: "block",
+
+                          letterSpacing: "1.5px",
+                        }}
+                      >
+                        3. Remarks / Exact Issue
+                      </label>
+
+                      <textarea
+                        rows="3"
+                        placeholder="Please type the exact issue..."
+                        value={idleRemarks}
+                        onChange={(e) => setIdleRemarks(e.target.value)}
+                        style={{
+                          width: "100%",
+
+                          padding: "14px 18px",
+
+                          borderRadius: "12px",
+
+                          background: "rgba(16,185,129,0.05)",
+
+                          color: "#ffffff",
+
+                          border: "1px solid rgba(16,185,129,0.4)",
+
+                          boxShadow: "inset 0 2px 10px rgba(0,0,0,0.2)",
+
+                          fontSize: "14px",
+
+                          outline: "none",
+
+                          resize: "vertical",
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Submit Button */}
               <button
                 type="submit"
                 disabled={
-                  loading ||
-                  !machine ||
-                  !selectedEventId ||
-                  !reason
+                  loading || !machine || !selectedEventId || !isIdleReasonValid
                 }
                 style={{
-                  width: '100%',
-                  background: loading || !machine || !reason
-                    ? '#4b5563'
-                    : '#06b6d4',
-                  border: 'none',
-                  borderRadius: '10px',
-                  padding: '15px',
-                  color: 'white',
-                  fontSize: '15px',
-                  fontWeight: '600',
-                  cursor: loading || !machine || !reason ? 'not-allowed' : 'pointer',
-                  marginTop: '28px',
-                  transition: 'all 0.2s ease',
-                  boxShadow: loading || !machine || !reason ? 'none' : '0 4px 14px rgba(6, 182, 212, 0.35)',
-                  letterSpacing: '0.3px'
+                  width: "100%",
+                  background:
+                    loading || !machine || !isIdleReasonValid
+                      ? "#4b5563"
+                      : "#06b6d4",
+                  border: "none",
+                  borderRadius: "10px",
+                  padding: "15px",
+                  color: "white",
+                  fontSize: "15px",
+                  fontWeight: "600",
+                  cursor:
+                    loading || !machine || !isIdleReasonValid
+                      ? "not-allowed"
+                      : "pointer",
+                  marginTop: "28px",
+                  transition: "all 0.2s ease",
+                  boxShadow:
+                    loading || !machine || !isIdleReasonValid
+                      ? "none"
+                      : "0 4px 14px rgba(6, 182, 212, 0.35)",
+                  letterSpacing: "0.3px",
                 }}
                 onMouseEnter={(e) => {
-                  if (!loading && machine && reason) {
-                    e.target.style.transform = 'translateY(-2px)';
-                    e.target.style.boxShadow = '0 6px 20px rgba(6, 182, 212, 0.45)';
-                    e.target.style.backgroundColor = '#0891b2';
+                  if (!loading && machine && isIdleReasonValid) {
+                    e.target.style.transform = "translateY(-2px)";
+                    e.target.style.boxShadow =
+                      "0 6px 20px rgba(6, 182, 212, 0.45)";
+                    e.target.style.backgroundColor = "#0891b2";
                   }
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0)';
-                  e.target.style.boxShadow = '0 4px 14px rgba(6, 182, 212, 0.35)';
-                  e.target.style.backgroundColor = '#06b6d4';
+                  e.target.style.transform = "translateY(0)";
+                  e.target.style.boxShadow =
+                    "0 4px 14px rgba(6, 182, 212, 0.35)";
+                  e.target.style.backgroundColor = "#06b6d4";
                 }}
               >
                 {loading ? "⏳ Submitting Report..." : "✓ Submit Idle Report"}
               </button>
 
               {/* Info Box */}
-              <div style={{
-                backgroundColor: '#78350f',
-                border: '1px solid #92400e',
-                borderRadius: '10px',
-                padding: '14px',
-                marginTop: '18px',
-                color: '#fbbf24',
-                fontSize: '13px',
-                display: 'flex',
-                gap: '12px',
-                alignItems: 'start',
-                lineHeight: '1.5'
-              }}>
-                <FaExclamationTriangle size={15} style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div
+                style={{
+                  backgroundColor: "#78350f",
+                  border: "1px solid #92400e",
+                  borderRadius: "10px",
+                  padding: "14px",
+                  marginTop: "18px",
+                  color: "#fbbf24",
+                  fontSize: "13px",
+                  display: "flex",
+                  gap: "12px",
+                  alignItems: "start",
+                  lineHeight: "1.5",
+                }}
+              >
+                <FaExclamationTriangle
+                  size={15}
+                  style={{ flexShrink: 0, marginTop: "2px" }}
+                />
                 <span>
-                  Please provide accurate information about the idle machine for proper tracking and analysis.
+                  Please provide accurate information about the idle machine for
+                  proper tracking and analysis.
                 </span>
               </div>
             </form>
@@ -1521,19 +2317,19 @@ export default function IdleCase({ onLogout }) {
       <div
         id="error-toast"
         style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          backgroundColor: '#dc2626',
-          color: 'white',
-          padding: '14px 22px',
-          borderRadius: '10px',
-          boxShadow: '0 8px 24px rgba(220, 38, 38, 0.4)',
+          position: "fixed",
+          top: "20px",
+          right: "20px",
+          backgroundColor: "#dc2626",
+          color: "white",
+          padding: "14px 22px",
+          borderRadius: "10px",
+          boxShadow: "0 8px 24px rgba(220, 38, 38, 0.4)",
           zIndex: 1000,
-          display: 'none',
-          fontWeight: '600',
-          fontSize: '14px',
-          border: '1px solid #991b1b'
+          display: "none",
+          fontWeight: "600",
+          fontSize: "14px",
+          border: "1px solid #991b1b",
         }}
       >
         ❌ Error Saving Idle Report!

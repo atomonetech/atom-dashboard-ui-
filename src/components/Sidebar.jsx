@@ -1749,6 +1749,7 @@ export default function Sidebar({ onLogout }) {
   const [notifications, setNotifications] = useState([]);
   const [notificationAlert, setNotificationAlert] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [idleCasePendingCount, setIdleCasePendingCount] = useState(0);
   const [hasNewNotification, setHasNewNotification] = useState(false);
   const [screenInfo, setScreenInfo] = useState({
     isMobile: false,
@@ -1796,48 +1797,238 @@ export default function Sidebar({ onLogout }) {
   }, []);
 
   // Notifications Logic
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const currentUser = localStorage.getItem("username");
-        const res = await fetch(
-          `${API_BASE}/api/qa-notifications/${currentUser}/`,
-        );
-        const data = await res.json();
+  // ============================================================
+  // NOTIFICATIONS COUNT
+  // QA REPORTS + ACTIVE MACHINE PENDING NOTIFICATIONS
+  // ============================================================
 
-        if (res.ok && data.notifications) {
-          const currentCount = data.notifications.length;
+  useEffect(() => {
+
+    const fetchNotifications = async () => {
+
+      try {
+
+        const currentUser =
+          localStorage.getItem("username");
+
+        const token =
+          localStorage.getItem("access_token");
+
+        if (!currentUser || !token) {
+          setNotificationCount(0);
+          setIdleCasePendingCount(0);
+          return;
+        }
+
+        // ======================================================
+        // 1. QA / REPORT NOTIFICATIONS
+        // ======================================================
+
+        let reportNotifications = [];
+
+        try {
+
+          const qaRes = await fetch(
+            `${API_BASE}/api/qa-notifications/${encodeURIComponent(
+              currentUser
+            )}/`
+          );
+
+          const qaData = await qaRes.json();
 
           if (
-            previousCount.current > 0 &&
-            currentCount > previousCount.current
+            qaRes.ok &&
+            Array.isArray(qaData.notifications)
           ) {
-            setHasNewNotification(true);
-            setNotificationAlert(true);
-            setTimeout(() => setNotificationAlert(false), 10000);
-            const latest = data.notifications[0];
-            toast.info(latest.message || "📄 New report submitted", {
-              autoClose: 5000,
-              position: "top-right",
-            });
+            reportNotifications =
+              qaData.notifications;
           }
 
-          if (previousCount.current > currentCount) {
-            toast.success("✅ Report approved/cleared", { autoClose: 3000 });
-          }
+        } catch (qaError) {
 
-          previousCount.current = currentCount;
-          setNotifications(data.notifications);
-          setNotificationCount(currentCount);
+          console.error(
+            "QA notification count error:",
+            qaError
+          );
+
         }
+
+
+        // ======================================================
+        // 2. MACHINE IDLE NOTIFICATIONS
+        // ======================================================
+
+        let machinePendingNotifications = [];
+
+        try {
+
+          const machineRes = await fetch(
+            `${API_BASE}/api/my-notifications/`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          const machineData =
+            await machineRes.json();
+
+          if (
+            machineRes.ok &&
+            machineData.success &&
+            Array.isArray(machineData.data)
+          ) {
+
+            // ======================================================
+            // ONLY MACHINE IDLE NOTIFICATIONS
+            // ======================================================
+
+            const machineOnly =
+              machineData.data.filter(
+                (notif) =>
+                  notif.notification_type === "IDLE_REASON"
+              );
+
+            // ======================================================
+            // ALL PENDING IDLE EVENTS
+            // Same machine ke old pending events bhi count honge
+            // ======================================================
+
+            machinePendingNotifications =
+              machineOnly.filter(
+                (notif) =>
+                  notif.status === "PENDING"
+              );
+
+            // ======================================================
+            // IDLE CASE
+            // Event ended but reason abhi bhi PENDING hai
+            // ======================================================
+
+            const closedPendingIdleCases =
+              machinePendingNotifications.filter(
+                (notif) =>
+                  Boolean(notif.idle_ended_at)
+              );
+
+            setIdleCasePendingCount(
+              closedPendingIdleCases.length
+            );
+          }
+
+        } catch (machineError) {
+
+          console.error(
+            "Machine notification count error:",
+            machineError
+          );
+          setIdleCasePendingCount(0);
+        }
+
+
+        // ======================================================
+        // 3. FINAL SIDEBAR COUNT
+        // ======================================================
+
+        const currentCount =
+          reportNotifications.length +
+          machinePendingNotifications.length;
+
+        if (
+          previousCount.current > 0 &&
+          currentCount >
+          previousCount.current
+        ) {
+
+          setHasNewNotification(true);
+          setNotificationAlert(true);
+
+          setTimeout(
+            () =>
+              setNotificationAlert(false),
+            10000
+          );
+
+        }
+
+        if (
+          previousCount.current >
+          currentCount
+        ) {
+
+          setHasNewNotification(false);
+
+        }
+
+        previousCount.current =
+          currentCount;
+
+        setNotifications(
+          reportNotifications
+        );
+
+        setNotificationCount(
+          currentCount
+        );
+
+        console.log(
+          "🔔 Sidebar notification count:",
+          currentCount,
+          "| Machine:",
+          machinePendingNotifications.length,
+          "| Reports:",
+          reportNotifications.length
+        );
+
       } catch (err) {
-        console.error(err);
+
+        console.error(
+          "Sidebar notification fetch error:",
+          err
+        );
+
       }
+
     };
 
+
+    // First load
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 10000);
-    return () => clearInterval(interval);
+
+
+    // Normal polling fallback
+    const interval =
+      setInterval(
+        fetchNotifications,
+        10000
+      );
+
+
+    // Instant refresh event
+    const handleNotificationRefresh =
+      () => {
+        fetchNotifications();
+      };
+
+
+    window.addEventListener(
+      "notificationCountRefresh",
+      handleNotificationRefresh
+    );
+
+
+    return () => {
+
+      clearInterval(interval);
+
+      window.removeEventListener(
+        "notificationCountRefresh",
+        handleNotificationRefresh
+      );
+
+    };
+
   }, []);
 
   // Responsive Screen Logic
@@ -1970,7 +2161,10 @@ export default function Sidebar({ onLogout }) {
       icon: CircleAlert,
       path: "/idle-case",
       color: "yellow",
-      badge: null,
+      badge:
+        idleCasePendingCount > 0
+          ? idleCasePendingCount
+          : null,
     },
     {
       label: "Production Report",
