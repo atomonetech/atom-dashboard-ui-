@@ -397,6 +397,26 @@ export default function Plant2Live() {
     if (!machine) return 0;
 
     // ========================================================
+    // FINAL SHIFT IDEAL TOTAL
+    //
+    // Backend is source of truth.
+    //
+    // Machine ON:
+    //     total ONLINE Ideal of current shift.
+    //
+    // Machine OFF:
+    //     total OFFLINE Ideal of current shift.
+    // ========================================================
+      
+    const backendShiftTotal = machine.machine_on
+      ? Number(machine.online_ideal_shift)
+      : Number(machine.offline_ideal_shift);
+      
+    if (Number.isFinite(backendShiftTotal)) {
+      return Math.max(0, backendShiftTotal);
+    }
+
+    // ========================================================
     // OFFLINE - FINAL DIRECT CALCULATION
     //
     // IMPORTANT:
@@ -1120,8 +1140,6 @@ export default function Plant2Live() {
       // created_at = null
       //
       // Notification ID == Ideal Event ID
-      // ============================================================
-
       const currentNotifications = allNotifications.filter((notification) => {
         const machineMatch = String(notification.machine_no || "").match(/\d+/);
 
@@ -1143,16 +1161,11 @@ export default function Plant2Live() {
           notification.report_status || notification.status || "",
         ).toUpperCase();
 
-        const isCurrentActive =
-          notification.idle_ended_at === null ||
-          notification.idle_ended_at === "";
-
         return (
           notificationMachineNo === targetMachineNo &&
           notificationPlant === "plant 2" &&
           notificationMode === currentMode &&
-          (notificationStatus === "PENDING" || notificationStatus === "") &&
-          isCurrentActive
+          (notificationStatus === "PENDING" || notificationStatus === "")
         );
       });
 

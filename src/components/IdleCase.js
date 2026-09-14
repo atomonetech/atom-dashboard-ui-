@@ -625,7 +625,13 @@ import Sidebar from "./Sidebar";
 // ✅ Simple icons
 import { FaCog, FaExclamationTriangle, FaIndustry } from "react-icons/fa";
 
-const API_BASE = "http://127.0.0.1:8000/api";
+// ==========================================================
+// API HOST
+
+const BACKEND_HOST = window.location.hostname;
+
+const API_BASE =
+  process.env.REACT_APP_API_BASE || `http://${BACKEND_HOST}:8000/api`; // Fallback to local if env variable is not set
 
 // ============================================================
 // SAME IDLE REASONS AS PLANT 1 LIVE
@@ -1021,7 +1027,7 @@ export default function IdleCase({ onLogout }) {
     // Existing operator/tool auto-fill
     try {
       const response = await axios.get(
-        `${API_BASE}/api/machines/${machine}/auto-fill/?plant=${plant}`,
+        `${API_BASE}/machines/${machine}/auto-fill/?plant=${plant}`,
       );
 
       if (response.data.success) {
@@ -1287,7 +1293,7 @@ export default function IdleCase({ onLogout }) {
 
         try {
           const autoFillResponse = await axios.get(
-            `${API_BASE}/api/machines/${machine}/auto-fill/?plant=${plant}`,
+            `${API_BASE}/machines/${machine}/auto-fill/?plant=${plant}`,
           );
 
           if (autoFillResponse.data.success) {
@@ -1342,7 +1348,9 @@ export default function IdleCase({ onLogout }) {
     // Production IP will be handled later.
     const wsPlant = plant === "1" ? "plant1" : "plant2";
 
-    const socket = new WebSocket(`ws://127.0.0.1:8000/ws/${wsPlant}/live/`);
+    const WS_HOST = window.location.hostname;
+
+    const socket = new WebSocket(`ws://${WS_HOST}:8000/ws/${wsPlant}/live/`);
 
     socket.onopen = () => {
       console.log(`✅ Ideal Report WebSocket connected: ${wsPlant}`);

@@ -1973,8 +1973,6 @@ export default function Plant1Live() {
 
       // ============================================================
       // 4. FIND ONLY CURRENT ACTIVE EVENT
-      // ============================================================
-
       const currentNotifications = allNotifications.filter((notification) => {
         const machineMatch = String(notification.machine_no || "").match(/\d+/);
 
@@ -1996,16 +1994,11 @@ export default function Plant1Live() {
           notification.report_status || notification.status || "",
         ).toUpperCase();
 
-        const isCurrentActive =
-          notification.idle_ended_at === null ||
-          notification.idle_ended_at === "";
-
         return (
           notificationMachineNo === targetMachineNo &&
           notificationPlant === "plant 1" &&
           notificationMode === currentMode &&
-          (notificationStatus === "PENDING" || notificationStatus === "") &&
-          isCurrentActive
+          (notificationStatus === "PENDING" || notificationStatus === "")
         );
       });
 
