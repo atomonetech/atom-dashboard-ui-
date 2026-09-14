@@ -119,7 +119,7 @@ const AccessDeniedScreen = ({ onLogout }) => {
               fontSize: 32,
             }}
           >
-            🔒
+            白
           </div>
 
           <h2
@@ -185,7 +185,7 @@ function App() {
         applicationServerKey: urlBase64ToUint8Array(publicVapidKey),
       });
 
-      // 🔥 UPDATED: Dynamic API URL setup based on environment
+      // 櫨 UPDATED: Dynamic API URL setup based on environment
       const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
       fetch(`${apiUrl}/api/save-subscription/`, {
@@ -220,7 +220,7 @@ function App() {
     localStorage.removeItem("profile_image");
   };
 
-  // 🔥 UPDATED PROTECTED ROUTE LOGIC 🔥
+  // 櫨 UPDATED PROTECTED ROUTE LOGIC 櫨
   const ProtectedRoute = ({
     children,
     allowedRole,
@@ -359,8 +359,9 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            {/*  ROUTE CHANGE for the operations route */}
             <Route
-              path="/assign-machine"
+              path="/operations/*"
               element={
                 <ProtectedRoute adminOnly={true}>
                   <OperatorAssignmentMaster onLogout={handleLogout} />
@@ -384,7 +385,7 @@ function App() {
               }
             />
 
-            {/* 🔥 SPECIFIC PLANT ROUTES (Maha Important Fix) 🔥 */}
+            {/* 櫨 SPECIFIC PLANT ROUTES (Maha Important Fix) 櫨 */}
             <Route
               path="/plant1-live"
               element={

@@ -1761,12 +1761,10 @@ export default function Sidebar({ onLogout }) {
     isIPadPro: false,
   });
 
-  // 🔥 NAYA CODE: User Data ko state mein rakha hai taaki real-time update ho sake
-  // const { user } = useUser();
+  // 🔥 NAYA CODE: Dropdown ko track karne ke liye state
+  const [openDropdown, setOpenDropdown] = useState("");
 
   const previousCount = useRef(0);
-
-  // 🔥 NAYA CODE: Login Listener - Jaise hi login hoga, Sidebar apne aap data refresh kar lega
 
   // Theme Sync Observer
   useEffect(() => {
@@ -1798,21 +1796,11 @@ export default function Sidebar({ onLogout }) {
 
   // Notifications Logic
   // ============================================================
-  // NOTIFICATIONS COUNT
-  // QA REPORTS + ACTIVE MACHINE PENDING NOTIFICATIONS
-  // ============================================================
-
   useEffect(() => {
-
     const fetchNotifications = async () => {
-
       try {
-
-        const currentUser =
-          localStorage.getItem("username");
-
-        const token =
-          localStorage.getItem("access_token");
+        const currentUser = localStorage.getItem("username");
+        const token = localStorage.getItem("access_token");
 
         if (!currentUser || !token) {
           setNotificationCount(0);
@@ -1820,215 +1808,74 @@ export default function Sidebar({ onLogout }) {
           return;
         }
 
-        // ======================================================
-        // 1. QA / REPORT NOTIFICATIONS
-        // ======================================================
-
         let reportNotifications = [];
-
         try {
-
           const qaRes = await fetch(
-            `${API_BASE}/api/qa-notifications/${encodeURIComponent(
-              currentUser
-            )}/`
+            `${API_BASE}/api/qa-notifications/${encodeURIComponent(currentUser)}/`
           );
-
           const qaData = await qaRes.json();
-
-          if (
-            qaRes.ok &&
-            Array.isArray(qaData.notifications)
-          ) {
-            reportNotifications =
-              qaData.notifications;
+          if (qaRes.ok && Array.isArray(qaData.notifications)) {
+            reportNotifications = qaData.notifications;
           }
-
         } catch (qaError) {
-
-          console.error(
-            "QA notification count error:",
-            qaError
-          );
-
+          console.error("QA notification count error:", qaError);
         }
 
-
-        // ======================================================
-        // 2. MACHINE IDLE NOTIFICATIONS
-        // ======================================================
-
         let machinePendingNotifications = [];
-
         try {
-
           const machineRes = await fetch(
             `${API_BASE}/api/my-notifications/`,
             {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
+              headers: { Authorization: `Bearer ${token}` },
             }
           );
+          const machineData = await machineRes.json();
 
-          const machineData =
-            await machineRes.json();
-
-          if (
-            machineRes.ok &&
-            machineData.success &&
-            Array.isArray(machineData.data)
-          ) {
-
-            // ======================================================
-            // ONLY MACHINE IDLE NOTIFICATIONS
-            // ======================================================
-
-            const machineOnly =
-              machineData.data.filter(
-                (notif) =>
-                  notif.notification_type === "IDLE_REASON"
-              );
-
-            // ======================================================
-            // ALL PENDING IDLE EVENTS
-            // Same machine ke old pending events bhi count honge
-            // ======================================================
-
-            machinePendingNotifications =
-              machineOnly.filter(
-                (notif) =>
-                  notif.status === "PENDING"
-              );
-
-            // ======================================================
-            // IDLE CASE
-            // Event ended but reason abhi bhi PENDING hai
-            // ======================================================
-
-            const closedPendingIdleCases =
-              machinePendingNotifications.filter(
-                (notif) =>
-                  Boolean(notif.idle_ended_at)
-              );
-
-            setIdleCasePendingCount(
-              closedPendingIdleCases.length
-            );
+          if (machineRes.ok && machineData.success && Array.isArray(machineData.data)) {
+            const machineOnly = machineData.data.filter((notif) => notif.notification_type === "IDLE_REASON");
+            machinePendingNotifications = machineOnly.filter((notif) => notif.status === "PENDING");
+            const closedPendingIdleCases = machinePendingNotifications.filter((notif) => Boolean(notif.idle_ended_at));
+            setIdleCasePendingCount(closedPendingIdleCases.length);
           }
-
         } catch (machineError) {
-
-          console.error(
-            "Machine notification count error:",
-            machineError
-          );
+          console.error("Machine notification count error:", machineError);
           setIdleCasePendingCount(0);
         }
 
+        const currentCount = reportNotifications.length + machinePendingNotifications.length;
 
-        // ======================================================
-        // 3. FINAL SIDEBAR COUNT
-        // ======================================================
-
-        const currentCount =
-          reportNotifications.length +
-          machinePendingNotifications.length;
-
-        if (
-          previousCount.current > 0 &&
-          currentCount >
-          previousCount.current
-        ) {
-
+        if (previousCount.current > 0 && currentCount > previousCount.current) {
           setHasNewNotification(true);
           setNotificationAlert(true);
-
-          setTimeout(
-            () =>
-              setNotificationAlert(false),
-            10000
-          );
-
+          setTimeout(() => setNotificationAlert(false), 10000);
         }
 
-        if (
-          previousCount.current >
-          currentCount
-        ) {
-
+        if (previousCount.current > currentCount) {
           setHasNewNotification(false);
-
         }
 
-        previousCount.current =
-          currentCount;
-
-        setNotifications(
-          reportNotifications
-        );
-
-        setNotificationCount(
-          currentCount
-        );
-
-        console.log(
-          "🔔 Sidebar notification count:",
-          currentCount,
-          "| Machine:",
-          machinePendingNotifications.length,
-          "| Reports:",
-          reportNotifications.length
-        );
+        previousCount.current = currentCount;
+        setNotifications(reportNotifications);
+        setNotificationCount(currentCount);
 
       } catch (err) {
-
-        console.error(
-          "Sidebar notification fetch error:",
-          err
-        );
-
+        console.error("Sidebar notification fetch error:", err);
       }
-
     };
 
-
-    // First load
     fetchNotifications();
+    const interval = setInterval(fetchNotifications, 10000);
 
+    const handleNotificationRefresh = () => {
+      fetchNotifications();
+    };
 
-    // Normal polling fallback
-    const interval =
-      setInterval(
-        fetchNotifications,
-        10000
-      );
-
-
-    // Instant refresh event
-    const handleNotificationRefresh =
-      () => {
-        fetchNotifications();
-      };
-
-
-    window.addEventListener(
-      "notificationCountRefresh",
-      handleNotificationRefresh
-    );
-
+    window.addEventListener("notificationCountRefresh", handleNotificationRefresh);
 
     return () => {
-
       clearInterval(interval);
-
-      window.removeEventListener(
-        "notificationCountRefresh",
-        handleNotificationRefresh
-      );
-
+      window.removeEventListener("notificationCountRefresh", handleNotificationRefresh);
     };
-
   }, []);
 
   // Responsive Screen Logic
@@ -2070,56 +1917,28 @@ export default function Sidebar({ onLogout }) {
   const fullLogo = "/logo1.jpg";
   const smallLogo = "/bhai.jpg";
 
-  // 🔥 DATA DESTRUCTURING (ab variables local storage ki jagah State se aayenge)
   const userRole = user?.role || localStorage.getItem("user_role") || "User";
-
-  const userGroups =
-    user?.groups || JSON.parse(localStorage.getItem("user_groups") || "[]");
-
+  const userGroups = user?.groups || JSON.parse(localStorage.getItem("user_groups") || "[]");
   const userName = user?.email || localStorage.getItem("username") || "";
-
-  const fullName =
-    user?.fullName || localStorage.getItem("full_name") || userName;
-
-  const profileImage =
-    user?.profileImage || localStorage.getItem("profile_image") || "";
+  const fullName = user?.fullName || localStorage.getItem("full_name") || userName;
+  const profileImage = user?.profileImage || localStorage.getItem("profile_image") || "";
 
   // Access Control
   const hasAccess = (path) => {
-    // Admin can access everything
-    if (userRole === "Admin") {
-      return true;
-    }
-
-    // Dashboard access through Django Group
-    if (path === "/dashboard") {
-      return userGroups.includes("Dashboard_Users");
-    }
-
-    //plant 1 access through Django Group
-    if (path === "/plant1-live") {
-      return userGroups.includes("Plant_1_User");
-    }
-    // Plant 2 access through Django Group
-    if (path === "/plant2-live") {
-      return userGroups.includes("Plant_2_User");
-    }
+    if (userRole === "Admin") return true;
+    if (path === "/dashboard") return userGroups.includes("Dashboard_Users");
+    if (path === "/plant1-live") return userGroups.includes("Plant_1_User");
+    if (path === "/plant2-live") return userGroups.includes("Plant_2_User");
 
     switch (userRole) {
-      case "QA_Hub":
-        return ["/qa-hub", "/qms"].includes(path);
-
-      case "Production_Hub":
-        return ["/production-hub"].includes(path);
-
-      case "Maintenance_Hub":
-        return ["/maintenance-hub"].includes(path);
-
-      default:
-        return false;
+      case "QA_Hub": return ["/qa-hub", "/qms"].includes(path);
+      case "Production_Hub": return ["/production-hub"].includes(path);
+      case "Maintenance_Hub": return ["/maintenance-hub"].includes(path);
+      default: return false;
     }
   };
 
+  // NAYA CODE: Operations ke andar subItems add kiye gaye hain
   const menuItems = [
     {
       label: "Dashboard",
@@ -2145,9 +1964,16 @@ export default function Sidebar({ onLogout }) {
     {
       label: "Operations",
       icon: Settings,
-      path: "/assign-machine",
+      path: "/operations",
       color: "indigo",
       badge: null,
+      subItems: [
+        { label: "Assign Operator", path: "/operations/assign-operator" },
+        { label: "Current Assignments", path: "/operations/current-assignments" },
+        { label: "Machine History", path: "/operations/machine-history" },
+        { label: "Operator History", path: "/operations/operator-history" },
+        { label: "Work Plan", path: "/operations/work-plan" },
+      ]
     },
     {
       label: "Reports",
@@ -2161,10 +1987,7 @@ export default function Sidebar({ onLogout }) {
       icon: CircleAlert,
       path: "/idle-case",
       color: "yellow",
-      badge:
-        idleCasePendingCount > 0
-          ? idleCasePendingCount
-          : null,
+      badge: idleCasePendingCount > 0 ? idleCasePendingCount : null,
     },
     {
       label: "Production Report",
@@ -2250,7 +2073,6 @@ export default function Sidebar({ onLogout }) {
   ];
 
   const handleLogout = () => {
-    // Clear current user data
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user_role");
@@ -2259,11 +2081,8 @@ export default function Sidebar({ onLogout }) {
     localStorage.removeItem("full_name");
     localStorage.removeItem("profile_image");
 
-    // Tell other components user logged out
     window.dispatchEvent(new Event("userLoginUpdate"));
-
     if (onLogout) onLogout();
-
     navigate("/login");
   };
 
@@ -2333,7 +2152,6 @@ export default function Sidebar({ onLogout }) {
     return "top-2 left-2";
   };
 
-  // Helper function to safely isolate the theme colors
   const getColors = (itemColor) => {
     if (theme === "light") {
       return {
@@ -2385,7 +2203,6 @@ export default function Sidebar({ onLogout }) {
 
   return (
     <>
-      {/* Menu Button - Always visible on mobile and tablets when sidebar is closed */}
       {(!mobileOpen || screenInfo.isDesktop) &&
         (screenInfo.isMobile || screenInfo.isTablet) && (
           <motion.button
@@ -2399,16 +2216,12 @@ export default function Sidebar({ onLogout }) {
                 : "bg-gradient-to-br from-[#1e293b] to-[#0f172a] border-2 border-indigo-500/40 text-indigo-400 shadow-2xl shadow-indigo-500/30"
             }`}
             aria-label="Open menu"
-            style={{
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
-            }}
+            style={{ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
           >
             <Menu className="w-4 h-4 md:w-5 md:h-5" strokeWidth={2} />
           </motion.button>
         )}
 
-      {/* Overlay for mobile and tablet */}
       <AnimatePresence>
         {mobileOpen && (screenInfo.isMobile || screenInfo.isTablet) && (
           <motion.div
@@ -2416,36 +2229,25 @@ export default function Sidebar({ onLogout }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className={`fixed inset-0 backdrop-blur-sm z-40 ${
-              theme === "light" ? "bg-slate-900/40" : "bg-black/70"
-            }`}
+            className={`fixed inset-0 backdrop-blur-sm z-40 ${theme === "light" ? "bg-slate-900/40" : "bg-black/70"}`}
             onClick={closeSidebar}
           />
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <motion.aside
         initial={false}
         animate={{
           width: getSidebarWidth(),
-          x:
-            (screenInfo.isMobile || screenInfo.isTablet) && !mobileOpen
-              ? "-100%"
-              : 0,
+          x: (screenInfo.isMobile || screenInfo.isTablet) && !mobileOpen ? "-100%" : 0,
         }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={`
           fixed left-0 top-0 h-screen z-50 flex flex-col overflow-hidden
-          ${
-            theme === "light"
-              ? "bg-white border-r border-slate-200 shadow-xl"
-              : "bg-gradient-to-b from-[#1e293b] to-[#0f172a] border-r border-indigo-500/20 shadow-2xl"
-          }
+          ${theme === "light" ? "bg-white border-r border-slate-200 shadow-xl" : "bg-gradient-to-b from-[#1e293b] to-[#0f172a] border-r border-indigo-500/20 shadow-2xl"}
         `}
         style={{ minWidth: getSidebarWidth(), maxWidth: getSidebarWidth() }}
       >
-        {/* Back Button on Right Side */}
         {(screenInfo.isMobile || screenInfo.isTablet) && mobileOpen && (
           <motion.button
             initial={{ opacity: 0, scale: 0.8 }}
@@ -2453,9 +2255,7 @@ export default function Sidebar({ onLogout }) {
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={closeSidebar}
             className={`absolute top-3 right-3 z-50 p-1.5 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border ${
-              theme === "light"
-                ? "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200"
-                : "bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 border-indigo-500/30"
+              theme === "light" ? "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200" : "bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 border-indigo-500/30"
             }`}
             aria-label="Go back"
           >
@@ -2463,118 +2263,38 @@ export default function Sidebar({ onLogout }) {
           </motion.button>
         )}
 
-        {/* Animated Background Gradients */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className={`absolute -top-20 -left-20 w-40 h-40 rounded-full blur-3xl ${
-              theme === "light" ? "bg-blue-400/10" : "bg-indigo-500/20"
-            }`}
-          />
-          <motion.div
-            animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 1,
-            }}
-            className={`absolute -bottom-20 -right-20 w-40 h-40 rounded-full blur-3xl ${
-              theme === "light" ? "bg-sky-400/10" : "bg-yellow-500/20"
-            }`}
-          />
+          <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} className={`absolute -top-20 -left-20 w-40 h-40 rounded-full blur-3xl ${theme === "light" ? "bg-blue-400/10" : "bg-indigo-500/20"}`} />
+          <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }} className={`absolute -bottom-20 -right-20 w-40 h-40 rounded-full blur-3xl ${theme === "light" ? "bg-sky-400/10" : "bg-yellow-500/20"}`} />
         </div>
 
-        {/* Toggle Button (Expand/Collapse) */}
         {showToggleButton() && !mobileOpen && (
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={toggleCollapse}
             className={`absolute right-[10px] top-5 z-50 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer ${
-              theme === "light"
-                ? "bg-white border border-slate-200 shadow-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                : "bg-gradient-to-br from-indigo-500 to-indigo-600 border-2 border-[#0f172a] shadow-lg shadow-indigo-500/50 hover:shadow-indigo-500/80 text-white"
+              theme === "light" ? "bg-white border border-slate-200 shadow-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50" : "bg-gradient-to-br from-indigo-500 to-indigo-600 border-2 border-[#0f172a] shadow-lg shadow-indigo-500/50 hover:shadow-indigo-500/80 text-white"
             }`}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {isCollapsed ? (
-              <ChevronRight className="w-2.5 h-2.5" />
-            ) : (
-              <ChevronLeft className="w-2.5 h-2.5" />
-            )}
+            {isCollapsed ? <ChevronRight className="w-2.5 h-2.5" /> : <ChevronLeft className="w-2.5 h-2.5" />}
           </motion.button>
         )}
 
-        {/* Logo Section */}
-        <div
-          className={`pt-10 pb-2 px-3 relative ${
-            theme === "light"
-              ? "border-b border-slate-100"
-              : "border-b border-indigo-500/20"
-          } ${!shouldShowLabels() ? "flex items-center justify-center" : ""}`}
-        >
-          <motion.div
-            className="flex items-center justify-center cursor-pointer group relative w-full"
-            onClick={() => {
-              navigate("/dashboard");
-              closeSidebar();
-            }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
+        <div className={`pt-10 pb-2 px-3 relative ${theme === "light" ? "border-b border-slate-100" : "border-b border-indigo-500/20"} ${!shouldShowLabels() ? "flex items-center justify-center" : ""}`}>
+          <motion.div className="flex items-center justify-center cursor-pointer group relative w-full" onClick={() => { navigate("/dashboard"); closeSidebar(); }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <AnimatePresence mode="wait">
               {shouldShowLabels() ? (
-                <motion.div
-                  key="full-logo"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.3 }}
-                  className="relative flex justify-center w-full"
-                >
-                  <div
-                    className={`absolute inset-0 rounded-lg blur-xl transition-opacity ${
-                      theme === "light"
-                        ? "bg-blue-100 opacity-40 group-hover:opacity-60"
-                        : "bg-gradient-to-r from-indigo-500/30 to-yellow-500/30 opacity-50 group-hover:opacity-75"
-                    }`}
-                  />
-                  <img
-                    src={fullLogo}
-                    alt="AtomOne Technologies"
-                    className={`relative ${getLogoSize()} ${getLogoWidth()} object-contain drop-shadow-xl filter brightness-110`}
-                  />
+                <motion.div key="full-logo" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3 }} className="relative flex justify-center w-full">
+                  <div className={`absolute inset-0 rounded-lg blur-xl transition-opacity ${theme === "light" ? "bg-blue-100 opacity-40 group-hover:opacity-60" : "bg-gradient-to-r from-indigo-500/30 to-yellow-500/30 opacity-50 group-hover:opacity-75"}`} />
+                  <img src={fullLogo} alt="AtomOne Technologies" className={`relative ${getLogoSize()} ${getLogoWidth()} object-contain drop-shadow-xl filter brightness-110`} />
                 </motion.div>
               ) : (
-                <motion.div
-                  key="small-logo"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.3 }}
-                  className="relative flex items-center justify-center"
-                >
-                  <div
-                    className={`absolute inset-0 rounded-xl blur-lg transition-opacity ${
-                      theme === "light"
-                        ? "bg-blue-200 opacity-50 group-hover:opacity-80"
-                        : "bg-gradient-to-br from-indigo-400/40 to-yellow-400/40 opacity-70 group-hover:opacity-100"
-                    }`}
-                  />
-                  <div
-                    className={`relative rounded-xl overflow-hidden ${
-                      theme === "light"
-                        ? "border border-slate-200 shadow-sm bg-white"
-                        : "border-2 border-indigo-500/30 shadow-lg shadow-indigo-500/30"
-                    } ${screenInfo.isIPadMini ? "w-8 h-8" : "w-9 h-9"}`}
-                  >
-                    <img
-                      src={smallLogo}
-                      alt="A1"
-                      className={`${getSmallLogoWidth()} h-full object-cover filter brightness-110`}
-                    />
+                <motion.div key="small-logo" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.3 }} className="relative flex items-center justify-center">
+                  <div className={`absolute inset-0 rounded-xl blur-lg transition-opacity ${theme === "light" ? "bg-blue-200 opacity-50 group-hover:opacity-80" : "bg-gradient-to-br from-indigo-400/40 to-yellow-400/40 opacity-70 group-hover:opacity-100"}`} />
+                  <div className={`relative rounded-xl overflow-hidden ${theme === "light" ? "border border-slate-200 shadow-sm bg-white" : "border-2 border-indigo-500/30 shadow-lg shadow-indigo-500/30"} ${screenInfo.isIPadMini ? "w-8 h-8" : "w-9 h-9"}`}>
+                    <img src={smallLogo} alt="A1" className={`${getSmallLogoWidth()} h-full object-cover filter brightness-110`} />
                   </div>
                 </motion.div>
               )}
@@ -2582,10 +2302,15 @@ export default function Sidebar({ onLogout }) {
           </motion.div>
         </div>
 
-        {/* Main Navigation Menu */}
+        {/* 🔥 NAYA CODE: Menu Mapping jisme Accordion Logic handle kiya gaya hai */}
         <nav className="flex-1 pt-2 pb-1 px-2 space-y-0.5 overflow-y-auto custom-scrollbar">
           {menuItems.map((item, index) => {
-            const isActive = location.pathname === item.path;
+            const hasSubItems = !!item.subItems;
+            const isDropdownOpen = openDropdown === item.label;
+            
+            // Item tab active hoga jab khud ka route hit ho ya iska koi child route hit ho
+            const isActive = location.pathname === item.path || (hasSubItems && item.subItems.some(sub => location.pathname.includes(sub.path)));
+            
             const Icon = item.icon;
             const colors = getColors(item.color);
             const showLabel = shouldShowLabels();
@@ -2596,156 +2321,115 @@ export default function Sidebar({ onLogout }) {
 
             return (
               <motion.div
-                key={item.path}
+                key={item.label}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.03 }}
+                className="flex flex-col"
               >
                 <motion.button
                   onClick={() => {
-                    if (!hasAccess(item.path)) {
-                      toast.error(
-                        "You do not have permission to access this page.",
-                      );
-                      return;
+                    // Agar dropdown hai to sirf toggle karo
+                    if (hasSubItems) {
+                      if (isCollapsed) setIsCollapsed(false);
+                      setOpenDropdown(isDropdownOpen ? "" : item.label);
+                    } else {
+                      // Agar dropdown nahi hai to direct navigate karo
+                      if (!hasAccess(item.path)) {
+                        toast.error("You do not have permission to access this page.");
+                        return;
+                      }
+                      navigate(item.path);
+                      closeSidebar();
                     }
-
-                    navigate(item.path);
-                    closeSidebar();
                   }}
-                  whileHover={{
-                    x: showLabel ? 3 : 0,
-                    scale: isCentered ? 1.02 : 1,
-                  }}
+                  whileHover={{ x: showLabel ? 3 : 0, scale: isCentered ? 1.02 : 1 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`w-full flex items-center ${
-                    isCentered ? "justify-center" : gap
-                  } ${itemPadding} rounded-lg transition-all relative group ${
-                    isActive ? colors.text : colors.inactiveText
-                  }`}
+                  className={`w-full flex items-center ${isCentered ? "justify-center" : gap} ${itemPadding} rounded-lg transition-all relative group ${isActive ? colors.text : colors.inactiveText}`}
                 >
-                  {/* Hover Effect */}
-                  {!isActive && (
-                    <motion.div
-                      className={`absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity blur-sm ${
-                        theme === "light" ? "bg-slate-100/60" : colors.hoverGlow
-                      }`}
-                    />
-                  )}
+                  {!isActive && <motion.div className={`absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity blur-sm ${theme === "light" ? "bg-slate-100/60" : colors.hoverGlow}`} />}
+                  {isActive && showLabel && <motion.div layoutId="activeTab" className={`absolute inset-0 rounded-lg ${colors.bg}`} transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />}
+                  {isActive && showLabel && <motion.div layoutId="activeBorder" className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full ${colors.border}`} transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />}
 
-                  {/* Active Glow Effect */}
-                  {isActive && showLabel && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className={`absolute inset-0 rounded-lg ${colors.bg}`}
-                      transition={{
-                        type: "spring",
-                        bounce: 0.2,
-                        duration: 0.6,
-                      }}
-                    />
-                  )}
-
-                  {/* Left Border Indicator */}
-                  {isActive && showLabel && (
-                    <motion.div
-                      layoutId="activeBorder"
-                      className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full ${colors.border}`}
-                      transition={{
-                        type: "spring",
-                        bounce: 0.2,
-                        duration: 0.6,
-                      }}
-                    />
-                  )}
-
-                  {/* Icon */}
-                  <div className="relative z-10">
-                    <motion.div
-                      className={`absolute inset-0 rounded-md blur-sm transition-all ${
-                        isActive ? colors.glow : "bg-transparent"
-                      }`}
-                    />
-                    <Icon
-                      className={`relative ${iconSize} flex-shrink-0 transition-all ${
-                        isActive ? colors.iconFilter : ""
-                      } group-hover:${colors.iconFilter}`}
-                    />
+                  <div className="relative z-10 flex items-center justify-center">
+                    <motion.div className={`absolute inset-0 rounded-md blur-sm transition-all ${isActive ? colors.glow : "bg-transparent"}`} />
+                    <Icon className={`relative ${iconSize} flex-shrink-0 transition-all ${isActive ? colors.iconFilter : ""} group-hover:${colors.iconFilter}`} />
                   </div>
 
-                  {/* Label */}
                   <AnimatePresence>
                     {showLabel && (
-                      <motion.span
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -10 }}
-                        className="relative text-xs z-10 flex-1 text-left font-medium whitespace-nowrap overflow-hidden text-ellipsis"
-                      >
+                      <motion.span initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="relative text-xs z-10 flex-1 text-left font-medium whitespace-nowrap overflow-hidden text-ellipsis">
                         {item.label}
                       </motion.span>
                     )}
                   </AnimatePresence>
 
-                  {/* Badge */}
-                  {!hasAccess(item.path) ? (
+                  {/* Agar dropdown hai toh arrow dikhao */}
+                  {hasSubItems && showLabel && (
+                    <ChevronRight className={`relative z-10 w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? "rotate-90" : ""}`} />
+                  )}
+
+                  {!hasSubItems && !hasAccess(item.path) && (
                     <div className="relative z-10 flex items-center justify-center w-7 h-7">
-                      <LockIcon
-                        sx={{
-                          color: theme === "light" ? "#94a3b8" : "#FFFFFF",
-                          fontSize: 16,
-                          opacity: theme === "light" ? 0.7 : 0.9,
-                        }}
-                      />
+                      <LockIcon sx={{ color: theme === "light" ? "#94a3b8" : "#FFFFFF", fontSize: 16, opacity: theme === "light" ? 0.7 : 0.9 }} />
                     </div>
-                  ) : (
-                    item.badge &&
-                    showLabel && (
-                      <span
-                        className={`relative z-10 px-2 py-0.5 rounded-full text-[10px] font-semibold ${colors.badge} border whitespace-nowrap animate-pulse`}
-                      >
-                        {item.badge}
-                      </span>
-                    )
+                  )}
+
+                  {!hasSubItems && item.badge && showLabel && (
+                    <span className={`relative z-10 px-2 py-0.5 rounded-full text-[10px] font-semibold ${colors.badge} border whitespace-nowrap animate-pulse`}>
+                      {item.badge}
+                    </span>
                   )}
                 </motion.button>
+
+                {/* Sub-menu Dropdown List */}
+                <AnimatePresence>
+                  {hasSubItems && isDropdownOpen && showLabel && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden flex flex-col gap-1 mt-1 pl-9 pr-2"
+                    >
+                      {item.subItems.map((sub) => {
+                        const isSubActive = location.pathname.includes(sub.path);
+                        return (
+                          <button
+                            key={sub.path}
+                            onClick={() => {
+                              navigate(sub.path);
+                              closeSidebar();
+                            }}
+                            className={`text-left text-xs py-2 px-3 rounded-md transition-all duration-200 ${
+                              isSubActive
+                                ? (theme === "light" ? "bg-blue-50 text-blue-600 font-semibold" : "bg-indigo-500/20 text-indigo-400 font-semibold")
+                                : (theme === "light" ? "text-slate-600 hover:bg-slate-100" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50")
+                            }`}
+                          >
+                            {sub.label}
+                          </button>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
               </motion.div>
             );
           })}
         </nav>
 
-        {/* Divider */}
-        <div
-          className={`mx-2 border-t ${
-            theme === "light" ? "border-slate-200" : "border-indigo-500/10"
-          }`}
-        />
+        <div className={`mx-2 border-t ${theme === "light" ? "border-slate-200" : "border-indigo-500/10"}`} />
 
-        {/* Bottom Section */}
         <div className="p-1.5 space-y-0.5">
           {bottomMenuItems.map((item) => {
             const Icon = item.icon;
             const bottomColors =
               theme === "light"
-                ? {
-                    hoverGlow: "bg-slate-100/60",
-                    badge: "bg-red-100 text-red-600 border-red-200",
-                    inactiveText:
-                      "text-slate-600 hover:text-blue-600 hover:bg-slate-50/50",
-                  }
+                ? { hoverGlow: "bg-slate-100/60", badge: "bg-red-100 text-red-600 border-red-200", inactiveText: "text-slate-600 hover:text-blue-600 hover:bg-slate-50/50" }
                 : item.color === "indigo"
-                ? {
-                    hoverGlow:
-                      "bg-gradient-to-r from-indigo-500/10 to-transparent",
-                    badge: "bg-red-500/20 text-red-400 border-red-500/30",
-                    inactiveText: "text-slate-400 hover:text-slate-200",
-                  }
-                : {
-                    hoverGlow:
-                      "bg-gradient-to-r from-yellow-500/10 to-transparent",
-                    badge: "bg-red-500/20 text-red-400 border-red-500/30",
-                    inactiveText: "text-slate-400 hover:text-slate-200",
-                  };
+                ? { hoverGlow: "bg-gradient-to-r from-indigo-500/10 to-transparent", badge: "bg-red-500/20 text-red-400 border-red-500/30", inactiveText: "text-slate-400 hover:text-slate-200" }
+                : { hoverGlow: "bg-gradient-to-r from-yellow-500/10 to-transparent", badge: "bg-red-500/20 text-red-400 border-red-500/30", inactiveText: "text-slate-400 hover:text-slate-200" };
 
             const showLabel = shouldShowLabels();
             const isCentered = !showLabel;
@@ -2760,55 +2444,21 @@ export default function Sidebar({ onLogout }) {
                   item.path && navigate(item.path);
                   closeSidebar();
                 }}
-                whileHover={{
-                  x: showLabel ? 3 : 0,
-                  scale: isCentered ? 1.02 : 1,
-                }}
+                whileHover={{ x: showLabel ? 3 : 0, scale: isCentered ? 1.02 : 1 }}
                 whileTap={{ scale: 0.98 }}
-                className={`w-full flex items-center ${
-                  isCentered ? "justify-center" : gap
-                } ${itemPadding} rounded-lg transition-all relative group ${
-                  bottomColors.inactiveText
-                } ${
-                  item.path === "/notifications" && notificationAlert
-                    ? "notification-glow border border-red-400"
-                    : ""
-                }`}
+                className={`w-full flex items-center ${isCentered ? "justify-center" : gap} ${itemPadding} rounded-lg transition-all relative group ${bottomColors.inactiveText} ${item.path === "/notifications" && notificationAlert ? "notification-glow border border-red-400" : ""}`}
               >
-                <motion.div
-                  className={`absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity blur-sm ${bottomColors.hoverGlow}`}
-                />
+                <motion.div className={`absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity blur-sm ${bottomColors.hoverGlow}`} />
 
                 <div className="relative z-10">
-                  <motion.div
-                    animate={
-                      item.path === "/notifications" && hasNewNotification
-                        ? { rotate: [0, -10, 10, -10, 0] }
-                        : {}
-                    }
-                    transition={{
-                      duration: 0.5,
-                      repeat:
-                        item.path === "/notifications" && hasNewNotification
-                          ? Infinity
-                          : 0,
-                      repeatDelay: 2,
-                    }}
-                  >
-                    <Icon
-                      className={`relative ${iconSize} flex-shrink-0 group-hover:filter group-hover:drop-shadow-[0_0_8px_currentColor] transition-all`}
-                    />
+                  <motion.div animate={item.path === "/notifications" && hasNewNotification ? { rotate: [0, -10, 10, -10, 0] } : {}} transition={{ duration: 0.5, repeat: item.path === "/notifications" && hasNewNotification ? Infinity : 0, repeatDelay: 2 }}>
+                    <Icon className={`relative ${iconSize} flex-shrink-0 group-hover:filter group-hover:drop-shadow-[0_0_8px_currentColor] transition-all`} />
                   </motion.div>
                 </div>
 
                 <AnimatePresence>
                   {showLabel && (
-                    <motion.span
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      className="relative text-xs flex-1 text-left z-10 font-medium whitespace-nowrap overflow-hidden text-ellipsis"
-                    >
+                    <motion.span initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="relative text-xs flex-1 text-left z-10 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
                       {item.label}
                     </motion.span>
                   )}
@@ -2817,26 +2467,12 @@ export default function Sidebar({ onLogout }) {
                 {item.badge && (
                   <AnimatePresence>
                     {showLabel ? (
-                      <motion.span
-                        className={`relative z-10 px-1.5 py-0.5 rounded-full text-[10px] font-semibold border ${
-                          bottomColors.badge
-                        } ${
-                          item.path === "/notifications" && hasNewNotification
-                            ? "bell-alert"
-                            : ""
-                        }`}
-                      >
+                      <motion.span className={`relative z-10 px-1.5 py-0.5 rounded-full text-[10px] font-semibold border ${bottomColors.badge} ${item.path === "/notifications" && hasNewNotification ? "bell-alert" : ""}`}>
                         {item.badge}
                       </motion.span>
                     ) : (
                       isCentered && (
-                        <div
-                          className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50 ${
-                            theme === "light"
-                              ? "border border-white"
-                              : "border border-[#1e293b]"
-                          }`}
-                        />
+                        <div className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50 ${theme === "light" ? "border border-white" : "border border-[#1e293b]"}`} />
                       )
                     )}
                   </AnimatePresence>
@@ -2846,187 +2482,51 @@ export default function Sidebar({ onLogout }) {
           })}
         </div>
 
-        {/* User Profile */}
-        <div
-          className={`p-2 ${
-            theme === "light"
-              ? "border-t border-slate-100"
-              : "border-t border-indigo-500/20"
-          }`}
-        >
+        <div className={`p-2 ${theme === "light" ? "border-t border-slate-100" : "border-t border-indigo-500/20"}`}>
           {shouldShowLabels() ? (
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                navigate("/profile");
-                closeSidebar();
-              }}
-              className={`flex items-center gap-1.5 p-1.5 rounded-lg relative overflow-hidden group cursor-pointer ${
-                theme === "light"
-                  ? "bg-slate-50 border border-slate-200 hover:bg-slate-100"
-                  : "bg-gradient-to-r from-slate-700/30 to-slate-700/20 border border-slate-700/50"
-              }`}
-            >
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
-                animate={{ x: ["-100%", "200%"] }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  repeatDelay: 2,
-                }}
-              />
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => { navigate("/profile"); closeSidebar(); }} className={`flex items-center gap-1.5 p-1.5 rounded-lg relative overflow-hidden group cursor-pointer ${theme === "light" ? "bg-slate-50 border border-slate-200 hover:bg-slate-100" : "bg-gradient-to-r from-slate-700/30 to-slate-700/20 border border-slate-700/50"}`}>
+              <motion.div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" animate={{ x: ["-100%", "200%"] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", repeatDelay: 2 }} />
               <div className="relative flex-shrink-0">
-                <div
-                  className={`absolute inset-0 rounded-full blur-md transition-opacity ${
-                    theme === "light"
-                      ? "bg-blue-200 opacity-0 group-hover:opacity-50"
-                      : "bg-gradient-to-br from-indigo-500 to-yellow-500 opacity-50 group-hover:opacity-75"
-                  }`}
-                />
-                <div
-                  className={`relative rounded-full overflow-hidden ${
-                    screenInfo.isIPadMini ? "w-8 h-8" : "w-10 h-10"
-                  } ${
-                    theme === "light"
-                      ? "border border-slate-200 shadow-sm"
-                      : "shadow-lg"
-                  }`}
-                >
-                  <img
-                    src={profileImage || "logo_head.png"}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
+                <div className={`absolute inset-0 rounded-full blur-md transition-opacity ${theme === "light" ? "bg-blue-200 opacity-0 group-hover:opacity-50" : "bg-gradient-to-br from-indigo-500 to-yellow-500 opacity-50 group-hover:opacity-75"}`} />
+                <div className={`relative rounded-full overflow-hidden ${screenInfo.isIPadMini ? "w-8 h-8" : "w-10 h-10"} ${theme === "light" ? "border border-slate-200 shadow-sm" : "shadow-lg"}`}>
+                  <img src={profileImage || "logo_head.png"} alt="Profile" className="w-full h-full object-cover" />
                 </div>
               </div>
               <div className="flex-1 min-w-0 relative z-10 pt-3 pl-5">
-                <p
-                  className={`text-base truncate font-medium ${
-                    theme === "light" ? "text-slate-800" : "text-slate-200"
-                  }`}
-                >
+                <p className={`text-base truncate font-medium ${theme === "light" ? "text-slate-800" : "text-slate-200"}`}>
                   {fullName || userName}
                 </p>
               </div>
-              <motion.button
-                whileHover={{ scale: 1.1, rotate: 90 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleLogout();
-                }}
-                className={`relative z-10 transition-colors flex-shrink-0 ${
-                  theme === "light"
-                    ? "text-red-500 hover:text-red-600"
-                    : "text-red-400 hover:text-red-300"
-                }`}
-              >
+              <motion.button whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); handleLogout(); }} className={`relative z-10 transition-colors flex-shrink-0 ${theme === "light" ? "text-red-500 hover:text-red-600" : "text-red-400 hover:text-red-300"}`}>
                 <LogOut className="w-4 h-4" />
               </motion.button>
             </motion.div>
           ) : (
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                navigate("/profile");
-                closeSidebar();
-              }}
-              className="flex items-center justify-center cursor-pointer group relative"
-            >
-              <div
-                className={`absolute inset-0 rounded-full blur-lg transition-opacity ${
-                  theme === "light"
-                    ? "bg-blue-300/40 opacity-0 group-hover:opacity-100"
-                    : "bg-gradient-to-br from-indigo-500/40 to-yellow-500/40 opacity-50 group-hover:opacity-100"
-                }`}
-              />
-              <div
-                className={`relative rounded-full overflow-hidden ${
-                  screenInfo.isIPadMini ? "w-10 h-10" : "w-12 h-12"
-                } ${
-                  theme === "light"
-                    ? "border border-slate-200 shadow-md bg-white"
-                    : "border-2 border-indigo-400/30 shadow-xl shadow-indigo-500/40"
-                }`}
-              >
-                <img
-                  src={profileImage || "AshokSir.jpg"}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} onClick={() => { navigate("/profile"); closeSidebar(); }} className="flex items-center justify-center cursor-pointer group relative">
+              <div className={`absolute inset-0 rounded-full blur-lg transition-opacity ${theme === "light" ? "bg-blue-300/40 opacity-0 group-hover:opacity-100" : "bg-gradient-to-br from-indigo-500/40 to-yellow-500/40 opacity-50 group-hover:opacity-100"}`} />
+              <div className={`relative rounded-full overflow-hidden ${screenInfo.isIPadMini ? "w-10 h-10" : "w-12 h-12"} ${theme === "light" ? "border border-slate-200 shadow-md bg-white" : "border-2 border-indigo-400/30 shadow-xl shadow-indigo-500/40"}`}>
+                <img src={profileImage || "AshokSir.jpg"} alt="Profile" className="w-full h-full object-cover" />
               </div>
-              <div
-                className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50 ${
-                  theme === "light"
-                    ? "border border-white"
-                    : "border-2 border-[#1e293b]"
-                }`}
-              />
+              <div className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50 ${theme === "light" ? "border border-white" : "border-2 border-[#1e293b]"}`} />
             </motion.div>
           )}
         </div>
       </motion.aside>
 
-      {/* Main Content Spacer */}
       {!screenInfo.isMobile && !mobileOpen && (
-        <div
-          className="hidden lg:block flex-shrink-0 transition-all duration-300"
-          style={{ width: getSidebarWidth() }}
-        />
+        <div className="hidden lg:block flex-shrink-0 transition-all duration-300" style={{ width: getSidebarWidth() }} />
       )}
 
-      {/* Custom Scrollbar Styles */}
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(99, 102, 241, 0.3);
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(99, 102, 241, 0.5);
-        }
-        @media (min-width: 768px) {
-          .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-          }
-        }
-        @keyframes notificationGlow {
-          0% {
-            background: rgba(248, 113, 113, 0.15);
-          }
-          50% {
-            background: rgba(248, 113, 113, 0.35);
-          }
-          100% {
-            background: rgba(248, 113, 113, 0.15);
-          }
-        }
-        .notification-glow {
-          animation: notificationGlow 1s infinite;
-        }
-        @keyframes bellAlert {
-          0% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.4);
-          }
-          100% {
-            transform: scale(1);
-          }
-        }
-        .bell-alert {
-          animation: bellAlert 0.8s infinite;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
+        @media (min-width: 768px) { .custom-scrollbar::-webkit-scrollbar { width: 4px; } }
+        @keyframes notificationGlow { 0% { background: rgba(248, 113, 113, 0.15); } 50% { background: rgba(248, 113, 113, 0.35); } 100% { background: rgba(248, 113, 113, 0.15); } }
+        .notification-glow { animation: notificationGlow 1s infinite; }
+        @keyframes bellAlert { 0% { transform: scale(1); } 50% { transform: scale(1.4); } 100% { transform: scale(1); } }
+        .bell-alert { animation: bellAlert 0.8s infinite; }
       `}</style>
     </>
   );

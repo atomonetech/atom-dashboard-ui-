@@ -433,7 +433,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import './AssignMachine.css';
 
-const API_BASE = "http://192.168.0.34:8000/api"; 
+const API_BASE = "http://127.0.0.1:8000/api"; 
 
 // Plant wise Machine Sections & Counts
 const MACHINE_CONFIG = {
@@ -607,7 +607,7 @@ export default function AssignMachine() {
       {/* Top Header */}
       <div className="page-header">
         <div className="header-left">
-          <span className="page-badge">2</span>
+          <span className="page-badge">1</span>
           <h1 className="page-title">Assign / Reassign Operator</h1>
         </div>
         <div className="header-right">

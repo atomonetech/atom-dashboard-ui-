@@ -21,7 +21,7 @@ export default function OperatorDashboard() {
     <div className="main-dashboard">
       <div className="dash-header">
         <div className="dash-title">
-          <span className="badge-circle">1</span>
+          <span className="badge-circle">2</span>
           <h1>Operator - Machine Dashboard</h1>
         </div>
         <div className="dash-controls">
