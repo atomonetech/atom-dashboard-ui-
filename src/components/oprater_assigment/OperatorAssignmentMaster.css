@@ -1,0 +1,43 @@
+.operator-module-container {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f8fafc;
+}
+
+/* Master Tabs Container */
+.module-tabs-wrapper {
+  background: white;
+  padding: 0 30px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.module-tabs {
+  display: flex;
+  gap: 30px;
+}
+
+.mod-tab {
+  background: none;
+  border: none;
+  padding: 16px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.mod-tab:hover {
+  color: #0f172a;
+}
+
+.mod-tab.active {
+  color: #2563eb; /* Primary Blue */
+  border-bottom-color: #2563eb;
+}
+
+.module-content {
+   padding: 30px
+}

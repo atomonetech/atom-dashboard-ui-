@@ -22,7 +22,8 @@ import CodeViewer from "./components/CodeViewer";
 import { UserProvider } from "./context/UserContext";
 import Auth from "./components/Auth";
 import Dashboard from "./components/Dashboard";
-import AssignMachine from "./components/AssignMachine";
+import OperatorAssignmentMaster from "./components/oprater_assigment/OperatorAssignmentMaster";
+// import AssignMachine from "./components/AssignMachine";
 import IdleCase from "./components/IdleCase";
 import MachineAssignments from "./components/MachineAssignments";
 import IdleReportsList from "./components/IdleReportsList";
@@ -362,7 +363,7 @@ function App() {
               path="/assign-machine"
               element={
                 <ProtectedRoute adminOnly={true}>
-                  <AssignMachine onLogout={handleLogout} />
+                  <OperatorAssignmentMaster onLogout={handleLogout} />
                 </ProtectedRoute>
               }
             />
