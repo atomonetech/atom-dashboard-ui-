@@ -44,9 +44,8 @@ import {
 } from "lucide-react";
 
 // API Base URL
-const API_BASE_URL = `${
-  process.env.REACT_APP_API_URL || "http://localhost:8000"
-}/api`;
+const API_BASE_URL = `${process.env.REACT_APP_API_URL || "http://localhost:8000"
+  }/api`;
 
 const monthNamesFull = [
   "January",
@@ -370,18 +369,16 @@ const RadialGauge = ({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span
-          className={`font-data font-bold leading-none ${
-            isDark ? "text-white" : "text-slate-900"
-          }`}
+          className={`font-data font-bold leading-none ${isDark ? "text-white" : "text-slate-900"
+            }`}
           style={{ fontSize: size * 0.24 }}
         >
           {Math.round(pct)}
         </span>
         {label && (
           <span
-            className={`text-[8px] font-bold uppercase tracking-wider mt-0.5 ${
-              isDark ? "text-slate-500" : "text-slate-400"
-            }`}
+            className={`text-[8px] font-bold uppercase tracking-wider mt-0.5 ${isDark ? "text-slate-500" : "text-slate-400"
+              }`}
           >
             {label}
           </span>
@@ -420,6 +417,11 @@ const ProductionHistory = () => {
   const [dateRange, setDateRange] = useState(null);
   const [realtimeData, setRealtimeData] = useState(null);
   const [apiError, setApiError] = useState(false);
+  // Actual machines received from database
+  const [machineNumbers, setMachineNumbers] = useState([]);
+
+  // Loading state only for machine selector
+  const [machineListLoading, setMachineListLoading] = useState(false);
 
   const sidebarRef = useRef(null);
   const mainContentRef = useRef(null);
@@ -511,7 +513,7 @@ const ProductionHistory = () => {
                 0,
               ) /
                 60) *
-                10,
+              10,
             ) / 10,
           days_with_data: sampleData.length,
           days_in_month: sampleData.length,
@@ -537,11 +539,65 @@ const ProductionHistory = () => {
       const response = await axios.get(`${API_BASE_URL}/realtime-dashboard/`, {
         params: { plant: selectedPlant },
       });
+
       setRealtimeData(response.data);
+
     } catch (error) {
       console.error("Error fetching realtime dashboard:", error);
     }
   };
+
+
+  // ======================================================
+  // FETCH ACTUAL MACHINE NUMBERS FOR SELECTED PLANT
+  // ======================================================
+  const fetchMachineNumbers = async () => {
+    try {
+      setMachineListLoading(true);
+
+      const response = await axios.get(
+        `${API_BASE_URL}/production-history-machines/`,
+        {
+          params: {
+            plant: selectedPlant,
+          },
+        },
+      );
+
+      console.log(
+        "✅ Production History Machines:",
+        response.data,
+      );
+
+      if (
+        response.data?.success &&
+        Array.isArray(response.data?.machines)
+      ) {
+        setMachineNumbers(response.data.machines);
+      } else {
+        console.error(
+          "❌ Invalid machine list response:",
+          response.data,
+        );
+
+        setMachineNumbers([]);
+      }
+
+    } catch (error) {
+
+      console.error(
+        `❌ Machine List API Error | ${selectedPlant}`,
+        error,
+      );
+
+      setMachineNumbers([]);
+
+    } finally {
+
+      setMachineListLoading(false);
+    }
+  };
+
 
   const fetchMachineAnalysis = async (machineNo, forceRefresh = false) => {
     const currentParamDate =
@@ -602,6 +658,14 @@ const ProductionHistory = () => {
       return null;
     }
   };
+
+  // ======================================================
+  // LOAD MACHINE LIST WHEN PLANT CHANGES
+  // ======================================================
+  useEffect(() => {
+    fetchMachineNumbers();
+  }, [selectedPlant]);
+
 
   useEffect(() => {
     const loadAllData = async () => {
@@ -978,9 +1042,8 @@ const ProductionHistory = () => {
 
   return (
     <div
-      className={`font-ui min-h-fit relative overflow-x-hidden transition-colors duration-300 ${themeBgMain} ${
-        isDark ? "theme-dark" : ""
-      }`}
+      className={`font-ui min-h-fit relative overflow-x-hidden transition-colors duration-300 ${themeBgMain} ${isDark ? "theme-dark" : ""
+        }`}
       style={{
         backgroundImage: isDark
           ? "radial-gradient(circle, #161b24 1px, transparent 1px)"
@@ -1001,9 +1064,8 @@ const ProductionHistory = () => {
                 >
                   <Terminal size={14} className={themeAccentText} />
                   <span
-                    className={`font-data text-xs font-medium ${
-                      isDark ? "text-slate-300" : "text-slate-600"
-                    }`}
+                    className={`font-data text-xs font-medium ${isDark ? "text-slate-300" : "text-slate-600"
+                      }`}
                   >
                     production@dashboard:~/system$
                   </span>
@@ -1018,21 +1080,19 @@ const ProductionHistory = () => {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setTheme(isDark ? "light" : "dark")}
-                  className={`flex items-center justify-center p-2 rounded-lg border transition-all ${
-                    isDark
-                      ? "bg-[#171B23] border-[#1E242E] text-[#18a8c6] hover:bg-[#1E242E]"
-                      : "bg-white border-slate-200 text-[#18a8c6] hover:bg-slate-100 shadow-sm"
-                  }`}
+                  className={`flex items-center justify-center p-2 rounded-lg border transition-all ${isDark
+                    ? "bg-[#171B23] border-[#1E242E] text-[#18a8c6] hover:bg-[#1E242E]"
+                    : "bg-white border-slate-200 text-[#18a8c6] hover:bg-slate-100 shadow-sm"
+                    }`}
                 >
                   {isDark ? <Sun size={18} /> : <Moon size={18} />}
                 </button>
                 <button
                   onClick={() => fetchRealtimeDashboard()}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold border transition-all ${
-                    isDark
-                      ? "bg-[#171B23] border-[#1E242E] text-slate-200 hover:border-[#18a8c6]/40"
-                      : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm"
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold border transition-all ${isDark
+                    ? "bg-[#171B23] border-[#1E242E] text-slate-200 hover:border-[#18a8c6]/40"
+                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm"
+                    }`}
                 >
                   <RefreshCw size={14} /> Refresh Data
                 </button>
@@ -1086,13 +1146,11 @@ const ProductionHistory = () => {
                         setSelectedMachineDetail(null);
                         setMachineAnalysisCache({});
                       }}
-                      className={`flex items-center justify-center gap-2 py-2.5 rounded-lg border transition-all duration-200 font-semibold text-sm ${
-                        selectedPlant === "plant1"
-                          ? `${themeAccentBg} border-transparent text-[#04120F] shadow-md`
-                          : `border-transparent ${themeSubBg} ${
-                              isDark ? "text-slate-300" : "text-slate-600"
-                            }`
-                      }`}
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-lg border transition-all duration-200 font-semibold text-sm ${selectedPlant === "plant1"
+                        ? `${themeAccentBg} border-transparent text-[#04120F] shadow-md`
+                        : `border-transparent ${themeSubBg} ${isDark ? "text-slate-300" : "text-slate-600"
+                        }`
+                        }`}
                     >
                       <Cpu size={16} /> Plant 1
                     </button>
@@ -1103,13 +1161,11 @@ const ProductionHistory = () => {
                         setSelectedMachineDetail(null);
                         setMachineAnalysisCache({});
                       }}
-                      className={`flex items-center justify-center gap-2 py-2.5 rounded-lg border transition-all duration-200 font-semibold text-sm ${
-                        selectedPlant === "plant2"
-                          ? `${themeAccentBg} border-transparent text-[#04120F] shadow-md`
-                          : `border-transparent ${themeSubBg} ${
-                              isDark ? "text-slate-300" : "text-slate-600"
-                            }`
-                      }`}
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded-lg border transition-all duration-200 font-semibold text-sm ${selectedPlant === "plant2"
+                        ? `${themeAccentBg} border-transparent text-[#04120F] shadow-md`
+                        : `border-transparent ${themeSubBg} ${isDark ? "text-slate-300" : "text-slate-600"
+                        }`
+                        }`}
                     >
                       <Zap size={16} /> Plant 2
                     </button>
@@ -1131,11 +1187,10 @@ const ProductionHistory = () => {
                     </label>
                     <button
                       onClick={() => setShowMachineGrid(!showMachineGrid)}
-                      className={`p-1 rounded-md transition-colors mt-5 ${
-                        isDark
-                          ? "bg-[#171B23] text-slate-400"
-                          : "bg-slate-100 text-slate-400"
-                      }`}
+                      className={`p-1 rounded-md transition-colors mt-5 ${isDark
+                        ? "bg-[#171B23] text-slate-400"
+                        : "bg-slate-100 text-slate-400"
+                        }`}
                     >
                       {showMachineGrid ? (
                         <ChevronDown size={14} />
@@ -1147,42 +1202,61 @@ const ProductionHistory = () => {
                   {showMachineGrid && (
                     <div className="space-y-3">
                       <div className="grid grid-cols-5 gap-1.5 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
-                        {Array.from(
-                          { length: getMachineCount() },
-                          (_, i) => i + 1,
-                        ).map((num) => (
-                          <button
-                            key={num}
-                            onClick={() => selectMachine(num)}
-                            className={`font-data aspect-square flex items-center justify-center text-xs font-semibold rounded-md border transition-all cursor-pointer ${
-                              selectedMachine === num
-                                ? `${themeAccentBg} border-transparent text-[#04120F] shadow-md`
-                                : `${themeSubBg} ${
-                                    isDark ? "text-slate-300" : "text-slate-600"
-                                  }`
-                            }`}
+
+                        {machineListLoading ? (
+
+                          <div
+                            className={`col-span-5 text-center py-4 text-xs font-data ${themeTextMuted}`}
                           >
-                            {String(num).padStart(2, "0")}
-                          </button>
-                        ))}
+                            Loading machines...
+                          </div>
+
+                        ) : machineNumbers.length === 0 ? (
+
+                          <div
+                            className={`col-span-5 text-center py-4 text-xs font-data ${themeTextMuted}`}
+                          >
+                            No machines found
+                          </div>
+
+                        ) : (
+
+                          machineNumbers.map((num) => (
+
+                            <button
+                              key={num}
+                              onClick={() => selectMachine(num)}
+                              className={`font-data aspect-square flex items-center justify-center text-xs font-semibold rounded-md border transition-all cursor-pointer ${selectedMachine === num
+                                  ? `${themeAccentBg} border-transparent text-[#04120F] shadow-md`
+                                  : `${themeSubBg} ${isDark
+                                    ? "text-slate-300"
+                                    : "text-slate-600"
+                                  }`
+                                }`}
+                            >
+                              {String(num).padStart(2, "0")}
+                            </button>
+
+                          ))
+
+                        )}
+
                       </div>
                       <div
                         className={`flex items-center justify-between pt-3 border-t ${themeBorder}`}
                       >
                         <button
                           onClick={clearMachine}
-                          className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
-                            isDark ? "text-slate-400" : "text-slate-500"
-                          }`}
+                          className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${isDark ? "text-slate-400" : "text-slate-500"
+                            }`}
                         >
                           Clear All
                         </button>
                         <div
-                          className={`font-data text-[11px] font-bold px-2 py-1 rounded border ${
-                            isDark
-                              ? "bg-[#171B23] border-[#1E242E] text-slate-300"
-                              : "bg-slate-100 border-transparent text-slate-600"
-                          }`}
+                          className={`font-data text-[11px] font-bold px-2 py-1 rounded border ${isDark
+                            ? "bg-[#171B23] border-[#1E242E] text-slate-300"
+                            : "bg-slate-100 border-transparent text-slate-600"
+                            }`}
                         >
                           {selectedMachine
                             ? `M-${String(selectedMachine).padStart(2, "0")}`
@@ -1214,20 +1288,18 @@ const ProductionHistory = () => {
                     Data Stream
                   </span>
                   <span
-                    className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                      apiError
-                        ? isDark
-                          ? "bg-amber-500/10 text-amber-400"
-                          : "bg-amber-100 text-amber-700"
-                        : isDark
+                    className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${apiError
+                      ? isDark
+                        ? "bg-amber-500/10 text-amber-400"
+                        : "bg-amber-100 text-amber-700"
+                      : isDark
                         ? "bg-emerald-500/10 text-emerald-400"
                         : "bg-emerald-100 text-emerald-700"
-                    }`}
+                      }`}
                   >
                     <div
-                      className={`w-2 h-2 rounded-full ${
-                        apiError ? "bg-amber-500" : "bg-emerald-500"
-                      } animate-pulse`}
+                      className={`w-2 h-2 rounded-full ${apiError ? "bg-amber-500" : "bg-emerald-500"
+                        } animate-pulse`}
                     />{" "}
                     {apiError ? "DEMO" : "ACTIVE"}
                   </span>
@@ -1271,9 +1343,9 @@ const ProductionHistory = () => {
                       <BarChart3 size={20} className={themeAccentText} />
                       {selectedMachine
                         ? `Machine M-${String(selectedMachine).padStart(
-                            2,
-                            "0",
-                          )} Production`
+                          2,
+                          "0",
+                        )} Production`
                         : "Overall Plant Production"}
                     </h3>
                     <p
@@ -1286,12 +1358,11 @@ const ProductionHistory = () => {
                       {timeFilter === "today"
                         ? `Date: ${formatDateNice(selectedDate)}`
                         : timeFilter === "weekly"
-                        ? `${formatDateNice(
+                          ? `${formatDateNice(
                             getWeeklyStartDate(selectedDate),
                           )} to ${formatDateNice(selectedDate)}`
-                        : `${
-                            timeFilter.charAt(0).toUpperCase() +
-                            timeFilter.slice(1)
+                          : `${timeFilter.charAt(0).toUpperCase() +
+                          timeFilter.slice(1)
                           }`}{" "}
                       Production •{" "}
                       {monthlySummary?.summary?.days_with_data ||
@@ -1310,25 +1381,22 @@ const ProductionHistory = () => {
                             type="date"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
-                            className={`font-data appearance-none bg-transparent border-none px-3 py-1.5 text-sm font-bold focus:outline-none cursor-pointer ${
-                              isDark
-                                ? "text-slate-200 color-scheme-dark"
-                                : "text-slate-700"
-                            }`}
+                            className={`font-data appearance-none bg-transparent border-none px-3 py-1.5 text-sm font-bold focus:outline-none cursor-pointer ${isDark
+                              ? "text-slate-200 color-scheme-dark"
+                              : "text-slate-700"
+                              }`}
                           />
 
                           {/* SHIFT SELECTOR FOR TODAY WITH ARROW */}
                           <div
-                            className={`relative border-l pl-2 flex items-center ${
-                              isDark ? "border-[#1E242E]" : "border-slate-300"
-                            }`}
+                            className={`relative border-l pl-2 flex items-center ${isDark ? "border-[#1E242E]" : "border-slate-300"
+                              }`}
                           >
                             <select
                               value={shiftFilter}
                               onChange={(e) => setShiftFilter(e.target.value)}
-                              className={`appearance-none bg-transparent border-none pl-2 pr-7 py-1.5 text-sm font-bold focus:outline-none cursor-pointer ${
-                                isDark ? "text-slate-200" : "text-slate-700"
-                              }`}
+                              className={`appearance-none bg-transparent border-none pl-2 pr-7 py-1.5 text-sm font-bold focus:outline-none cursor-pointer ${isDark ? "text-slate-200" : "text-slate-700"
+                                }`}
                             >
                               <option
                                 className={isDark ? "bg-[#171B23]" : ""}
@@ -1351,9 +1419,8 @@ const ProductionHistory = () => {
                             </select>
                             <ChevronDown
                               size={14}
-                              className={`absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none ${
-                                isDark ? "text-slate-500" : "text-slate-400"
-                              }`}
+                              className={`absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none ${isDark ? "text-slate-500" : "text-slate-400"
+                                }`}
                             />
                           </div>
                         </div>
@@ -1377,16 +1444,14 @@ const ProductionHistory = () => {
                                 ).padStart(2, "0")}`,
                               );
                             }}
-                            className={`font-data appearance-none bg-transparent border-none pl-3 pr-1 py-1.5 text-sm font-bold focus:outline-none cursor-pointer ${
-                              isDark
-                                ? "text-slate-200 color-scheme-dark"
-                                : "text-slate-700"
-                            }`}
+                            className={`font-data appearance-none bg-transparent border-none pl-3 pr-1 py-1.5 text-sm font-bold focus:outline-none cursor-pointer ${isDark
+                              ? "text-slate-200 color-scheme-dark"
+                              : "text-slate-700"
+                              }`}
                           />
                           <span
-                            className={`font-black px-1 ${
-                              isDark ? "text-slate-500" : "text-slate-300"
-                            }`}
+                            className={`font-black px-1 ${isDark ? "text-slate-500" : "text-slate-300"
+                              }`}
                           >
                             -
                           </span>
@@ -1394,98 +1459,90 @@ const ProductionHistory = () => {
                             type="date"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
-                            className={`font-data appearance-none bg-transparent border-none pr-3 pl-1 py-1.5 text-sm font-bold focus:outline-none cursor-pointer ${
-                              isDark
-                                ? "text-slate-200 color-scheme-dark"
-                                : "text-slate-700"
-                            }`}
+                            className={`font-data appearance-none bg-transparent border-none pr-3 pl-1 py-1.5 text-sm font-bold focus:outline-none cursor-pointer ${isDark
+                              ? "text-slate-200 color-scheme-dark"
+                              : "text-slate-700"
+                              }`}
                           />
                         </div>
                       )}
 
                       {(timeFilter === "monthly" ||
                         timeFilter === "yearly") && (
-                        <div className="flex items-center">
-                          {timeFilter === "monthly" && (
-                            <>
-                              <div className="relative flex items-center">
-                                <select
-                                  value={selectedMonth}
-                                  onChange={(e) =>
-                                    setSelectedMonth(parseInt(e.target.value))
-                                  }
-                                  className={`appearance-none bg-transparent border-none pl-3 pr-7 py-1.5 text-sm font-bold focus:outline-none cursor-pointer ${
-                                    isDark ? "text-slate-200" : "text-slate-700"
-                                  }`}
+                          <div className="flex items-center">
+                            {timeFilter === "monthly" && (
+                              <>
+                                <div className="relative flex items-center">
+                                  <select
+                                    value={selectedMonth}
+                                    onChange={(e) =>
+                                      setSelectedMonth(parseInt(e.target.value))
+                                    }
+                                    className={`appearance-none bg-transparent border-none pl-3 pr-7 py-1.5 text-sm font-bold focus:outline-none cursor-pointer ${isDark ? "text-slate-200" : "text-slate-700"
+                                      }`}
+                                  >
+                                    {monthNamesFull.map((month, idx) => (
+                                      <option
+                                        className={isDark ? "bg-[#171B23]" : ""}
+                                        key={month}
+                                        value={idx + 1}
+                                      >
+                                        {month}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <ChevronDown
+                                    size={14}
+                                    className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${isDark ? "text-slate-500" : "text-slate-400"
+                                      }`}
+                                  />
+                                </div>
+                                <span
+                                  className={`px-1 ${isDark ? "text-slate-500" : "text-slate-300"
+                                    }`}
                                 >
-                                  {monthNamesFull.map((month, idx) => (
-                                    <option
-                                      className={isDark ? "bg-[#171B23]" : ""}
-                                      key={month}
-                                      value={idx + 1}
-                                    >
-                                      {month}
-                                    </option>
-                                  ))}
-                                </select>
-                                <ChevronDown
-                                  size={14}
-                                  className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${
-                                    isDark ? "text-slate-500" : "text-slate-400"
+                                  |
+                                </span>
+                              </>
+                            )}
+                            <div className="relative flex items-center">
+                              <select
+                                value={selectedYear}
+                                onChange={(e) => setSelectedYear(e.target.value)}
+                                className={`font-data appearance-none bg-transparent border-none pl-3 pr-7 py-1.5 text-sm font-bold focus:outline-none cursor-pointer ${isDark ? "text-slate-200" : "text-slate-700"
                                   }`}
-                                />
-                              </div>
-                              <span
-                                className={`px-1 ${
-                                  isDark ? "text-slate-500" : "text-slate-300"
-                                }`}
                               >
-                                |
-                              </span>
-                            </>
-                          )}
-                          <div className="relative flex items-center">
-                            <select
-                              value={selectedYear}
-                              onChange={(e) => setSelectedYear(e.target.value)}
-                              className={`font-data appearance-none bg-transparent border-none pl-3 pr-7 py-1.5 text-sm font-bold focus:outline-none cursor-pointer ${
-                                isDark ? "text-slate-200" : "text-slate-700"
-                              }`}
-                            >
-                              {years.map((year) => (
-                                <option
-                                  className={isDark ? "bg-[#171B23]" : ""}
-                                  key={year}
-                                  value={year}
-                                >
-                                  {year}
-                                </option>
-                              ))}
-                            </select>
-                            <ChevronDown
-                              size={14}
-                              className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${
-                                isDark ? "text-slate-500" : "text-slate-400"
-                              }`}
-                            />
+                                {years.map((year) => (
+                                  <option
+                                    className={isDark ? "bg-[#171B23]" : ""}
+                                    key={year}
+                                    value={year}
+                                  >
+                                    {year}
+                                  </option>
+                                ))}
+                              </select>
+                              <ChevronDown
+                                size={14}
+                                className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none ${isDark ? "text-slate-500" : "text-slate-400"
+                                  }`}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
                     </div>
 
                     <div
-                      className={`relative group flex items-center rounded-lg p-0.5 shadow-sm transition-all border ${
-                        isDark
-                          ? "bg-[#18a8c6]/10 border-[#18a8c6]/20"
-                          : "bg-[#18a8c6]/10 border-[#18a8c6]/30"
-                      }`}
+                      className={`relative group flex items-center rounded-lg p-0.5 shadow-sm transition-all border ${isDark
+                        ? "bg-[#18a8c6]/10 border-[#18a8c6]/20"
+                        : "bg-[#18a8c6]/10 border-[#18a8c6]/30"
+                        }`}
                     >
                       <select
                         value={timeFilter}
                         onChange={(e) => setTimeFilter(e.target.value)}
-                        className={`appearance-none bg-transparent border-none pl-3 pr-6 py-1.5 text-sm font-bold focus:outline-none focus:ring-0 cursor-pointer capitalize ${
-                          isDark ? "text-white" : "text-[#128a9c]"
-                        }`}
+                        className={`appearance-none bg-transparent border-none pl-3 pr-6 py-1.5 text-sm font-bold focus:outline-none focus:ring-0 cursor-pointer capitalize ${isDark ? "text-white" : "text-[#128a9c]"
+                          }`}
                       >
                         <option
                           className={isDark ? "bg-[#171B23]" : ""}
@@ -1514,9 +1571,8 @@ const ProductionHistory = () => {
                       </select>
                       <ChevronDown
                         size={14}
-                        className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${
-                          isDark ? "text-[#18a8c6]" : "text-[#18a8c6]"
-                        }`}
+                        className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${isDark ? "text-[#18a8c6]" : "text-[#18a8c6]"
+                          }`}
                       />
                     </div>
                   </div>
@@ -1542,11 +1598,10 @@ const ProductionHistory = () => {
                     <Cpu size={26} className={themeAccentText} />
                     {selectedMachineDetail.machine_info.machine_id} Overview
                     <span
-                      className={`font-data text-xs px-2 py-1 ml-2 border rounded capitalize ${
-                        isDark
-                          ? "bg-[#18a8c6]/10 text-[#18a8c6] border-[#18a8c6]/20"
-                          : "bg-[#18a8c6]/10 text-[#128a9c] border-[#18a8c6]/20"
-                      }`}
+                      className={`font-data text-xs px-2 py-1 ml-2 border rounded capitalize ${isDark
+                        ? "bg-[#18a8c6]/10 text-[#18a8c6] border-[#18a8c6]/20"
+                        : "bg-[#18a8c6]/10 text-[#128a9c] border-[#18a8c6]/20"
+                        }`}
                     >
                       {selectedMachineDetail.machine_info.period_type ||
                         timeFilter}
@@ -1640,7 +1695,7 @@ const ProductionHistory = () => {
                         <span
                           className={
                             selectedMachineDetail.machine_status.status ===
-                            "Operational"
+                              "Operational"
                               ? "text-[#10b981] ml-1"
                               : "text-[#ef4444] ml-1"
                           }
@@ -1659,9 +1714,8 @@ const ProductionHistory = () => {
                       </p>
                     </div>
                     <div
-                      className={`h-3 rounded-full overflow-hidden flex ${
-                        isDark ? "bg-[#0A0C10]" : "bg-slate-200"
-                      }`}
+                      className={`h-3 rounded-full overflow-hidden flex ${isDark ? "bg-[#0A0C10]" : "bg-slate-200"
+                        }`}
                     >
                       <div
                         className="h-full bg-[#10b981] transition-all duration-1000"
@@ -1672,11 +1726,10 @@ const ProductionHistory = () => {
                       <div
                         className="h-full bg-[#ef4444] transition-all duration-1000"
                         style={{
-                          width: `${
-                            100 -
+                          width: `${100 -
                             selectedMachineDetail.machine_status
                               .active_percentage
-                          }%`,
+                            }%`,
                         }}
                       />
                     </div>
@@ -1790,11 +1843,10 @@ const ProductionHistory = () => {
               className={`flex items-center gap-4 border rounded-xl px-5 py-3.5 shadow-sm flex-wrap transition-colors duration-300 ${themeCard}`}
             >
               <span
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${
-                  isDark
-                    ? "bg-[#18a8c6]/10 text-[#18a8c6]"
-                    : "bg-[#18a8c6]/10 text-[#128a9c]"
-                }`}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap ${isDark
+                  ? "bg-[#18a8c6]/10 text-[#18a8c6]"
+                  : "bg-[#18a8c6]/10 text-[#128a9c]"
+                  }`}
               >
                 <Power size={12} /> Live System
               </span>
