@@ -21,9 +21,6 @@ import aidaImg from './images/AIDA_PRESS_MACHINE.png';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:9000';
 
-// =================================================================================
-// MACHINE COMPANY & CAPACITY MAPPING FOR PLANT 1 & PLANT 2
-// =================================================================================
 const PLANT1_SPECS = {
   1: { company: "SNX", capacity: 63 }, 2: { company: "SNX", capacity: 63 }, 3: { company: "SNX", capacity: 63 }, 4: { company: "SNX", capacity: 63 },
   5: { company: "ISGEC", capacity: 160 }, 6: { company: "ISGEC", capacity: 160 },
@@ -78,7 +75,32 @@ const getCompanyImage = (company) => {
   return null;
 };
 
-// Helper for formatting API timestamps to include Date and Time
+const convertDecimalToMMSS = (decimalMinutes) => {
+  if (!decimalMinutes || isNaN(decimalMinutes)) return 0;
+  let m = Math.floor(decimalMinutes);
+  let s = Math.round((decimalMinutes - m) * 60);
+  if (s === 60) {
+    m += 1;
+    s = 0;
+  }
+  return parseFloat((m + s / 100).toFixed(2));
+};
+
+const formatHourRange = (timeStr) => {
+  if (!timeStr) return '--';
+  if (timeStr === '8:00' || timeStr === '08:00') return '08:30 - 09:00';
+  
+  if (timeStr.includes(':')) {
+    const hr = parseInt(timeStr.split(':')[0], 10);
+    if (!isNaN(hr)) {
+      const startHr = hr.toString().padStart(2, '0');
+      const endHr = (hr + 1).toString().padStart(2, '0');
+      return `${startHr}:00 - ${endHr}:00`;
+    }
+  }
+  return timeStr;
+};
+
 const formatChangeTime = (timeStr, selectedDate) => {
   if (!timeStr) return '--:--';
   if (timeStr.includes('AM') || timeStr.includes('PM')) return `${selectedDate} | ${timeStr}`;
@@ -100,9 +122,9 @@ export default function MachineHistory() {
   const [summary, setSummary] = useState({ total_production: 0, active_days: 0 });
   const [keyInsights, setKeyInsights] = useState(null);
   
-  // State for Dynamic Machine Changes
   const [shutHeightChanges, setShutHeightChanges] = useState([]);
   const [toolChanges, setToolChanges] = useState([]);
+  const [onOffEvents, setOnOffEvents] = useState([]);
 
   const [machineStatus, setMachineStatus] = useState('Offline');
   const [loading, setLoading] = useState(false);
@@ -123,7 +145,6 @@ export default function MachineHistory() {
     const fetchMachineAnalysis = async () => {
       setLoading(true);
       try {
-        // 1. Fetch Production & Status Analysis
         const analysisUrl = `${API_BASE}/api/machine-analysis/?plant=${plant}&machine_no=${machineNo}&date=${selectedDate}&shift=${shift}&period=today`;
         const res = await fetch(analysisUrl);
         
@@ -157,15 +178,10 @@ export default function MachineHistory() {
           setMachineStatus('Offline');
         }
 
-        // 2. Fetch Tool & Shut Height Changes using the LIVE History APIs
         try {
-          // Frontend ke 'plant1'/'plant2' ko Database ke '1'/'2' (Integer) me convert karo
           const plantNo = plant === 'plant1' ? 1 : 2;
-          
-          // Shift dropdown ("shiftA") ko Live API format ("A", "B", "ALL") me convert karo
           const shiftVal = shift === 'fullday' ? 'ALL' : shift.replace('shift', '');
 
-          // Plant1Live.js aur Plant2Live.js ki tarah exact APIs call karo
           let historyUrl = '';
           if (plantNo === 1) {
             historyUrl = `${API_BASE}/api/plant1-machine-history/?machine_no=${machineNo}&date=${selectedDate}&shift=${shiftVal}`;
@@ -178,29 +194,31 @@ export default function MachineHistory() {
           if (historyRes.ok) {
             const historyData = await historyRes.json();
             
-            // Live files me data.events array me aata hai
             if (historyData.success && historyData.events) {
-               
-               // Type ya Event_Type dono me se jo bhi match kare usko filter karo
                const shc = historyData.events.filter(c => 
                  c.type === 'SHUT_HEIGHT_CHANGE' || c.event_type === 'SHUT_HEIGHT_CHANGE'
                );
-               
                const tc = historyData.events.filter(c => 
                  c.type === 'TOOL_CHANGE' || c.event_type === 'TOOL_CHANGE' || String(c.type).includes('TOOL')
+               );
+               const onOff = historyData.events.filter(c => 
+                 c.type === 'ON' || c.type === 'OFF' || c.event_type === 'ON' || c.event_type === 'OFF'
                );
                
                setShutHeightChanges(shc);
                setToolChanges(tc);
+               setOnOffEvents(onOff);
             } else {
                setShutHeightChanges([]);
                setToolChanges([]);
+               setOnOffEvents([]);
             }
           }
         } catch(err) {
           console.error("Failed to fetch machine history events", err);
           setShutHeightChanges([]);
           setToolChanges([]);
+          setOnOffEvents([]);
         }
 
       } catch (err) {
@@ -211,6 +229,7 @@ export default function MachineHistory() {
         setMachineStatus('Offline');
         setShutHeightChanges([]);
         setToolChanges([]);
+        setOnOffEvents([]);
       } finally {
         setLoading(false);
       }
@@ -219,20 +238,74 @@ export default function MachineHistory() {
     fetchMachineAnalysis();
   }, [plant, machineNo, selectedDate, shift]);
 
+  let currentTotalProd = 0;
+  let currentTotalIdle = 0;
+  let currentTotalOffline = 0;
+
+  const now = new Date();
+  const [selYear, selMonth, selDay] = selectedDate.split('-').map(Number);
+  let hasWrapped = false;
+  let previousHour = -1;
+
+  const cumulativeChartData = chartData.map((item, index) => {
+    let isFuture = false;
+    
+    if (item.name) {
+      const match = String(item.name).match(/^(\d+)/);
+      if (match) {
+        const blockHour = parseInt(match[1], 10);
+        
+        if (previousHour !== -1 && blockHour < previousHour && blockHour < 12 && previousHour > 12) {
+          hasWrapped = true;
+        }
+        previousHour = blockHour;
+        
+        let blockDate = new Date(selYear, selMonth - 1, selDay);
+        
+        if (hasWrapped || (shift === 'shiftB' && blockHour < 12)) {
+          blockDate.setDate(blockDate.getDate() + 1);
+        }
+        
+        blockDate.setHours(blockHour, 0, 0, 0);
+        
+        if (blockDate > now) {
+          isFuture = true;
+        }
+      }
+    }
+
+    if (!isFuture) {
+      currentTotalProd += (item.production || 0);
+      currentTotalIdle += (item.idle_minutes || 0);
+      currentTotalOffline += (item.shutdown_minutes || 0);
+    }
+    
+    return {
+      ...item,
+      display_name: formatHourRange(item.name),
+      cumulative_production: isFuture ? null : currentTotalProd,
+      cumulative_idle: isFuture ? null : convertDecimalToMMSS(currentTotalIdle),
+      cumulative_offline: isFuture ? null : convertDecimalToMMSS(currentTotalOffline)
+    };
+  });
+
   const getStatusColor = (status) => {
     if (status === 'Running') return '#10b981';
-    if (status === 'Idle') return '#f59e0b';
+    if (status === 'Idle') return '#f59e0b';    
     return '#64748b';
   };
   const statusColor = getStatusColor(machineStatus);
 
   const totalIdle = chartData.reduce((acc, d) => acc + (d.idle_minutes || 0), 0);
   const totalOffline = keyInsights?.offline_detected?.raw_mins || 0;
+  
+  const totalIdleFormatted = convertDecimalToMMSS(totalIdle);
+  const totalOfflineFormatted = convertDecimalToMMSS(totalOffline);
 
   const pieData = [
-    { name: 'Production', value: summary.total_production || 0, color: '#3b82f6' },
-    { name: 'Online Idle', value: parseFloat(totalIdle.toFixed(2)), color: '#10b981' },
-    { name: 'Offline', value: parseFloat(totalOffline.toFixed(2)), color: '#f59e0b' }
+    { name: 'Production', value: summary.total_production || 0, color: '#10b981' },
+    { name: 'Online Idle', value: totalIdleFormatted, color: '#f59e0b' },
+    { name: 'Offline', value: totalOfflineFormatted, color: '#ef4444' }
   ];
 
   return (
@@ -240,8 +313,8 @@ export default function MachineHistory() {
       <style>
         {`
           @media (min-width: 1025px) {
-            .three-col-grid {
-              grid-template-columns: repeat(3, 1fr) !important;
+            .four-col-grid {
+              grid-template-columns: repeat(4, 1fr) !important;
             }
           }
         `}
@@ -292,62 +365,50 @@ export default function MachineHistory() {
         </div>
       </div>
 
-      <div className="history-grid three-col-grid">
+      <div className="history-grid four-col-grid">
         
-        {/* ROW 1 (3 Cards filling the empty space perfectly) */}
+        {/* Row 1 */}
         <div className="card">
-          <div className="machine-info-flex">
-            <div className="machine-img-box" style={{ overflow: 'hidden', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+            <div className="machine-img-box" style={{ width: '85px', height: '85px', flexShrink: 0, borderRadius: '8px', overflow: 'hidden', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a' }}>
               {getCompanyImage(spec.company) ? (
-                <img 
-                  src={getCompanyImage(spec.company)} 
-                  alt={`${spec.company} Press Machine`} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} 
-                />
+                <img src={getCompanyImage(spec.company)} alt={`${spec.company} Press Machine`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <span style={{ fontSize: '2rem' }}>🤖</span>
               )}
             </div>
-            <div className="machine-details">
-              <div className="flex-between">
-                <h2>Press Machine {machineNo}</h2>
-                <span style={{ 
-                  padding: '4px 12px', 
-                  borderRadius: '20px', 
-                  fontSize: '12px', 
-                  fontWeight: 'bold', 
-                  backgroundColor: `${statusColor}20`, 
-                  color: statusColor, 
-                  border: `1px solid ${statusColor}40`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+                <h2 style={{ fontSize: '1.25rem', margin: 0, color: '#f8fafc', lineHeight: '1.2' }}>Press Machine {machineNo}</h2>
+                <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', backgroundColor: `${statusColor}20`, color: statusColor, border: `1px solid ${statusColor}40`, display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: '10px' }}>●</span> {machineStatus}
                 </span>
               </div>
-              <div className="detail-row">
-                <span className="label">Machine Type</span> 
-                <span className="val">Press Machine</span>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '5px', borderBottom: '1px dashed #334155', marginTop: 'auto' }}>
+                <span style={{ color: '#94a3b8', fontWeight: '600', fontSize: '14px' }}>Machine Type</span>
+                <span style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '14px' }}>Press Machine</span>
               </div>
-              <div className="detail-row">
-                <span className="label">Company</span> 
-                <span className="val text-yellow-400 font-bold">{spec.company}</span>
-              </div>
-              <div className="detail-row">
-                <span className="label">Capacity</span> 
-                <span className="val text-yellow-400 font-bold">{spec.capacity !== 'N/A' ? `${spec.capacity} TON` : 'N/A'}</span>
-              </div>
-              <div className="detail-row">
-                <span className="label">Plant</span> 
-                <span className="val">{plant === 'plant1' ? 'Plant 1' : 'Plant 2'}</span>
-              </div>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px dashed #334155' }}>
+              <span style={{ color: '#94a3b8', fontWeight: '600', fontSize: '14px' }}>Company</span>
+              <span style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '14px' }}>{spec.company}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px dashed #334155' }}>
+              <span style={{ color: '#94a3b8', fontWeight: '600', fontSize: '14px' }}>Capacity</span>
+              <span style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '14px' }}>{spec.capacity !== 'N/A' ? `${spec.capacity} TON` : 'N/A'}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ color: '#94a3b8', fontWeight: '600', fontSize: '14px' }}>Plant</span>
+              <span style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '14px' }}>{plant === 'plant1' ? 'Plant 1' : 'Plant 2'}</span>
             </div>
           </div>
         </div>
 
-        {/* Key Insights */}
-        <div className="card">
+        <div className="card" style={{ gridColumn: "span 2" }}>
           <h3 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#facc15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0px 0px 8px rgba(250, 204, 21, 0.6))' }}>
               <path d="M12 2v1"></path>
@@ -363,19 +424,10 @@ export default function MachineHistory() {
             Key Insights
           </h3>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-            {/* Peak Production */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
             <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-              <div style={{
-                width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0,
-                background: 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0.05) 100%)',
-                border: '1px solid rgba(16,185,129,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                  <polyline points="17 6 23 6 23 12"></polyline>
-                </svg>
+              <div style={{ width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0, background: 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0.05) 100%)', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
               </div>
               <div>
                 <p style={{ margin: 0, fontWeight: 'bold', color: '#f8fafc', fontSize: '14px' }}>Peak Production</p>
@@ -383,19 +435,9 @@ export default function MachineHistory() {
               </div>
             </div>
             
-            {/* Total Production */}
             <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-              <div style={{
-                width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0,
-                background: 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(59,130,246,0.05) 100%)',
-                border: '1px solid rgba(59,130,246,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="20" x2="18" y2="10"></line>
-                  <line x1="12" y1="20" x2="12" y2="4"></line>
-                  <line x1="6" y1="20" x2="6" y2="14"></line>
-                </svg>
+              <div style={{ width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0, background: 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(59,130,246,0.05) 100%)', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
               </div>
               <div>
                 <p style={{ margin: 0, fontWeight: 'bold', color: '#f8fafc', fontSize: '14px' }}>Total Production</p>
@@ -403,18 +445,9 @@ export default function MachineHistory() {
               </div>
             </div>
 
-            {/* Online Idle Time */}
             <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-              <div style={{
-                width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0,
-                background: 'linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(245,158,11,0.05) 100%)',
-                border: '1px solid rgba(245,158,11,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
+              <div style={{ width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0, background: 'linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(245,158,11,0.05) 100%)', border: '1px solid rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               </div>
               <div>
                 <p style={{ margin: 0, fontWeight: 'bold', color: '#f8fafc', fontSize: '14px' }}>Online Idle Time</p>
@@ -422,44 +455,22 @@ export default function MachineHistory() {
               </div>
             </div>
 
-            {/* Offline Detected */}
             <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-              <div style={{
-                width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0,
-                background: totalOffline === 0 
-                  ? 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0.05) 100%)' 
-                  : 'linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(239,68,68,0.05) 100%)',
-                border: totalOffline === 0 ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(239,68,68,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0, background: totalOffline === 0 ? 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0.05) 100%)' : 'linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(239,68,68,0.05) 100%)', border: totalOffline === 0 ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {totalOffline === 0 ? (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                  </svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                 ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                  </svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                 )}
               </div>
               <div>
-                <p style={{ margin: 0, fontWeight: 'bold', color: '#f8fafc', fontSize: '14px' }}>
-                  {totalOffline === 0 ? 'No Offline Time' : 'Offline Detected'}
-                </p>
-                <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>
-                  {totalOffline === 0 
-                    ? 'Machine remained online throughout the day' 
-                    : `Machine was offline for ${keyInsights?.offline_detected?.formatted_time}`}
-                </p>
+                <p style={{ margin: 0, fontWeight: 'bold', color: '#f8fafc', fontSize: '14px' }}>{totalOffline === 0 ? 'No Offline Time' : 'Offline Detected'}</p>
+                <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>{totalOffline === 0 ? 'Machine remained online throughout the day' : `Machine was offline for ${keyInsights?.offline_detected?.formatted_time}`}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Selected Date Production and Status Card */}
         <div className="card">
           <div className="flex-between mb-4">
             <div>
@@ -468,114 +479,113 @@ export default function MachineHistory() {
             </div>
             <div className="text-right">
               <p className="label mb-2">Status</p>
-              <div style={{ 
-                border: `2px solid ${statusColor}`, 
-                color: statusColor,
-                padding: '6px 16px',
-                borderRadius: '20px',
-                fontSize: '13px',
-                fontWeight: 'bold',
-                display: 'inline-block',
-                whiteSpace: 'nowrap',
-                backgroundColor: `${statusColor}10`
-              }}>
+              <div style={{ border: `2px solid ${statusColor}`, color: statusColor, padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', display: 'inline-block', whiteSpace: 'nowrap', backgroundColor: `${statusColor}10` }}>
                 {machineStatus}
               </div>
             </div>
           </div>
           <div className="detail-row"><span className="label">Target</span> <span className="val">--</span></div>
-          <div className="detail-row">
-             <span className="label">Achievement</span> 
-             <span className="val text-green">--</span>
-          </div>
+          <div className="detail-row"><span className="label">Achievement</span> <span className="val text-green">--</span></div>
           <div className="detail-row"><span className="label">Date</span> <span className="val text-blue-400">{selectedDate}</span></div>
         </div>
         
-        {/* ROW 2 */}
-        <div className="card" style={{ gridColumn: "span 2" }}>
-          <h3 className="section-title">Production Trend ({shift === 'shiftA' ? 'Shift A' : shift === 'shiftB' ? 'Shift B' : 'Full Day'})</h3>
+        {/* Row 2 */}
+        <div className="card" style={{ gridColumn: "span 3" }}>
+          <h3 className="section-title">Production & Downtime Trend ({shift === 'shiftA' ? 'Shift A' : shift === 'shiftB' ? 'Shift B' : 'Full Day'})</h3>
           <div className="chart-container mt-4" style={{ height: '320px', width: '100%', position: 'relative' }}>
             {loading ? (
               <p className="text-muted text-center" style={{ marginTop: '100px' }}>Loading Chart Data...</p>
-            ) : chartData.length > 0 ? (
+            ) : cumulativeChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <LineChart data={cumulativeChartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                  <XAxis dataKey="name" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                  <XAxis dataKey="display_name" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} />
                   <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} />
                   <Tooltip 
+                    formatter={(value, name) => {
+                      if (name.includes('Mins')) return value.toFixed(2);
+                      return value;
+                    }}
                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f8fafc', borderRadius: '8px' }} 
-                    itemStyle={{ fontSize: '14px' }}
+                    itemStyle={{ fontSize: '14px' }} 
                   />
                   <Legend wrapperStyle={{ paddingTop: '20px' }}/>
-                  <Line type="monotone" dataKey="production" name="Production (Count)" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} activeDot={{ r: 6 }} />
-                  <Line type="monotone" dataKey="idle_minutes" name="Online Idle (Mins)" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} />
-                  <Line type="monotone" dataKey="shutdown_minutes" name="Offline (Mins)" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} />
+                  
+                  <Line type="linear" dataKey="cumulative_production" name="Total Production" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} activeDot={{ r: 6 }} />
+                  <Line type="linear" dataKey="cumulative_idle" name="Total Online Idle (Mins)" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line type="linear" dataKey="cumulative_offline" name="Total Offline (Mins)" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-muted text-center" style={{ marginTop: '100px' }}>No Production Data for Selected Parameters</p>
+              <p className="text-muted text-center" style={{ marginTop: '100px' }}>No Data for Selected Parameters</p>
             )}
           </div>
         </div>
 
+        {/* 👇 YAHAN SE MAIN CHANGES HAIN (TOP/BOTTOM LAYOUT) 👇 */}
         <div className="card">
           <h3 className="section-title">Machine State Distribution ({shift === 'fullday' ? 'Full Day' : 'Today'})</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', height: '320px', justifyContent: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '220px', position: 'relative' }}>
-              <ResponsiveContainer width="60%" height="100%">
+          <div style={{ display: 'flex', flexDirection: 'column', height: '320px', alignItems: 'center', justifyContent: 'center', paddingTop: '10px' }}>
+            
+            {/* Chart Upar (Top) */}
+            <div style={{ width: '100%', height: '180px', position: 'relative' }}>
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie
-                    data={pieData}
-                    innerRadius={55}
-                    outerRadius={80}
-                    paddingAngle={3}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
+                  <Pie data={pieData} innerRadius={60} outerRadius={80} paddingAngle={0} dataKey="value" stroke="none">
+                    {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                   </Pie>
-                  <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }} />
+                  <Tooltip 
+                    formatter={(value, name) => {
+                      if (name === 'Production') return value;
+                      return value.toFixed(2);
+                    }} 
+                    contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }} 
+                  />
                 </PieChart>
               </ResponsiveContainer>
-              <div style={{ position: 'absolute', textAlign: 'center', pointerEvents: 'none', left: '16%' }}>
+              
+              {/* Center ka Text Size Thoda Chhota Kiya Hai */}
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
                 <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#fff' }}>{summary.total_production || 0}</div>
                 <div style={{ fontSize: '11px', color: '#94a3b8' }}>Total Count</div>
               </div>
-              <div style={{ width: '40%', paddingLeft: '10px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#3b82f6' }}></div>
-                  <div>
-                    <div style={{ color: '#f8fafc', fontSize: '13px', fontWeight: 'bold' }}>Production</div>
-                    <div style={{ color: '#94a3b8', fontSize: '11px' }}>({summary.total_production || 0})</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#10b981' }}></div>
-                  <div>
-                    <div style={{ color: '#f8fafc', fontSize: '13px', fontWeight: 'bold' }}>Online Idle</div>
-                    <div style={{ color: '#94a3b8', fontSize: '11px' }}>({totalIdle.toFixed(2)} mins)</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#f59e0b' }}></div>
-                  <div>
-                    <div style={{ color: '#f8fafc', fontSize: '13px', fontWeight: 'bold' }}>Offline</div>
-                    <div style={{ color: '#94a3b8', fontSize: '11px' }}>({totalOffline.toFixed(2)} mins)</div>
-                  </div>
-                </div>
-              </div>
             </div>
+            
+            {/* Legend Neeche (Bottom) */}
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px', padding: '0 15px', marginTop: '15px' }}>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#10b981' }}></div>
+                  <div style={{ color: '#f8fafc', fontSize: '13px', fontWeight: 'bold' }}>Production</div>
+                </div>
+                <div style={{ color: '#94a3b8', fontSize: '12px', fontWeight: '600' }}>{summary.total_production || 0}</div>
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#f59e0b' }}></div>
+                  <div style={{ color: '#f8fafc', fontSize: '13px', fontWeight: 'bold' }}>Online Idle</div>
+                </div>
+                <div style={{ color: '#94a3b8', fontSize: '12px', fontWeight: '600' }}>{totalIdleFormatted.toFixed(2)} mins</div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ef4444' }}></div>
+                  <div style={{ color: '#f8fafc', fontSize: '13px', fontWeight: 'bold' }}>Offline</div>
+                </div>
+                <div style={{ color: '#94a3b8', fontSize: '12px', fontWeight: '600' }}>{totalOfflineFormatted.toFixed(2)} mins</div>
+              </div>
+
+            </div>
+
           </div>
         </div>
 
-        {/* ROW 3: Shut Height Change, Tool Change, Operator Timeline */}
-        
-        {/* DYNAMIC SHUT HEIGHT CHANGE */}
+        {/* ROW 3: Shut Height Change, Tool Change, ON/OFF Status, Operator Timeline */}
         <div className="card">
-          <h3 className="section-title">Shut Height Change</h3>
+          <h3 className="section-title">Shut Height Change ({shutHeightChanges.length})</h3>
           <div className="timeline" style={{ padding: '20px 10px', maxHeight: '350px', overflowY: 'auto' }}>
             {shutHeightChanges.length > 0 ? (
               <>
@@ -587,7 +597,9 @@ export default function MachineHistory() {
                     <div className="tl-content">
                       <p className="tl-time text-sm text-gray-400">{formatChangeTime(change.time || change.timestamp, selectedDate)}</p>
                       <p className="tl-title text-white font-semibold mt-1">{change.title || 'Height Changed'}</p>
-                      <p className="text-muted text-xs mt-1" style={{ wordBreak: 'break-word' }}>{change.details}</p>
+                      <p className="text-muted text-xs mt-1" style={{ wordBreak: 'break-word' }}>
+                        {change.details ? change.details.split(' | Tool:')[0] : ''}
+                      </p>
                       {(change.shut_height !== undefined || change.part_name) && (
                         <div style={{ marginTop: '6px', padding: '6px 8px', borderRadius: '6px', background: 'rgba(16,185,129,0.08)', color: '#cbd5e1', fontSize: '11px' }}>
                           <b style={{ color: '#34d399' }}>Details:</b> {change.shut_height ? `Height: ${change.shut_height} ` : ''} 
@@ -613,9 +625,8 @@ export default function MachineHistory() {
           </div>
         </div>
 
-        {/* DYNAMIC TOOL CHANGE */}
         <div className="card">
-          <h3 className="section-title">Tool Change</h3>
+          <h3 className="section-title">Tool Change ({toolChanges.length})</h3>
           <div className="timeline" style={{ padding: '20px 10px', maxHeight: '350px', overflowY: 'auto' }}>
             {toolChanges.length > 0 ? (
               <>
@@ -627,7 +638,9 @@ export default function MachineHistory() {
                     <div className="tl-content">
                       <p className="tl-time text-sm text-gray-400">{formatChangeTime(change.time || change.timestamp, selectedDate)}</p>
                       <p className="tl-title text-white font-semibold mt-1">{change.title || 'Tool Changed'}</p>
-                      <p className="text-muted text-xs mt-1" style={{ wordBreak: 'break-word' }}>{change.details}</p>
+                      <p className="text-muted text-xs mt-1" style={{ wordBreak: 'break-word' }}>
+                        {change.details ? change.details.split(' | Shut Height:')[0] : ''}
+                      </p>
                       {(change.part_name || change.part_number || change.model_name || change.tool_name) && (
                         <div style={{ marginTop: '6px', padding: '6px 8px', borderRadius: '6px', background: 'rgba(59,130,246,0.08)', color: '#cbd5e1', fontSize: '11px' }}>
                           <b style={{ color: '#93c5fd' }}>Details:</b> {change.customer_name || change.customer || 'N/A'} | {change.model_name || change.model || 'N/A'} | {change.part_name || 'N/A'} | Part No: {change.part_number || 'N/A'} | Tool: {change.tool_name || 'N/A'}
@@ -647,6 +660,41 @@ export default function MachineHistory() {
             ) : (
               <div style={{ textAlign: 'center', color: '#94a3b8', padding: '20px' }}>
                 <p>No tool changes recorded for this date.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="card">
+          <h3 className="section-title">Machine ON/OFF Status ({onOffEvents.length})</h3>
+          <div className="timeline" style={{ padding: '20px 10px', maxHeight: '350px', overflowY: 'auto' }}>
+            {onOffEvents.length > 0 ? (
+              <>
+                {onOffEvents.map((change, idx) => {
+                  const isOn = change.type === 'ON' || change.event_type === 'ON';
+                  return (
+                    <div key={idx} className="timeline-item" style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+                      <div className="tl-dot" style={{ width: '32px', height: '32px', borderRadius: '50%', background: isOn ? '#10b981' : '#ef4444', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                      </div>
+                      <div className="tl-content">
+                        <p className="tl-time text-sm text-gray-400">
+                           {formatChangeTime(change.time || change.timestamp, selectedDate)}
+                        </p>
+                        <p className="tl-title text-white font-semibold mt-1">
+                          Machine Powered {isOn ? 'ON' : 'OFF'}
+                        </p>
+                        <p className="text-muted text-xs mt-1" style={{ wordBreak: 'break-word' }}>
+                          {change.details || (isOn ? 'Machine Power/Signal Restored' : 'Machine detected as Offline/No Signal')}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', color: '#94a3b8', padding: '20px' }}>
+                <p>No ON/OFF changes recorded for this date.</p>
               </div>
             )}
           </div>
@@ -684,8 +732,8 @@ export default function MachineHistory() {
           </div>
         </div>
 
-        {/* ROW 4: Hourly Breakdown moved below */}
-        <div className="card" style={{ gridColumn: "span 3" }}>
+        {/* ROW 4 */}
+        <div className="card" style={{ gridColumn: "span 4" }}>
           <h3 className="section-title">Hourly Breakdown</h3>
           <div style={{ overflowX: 'auto', maxHeight: '350px', overflowY: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', color: '#f8fafc' }}>
@@ -700,10 +748,10 @@ export default function MachineHistory() {
               <tbody>
                 {chartData.length > 0 ? chartData.map((row, i) => (
                   <tr key={i} style={{ borderBottom: '1px solid #1e293b' }}>
-                    <td style={{ padding: '12px', textAlign: 'left' }}>{row.name}</td>
+                    <td style={{ padding: '12px', textAlign: 'left' }}>{formatHourRange(row.name)}</td>
                     <td style={{ padding: '12px', textAlign: 'center' }}>{row.production}</td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>{row.idle_minutes?.toFixed(2) || 0}</td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>{row.shutdown_minutes?.toFixed(2) || 0}</td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>{convertDecimalToMMSS(row.idle_minutes).toFixed(2)}</td>
+                    <td style={{ padding: '12px', textAlign: 'center' }}>{convertDecimalToMMSS(row.shutdown_minutes).toFixed(2)}</td>
                   </tr>
                 )) : (
                   <tr>
