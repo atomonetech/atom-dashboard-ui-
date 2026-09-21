@@ -19,7 +19,7 @@ import snxImg from './images/SNX_PRESS_MACHINE.png';
 import isgecImg from './images/ISGEC_PRESS_MACHINE.png';
 import aidaImg from './images/AIDA_PRESS_MACHINE.png';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:9000';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 const PLANT1_SPECS = {
   1: { company: "SNX", capacity: 63 }, 2: { company: "SNX", capacity: 63 }, 3: { company: "SNX", capacity: 63 }, 4: { company: "SNX", capacity: 63 },
@@ -89,7 +89,7 @@ const convertDecimalToMMSS = (decimalMinutes) => {
 const formatHourRange = (timeStr) => {
   if (!timeStr) return '--';
   if (timeStr === '8:00' || timeStr === '08:00') return '08:30 - 09:00';
-  
+
   if (timeStr.includes(':')) {
     const hr = parseInt(timeStr.split(':')[0], 10);
     if (!isNaN(hr)) {
@@ -105,10 +105,10 @@ const formatChangeTime = (timeStr, selectedDate) => {
   if (!timeStr) return '--:--';
   if (timeStr.includes('AM') || timeStr.includes('PM')) return `${selectedDate} | ${timeStr}`;
   try {
-     const d = new Date(timeStr);
-     return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  } catch(e) {
-     return `${selectedDate} | ${timeStr}`;
+    const d = new Date(timeStr);
+    return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    return `${selectedDate} | ${timeStr}`;
   }
 };
 
@@ -117,11 +117,11 @@ export default function MachineHistory() {
   const [machineNo, setMachineNo] = useState(2);
   const [shift, setShift] = useState('shiftA');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  
+
   const [chartData, setChartData] = useState([]);
   const [summary, setSummary] = useState({ total_production: 0, active_days: 0 });
   const [keyInsights, setKeyInsights] = useState(null);
-  
+
   const [shutHeightChanges, setShutHeightChanges] = useState([]);
   const [toolChanges, setToolChanges] = useState([]);
   const [onOffEvents, setOnOffEvents] = useState([]);
@@ -131,8 +131,8 @@ export default function MachineHistory() {
 
   const spec = getMachineSpec(plant, machineNo);
 
-  const machineOptions = plant === 'plant1' 
-    ? Array.from({ length: 57 }, (_, i) => i + 1) 
+  const machineOptions = plant === 'plant1'
+    ? Array.from({ length: 57 }, (_, i) => i + 1)
     : Array.from({ length: 46 }, (_, i) => i + 1);
 
   useEffect(() => {
@@ -147,19 +147,19 @@ export default function MachineHistory() {
       try {
         const analysisUrl = `${API_BASE}/api/machine-analysis/?plant=${plant}&machine_no=${machineNo}&date=${selectedDate}&shift=${shift}&period=today`;
         const res = await fetch(analysisUrl);
-        
+
         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
         const data = await res.json();
-        
+
         if (data.success) {
           const breakdown = data.daily_breakdown || [];
           setChartData(breakdown);
           setSummary(data.production_summary || { total_production: 0 });
           setKeyInsights(data.key_insights);
-          
+
           let derivedStatus = 'Offline';
           const activeBlocks = breakdown.filter(b => b.has_data);
-          
+
           if (activeBlocks.length > 0) {
             const lastBlock = activeBlocks[activeBlocks.length - 1];
             if (lastBlock.production > 0) {
@@ -188,33 +188,33 @@ export default function MachineHistory() {
           } else {
             historyUrl = `${API_BASE}/api/machine-history/?plant_no=2&machine_no=${machineNo}&date=${selectedDate}&shift=${shiftVal}`;
           }
-          
+
           const historyRes = await fetch(historyUrl);
-          
+
           if (historyRes.ok) {
             const historyData = await historyRes.json();
-            
+
             if (historyData.success && historyData.events) {
-               const shc = historyData.events.filter(c => 
-                 c.type === 'SHUT_HEIGHT_CHANGE' || c.event_type === 'SHUT_HEIGHT_CHANGE'
-               );
-               const tc = historyData.events.filter(c => 
-                 c.type === 'TOOL_CHANGE' || c.event_type === 'TOOL_CHANGE' || String(c.type).includes('TOOL')
-               );
-               const onOff = historyData.events.filter(c => 
-                 c.type === 'ON' || c.type === 'OFF' || c.event_type === 'ON' || c.event_type === 'OFF'
-               );
-               
-               setShutHeightChanges(shc);
-               setToolChanges(tc);
-               setOnOffEvents(onOff);
+              const shc = historyData.events.filter(c =>
+                c.type === 'SHUT_HEIGHT_CHANGE' || c.event_type === 'SHUT_HEIGHT_CHANGE'
+              );
+              const tc = historyData.events.filter(c =>
+                c.type === 'TOOL_CHANGE' || c.event_type === 'TOOL_CHANGE' || String(c.type).includes('TOOL')
+              );
+              const onOff = historyData.events.filter(c =>
+                c.type === 'ON' || c.type === 'OFF' || c.event_type === 'ON' || c.event_type === 'OFF'
+              );
+
+              setShutHeightChanges(shc);
+              setToolChanges(tc);
+              setOnOffEvents(onOff);
             } else {
-               setShutHeightChanges([]);
-               setToolChanges([]);
-               setOnOffEvents([]);
+              setShutHeightChanges([]);
+              setToolChanges([]);
+              setOnOffEvents([]);
             }
           }
-        } catch(err) {
+        } catch (err) {
           console.error("Failed to fetch machine history events", err);
           setShutHeightChanges([]);
           setToolChanges([]);
@@ -249,25 +249,25 @@ export default function MachineHistory() {
 
   const cumulativeChartData = chartData.map((item, index) => {
     let isFuture = false;
-    
+
     if (item.name) {
       const match = String(item.name).match(/^(\d+)/);
       if (match) {
         const blockHour = parseInt(match[1], 10);
-        
+
         if (previousHour !== -1 && blockHour < previousHour && blockHour < 12 && previousHour > 12) {
           hasWrapped = true;
         }
         previousHour = blockHour;
-        
+
         let blockDate = new Date(selYear, selMonth - 1, selDay);
-        
+
         if (hasWrapped || (shift === 'shiftB' && blockHour < 12)) {
           blockDate.setDate(blockDate.getDate() + 1);
         }
-        
+
         blockDate.setHours(blockHour, 0, 0, 0);
-        
+
         if (blockDate > now) {
           isFuture = true;
         }
@@ -279,7 +279,7 @@ export default function MachineHistory() {
       currentTotalIdle += (item.idle_minutes || 0);
       currentTotalOffline += (item.shutdown_minutes || 0);
     }
-    
+
     return {
       ...item,
       display_name: formatHourRange(item.name),
@@ -291,14 +291,14 @@ export default function MachineHistory() {
 
   const getStatusColor = (status) => {
     if (status === 'Running') return '#10b981';
-    if (status === 'Idle') return '#f59e0b';    
+    if (status === 'Idle') return '#f59e0b';
     return '#64748b';
   };
   const statusColor = getStatusColor(machineStatus);
 
   const totalIdle = chartData.reduce((acc, d) => acc + (d.idle_minutes || 0), 0);
   const totalOffline = keyInsights?.offline_detected?.raw_mins || 0;
-  
+
   const totalIdleFormatted = convertDecimalToMMSS(totalIdle);
   const totalOfflineFormatted = convertDecimalToMMSS(totalOffline);
 
@@ -319,16 +319,16 @@ export default function MachineHistory() {
           }
         `}
       </style>
-      
+
       <div className="page-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'space-between', alignItems: 'center' }}>
         <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <span className="page-badge"></span>
           <h1 className="page-title">Machine History</h1>
         </div>
-        
+
         <div className="header-filters" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <select 
-            value={plant} 
+          <select
+            value={plant}
             onChange={(e) => setPlant(e.target.value)}
             style={{ padding: '8px 12px', borderRadius: '8px', background: '#1e293b', color: '#fff', border: '1px solid #334155' }}
           >
@@ -336,8 +336,8 @@ export default function MachineHistory() {
             <option value="plant2">Plant 2</option>
           </select>
 
-          <select 
-            value={machineNo} 
+          <select
+            value={machineNo}
             onChange={(e) => setMachineNo(Number(e.target.value))}
             style={{ padding: '8px 12px', borderRadius: '8px', background: '#1e293b', color: '#fff', border: '1px solid #334155' }}
           >
@@ -346,15 +346,15 @@ export default function MachineHistory() {
             ))}
           </select>
 
-          <input 
-            type="date" 
-            value={selectedDate} 
-            onChange={(e) => setSelectedDate(e.target.value)} 
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
             style={{ padding: '8px 12px', borderRadius: '8px', background: '#1e293b', color: '#fff', border: '1px solid #334155', colorScheme: 'dark' }}
           />
 
-          <select 
-            value={shift} 
+          <select
+            value={shift}
             onChange={(e) => setShift(e.target.value)}
             style={{ padding: '8px 12px', borderRadius: '8px', background: '#1e293b', color: '#fff', border: '1px solid #334155' }}
           >
@@ -366,7 +366,7 @@ export default function MachineHistory() {
       </div>
 
       <div className="history-grid four-col-grid">
-        
+
         {/* Row 1 */}
         <div className="card">
           <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
@@ -384,14 +384,14 @@ export default function MachineHistory() {
                   <span style={{ fontSize: '10px' }}>●</span> {machineStatus}
                 </span>
               </div>
-              
+
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '5px', borderBottom: '1px dashed #334155', marginTop: 'auto' }}>
                 <span style={{ color: '#94a3b8', fontWeight: '600', fontSize: '14px' }}>Machine Type</span>
                 <span style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '14px' }}>Press Machine</span>
               </div>
             </div>
           </div>
-          
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px dashed #334155' }}>
               <span style={{ color: '#94a3b8', fontWeight: '600', fontSize: '14px' }}>Company</span>
@@ -423,7 +423,7 @@ export default function MachineHistory() {
             </svg>
             Key Insights
           </h3>
-          
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
             <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
               <div style={{ width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0, background: 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0.05) 100%)', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -434,7 +434,7 @@ export default function MachineHistory() {
                 <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>Highest count of {keyInsights?.peak_production?.count || 0} at {keyInsights?.peak_production?.time || '--:--'}</p>
               </div>
             </div>
-            
+
             <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
               <div style={{ width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0, background: 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(59,130,246,0.05) 100%)', border: '1px solid rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
@@ -488,7 +488,7 @@ export default function MachineHistory() {
           <div className="detail-row"><span className="label">Achievement</span> <span className="val text-green">--</span></div>
           <div className="detail-row"><span className="label">Date</span> <span className="val text-blue-400">{selectedDate}</span></div>
         </div>
-        
+
         {/* Row 2 */}
         <div className="card" style={{ gridColumn: "span 3" }}>
           <h3 className="section-title">Production & Downtime Trend ({shift === 'shiftA' ? 'Shift A' : shift === 'shiftB' ? 'Shift B' : 'Full Day'})</h3>
@@ -501,16 +501,16 @@ export default function MachineHistory() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                   <XAxis dataKey="display_name" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} />
                   <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value, name) => {
                       if (name.includes('Mins')) return value.toFixed(2);
                       return value;
                     }}
-                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f8fafc', borderRadius: '8px' }} 
-                    itemStyle={{ fontSize: '14px' }} 
+                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f8fafc', borderRadius: '8px' }}
+                    itemStyle={{ fontSize: '14px' }}
                   />
-                  <Legend wrapperStyle={{ paddingTop: '20px' }}/>
-                  
+                  <Legend wrapperStyle={{ paddingTop: '20px' }} />
+
                   <Line type="linear" dataKey="cumulative_production" name="Total Production" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} activeDot={{ r: 6 }} />
                   <Line type="linear" dataKey="cumulative_idle" name="Total Online Idle (Mins)" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} />
                   <Line type="linear" dataKey="cumulative_offline" name="Total Offline (Mins)" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} />
@@ -526,7 +526,7 @@ export default function MachineHistory() {
         <div className="card">
           <h3 className="section-title">Machine State Distribution ({shift === 'fullday' ? 'Full Day' : 'Today'})</h3>
           <div style={{ display: 'flex', flexDirection: 'column', height: '320px', alignItems: 'center', justifyContent: 'center', paddingTop: '10px' }}>
-            
+
             {/* Chart Upar (Top) */}
             <div style={{ width: '100%', height: '180px', position: 'relative' }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -534,26 +534,26 @@ export default function MachineHistory() {
                   <Pie data={pieData} innerRadius={60} outerRadius={80} paddingAngle={0} dataKey="value" stroke="none">
                     {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                   </Pie>
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value, name) => {
                       if (name === 'Production') return value;
                       return value.toFixed(2);
-                    }} 
-                    contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }} 
+                    }}
+                    contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
-              
+
               {/* Center ka Text Size Thoda Chhota Kiya Hai */}
               <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
                 <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#fff' }}>{summary.total_production || 0}</div>
                 <div style={{ fontSize: '11px', color: '#94a3b8' }}>Total Count</div>
               </div>
             </div>
-            
+
             {/* Legend Neeche (Bottom) */}
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px', padding: '0 15px', marginTop: '15px' }}>
-              
+
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#10b981' }}></div>
@@ -561,7 +561,7 @@ export default function MachineHistory() {
                 </div>
                 <div style={{ color: '#94a3b8', fontSize: '12px', fontWeight: '600' }}>{summary.total_production || 0}</div>
               </div>
-              
+
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#f59e0b' }}></div>
@@ -592,7 +592,7 @@ export default function MachineHistory() {
                 {shutHeightChanges.map((change, idx) => (
                   <div key={idx} className="timeline-item" style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
                     <div className="tl-dot" style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#10b981', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" /></svg>
                     </div>
                     <div className="tl-content">
                       <p className="tl-time text-sm text-gray-400">{formatChangeTime(change.time || change.timestamp, selectedDate)}</p>
@@ -602,7 +602,7 @@ export default function MachineHistory() {
                       </p>
                       {(change.shut_height !== undefined || change.part_name) && (
                         <div style={{ marginTop: '6px', padding: '6px 8px', borderRadius: '6px', background: 'rgba(16,185,129,0.08)', color: '#cbd5e1', fontSize: '11px' }}>
-                          <b style={{ color: '#34d399' }}>Details:</b> {change.shut_height ? `Height: ${change.shut_height} ` : ''} 
+                          <b style={{ color: '#34d399' }}>Details:</b> {change.shut_height ? `Height: ${change.shut_height} ` : ''}
                           {change.part_name ? `| Part: ${change.part_name}` : ''}
                         </div>
                       )}
@@ -633,7 +633,7 @@ export default function MachineHistory() {
                 {toolChanges.map((change, idx) => (
                   <div key={idx} className="timeline-item" style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
                     <div className="tl-dot" style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
                     </div>
                     <div className="tl-content">
                       <p className="tl-time text-sm text-gray-400">{formatChangeTime(change.time || change.timestamp, selectedDate)}</p>
@@ -679,7 +679,7 @@ export default function MachineHistory() {
                       </div>
                       <div className="tl-content">
                         <p className="tl-time text-sm text-gray-400">
-                           {formatChangeTime(change.time || change.timestamp, selectedDate)}
+                          {formatChangeTime(change.time || change.timestamp, selectedDate)}
                         </p>
                         <p className="tl-title text-white font-semibold mt-1">
                           Machine Powered {isOn ? 'ON' : 'OFF'}
@@ -710,7 +710,7 @@ export default function MachineHistory() {
                 <p className="tl-title text-muted font-semibold mt-1">No Operator</p>
               </div>
             </div>
-            
+
             <div className="timeline-item" style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
               <div className="tl-dot" style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#a855f7', color: 'white', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>A</div>
               <div className="tl-content">

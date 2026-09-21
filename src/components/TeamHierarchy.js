@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Mail, FileText, AlertCircle, ArrowUpRight } from 'lucide-react';
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://192.168.0.34:8000";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 export default function TeamHierarchy({ department, onBack, onViewReports, plantTitle }) {
   const [liveJuniors, setLiveJuniors] = useState([]);

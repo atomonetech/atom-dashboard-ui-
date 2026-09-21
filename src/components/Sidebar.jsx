@@ -1731,7 +1731,7 @@ import { useUser } from "../../src/context/UserContext";
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:9000";
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 export default function Sidebar({ onLogout }) {
   const navigate = useNavigate();
