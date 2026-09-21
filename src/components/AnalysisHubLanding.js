@@ -11,7 +11,7 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://192.168.0.34:8000";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 export default function AnalysisHubLanding({ onAnalysisClick }) {
   const [liveAnalyses, setLiveAnalyses] = useState([]);

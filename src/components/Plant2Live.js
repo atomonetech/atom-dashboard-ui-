@@ -714,7 +714,7 @@ export default function Plant2Live() {
           );
           const cumulativeCountFromDb = getSafeCount(liveData.cumulative_count);
 
-          console.log("🔥 LIVE COUNT DATA:", liveData);
+          // console.log("🔥 LIVE COUNT DATA:", liveData);
 
           setMachines((prevMachines) => {
             if (prevMachines.length === 0) {

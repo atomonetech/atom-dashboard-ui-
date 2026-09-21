@@ -1055,7 +1055,7 @@ export default function Auth({ onLogin }) {
     setErrorMessage("");
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:9000";
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
       const response = await fetch(`${apiUrl}/api/request-reset-otp/`, {
         method: "POST",
         headers: {
@@ -1094,7 +1094,7 @@ export default function Auth({ onLogin }) {
     }
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:9000";
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
       const response = await fetch(`${apiUrl}/api/verify-reset-otp/`, {
         method: "POST",
         headers: {
@@ -1160,7 +1160,7 @@ export default function Auth({ onLogin }) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:9000";
+      const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
       console.log("🔐 LOGIN API URL:", apiUrl);
       const response = await fetch(`${apiUrl}/api/login/`, {
         method: "POST",

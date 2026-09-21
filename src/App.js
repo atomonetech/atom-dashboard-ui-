@@ -363,7 +363,7 @@ function App() {
             <Route
               path="/operations/*"
               element={
-                <ProtectedRoute adminOnly={true}>
+                <ProtectedRoute allowedGroup="Operations_Users">
                   <OperatorAssignmentMaster onLogout={handleLogout} />
                 </ProtectedRoute>
               }
@@ -379,7 +379,7 @@ function App() {
             <Route
               path="/idle-reports-list"
               element={
-                <ProtectedRoute adminOnly={true}>
+                <ProtectedRoute allowedGroup="Idle_Reason_Responder">
                   <IdleReportsList onLogout={handleLogout} />
                 </ProtectedRoute>
               }
