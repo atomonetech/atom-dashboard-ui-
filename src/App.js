@@ -3,15 +3,12 @@ import "./index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import "./styles/alert.css";
-
-import axios from 'axios';
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-  useNavigate,
 } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -36,7 +33,6 @@ import Notifications from "./components/Notifications";
 import Profile from "./components/Profile";
 import Support from "./components/Support";
 import ProductionHistory from "./components/ProductionHistory";
-import AnalysisDashboard from "./components/AnalysisDashboard";
 import AnalysisHubV2 from "./pages/AnalysisHubV2";
 import AttendanceDashboard from "./components/attendance/AttendanceDashboard";
 import EmployeeAttendanceProfile from "./components/attendance/EmployeeAttendanceProfile";
