@@ -5,7 +5,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import './AssignMachine.css';
 
-const API_BASE = process.env.REACT_APP_API_URL + "/api" || "http://localhost:8000/api";
+const API_BASE = process.env.REACT_APP_API_URL +"/api" || "http://localhost:8000/api";
 
 // Plant wise Machine Sections & Counts
 const MACHINE_CONFIG = {
