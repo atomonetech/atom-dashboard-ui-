@@ -12,154 +12,351 @@ const MachineYearlyReport = () => {
         setShowOptionsModal(true);
     };
 
-    const handleAction = (actionType) => {
-        const basePath = "/Maintenance/Machine";
-        const routeSlug = selectedCard.id.replace(/_/g, '-');
-
-        if (actionType === 'fill') {
-            navigate(`${basePath}/${routeSlug}`); 
-        } else if (actionType === 'view') {
-            navigate(`/maintenance-view/${selectedCard.id}`);
-        } else if (actionType === 'print') {
-            navigate(`${basePath}/${routeSlug}-print`);
-        }
-        closeModal();
-    };
-
     const closeModal = () => {
         setShowOptionsModal(false);
         setSelectedCard(null);
     };
 
+    const handleAction = (actionType) => {
+        if (!selectedCard) return;
+
+        const basePath = "/Maintenance/Machine";
+        const routeSlug = selectedCard.id.replace(/_/g, '-');
+
+        if (actionType === 'fill') navigate(`${basePath}/${routeSlug}`);
+        else if (actionType === 'view') navigate(`/maintenance-view/${selectedCard.id}`);
+        else if (actionType === 'print') navigate(`${basePath}/${routeSlug}-print`);
+
+        closeModal();
+    };
+
+    const actions = [
+        ['fill', 'bi-pencil-square', 'Fill Data', 'Enter new data into the form'],
+        ['view', 'bi-eye', 'View Data', 'View saved records from the database'],
+        ['print', 'bi-printer', 'Print Data', 'Print saved records']
+    ];
+
     return (
         <div className="maintenance-page-wrapper">
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
-            
+
             <style>{`
-                .maintenance-page-wrapper { position: relative; min-height: 100vh; background-color: #f8fafc; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-                
-                /* Navbar Style */
-                .hub-main-navbar {  position: sticky; 
-        top: 0; 
-        background: #fff; 
-        min-height: 100px; 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        padding: 0 2rem; 
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
-        z-index: 1000; 
-        gap: 15px;
-        }
-                @media (min-width: 768px) { .hub-main-navbar { padding: 0 40px; } }
-                .nav-brand-section { font-weight: 800; color: #3b82f6; font-size: 1.25rem; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+                .maintenance-page-wrapper {
+                    min-height: 100vh;
+                    background: #0f172a;
+                    font-family: 'Inter', sans-serif;
+                    overflow-x: hidden;
+                    color: #f8fafc;
+                }
 
-                /* Content Area */
-                .main-content-area { padding: 50px 1px 80px; max-width: 1500px; margin-left: 20px; }
-                .back-link { cursor: pointer; color: #64748b; font-weight: 700; margin-bottom: 1.5rem; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.9rem; }
-                .back-link:hover { color: #f59e0b; }
+                .maintenance-page-wrapper .text-muted {
+                    color: #94a3b8 !important;
+                }
 
-                /* Premium Card Design */
-                .report-card-ui { background: white; border-radius: 24px; padding: 35px 25px; border: 1px solid #eef2f6; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; height: 100%; position: relative; display: flex; flex-direction: column; }
-                .report-card-ui:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.06); border-color: #cbd5e1; }
-                .card-header-line { position: absolute; top: 0; left: 0; right: 0; height: 6px; border-radius: 24px 24px 0 0; }
-                
-                .icon-box-wrapper { width: 55px; height: 55px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 25px; }
-                
-                /* Typography */
-                .card-main-title { font-weight: 800; color: #334155 !important; font-size: 1.4rem; margin-bottom: 25px; min-height: 60px; line-height: 1.3; padding-right: 120px; }
-                .meta-pill-ui { display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 10px 16px; border-radius: 12px; border: 1px solid #f1f5f9; font-size: 0.85rem; color: #64748b; font-weight: 600; margin-bottom: 10px; }
-                .meta-pill-ui b { color: #334155; font-weight: 800; }
+                .hub-main-navbar {
+                    position: sticky;
+                    top: 0;
+                    min-height: 100px;
+                    background: #0f172a;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0 2rem;
+                    box-shadow: 0 1px 0 #263750;
+                    z-index: 1000;
+                }
 
-                /*  Live / Under Development Badges */
+                .nav-brand-section {
+                    position: relative;
+                    z-index: 2;
+                    font-weight: 800;
+                    color: #22d3ee;
+                    font-size: 1.25rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    transition: .2s;
+                }
+
+                .nav-brand-section:hover {
+                    color: #67e8f9;
+                }
+
+                .main-content-area {
+                    padding: 50px 20px 80px;
+                    max-width: 1500px;
+                    margin: 0 auto;
+                }
+
+                .report-card-ui {
+                    background: #182338;
+                    border: 1px solid #263750;
+                    border-radius: 24px;
+                    padding: 32px 25px;
+                    cursor: pointer;
+                    height: 100%;
+                    position: relative;
+                    display: flex;
+                    flex-direction: column;
+                    transition: .3s;
+                    box-shadow: 0 4px 10px rgba(0,0,0,.18);
+                }
+
+                .report-card-ui:hover {
+                    transform: translateY(-8px);
+                    border-color: #22d3ee;
+                    box-shadow: 0 18px 36px rgba(34,211,238,.10);
+                }
+
+                .card-header-line {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 6px;
+                    border-radius: 24px 24px 0 0;
+                }
+
+                .icon-box-wrapper {
+                    width: 55px;
+                    height: 55px;
+                    border-radius: 15px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.6rem;
+                    margin-bottom: 25px;
+                    background: #10293a !important;
+                }
+
+                .card-main-title {
+                    font-weight: 800;
+                    color: #f8fafc !important;
+                    font-size: 1.35rem;
+                    margin-bottom: 25px;
+                    min-height: 60px;
+                    line-height: 1.3;
+                    padding-right: 110px;
+                }
+
+                .meta-pill-ui {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    background: #202d43;
+                    border: 1px solid #263750;
+                    padding: 10px 16px;
+                    border-radius: 12px;
+                    font-size: .85rem;
+                    color: #94a3b8;
+                    font-weight: 600;
+                    margin-bottom: 10px;
+                }
+
+                .meta-pill-ui b {
+                    color: #f8fafc;
+                    font-weight: 800;
+                }
+
                 .status-badge {
-                    position: absolute; top: 16px; right: 16px;
+                    position: absolute;
+                    top: 16px;
+                    right: 16px;
                     padding: 5px 10px;
                     border-radius: 4px;
-                    font-size: 0.65rem;
+                    font-size: .65rem;
                     font-weight: 700;
                     text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                    display: flex; align-items: center; gap: 6px;
+                    letter-spacing: .05em;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
                 }
-                .status-live { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
-                .status-dev  { background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; }
 
-                /* Icon Animations */
-                .pulse-icon { animation: pulseAnim 2s infinite; font-size: 0.8rem; }
-                @keyframes pulseAnim { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
-                .spin-icon { animation: spinAnim 4s linear infinite; font-size: 0.8rem; }
-                @keyframes spinAnim { 100% { transform: rotate(360deg); } }
+                .status-live {
+                    background: #0f2f25;
+                    color: #4ade80;
+                    border: 1px solid #166534;
+                }
 
-                /* Modal Unified Styles */
-                .modal-overlay-ui { position: fixed; inset: 0; background: rgba(15,23,42,0.6); display: flex; align-items: center; justify-content: center; z-index: 100000; backdrop-filter: blur(4px); animation: fadeIn 0.15s ease; }
-                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-                .modal-action-btn { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 8px; border: 1.5px solid #e2e8f0; background: #fff; cursor: pointer; text-align: left; width: 100%; transition: all 0.2s; margin-bottom: 10px; font-family: 'Inter', sans-serif; }
-                .modal-action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.09); border-color: #cbd5e1; }
-                .modal-action-btn:last-child { margin-bottom: 0; }
-                .modal-btn-icon { width: 42px; height: 42px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+                .status-dev {
+                    background: #202d43;
+                    color: #94a3b8;
+                    border: 1px solid #3b4b63;
+                }
+
+                .pulse-icon { animation: pulseAnim 2s infinite; }
+                .spin-icon { animation: spinAnim 4s linear infinite; }
+
+                @keyframes pulseAnim {
+                    0%,100% { opacity: 1; transform: scale(1); }
+                    50% { opacity: .5; transform: scale(.8); }
+                }
+
+                @keyframes spinAnim {
+                    100% { transform: rotate(360deg); }
+                }
+
+                .modal-overlay-ui {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(2,6,23,.78);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 100000;
+                    backdrop-filter: blur(4px);
+                }
+
+                .modal-box {
+                    background: #182338;
+                    border: 1px solid #263750;
+                    border-radius: 12px;
+                    padding: 2rem;
+                    width: 100%;
+                    max-width: 400px;
+                    position: relative;
+                }
+
+                .modal-close-btn {
+                    position: absolute;
+                    top: 14px;
+                    right: 16px;
+                    width: 32px;
+                    height: 32px;
+                    background: #202d43;
+                    color: #94a3b8;
+                    border: 1px solid #263750;
+                    border-radius: 4px;
+                    cursor: pointer;
+                }
+
+                .modal-action-btn {
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    gap: 14px;
+                    padding: 14px 16px;
+                    margin-bottom: 10px;
+                    background: #111c2f;
+                    color: #f8fafc;
+                    border: 1px solid #263750;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    text-align: left;
+                    transition: .2s;
+                }
+
+                .modal-action-btn:hover {
+                    transform: translateY(-2px);
+                    background: #16243a;
+                    border-color: #22d3ee;
+                }
+
+                .modal-action-btn:last-child {
+                    margin-bottom: 0;
+                }
+
+                .modal-btn-icon {
+                    width: 42px;
+                    height: 42px;
+                    border-radius: 6px;
+                    background: #202d43;
+                    color: #22d3ee;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.2rem;
+                    flex-shrink: 0;
+                }
+
+                @media (max-width: 768px) {
+                    .hub-main-navbar { padding: 0 16px; }
+                    .main-content-area { padding: 30px 12px 60px; }
+                    .card-main-title { padding-right: 90px; }
+                }
             `}</style>
 
-              <nav className="hub-main-navbar">
-    {/* Left Side: Back Button */}
-    <div className="nav-brand-section" onClick={() => navigate('/Maintenance/Machine')} style={{ position: 'relative', zIndex: 2 }}>
-        <i className="bi bi-arrow-left-circle"></i> <span>Back To Maintenance</span>
-    </div>
-    
-    {/* Exact Center: Header */}
-    <header className="text-center" style={{ 
-        position: 'absolute', 
-        left: '50%', 
-        transform: 'translateX(-50%)', 
-        width: 'max-content',
-        pointerEvents: 'none' /* Prevents header from blocking clicks */
-    }}>
-        <h1 style={{ fontWeight: 900, color: '#3b82f6', fontSize: 'clamp(1.2rem, 3vw, 1.8rem)', margin: '0 0 4px 0' }}>
-            Annual Assest Management
-        </h1>
-        <p className="text-muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-           Master lists, preventive plans, and overhauling schedules
-        </p>
-    </header>
-</nav>
+            <nav className="hub-main-navbar">
+                <div
+                    className="nav-brand-section"
+                    onClick={() => navigate('/Maintenance/Machine')}
+                >
+                    <i className="bi bi-arrow-left-circle"></i>
+                    <span>Back To Maintenance</span>
+                </div>
+
+                <header
+                    className="text-center"
+                    style={{
+                        position: 'absolute',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: 'max-content',
+                        pointerEvents: 'none'
+                    }}
+                >
+                    <h1
+                        style={{
+                            fontWeight: 900,
+                            color: '#22d3ee',
+                            fontSize: 'clamp(1.2rem,3vw,1.8rem)',
+                            margin: '0 0 4px'
+                        }}
+                    >
+                        Annual Assest Management
+                    </h1>
+
+                    <p className="text-muted" style={{ margin: 0, fontSize: '.85rem' }}>
+                        Master lists, preventive plans, and overhauling schedules
+                    </p>
+                </header>
+            </nav>
 
             <div className="main-content-area">
-                {/* <div className="back-link" onClick={() => navigate('/Maintenance/Machine')}>
-                    <i className="bi bi-arrow-left"></i> Back to Hub
-                </div> */}
-
-             
-
                 <div className="row g-4 justify-content-center px-2">
                     {machineYearlyReports.map((report) => (
                         <div key={report.id} className="col-12 col-md-6 col-lg-3">
-                            <div className="report-card-ui h-100" onClick={() => handleCardClick(report)}>
-                                <div className="card-header-line" style={{backgroundColor: report.color}}></div>
+                            <div
+                                className="report-card-ui h-100"
+                                onClick={() => handleCardClick(report)}
+                            >
+                                <div
+                                    className="card-header-line"
+                                    style={{ backgroundColor: report.color }}
+                                />
 
-                                {/* ✅ Live / Dev Badge */}
                                 <div className={`status-badge ${report.isLive ? 'status-live' : 'status-dev'}`}>
-                                    {report.isLive ? (
-                                        <><i className="bi bi-broadcast pulse-icon"></i> Live</>
-                                    ) : (
-                                        <><i className="bi bi-gear-wide-connected spin-icon"></i> Under Development</>
-                                    )}
+                                    {report.isLive
+                                        ? <><i className="bi bi-broadcast pulse-icon"></i> Live</>
+                                        : <><i className="bi bi-gear-wide-connected spin-icon"></i> Under Development</>
+                                    }
                                 </div>
 
-                                <div className="icon-box-wrapper" style={{backgroundColor: `${report.color}15`, color: report.color}}>
+                                <div className="icon-box-wrapper" style={{ color: report.color }}>
                                     <i className={`bi ${report.icon}`}></i>
                                 </div>
+
                                 <div className="card-main-title">{report.title}</div>
+
                                 <div className="mt-auto">
                                     <div className="meta-pill-ui">
-                                        <span>Form No:</span> <b>{report.formNo}</b>
+                                        <span>Form No:</span>
+                                        <b>{report.formNo}</b>
                                     </div>
+
                                     <div className="meta-pill-ui">
-                                        <span>Freq:</span> <b>Yearly</b>
+                                        <span>Freq:</span>
+                                        <b>Yearly</b>
                                     </div>
+
                                     <div className="mt-4 text-end">
-                                        <i className="bi bi-arrow-right-circle-fill" style={{fontSize: '1.8rem', color: report.color}}></i>
+                                        <i
+                                            className="bi bi-arrow-right-circle-fill"
+                                            style={{ fontSize: '1.8rem', color: report.color }}
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -168,61 +365,75 @@ const MachineYearlyReport = () => {
                 </div>
             </div>
 
-            {/* Unified Modal */}
             {showOptionsModal && selectedCard && (
                 <div className="modal-overlay-ui" onClick={closeModal}>
-                    <div style={{background:'#fff', borderRadius:'12px', padding:'2rem', width:'100%', maxWidth:'400px', position:'relative', animation: 'slideUp 0.2s ease'}} onClick={(e) => e.stopPropagation()}>
-                        
-                        <button style={{position:'absolute', top:'14px', right:'16px', background:'#f1f5f9', border:'none', borderRadius:'4px', width:'32px', height:'32px', cursor:'pointer'}} onClick={closeModal}>
-                            <i className="bi bi-x-lg text-muted"></i>
+                    <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+                        <button className="modal-close-btn" onClick={closeModal}>
+                            <i className="bi bi-x-lg"></i>
                         </button>
 
-                        <div style={{display:'flex', alignItems:'center', gap:14, marginBottom:16}}>
-                            <div style={{width:46, height:46, borderRadius:8, background:`${selectedCard.color}15`, color:selectedCard.color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.4rem'}}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+                            <div
+                                style={{
+                                    width: 46,
+                                    height: 46,
+                                    borderRadius: 8,
+                                    background: '#10293a',
+                                    color: selectedCard.color,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '1.4rem'
+                                }}
+                            >
                                 <i className={`bi ${selectedCard.icon}`}></i>
                             </div>
-                            <div style={{textAlign: 'left'}}>
-                                <p style={{fontWeight:800, fontSize:'0.95rem', margin:0, color:'#0f172a'}}>{selectedCard.title}</p>
-                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Form: {selectedCard.formNo || "N/A"}</p>
+
+                            <div>
+                                <p style={{ fontWeight: 800, fontSize: '.95rem', margin: 0, color: '#f8fafc' }}>
+                                    {selectedCard.title}
+                                </p>
+                                <p style={{ fontSize: '.75rem', color: '#94a3b8', margin: 0 }}>
+                                    Form: {selectedCard.formNo || 'N/A'}
+                                </p>
                             </div>
                         </div>
 
-                        <div style={{borderTop:'1px solid #f1f5f9', margin:'16px 0'}}></div>
-                        <p style={{fontSize:'0.78rem', color:'#94a3b8', fontWeight:600, marginBottom:14, textTransform:'uppercase', letterSpacing:'0.06em', textAlign: 'left'}}>What would you like to do?</p>
+                        <div style={{ borderTop: '1px solid #263750', margin: '16px 0' }} />
 
-                        <button className="modal-action-btn" onClick={() => handleAction('fill')}>
-                            <div className="modal-btn-icon" style={{background:'#f1f5f9', color:'#0f172a'}}>
-                                <i className="bi bi-pencil-square"></i>
-                            </div>
-                            <div>
-                                <p style={{fontWeight:700, fontSize:'0.9rem', margin:0, color:'#0f172a'}}>Fill Data</p>
-                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Enter new data into the form</p>
-                            </div>
-                            <i className="bi bi-chevron-right ms-auto text-muted"></i>
-                        </button>
+                        <p style={{
+                            fontSize: '.78rem',
+                            color: '#94a3b8',
+                            fontWeight: 600,
+                            marginBottom: 14,
+                            textTransform: 'uppercase',
+                            letterSpacing: '.06em'
+                        }}>
+                            What would you like to do?
+                        </p>
 
-                        <button className="modal-action-btn" onClick={() => handleAction('view')}>
-                            <div className="modal-btn-icon" style={{background:'#f1f5f9', color:'#0f172a'}}>
-                                <i className="bi bi-eye"></i>
-                            </div>
-                            <div>
-                                <p style={{fontWeight:700, fontSize:'0.9rem', margin:0, color:'#0f172a'}}>View Data</p>
-                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>View saved records from the database</p>
-                            </div>
-                            <i className="bi bi-chevron-right ms-auto text-muted"></i>
-                        </button>
+                        {actions.map(([action, icon, title, desc]) => (
+                            <button
+                                key={action}
+                                className="modal-action-btn"
+                                onClick={() => handleAction(action)}
+                            >
+                                <div className="modal-btn-icon">
+                                    <i className={`bi ${icon}`}></i>
+                                </div>
 
-                        <button className="modal-action-btn" onClick={() => handleAction('print')}>
-                            <div className="modal-btn-icon" style={{background:'#f1f5f9', color:'#0f172a'}}>
-                                <i className="bi bi-printer"></i>
-                            </div>
-                            <div>
-                                <p style={{fontWeight:700, fontSize:'0.9rem', margin:0, color:'#0f172a'}}>Print Data</p>
-                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Print saved records</p>
-                            </div>
-                            <i className="bi bi-chevron-right ms-auto text-muted"></i>
-                        </button>
+                                <div>
+                                    <p style={{ fontWeight: 700, fontSize: '.9rem', margin: 0, color: '#f8fafc' }}>
+                                        {title}
+                                    </p>
+                                    <p style={{ fontSize: '.75rem', color: '#94a3b8', margin: 0 }}>
+                                        {desc}
+                                    </p>
+                                </div>
 
+                                <i className="bi bi-chevron-right ms-auto text-muted"></i>
+                            </button>
+                        ))}
                     </div>
                 </div>
             )}
@@ -231,149 +442,3 @@ const MachineYearlyReport = () => {
 };
 
 export default MachineYearlyReport;
-
-// import React, { useState } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import { machineYearlyReports } from '../data/machineData';
-
-// const MachineYearlyReport = () => {
-//     const navigate = useNavigate();
-//     const [showOptionsModal, setShowOptionsModal] = useState(false);
-//     const [selectedCard, setSelectedCard] = useState(null);
-
-//     const handleCardClick = (report) => {
-//         setSelectedCard(report);
-//         setShowOptionsModal(true);
-//     };
-
-//     const handleAction = (actionType) => {
-//         const basePath = "/Maintenance/Machine";
-//         // Convert ID to route slug (master_list_mc -> master-list-mc)
-//         const routeSlug = selectedCard.id.replace(/_/g, '-');
-
-//         if (actionType === 'FILL') {
-//             navigate(`${basePath}/${routeSlug}`); 
-//         } else {
-//             navigate(`${basePath}/${routeSlug}-print`);
-//         }
-//         closeModal();
-//     };
-
-//     const closeModal = () => {
-//         setShowOptionsModal(false);
-//         setSelectedCard(null);
-//     };
-
-//     return (
-//         <div className="maintenance-page-wrapper">
-//             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-//             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
-            
-//             <style>{`
-//                 .maintenance-page-wrapper { position: relative; min-height: 100vh; background-color: #f8fafc; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-                
-//                 /* Navbar Style */
-//                 .hub-main-navbar { position: fixed; top: 0; width: 100%; height: 75px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid #eef2f6; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
-//                 @media (min-width: 768px) { .hub-main-navbar { padding: 0 40px; } }
-//                 .nav-brand-section { font-weight: 800; color: #f59e0b; font-size: 1.25rem; display: flex; align-items: center; gap: 12px; cursor: pointer; }
-
-//                 /* Content Area */
-//                 .main-content-area { padding: 110px 15px 80px; max-width: 1200px; margin: 0 auto; }
-//                 .back-link { cursor: pointer; color: #64748b; font-weight: 700; margin-bottom: 1.5rem; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.9rem; }
-//                 .back-link:hover { color: #f59e0b; }
-
-//                 /* Premium Card Design */
-//                 .report-card-ui { background: white; border-radius: 24px; padding: 35px 25px; border: 1px solid #eef2f6; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; height: 100%; position: relative; display: flex; flex-direction: column; }
-//                 .report-card-ui:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.06); border-color: #cbd5e1; }
-//                 .card-header-line { position: absolute; top: 0; left: 0; right: 0; height: 6px; border-radius: 24px 24px 0 0; }
-                
-//                 .icon-box-wrapper { width: 55px; height: 55px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 25px; }
-                
-//                 /* Typography (Requested Slate-700) */
-//                 .card-main-title { font-weight: 800; color: #334155 !important; font-size: 1.4rem; margin-bottom: 25px; min-height: 60px; line-height: 1.3; }
-//                 .meta-pill-ui { display: flex; align-items: center; justify-content: space-between; background: #f8fafc; padding: 10px 16px; border-radius: 12px; border: 1px solid #f1f5f9; font-size: 0.85rem; color: #64748b; font-weight: 600; margin-bottom: 10px; }
-//                 .meta-pill-ui b { color: #334155; font-weight: 800; }
-
-//                 /* Modal Styling */
-//                 .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 100000; padding: 20px; }
-//                 .modal-content-custom { background: white; border-radius: 30px; padding: 40px 30px; max-width: 420px; width: 100%; text-align: center; border: 1px solid #e2e8f0; }
-                
-//                 .action-btn { width: 100%; padding: 15px; border-radius: 16px; font-weight: 700; margin-bottom: 12px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; border: none; }
-//                 .fill-btn { background: #0f172a; color: white; }
-//                 .fill-btn:hover { background: #1e293b; transform: scale(1.02); }
-//                 .print-btn { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
-//                 .print-btn:hover { background: #e2e8f0; }
-//             `}</style>
-
-//             <nav className="hub-main-navbar">
-//                 <div className="nav-brand-section" onClick={() => navigate('/Maintenance/Machine')}>
-//                     <i className="bi bi-calendar-range-fill"></i> <span>Machine Yearly Reports</span>
-//                 </div>
-//             </nav>
-
-//             <div className="main-content-area">
-//                 <div className="back-link" onClick={() => navigate('/Maintenance/Machine')}>
-//                     <i className="bi bi-arrow-left"></i> Back to Hub
-//                 </div>
-
-//                 <header className="text-center mb-5 px-3">
-//                     <h1 style={{ fontWeight: 900, color: '#0f172a', fontSize: 'clamp(1.8rem, 5vw, 2.8rem)' }}>Annual Asset Management</h1>
-//                     <p className="text-muted">Master lists, preventive plans, and overhauling schedules</p>
-//                 </header>
-
-//                 {/* --- GRID WITH CENTERING LOGIC --- */}
-//                 <div className="row g-4 justify-content-center px-2">
-//                     {machineYearlyReports.map((report) => (
-//                         <div key={report.id} className="col-12 col-md-6 col-lg-4">
-//                             <div className="report-card-ui h-100" onClick={() => handleCardClick(report)}>
-//                                 <div className="card-header-line" style={{backgroundColor: report.color}}></div>
-//                                 <div className="icon-box-wrapper" style={{backgroundColor: `${report.color}15`, color: report.color}}>
-//                                     <i className={`bi ${report.icon}`}></i>
-//                                 </div>
-//                                 <div className="card-main-title">{report.title}</div>
-//                                 <div className="mt-auto">
-//                                     <div className="meta-pill-ui">
-//                                         <span>Form No:</span> <b>{report.formNo}</b>
-//                                     </div>
-//                                     <div className="meta-pill-ui">
-//                                         <span>Freq:</span> <b>Yearly</b>
-//                                     </div>
-//                                     <div className="mt-4 text-end">
-//                                         <i className="bi bi-arrow-right-circle-fill" style={{fontSize: '1.8rem', color: report.color}}></i>
-//                                     </div>
-//                                 </div>
-//                             </div>
-//                         </div>
-//                     ))}
-//                 </div>
-//             </div>
-
-//             {/* Selection Modal */}
-//             {showOptionsModal && selectedCard && (
-//                 <div className="modal-overlay" onClick={closeModal}>
-//                     <div className="modal-content-custom" onClick={(e) => e.stopPropagation()}>
-//                         <div style={{width:'65px', height:'65px', borderRadius:'20px', background:`${selectedCard.color}15`, color:selectedCard.color, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px', fontSize:'2rem'}}>
-//                             <i className={`bi ${selectedCard.icon}`}></i>
-//                         </div>
-//                         <h3 className="fw-bold mb-2 text-slate-800">{selectedCard.title}</h3>
-//                         <p className="text-muted small mb-4">Select an action for this annual log</p>
-                        
-//                         <button className="action-btn fill-btn" onClick={() => handleAction('FILL')}>
-//                             <i className="bi bi-pencil-square"></i> Fill New Entry 
-//                         </button>
-                        
-//                         <button className="action-btn print-btn" onClick={() => handleAction('PRINT')}>
-//                             <i className="bi bi-printer"></i> View & Print
-//                         </button>
-                        
-//                         <button className="btn btn-link w-100 mt-2 text-decoration-none text-muted fw-bold" onClick={closeModal}>
-//                             Discard
-//                         </button>
-//                     </div>
-//                 </div>
-//             )}
-//         </div>
-//     );
-// };
-
-// export default MachineYearlyReport;

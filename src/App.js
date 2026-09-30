@@ -23,7 +23,6 @@ import OperatorAssignmentMaster from "./components/oprater_assigment/OperatorAss
 // import AssignMachine from "./components/AssignMachine";
 import IdleCase from "./components/IdleCase";
 import MachineAssignments from "./components/MachineAssignments";
-import IdleReportsList from "./components/IdleReportsList";
 import MachinesStatus from "./components/MachinesStatus";
 import Plant2Live from "./components/Plant2Live";
 import Plant1Live from "./components/Plant1Live";
@@ -372,15 +371,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/idle-reports-list"
-              element={
-                <ProtectedRoute allowedGroup="Idle_Reason_Responder">
-                  <IdleReportsList onLogout={handleLogout} />
-                </ProtectedRoute>
-              }
-            />
-
+ 
             {/* 櫨 SPECIFIC PLANT ROUTES (Maha Important Fix) 櫨 */}
             <Route
               path="/plant1-live"

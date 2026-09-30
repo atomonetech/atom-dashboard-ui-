@@ -1,43 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// 🔥 Import mapping matched with ToolMachineData.js
-import { toolReports as toolDailyReports } from '../data/ToolMachineData'; 
+import { toolReports as toolDailyReports } from '../data/ToolMachineData';
 
 const ToolDailyReports = () => {
     const navigate = useNavigate();
     const [showOptionsModal, setShowOptionsModal] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
 
+    const routes = {
+        tool_history: 'history-form',
+        tool_pm_check: 'pm-checklist',
+        tool_breakdown_slip: 'breakdown-form',
+        tool_stroke: 'stroke-record'
+    };
+
     const handleCardClick = (report) => {
         setSelectedCard(report);
         setShowOptionsModal(true);
-    };
-
-    // 🚀 Unified Action Handler (Fill, View, Print) - Matched with MachineDailyReport
-    const handleAction = (actionType) => {
-        const basePath = "/Maintenance/Tool";
-        const reportId = selectedCard.id;
-
-        if (actionType === 'fill') {
-            switch (reportId) {
-                case "tool_history": navigate(`${basePath}/history-form`); break;
-                case "tool_pm_check": navigate(`${basePath}/pm-checklist`); break;
-                case "tool_breakdown_slip": navigate(`${basePath}/breakdown-form`); break;
-                case "tool_stroke": navigate(`${basePath}/stroke-record`); break;
-                default: alert("🚧 Form logic coming soon!");
-            }
-        } else if (actionType === 'view') {
-            navigate(`/maintenance-view/${reportId}`);
-        } else if (actionType === 'print') {
-            switch (reportId) {
-                case "tool_history": navigate(`${basePath}/history-form/print`); break;
-                case "tool_pm_check": navigate(`${basePath}/pm-checklist/print`); break;
-                case "tool_breakdown_slip": navigate(`${basePath}/breakdown-form/print`); break;
-                case "tool_stroke": navigate(`${basePath}/stroke-record/print`); break;
-                default: alert("🚧 Print page coming soon!");
-            }
-        }
-        closeModal();
     };
 
     const closeModal = () => {
@@ -45,197 +24,438 @@ const ToolDailyReports = () => {
         setSelectedCard(null);
     };
 
+    const handleAction = (actionType) => {
+        if (!selectedCard) return;
+
+        const basePath = '/Maintenance/Tool';
+        const route = routes[selectedCard.id];
+
+        if (actionType === 'view') {
+            navigate(`/maintenance-view/${selectedCard.id}`);
+        } else if (route) {
+            navigate(`${basePath}/${route}${actionType === 'print' ? '/print' : ''}`);
+        } else {
+            alert(actionType === 'print' ? '🚧 Print page coming soon!' : '🚧 Form logic coming soon!');
+        }
+
+        closeModal();
+    };
+
+    const actions = [
+        ['fill', 'bi-pencil-square', 'Fill Data', 'Enter new data into the form'],
+        ['view', 'bi-eye', 'View Data', 'View saved records from the database'],
+        ['print', 'bi-printer', 'Print Data', 'Print saved records']
+    ];
+
     return (
         <div className="maintenance-page-wrapper">
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
-            
+
             <style>{`
-                .maintenance-page-wrapper { position: relative; min-height: 100vh; background-color: #f1f4f9; overflow-y: auto; font-family: 'Inter', sans-serif; }
-                
-                /* Sticky Navbar Style */
-                .hub-main-navbar { 
-                    position: sticky; 
-                    top: 0; 
-                    background: #fff; 
-                    min-height: 90px; 
-                    display: flex; 
-                    justify-content: space-between; 
-                    align-items: center; 
-                    padding: 0 2.5rem; 
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.06); 
-                    z-index: 1000; 
-                    gap: 15px; 
+                .maintenance-page-wrapper {
+                    min-height: 100vh;
+                    background: #0f172a;
+                    overflow-y: auto;
+                    font-family: 'Inter', sans-serif;
+                    color: #f8fafc;
                 }
-                .nav-brand-section { font-weight: 800; color: #3b82f6; font-size: 1.25rem; display: flex; align-items: center; gap: 12px; cursor: pointer; text-decoration: none; z-index: 2; }
-                
-                /* Main Content Area */
-                .main-content-area { padding: 40px 24px 80px; max-width: 1536px; margin-left:50px; }
-                
-                /* 🔥 Bulletproof Grid System - Exactly 4 columns on laptops */
-                .reports-grid { 
-                    display: grid; 
-                    grid-template-columns: repeat(4, 1fr); 
+
+                .maintenance-page-wrapper .text-muted {
+                    color: #94a3b8 !important;
+                }
+
+                .hub-main-navbar {
+                    position: sticky;
+                    top: 0;
+                    min-height: 90px;
+                    background: #0f172a;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0 2.5rem;
+                    box-shadow: 0 1px 0 #263750;
+                    z-index: 1000;
+                    gap: 15px;
+                }
+
+                .nav-brand-section {
+                    font-weight: 800;
+                    color: #22d3ee;
+                    font-size: 1.25rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    cursor: pointer;
+                    z-index: 2;
+                }
+
+                .nav-brand-section:hover {
+                    color: #67e8f9;
+                }
+
+                .status-top {
+                    z-index: 2;
+                    background: #0f2f25;
+                    color: #4ade80;
+                    border: 1px solid #166534;
+                    padding: 7px 14px;
+                    border-radius: 20px;
+                    font-size: .75rem;
+                    font-weight: 700;
+                }
+
+                .main-content-area {
+                    padding: 40px 24px 80px;
+                    max-width: 1536px;
+                    margin: 0 auto;
+                }
+
+                .reports-grid {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
                     gap: 24px;
                     width: 100%;
                 }
 
-                /* Responsive Breakpoints for Grid */
+                .module-card {
+                    background: #182338;
+                    border: 1px solid #263750;
+                    border-radius: 20px;
+                    padding: 2.5rem 2rem;
+                    cursor: pointer;
+                    transition: .3s;
+                    position: relative;
+                    overflow: hidden;
+                    height: 100%;
+                    text-align: left;
+                    box-shadow: 0 4px 10px rgba(0,0,0,.18);
+                }
+
+                .module-card:hover {
+                    transform: translateY(-8px);
+                    border-color: #22d3ee;
+                    box-shadow: 0 20px 40px rgba(34,211,238,.10);
+                }
+
+                .card-accent-line {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 5px;
+                }
+
+                .icon-wrapper {
+                    width: 55px;
+                    height: 55px;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.6rem;
+                    margin-bottom: 1.5rem;
+                    background: #10293a !important;
+                }
+
+                .card-title-custom {
+                    font-weight: 800;
+                    font-size: 1.25rem;
+                    color: #f8fafc;
+                    margin-bottom: 1.2rem;
+                    padding-right: 110px;
+                }
+
+                .meta-tag {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    font-size: .8rem;
+                    color: #94a3b8;
+                    background: #202d43;
+                    padding: 7px 12px;
+                    border-radius: 8px;
+                    margin-bottom: 8px;
+                    font-weight: 600;
+                    border: 1px solid #263750;
+                    width: fit-content;
+                }
+
+                .meta-tag b {
+                    color: #f8fafc;
+                }
+
+                .status-badge {
+                    position: absolute;
+                    top: 16px;
+                    right: 16px;
+                    padding: 5px 10px;
+                    border-radius: 4px;
+                    font-size: .65rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: .05em;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+
+                .status-live {
+                    background: #0f2f25;
+                    color: #4ade80;
+                    border: 1px solid #166534;
+                }
+
+                .status-dev {
+                    background: #202d43;
+                    color: #94a3b8;
+                    border: 1px solid #3b4b63;
+                }
+
+                .pulse-icon { animation: pulseAnim 2s infinite; }
+                .spin-icon { animation: spinAnim 4s linear infinite; }
+
+                @keyframes pulseAnim {
+                    0%,100% { opacity: 1; transform: scale(1); }
+                    50% { opacity: .5; transform: scale(.8); }
+                }
+
+                @keyframes spinAnim {
+                    100% { transform: rotate(360deg); }
+                }
+
+                .modal-overlay-ui {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(2,6,23,.78);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 20000;
+                    backdrop-filter: blur(4px);
+                }
+
+                .modal-box {
+                    background: #182338;
+                    border: 1px solid #263750;
+                    border-radius: 12px;
+                    padding: 2rem;
+                    width: 100%;
+                    max-width: 400px;
+                    position: relative;
+                }
+
+                .modal-close-btn {
+                    position: absolute;
+                    top: 14px;
+                    right: 16px;
+                    width: 32px;
+                    height: 32px;
+                    background: #202d43;
+                    color: #94a3b8;
+                    border: 1px solid #263750;
+                    border-radius: 4px;
+                    cursor: pointer;
+                }
+
+                .modal-action-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 14px;
+                    padding: 14px 16px;
+                    border-radius: 8px;
+                    border: 1px solid #263750;
+                    background: #111c2f;
+                    color: #f8fafc;
+                    cursor: pointer;
+                    text-align: left;
+                    width: 100%;
+                    transition: .2s;
+                    margin-bottom: 10px;
+                }
+
+                .modal-action-btn:hover {
+                    transform: translateY(-2px);
+                    background: #16243a;
+                    border-color: #22d3ee;
+                }
+
+                .modal-action-btn:last-child {
+                    margin-bottom: 0;
+                }
+
+                .modal-btn-icon {
+                    width: 42px;
+                    height: 42px;
+                    border-radius: 6px;
+                    background: #202d43;
+                    color: #22d3ee;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.2rem;
+                    flex-shrink: 0;
+                }
+
                 @media (max-width: 1200px) {
                     .reports-grid { grid-template-columns: repeat(3, 1fr); }
                 }
+
                 @media (max-width: 900px) {
                     .reports-grid { grid-template-columns: repeat(2, 1fr); }
                 }
+
                 @media (max-width: 600px) {
-                    .reports-grid { grid-template-columns: repeat(1, 1fr); }
+                    .hub-main-navbar { padding: 0 16px; }
+                    .main-content-area { padding: 30px 16px 60px; }
+                    .reports-grid { grid-template-columns: 1fr; }
                 }
-
-                .module-card { background: #ffffff; border: 1px solid #eef2f6; border-radius: 20px; padding: 2.5rem 2rem; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; height: 100%; text-align: left; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
-                .module-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
-                .card-accent-line { position: absolute; top: 0; left: 0; right: 0; height: 5px; }
-                
-                .icon-wrapper { width: 55px; height: 55px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.5rem; }
-                .card-title-custom { font-weight: 800; font-size: 1.25rem; color: #0f172a; margin-bottom: 1.2rem; padding-right: 40px; }
-                .meta-tag { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: #64748b; background: #f8fafc; padding: 6px 12px; border-radius: 8px; margin-bottom: 8px; font-weight: 600; border: 1px solid #f1f5f9; width: fit-content; }
-                .meta-tag b { color: #0f172a; }
-
-                /* ✅ Live / Under Development Badges */
-                .status-badge {
-                    position: absolute; top: 16px; right: 16px;
-                    padding: 5px 10px;
-                    border-radius: 4px;
-                    font-size: 0.65rem;
-                    font-weight: 700;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                    display: flex; align-items: center; gap: 6px;
-                }
-                .status-live { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
-                .status-dev  { background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; }
-
-                /* Icon Animations */
-                .pulse-icon { animation: pulseAnim 2s infinite; font-size: 0.8rem; }
-                @keyframes pulseAnim {
-                    0%   { opacity: 1; transform: scale(1); }
-                    50%  { opacity: 0.5; transform: scale(0.8); }
-                    100% { opacity: 1; transform: scale(1); }
-                }
-                .spin-icon { animation: spinAnim 4s linear infinite; font-size: 0.8rem; }
-                @keyframes spinAnim { 100% { transform: rotate(360deg); } }
-
-                /* Modal */
-                .modal-overlay-ui { position: fixed; inset: 0; background: rgba(15,23,42,0.6); display: flex; align-items: center; justify-content: center; z-index: 20000; backdrop-filter: blur(4px); animation: fadeIn 0.15s ease; }
-                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-                .modal-action-btn { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 8px; border: 1.5px solid #e2e8f0; background: #fff; cursor: pointer; text-align: left; width: 100%; transition: all 0.2s; margin-bottom: 10px; font-family: 'Inter', sans-serif; }
-                .modal-action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.09); border-color: #cbd5e1; }
-                .modal-action-btn:last-child { margin-bottom: 0; }
-                .modal-btn-icon { width: 42px; height: 42px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
             `}</style>
 
-            {/* Navbar with True-Centered Header */}
             <nav className="hub-main-navbar" style={{ position: 'relative' }}>
                 <div className="nav-brand-section" onClick={() => navigate('/Maintenance/Tool')}>
-                    <i className="bi bi-arrow-left-circle"></i> Back To Tool
-                </div>
-                
-                {/* Centered Header Title */}
-                <div className="text-center" style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', width: 'max-content', pointerEvents: 'none' }}>
-                    <h1 style={{ fontWeight: 900, color: '#3b82f6', fontSize: 'clamp(1.2rem, 3vw, 1.8rem)', margin: '0 0 4px 0' }}>Tool Daily Reports</h1>
-                    <p className="text-muted" style={{ margin: 0, fontSize: '0.85rem' }}>Select a checklist to record today's maintenance activities</p>
+                    <i className="bi bi-arrow-left-circle"></i>
+                    Back To Tool
                 </div>
 
-                <div className="d-flex align-items-center gap-3" style={{ zIndex: 2 }}>
-                    <span className="badge bg-light text-primary border px-3 py-2 rounded-pill">Status: Live</span>
+                <div
+                    className="text-center"
+                    style={{
+                        position: 'absolute',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: 'max-content',
+                        pointerEvents: 'none'
+                    }}
+                >
+                    <h1 style={{ fontWeight: 900, color: '#22d3ee', fontSize: 'clamp(1.2rem,3vw,1.8rem)', margin: '0 0 4px' }}>
+                        Tool Daily Reports
+                    </h1>
+
+                    <p className="text-muted" style={{ margin: 0, fontSize: '.85rem' }}>
+                        Select a checklist to record today's maintenance activities
+                    </p>
+                </div>
+
+                <div className="status-top">
+                    Status: Live
                 </div>
             </nav>
 
             <div className="main-content-area">
-                {/* 🔥 Clean Grid Layout replacing Bootstrap rows/columns */}
                 <div className="reports-grid">
                     {toolDailyReports.map((report) => (
-                        <div key={report.id} className="module-card" onClick={() => handleCardClick(report)}>
-                            <div className="card-accent-line" style={{ backgroundColor: report.color }}></div>
+                        <div
+                            key={report.id}
+                            className="module-card"
+                            onClick={() => handleCardClick(report)}
+                        >
+                            <div
+                                className="card-accent-line"
+                                style={{ backgroundColor: report.color }}
+                            />
 
-                            {/* ✅ Live / Dev Badge */}
                             <div className={`status-badge ${report.isLive ? 'status-live' : 'status-dev'}`}>
-                                {report.isLive ? (
-                                    <><i className="bi bi-broadcast pulse-icon"></i> Live</>
-                                ) : (
-                                    <><i className="bi bi-gear-wide-connected spin-icon"></i> Under Development</>
-                                )}
+                                {report.isLive
+                                    ? <><i className="bi bi-broadcast pulse-icon"></i> Live</>
+                                    : <><i className="bi bi-gear-wide-connected spin-icon"></i> Under Development</>
+                                }
                             </div>
 
-                            <div className="icon-wrapper" style={{ backgroundColor: `${report.color}15`, color: report.color }}>
+                            <div className="icon-wrapper" style={{ color: report.color }}>
                                 <i className={`bi ${report.icon}`}></i>
                             </div>
+
                             <h3 className="card-title-custom">{report.title}</h3>
-                            <div className="meta-tag">Form: <b>{report.formNo}</b></div>
-                            <div className="meta-tag">Resp: <b>{report.responsibility}</b></div>
+
+                            <div className="meta-tag">
+                                Form: <b>{report.formNo}</b>
+                            </div>
+
+                            <div className="meta-tag">
+                                Resp: <b>{report.responsibility}</b>
+                            </div>
+
                             <div className="mt-4 text-end">
-                                <i className="bi bi-arrow-right-circle-fill" style={{ fontSize: '1.5rem', color: report.color }}></i>
+                                <i
+                                    className="bi bi-arrow-right-circle-fill"
+                                    style={{ fontSize: '1.5rem', color: report.color }}
+                                />
                             </div>
                         </div>
                     ))}
                 </div>
             </div>
 
-            {/* Modal */}
             {showOptionsModal && selectedCard && (
                 <div className="modal-overlay-ui" onClick={closeModal}>
-                    <div style={{background:'#fff', borderRadius:'12px', padding:'2rem', width:'100%', maxWidth:'400px', position:'relative', animation: 'slideUp 0.2s ease'}} onClick={(e) => e.stopPropagation()}>
-                        
-                        <button style={{position:'absolute', top:'14px', right:'16px', background:'#f1f5f9', border:'none', borderRadius:'4px', width:'32px', height:'32px', cursor:'pointer'}} onClick={closeModal}>
-                            <i className="bi bi-x-lg text-muted"></i>
+                    <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+                        <button className="modal-close-btn" onClick={closeModal}>
+                            <i className="bi bi-x-lg"></i>
                         </button>
 
-                        <div style={{display:'flex', alignItems:'center', gap:14, marginBottom:16}}>
-                            <div style={{width:46, height:46, borderRadius:8, background:`${selectedCard.color}15`, color:selectedCard.color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.4rem'}}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+                            <div
+                                style={{
+                                    width: 46,
+                                    height: 46,
+                                    borderRadius: 8,
+                                    background: '#10293a',
+                                    color: selectedCard.color,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '1.4rem'
+                                }}
+                            >
                                 <i className={`bi ${selectedCard.icon}`}></i>
                             </div>
-                            <div style={{textAlign: 'left'}}>
-                                <p style={{fontWeight:800, fontSize:'0.95rem', margin:0, color:'#0f172a'}}>{selectedCard.title}</p>
-                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Form: {selectedCard.formNo || "N/A"}</p>
+
+                            <div>
+                                <p style={{ fontWeight: 800, fontSize: '.95rem', margin: 0, color: '#f8fafc' }}>
+                                    {selectedCard.title}
+                                </p>
+                                <p style={{ fontSize: '.75rem', color: '#94a3b8', margin: 0 }}>
+                                    Form: {selectedCard.formNo || 'N/A'}
+                                </p>
                             </div>
                         </div>
 
-                        <div style={{borderTop:'1px solid #f1f5f9', margin:'16px 0'}}></div>
-                        <p style={{fontSize:'0.78rem', color:'#94a3b8', fontWeight:600, marginBottom:14, textTransform:'uppercase', letterSpacing:'0.06em', textAlign: 'left'}}>What would you like to do?</p>
+                        <div style={{ borderTop: '1px solid #263750', margin: '16px 0' }} />
 
-                        <button className="modal-action-btn" onClick={() => handleAction('fill')}>
-                            <div className="modal-btn-icon" style={{background:'#f1f5f9', color:'#0f172a'}}>
-                                <i className="bi bi-pencil-square"></i>
-                            </div>
-                            <div>
-                                <p style={{fontWeight:700, fontSize:'0.9rem', margin:0, color:'#0f172a'}}>Fill Data</p>
-                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Enter new data into the form</p>
-                            </div>
-                            <i className="bi bi-chevron-right ms-auto text-muted"></i>
-                        </button>
+                        <p style={{
+                            fontSize: '.78rem',
+                            color: '#94a3b8',
+                            fontWeight: 600,
+                            marginBottom: 14,
+                            textTransform: 'uppercase',
+                            letterSpacing: '.06em'
+                        }}>
+                            What would you like to do?
+                        </p>
 
-                        <button className="modal-action-btn" onClick={() => handleAction('view')}>
-                            <div className="modal-btn-icon" style={{background:'#f1f5f9', color:'#0f172a'}}>
-                                <i className="bi bi-eye"></i>
-                            </div>
-                            <div>
-                                <p style={{fontWeight:700, fontSize:'0.9rem', margin:0, color:'#0f172a'}}>View Data</p>
-                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>View saved records from the database</p>
-                            </div>
-                            <i className="bi bi-chevron-right ms-auto text-muted"></i>
-                        </button>
+                        {actions.map(([action, icon, title, desc]) => (
+                            <button
+                                key={action}
+                                className="modal-action-btn"
+                                onClick={() => handleAction(action)}
+                            >
+                                <div className="modal-btn-icon">
+                                    <i className={`bi ${icon}`}></i>
+                                </div>
 
-                        <button className="modal-action-btn" onClick={() => handleAction('print')}>
-                            <div className="modal-btn-icon" style={{background:'#f1f5f9', color:'#0f172a'}}>
-                                <i className="bi bi-printer"></i>
-                            </div>
-                            <div>
-                                <p style={{fontWeight:700, fontSize:'0.9rem', margin:0, color:'#0f172a'}}>Print Data</p>
-                                <p style={{fontSize:'0.75rem', color:'#64748b', margin:0}}>Print saved records</p>
-                            </div>
-                            <i className="bi bi-chevron-right ms-auto text-muted"></i>
-                        </button>
+                                <div>
+                                    <p style={{ fontWeight: 700, fontSize: '.9rem', margin: 0, color: '#f8fafc' }}>
+                                        {title}
+                                    </p>
+                                    <p style={{ fontSize: '.75rem', color: '#94a3b8', margin: 0 }}>
+                                        {desc}
+                                    </p>
+                                </div>
 
+                                <i className="bi bi-chevron-right ms-auto text-muted"></i>
+                            </button>
+                        ))}
                     </div>
                 </div>
             )}

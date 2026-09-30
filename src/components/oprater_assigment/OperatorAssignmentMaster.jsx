@@ -26,7 +26,7 @@ export default function OperatorAssignmentMaster({ onLogout }) {
           <Route path="/" element={<Navigate to="current-assignments" replace />} />
           
           {/* Individual Pages */}
-          <Route path="current-assignments" element={<OperatorDashboard />} />
+          {/* <Route path="current-assignments" element={<OperatorDashboard />} /> */}
           <Route path="assign-operator" element={<AssignMachine />} />
           <Route path="machine-history" element={<MachineHistory />} />
           <Route path="operator-history" element={<OperatorProfile />} />
