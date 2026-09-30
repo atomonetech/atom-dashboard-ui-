@@ -112,6 +112,17 @@ const formatChangeTime = (timeStr, selectedDate) => {
   }
 };
 
+const formatTimeOnly = (timeStr) => {
+  if (!timeStr) return '--:--';
+  try {
+    const d = new Date(timeStr);
+    if (isNaN(d.getTime())) return timeStr; 
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+  } catch (e) {
+    return '--:--';
+  }
+};
+
 export default function MachineHistory() {
   const [plant, setPlant] = useState('plant1');
   const [machineNo, setMachineNo] = useState(2);
@@ -125,6 +136,7 @@ export default function MachineHistory() {
   const [shutHeightChanges, setShutHeightChanges] = useState([]);
   const [toolChanges, setToolChanges] = useState([]);
   const [onOffEvents, setOnOffEvents] = useState([]);
+  const [operatorTimeline, setOperatorTimeline] = useState([]);
 
   const [machineStatus, setMachineStatus] = useState('Offline');
   const [loading, setLoading] = useState(false);
@@ -178,10 +190,11 @@ export default function MachineHistory() {
           setMachineStatus('Offline');
         }
 
-        try {
-          const plantNo = plant === 'plant1' ? 1 : 2;
-          const shiftVal = shift === 'fullday' ? 'ALL' : shift.replace('shift', '');
+        const plantNo = plant === 'plant1' ? 1 : 2;
+        const shiftVal = shift === 'fullday' ? 'ALL' : shift.replace('shift', '');
 
+        // Fetch Machine Status Changes History
+        try {
           let historyUrl = '';
           if (plantNo === 1) {
             historyUrl = `${API_BASE}/api/plant1-machine-history/?machine_no=${machineNo}&date=${selectedDate}&shift=${shiftVal}`;
@@ -215,10 +228,31 @@ export default function MachineHistory() {
             }
           }
         } catch (err) {
-          console.error("Failed to fetch machine history events", err);
+          console.error("Failed to fetch machine state events", err);
           setShutHeightChanges([]);
           setToolChanges([]);
           setOnOffEvents([]);
+        }
+
+        // Fetch Operator Timeline
+        try {
+          const dbPlant = plant === 'plant1' ? 'plant_1' : 'plant_2';
+          const timelineUrl = `${API_BASE}/api/operator-timeline/?plant=${dbPlant}&machine_no=${machineNo}&date=${selectedDate}&shift=${shiftVal}`;
+
+          const timelineRes = await fetch(timelineUrl);
+          let timelineData = [];
+
+          if (timelineRes.ok) {
+            const resultData = await timelineRes.json();
+            if (resultData.success && resultData.timeline) {
+               timelineData = resultData.timeline;
+            }
+          }
+
+          setOperatorTimeline(timelineData);
+        } catch (err) {
+          console.error("Failed to fetch operator timeline", err);
+          setOperatorTimeline([]);
         }
 
       } catch (err) {
@@ -230,6 +264,7 @@ export default function MachineHistory() {
         setShutHeightChanges([]);
         setToolChanges([]);
         setOnOffEvents([]);
+        setOperatorTimeline([]);
       } finally {
         setLoading(false);
       }
@@ -307,6 +342,10 @@ export default function MachineHistory() {
     { name: 'Online Idle', value: totalIdleFormatted, color: '#f59e0b' },
     { name: 'Offline', value: totalOfflineFormatted, color: '#ef4444' }
   ];
+
+  // LOGIC TO DETERMINE IF SELECTED DATE IS TODAY
+  const todayDateString = new Date().toISOString().split('T')[0];
+  const dateDisplayText = selectedDate === todayDateString ? 'Today' : selectedDate;
 
   return (
     <div className="modern-container">
@@ -441,7 +480,7 @@ export default function MachineHistory() {
               </div>
               <div>
                 <p style={{ margin: 0, fontWeight: 'bold', color: '#f8fafc', fontSize: '14px' }}>Total Production</p>
-                <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>{summary.total_production || 0} units produced today</p>
+                <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>{summary.total_production || 0} units produced {dateDisplayText.toLowerCase()}</p>
               </div>
             </div>
 
@@ -465,7 +504,7 @@ export default function MachineHistory() {
               </div>
               <div>
                 <p style={{ margin: 0, fontWeight: 'bold', color: '#f8fafc', fontSize: '14px' }}>{totalOffline === 0 ? 'No Offline Time' : 'Offline Detected'}</p>
-                <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>{totalOffline === 0 ? 'Machine remained online throughout the day' : `Machine was offline for ${keyInsights?.offline_detected?.formatted_time}`}</p>
+                <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>{totalOffline === 0 ? `Machine remained online throughout ${dateDisplayText.toLowerCase()}` : `Machine was offline for ${keyInsights?.offline_detected?.formatted_time}`}</p>
               </div>
             </div>
           </div>
@@ -522,12 +561,11 @@ export default function MachineHistory() {
           </div>
         </div>
 
-        {/* 👇 YAHAN SE MAIN CHANGES HAIN (TOP/BOTTOM LAYOUT) 👇 */}
+        {/* Row 3 */}
         <div className="card">
-          <h3 className="section-title">Machine State Distribution ({shift === 'fullday' ? 'Full Day' : 'Today'})</h3>
+          <h3 className="section-title">Machine State Distribution ({shift === 'fullday' ? 'Full Day' : dateDisplayText})</h3>
           <div style={{ display: 'flex', flexDirection: 'column', height: '320px', alignItems: 'center', justifyContent: 'center', paddingTop: '10px' }}>
 
-            {/* Chart Upar (Top) */}
             <div style={{ width: '100%', height: '180px', position: 'relative' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -544,14 +582,12 @@ export default function MachineHistory() {
                 </PieChart>
               </ResponsiveContainer>
 
-              {/* Center ka Text Size Thoda Chhota Kiya Hai */}
               <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
                 <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#fff' }}>{summary.total_production || 0}</div>
                 <div style={{ fontSize: '11px', color: '#94a3b8' }}>Total Count</div>
               </div>
             </div>
 
-            {/* Legend Neeche (Bottom) */}
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px', padding: '0 15px', marginTop: '15px' }}>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px' }}>
@@ -583,7 +619,7 @@ export default function MachineHistory() {
           </div>
         </div>
 
-        {/* ROW 3: Shut Height Change, Tool Change, ON/OFF Status, Operator Timeline */}
+        {/* ROW 3/4 Continuation: Shut Height Change, Tool Change, ON/OFF Status, Operator Timeline */}
         <div className="card">
           <h3 className="section-title">Shut Height Change ({shutHeightChanges.length})</h3>
           <div className="timeline" style={{ padding: '20px 10px', maxHeight: '350px', overflowY: 'auto' }}>
@@ -701,38 +737,52 @@ export default function MachineHistory() {
         </div>
 
         <div className="card">
-          <h3 className="section-title">Operator Timeline (Today)</h3>
-          <div className="timeline" style={{ padding: '20px 10px' }}>
-            <div className="timeline-item" style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
-              <div className="tl-dot" style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}></div>
-              <div className="tl-content">
-                <p className="tl-time text-sm text-gray-400">06:00 AM - 08:15 AM</p>
-                <p className="tl-title text-muted font-semibold mt-1">No Operator</p>
-              </div>
-            </div>
+          <h3 className="section-title">Operator Timeline ({dateDisplayText})</h3>
+          <div className="timeline" style={{ padding: '20px 10px', maxHeight: '350px', overflowY: 'auto' }}>
+            {operatorTimeline.length > 0 ? (
+              operatorTimeline.map((op, idx) => {
+                const isLastItem = idx === operatorTimeline.length - 1;
+                const operatorName = op.operator_name || 'No Operator';
+                const initial = operatorName !== 'No Operator' ? operatorName.charAt(0).toUpperCase() : '';
+                
+                const isCurrent = op.is_current === true || op.is_current === 'true' || op.is_current === 1;
+                
+                const dotBg = operatorName === 'No Operator' ? '#475569' : (isCurrent ? '#3b82f6' : '#a855f7');
 
-            <div className="timeline-item" style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
-              <div className="tl-dot" style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#a855f7', color: 'white', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>A</div>
-              <div className="tl-content">
-                <p className="tl-time text-sm text-gray-400">08:15 AM - 10:30 AM</p>
-                <p className="tl-title font-semibold mt-1 text-white">Abhishek <span className="text-muted font-normal text-sm ml-2">- 1250 Pcs</span></p>
-              </div>
-            </div>
+                let startTimeFormatted = formatTimeOnly(op.start_time);
+                let endTimeFormatted = isCurrent ? 'Current' : formatTimeOnly(op.end_time);
 
-            <div className="timeline-item" style={{ display: 'flex', gap: '20px' }}>
-              <div className="tl-dot" style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#3b82f6', color: 'white', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>M</div>
-              <div className="tl-content">
-                <p className="tl-time text-sm text-gray-400">10:30 AM - Current</p>
-                <p className="tl-title font-semibold mt-1 text-white">Mohit <span className="text-muted font-normal text-sm ml-2">- 980 Pcs</span></p>
+                return (
+                  <div key={idx} className="timeline-item" style={{ display: 'flex', gap: '20px', marginBottom: isLastItem ? '0px' : '20px' }}>
+                    <div className="tl-dot" style={{ width: '32px', height: '32px', borderRadius: '50%', background: dotBg, color: 'white', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {initial}
+                    </div>
+                    <div className="tl-content">
+                      <p className="tl-time text-sm text-gray-400">
+                        {startTimeFormatted} - {endTimeFormatted}
+                      </p>
+                      <p className="tl-title font-semibold mt-1 text-white">
+                        {operatorName} 
+                        {op.production_count !== undefined && (
+                          <span className="text-muted font-normal text-sm ml-2">- {op.production_count} Pcs</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div style={{ textAlign: 'center', color: '#94a3b8', padding: '20px' }}>
+                <p>No operator history recorded for this shift.</p>
               </div>
-            </div>
+            )}
           </div>
           <div className="tl-footer mt-4" style={{ padding: '12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', color: '#60a5fa', fontWeight: 'bold' }}>
-            📊 Total Production Today: {summary.total_production || 2230} Pcs
+            📊 Total Production {dateDisplayText}: {summary.total_production || 0} Pcs
           </div>
         </div>
 
-        {/* ROW 4 */}
+        {/* Row 5 */}
         <div className="card" style={{ gridColumn: "span 4" }}>
           <h3 className="section-title">Hourly Breakdown</h3>
           <div style={{ overflowX: 'auto', maxHeight: '350px', overflowY: 'auto' }}>
