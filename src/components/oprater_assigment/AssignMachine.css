@@ -616,3 +616,191 @@ body,
   color: #f87171;
   font-weight: 600;
 }
+
+
+/* =========================
+   RESPONSIVE DESIGN
+========================= */
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .dashboard-container {
+    padding: 20px;
+  }
+
+  .assignment-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 12px;
+  }
+
+  /* Header */
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .header-left {
+    width: 100%;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  .header-right {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+  }
+
+  .header-right button {
+    flex: 1;
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  /* Card */
+  .content-card {
+    width: 100%;
+  }
+
+  /* Tabs */
+  .modern-tabs {
+    padding: 0;
+  }
+
+  .tab-item {
+    flex: 1;
+    padding: 14px 8px;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  /* Form Layout */
+  .assignment-grid {
+    grid-template-columns: 1fr;
+    padding: 18px;
+    gap: 24px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .form-column,
+  .preview-column {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .input-field {
+    width: 100%;
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  /* Buttons */
+  .form-actions {
+    gap: 10px;
+  }
+
+  .form-actions button {
+    flex: 1;
+  }
+
+  .btn-primary {
+    min-width: 0;
+  }
+
+  /* Preview */
+  .preview-card {
+    width: 100%;
+    padding: 18px;
+  }
+
+  /* History */
+  .history-tab {
+    padding: 16px;
+  }
+
+  .history-filters {
+    justify-content: stretch;
+  }
+
+  .history-filters .input-field,
+  .w-auto {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .theme-table {
+    min-width: 650px;
+  }
+
+  /* Operator Dropdown */
+  .operator-search-dropdown {
+    width: 100%;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding: 8px;
+  }
+
+  .page-header {
+    gap: 10px;
+  }
+
+  .header-right {
+    flex-direction: column;
+  }
+
+  .header-right button {
+    width: 100%;
+  }
+
+  .assignment-grid {
+    padding: 14px;
+  }
+
+  .modern-tabs {
+    width: 100%;
+  }
+
+  .tab-item {
+    font-size: 12px;
+    padding: 12px 5px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+
+  .preview-card {
+    padding: 14px;
+  }
+
+  .operator-search-item {
+    gap: 8px;
+  }
+}
