@@ -75,6 +75,46 @@ const getCompanyImage = (company) => {
   return null;
 };
 
+// Shut Height Formatter (Same as Plant1Live.js & Plant2Live.js)
+const formatShutHeightDisplay = (value) => {
+  if (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    value === "No data" ||
+    value === "N/A"
+  ) {
+    return "--";
+  }
+
+  const raw = String(value).trim();
+  if (raw.toLowerCase().includes("fail")) return "Failed";
+
+  const num = Number(raw);
+  if (Number.isFinite(num)) {
+    if (num > 0 && num <= 10) return "Failed";
+    if (num <= 0) return "--";
+    return num.toFixed(2);
+  }
+
+  return raw;
+};
+
+// Helper to check if a value is valid (not empty/N/A)
+const isValidValue = (val) => {
+  if (val === null || val === undefined) return false;
+  const str = String(val).trim().toLowerCase();
+  return (
+    str !== "" &&
+    str !== "n/a" &&
+    str !== "no data" &&
+    str !== "none" &&
+    str !== "null" &&
+    str !== "no tag" &&
+    str !== "--"
+  );
+};
+
 const convertDecimalToMMSS = (decimalMinutes) => {
   if (!decimalMinutes || isNaN(decimalMinutes)) return 0;
   let m = Math.floor(decimalMinutes);
@@ -101,14 +141,17 @@ const formatHourRange = (timeStr) => {
   return timeStr;
 };
 
-const formatChangeTime = (timeStr, selectedDate) => {
+const formatChangeTime = (timeStr, fallbackDate) => {
   if (!timeStr) return '--:--';
-  if (timeStr.includes('AM') || timeStr.includes('PM')) return `${selectedDate} | ${timeStr}`;
+  if (typeof timeStr === 'string' && (timeStr.includes('AM') || timeStr.includes('PM'))) {
+    return fallbackDate ? `${fallbackDate} | ${timeStr}` : timeStr;
+  }
   try {
     const d = new Date(timeStr);
+    if (isNaN(d.getTime())) return `${fallbackDate} | ${timeStr}`;
     return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   } catch (e) {
-    return `${selectedDate} | ${timeStr}`;
+    return `${fallbackDate} | ${timeStr}`;
   }
 };
 
@@ -116,7 +159,7 @@ const formatTimeOnly = (timeStr) => {
   if (!timeStr) return '--:--';
   try {
     const d = new Date(timeStr);
-    if (isNaN(d.getTime())) return timeStr; 
+    if (isNaN(d.getTime())) return timeStr;
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
   } catch (e) {
     return '--:--';
@@ -138,6 +181,31 @@ export default function MachineHistory() {
   const [onOffEvents, setOnOffEvents] = useState([]);
   const [operatorTimeline, setOperatorTimeline] = useState([]);
 
+  // =========================================================================
+  // SEPARATE FILTER STATES FOR SHUT HEIGHT CARD vs TOOL CHANGE CARD
+  // Modes: '1' (Today), 'specific_date', '2', '5', '7', '30', 'custom'
+  // =========================================================================
+  // 1. Shut Height Filter States
+  const [shFilterMode, setShFilterMode] = useState('1');
+  const [shSpecificDate, setShSpecificDate] = useState(new Date().toISOString().split('T')[0]);
+  const [shStartDate, setShStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [shEndDate, setShEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [shLoading, setShLoading] = useState(false);
+  const [shFilterLabel, setShFilterLabel] = useState('Today');
+
+  // 2. Tool Change Filter States
+  const [toolFilterMode, setToolFilterMode] = useState('1');
+  const [toolSpecificDate, setToolSpecificDate] = useState(new Date().toISOString().split('T')[0]);
+  const [toolStartDate, setToolStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [toolEndDate, setToolEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [toolHistoryLoading, setToolHistoryLoading] = useState(false);
+  const [toolFilterLabel, setToolFilterLabel] = useState('Today');
+
+  // Current Live Machine Info & History Meta
+  const [liveMachineData, setLiveMachineData] = useState(null);
+  const [historyMachineMeta, setHistoryMachineMeta] = useState(null);
+  const [currentToolFromRangeApi, setCurrentToolFromRangeApi] = useState(null);
+
   const [machineStatus, setMachineStatus] = useState('Offline');
   const [loading, setLoading] = useState(false);
 
@@ -153,10 +221,51 @@ export default function MachineHistory() {
     }
   }, [plant, machineNo]);
 
+  // =========================================================================
+  // 1. MAIN EFFECT: LIVE DATA, PRODUCTION CHART, ON/OFF & OPERATOR TIMELINE
+  // =========================================================================
   useEffect(() => {
     const fetchMachineAnalysis = async () => {
       setLoading(true);
       try {
+        // 1. Fetch Live Data from /api/plant1-live/ or /api/plant2-live/
+        try {
+          const liveUrl =
+            plant === 'plant1'
+              ? `${API_BASE}/api/plant1-live/`
+              : `${API_BASE}/api/plant2-live/`;
+
+          const liveRes = await fetch(liveUrl, {
+            method: 'GET',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'ngrok-skip-browser-warning': 'true',
+            },
+          });
+
+          if (liveRes.ok) {
+            const liveJson = await liveRes.json();
+            if (liveJson.success && Array.isArray(liveJson.machines)) {
+              const foundMachine = liveJson.machines.find(
+                (m) =>
+                  parseInt(String(m.machine_no).replace(/\D/g, ''), 10) ===
+                  Number(machineNo)
+              );
+              setLiveMachineData(foundMachine || null);
+            } else {
+              setLiveMachineData(null);
+            }
+          } else {
+            setLiveMachineData(null);
+          }
+        } catch (liveErr) {
+          console.error('Failed to fetch live machine data:', liveErr);
+          setLiveMachineData(null);
+        }
+
+        // 2. Fetch Machine Analysis
         const analysisUrl = `${API_BASE}/api/machine-analysis/?plant=${plant}&machine_no=${machineNo}&date=${selectedDate}&shift=${shift}&period=today`;
         const res = await fetch(analysisUrl);
 
@@ -193,7 +302,7 @@ export default function MachineHistory() {
         const plantNo = plant === 'plant1' ? 1 : 2;
         const shiftVal = shift === 'fullday' ? 'ALL' : shift.replace('shift', '');
 
-        // Fetch Machine Status Changes History
+        // 3. Fetch Machine Status Changes History & machine_meta
         try {
           let historyUrl = '';
           if (plantNo === 1) {
@@ -207,34 +316,26 @@ export default function MachineHistory() {
           if (historyRes.ok) {
             const historyData = await historyRes.json();
 
-            if (historyData.success && historyData.events) {
-              const shc = historyData.events.filter(c =>
-                c.type === 'SHUT_HEIGHT_CHANGE' || c.event_type === 'SHUT_HEIGHT_CHANGE'
-              );
-              const tc = historyData.events.filter(c =>
-                c.type === 'TOOL_CHANGE' || c.event_type === 'TOOL_CHANGE' || String(c.type).includes('TOOL')
-              );
-              const onOff = historyData.events.filter(c =>
+            if (historyData.success) {
+              setHistoryMachineMeta(historyData.machine_meta || null);
+
+              const events = historyData.events || [];
+              const onOff = events.filter(c =>
                 c.type === 'ON' || c.type === 'OFF' || c.event_type === 'ON' || c.event_type === 'OFF'
               );
-
-              setShutHeightChanges(shc);
-              setToolChanges(tc);
               setOnOffEvents(onOff);
             } else {
-              setShutHeightChanges([]);
-              setToolChanges([]);
+              setHistoryMachineMeta(null);
               setOnOffEvents([]);
             }
           }
         } catch (err) {
           console.error("Failed to fetch machine state events", err);
-          setShutHeightChanges([]);
-          setToolChanges([]);
+          setHistoryMachineMeta(null);
           setOnOffEvents([]);
         }
 
-        // Fetch Operator Timeline
+        // 4. Fetch Operator Timeline
         try {
           const dbPlant = plant === 'plant1' ? 'plant_1' : 'plant_2';
           const timelineUrl = `${API_BASE}/api/operator-timeline/?plant=${dbPlant}&machine_no=${machineNo}&date=${selectedDate}&shift=${shiftVal}`;
@@ -245,7 +346,7 @@ export default function MachineHistory() {
           if (timelineRes.ok) {
             const resultData = await timelineRes.json();
             if (resultData.success && resultData.timeline) {
-               timelineData = resultData.timeline;
+              timelineData = resultData.timeline;
             }
           }
 
@@ -261,8 +362,6 @@ export default function MachineHistory() {
         setSummary({ total_production: 0 });
         setKeyInsights(null);
         setMachineStatus('Offline');
-        setShutHeightChanges([]);
-        setToolChanges([]);
         setOnOffEvents([]);
         setOperatorTimeline([]);
       } finally {
@@ -273,6 +372,183 @@ export default function MachineHistory() {
     fetchMachineAnalysis();
   }, [plant, machineNo, selectedDate, shift]);
 
+  // =========================================================================
+  // 2A. INDEPENDENT EFFECT FOR SHUT HEIGHT HISTORY CARD ONLY
+  // =========================================================================
+  useEffect(() => {
+    const fetchShutHeightHistoryOnly = async () => {
+      setShLoading(true);
+      try {
+        const plantNo = plant === 'plant1' ? 1 : 2;
+        let queryParams = `plant_no=${plantNo}&machine_no=${machineNo}`;
+
+        if (shFilterMode === 'specific_date') {
+          if (!shSpecificDate) {
+            setShLoading(false);
+            return;
+          }
+          queryParams += `&date=${shSpecificDate}`;
+        } else if (shFilterMode === 'custom') {
+          if (!shStartDate || !shEndDate) {
+            setShLoading(false);
+            return;
+          }
+          queryParams += `&start_date=${shStartDate}&end_date=${shEndDate}`;
+        } else {
+          queryParams += `&days=${shFilterMode}`;
+        }
+
+        const res = await fetch(`${API_BASE}/api/machine-tool-history/?${queryParams}`, {
+          headers: {
+            Accept: 'application/json',
+            'Cache-Control': 'no-cache',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            setShutHeightChanges(data.shut_height_changes || []);
+            setShFilterLabel(data.filter_label || 'Selected Range');
+            if (data.current_tool) {
+              setCurrentToolFromRangeApi(data.current_tool);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch shut height history:", err);
+      } finally {
+        setShLoading(false);
+      }
+    };
+
+    fetchShutHeightHistoryOnly();
+  }, [plant, machineNo, shFilterMode, shSpecificDate, shStartDate, shEndDate]);
+
+  // =========================================================================
+  // 2B. INDEPENDENT EFFECT FOR TOOL CHANGE HISTORY CARD ONLY
+  // =========================================================================
+  useEffect(() => {
+    const fetchToolHistoryOnly = async () => {
+      setToolHistoryLoading(true);
+      try {
+        const plantNo = plant === 'plant1' ? 1 : 2;
+        let queryParams = `plant_no=${plantNo}&machine_no=${machineNo}`;
+
+        if (toolFilterMode === 'specific_date') {
+          if (!toolSpecificDate) {
+            setToolHistoryLoading(false);
+            return;
+          }
+          queryParams += `&date=${toolSpecificDate}`;
+        } else if (toolFilterMode === 'custom') {
+          if (!toolStartDate || !toolEndDate) {
+            setToolHistoryLoading(false);
+            return;
+          }
+          queryParams += `&start_date=${toolStartDate}&end_date=${toolEndDate}`;
+        } else {
+          queryParams += `&days=${toolFilterMode}`;
+        }
+
+        const res = await fetch(`${API_BASE}/api/machine-tool-history/?${queryParams}`, {
+          headers: {
+            Accept: 'application/json',
+            'Cache-Control': 'no-cache',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            setToolChanges(data.tool_changes || []);
+            setToolFilterLabel(data.filter_label || 'Selected Range');
+            if (data.current_tool) {
+              setCurrentToolFromRangeApi(data.current_tool);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch tool change history:", err);
+      } finally {
+        setToolHistoryLoading(false);
+      }
+    };
+
+    fetchToolHistoryOnly();
+  }, [plant, machineNo, toolFilterMode, toolSpecificDate, toolStartDate, toolEndDate]);
+
+  // =================================================================================
+  // CURRENT SHUT HEIGHT & CURRENT TOOL DETAILS (FROM LIVE API + RANGE API + META)
+  // =================================================================================
+  const lastShutHeightEvent =
+    shutHeightChanges.length > 0 ? shutHeightChanges[0] : null;
+
+  const lastToolEvent =
+    toolChanges.length > 0 ? toolChanges[0] : null;
+
+  const rawCurrentShutHeight =
+    liveMachineData?.shut_height ??
+    currentToolFromRangeApi?.shut_height ??
+    historyMachineMeta?.shut_height ??
+    lastShutHeightEvent?.shut_height ??
+    null;
+
+  const currentShutHeightDisplay = formatShutHeightDisplay(rawCurrentShutHeight);
+
+  const currentCustomer =
+    (isValidValue(liveMachineData?.tool_customer) && liveMachineData.tool_customer) ||
+    (isValidValue(currentToolFromRangeApi?.customer_name) && currentToolFromRangeApi.customer_name) ||
+    (isValidValue(currentToolFromRangeApi?.customer) && currentToolFromRangeApi.customer) ||
+    (isValidValue(historyMachineMeta?.customer_name) && historyMachineMeta.customer_name) ||
+    (isValidValue(historyMachineMeta?.customer) && historyMachineMeta.customer) ||
+    (isValidValue(lastToolEvent?.customer_name) && lastToolEvent.customer_name) ||
+    (isValidValue(lastToolEvent?.customer) && lastToolEvent.customer) ||
+    null;
+
+  const currentModel =
+    (isValidValue(liveMachineData?.tool_model) && liveMachineData.tool_model) ||
+    (isValidValue(currentToolFromRangeApi?.model_name) && currentToolFromRangeApi.model_name) ||
+    (isValidValue(currentToolFromRangeApi?.model) && currentToolFromRangeApi.model) ||
+    (isValidValue(historyMachineMeta?.model_name) && historyMachineMeta.model_name) ||
+    (isValidValue(historyMachineMeta?.model) && historyMachineMeta.model) ||
+    (isValidValue(lastToolEvent?.model_name) && lastToolEvent.model_name) ||
+    (isValidValue(lastToolEvent?.model) && lastToolEvent.model) ||
+    null;
+
+  const currentPartName =
+    (isValidValue(liveMachineData?.tool_part_name) && liveMachineData.tool_part_name) ||
+    (isValidValue(currentToolFromRangeApi?.part_name) && currentToolFromRangeApi.part_name) ||
+    (isValidValue(historyMachineMeta?.part_name) && historyMachineMeta.part_name) ||
+    (isValidValue(lastToolEvent?.part_name) && lastToolEvent.part_name) ||
+    (isValidValue(lastShutHeightEvent?.part_name) && lastShutHeightEvent.part_name) ||
+    null;
+
+  const currentToolName =
+    (isValidValue(liveMachineData?.tool_name) && liveMachineData.tool_name) ||
+    (isValidValue(currentToolFromRangeApi?.tool_name) && currentToolFromRangeApi.tool_name) ||
+    (isValidValue(historyMachineMeta?.tool_name) && historyMachineMeta.tool_name) ||
+    (isValidValue(lastToolEvent?.tool_name) && lastToolEvent.tool_name) ||
+    null;
+
+  const currentPartNumber =
+    (isValidValue(liveMachineData?.tool_part_number) && liveMachineData.tool_part_number) ||
+    (isValidValue(currentToolFromRangeApi?.part_number) && currentToolFromRangeApi.part_number) ||
+    (isValidValue(historyMachineMeta?.part_number) && historyMachineMeta.part_number) ||
+    (isValidValue(lastToolEvent?.part_number) && lastToolEvent.part_number) ||
+    null;
+
+  // Check if any valid tool data exists; otherwise show "No Tag"
+  const hasCurrentToolData = Boolean(
+    currentPartName ||
+    currentToolName ||
+    currentPartNumber ||
+    currentCustomer ||
+    currentModel
+  );
+
   let currentTotalProd = 0;
   let currentTotalIdle = 0;
   let currentTotalOffline = 0;
@@ -282,7 +558,7 @@ export default function MachineHistory() {
   let hasWrapped = false;
   let previousHour = -1;
 
-  const cumulativeChartData = chartData.map((item, index) => {
+  const cumulativeChartData = chartData.map((item) => {
     let isFuture = false;
 
     if (item.name) {
@@ -406,9 +682,9 @@ export default function MachineHistory() {
 
       <div className="history-grid four-col-grid">
 
-        {/* Row 1 */}
+        {/* Row 1 - Machine Info Card */}
         <div className="card">
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '20px' }}>
             <div className="machine-img-box" style={{ width: '85px', height: '85px', flexShrink: 0, borderRadius: '8px', overflow: 'hidden', border: '1px solid #334155', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a' }}>
               {getCompanyImage(spec.company) ? (
                 <img src={getCompanyImage(spec.company)} alt={`${spec.company} Press Machine`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -416,31 +692,28 @@ export default function MachineHistory() {
                 <span style={{ fontSize: '2rem' }}>🤖</span>
               )}
             </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
-                <h2 style={{ fontSize: '1.25rem', margin: 0, color: '#f8fafc', lineHeight: '1.2' }}>Press Machine {machineNo}</h2>
-                <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', backgroundColor: `${statusColor}20`, color: statusColor, border: `1px solid ${statusColor}40`, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '10px' }}>●</span> {machineStatus}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '5px', borderBottom: '1px dashed #334155', marginTop: 'auto' }}>
-                <span style={{ color: '#94a3b8', fontWeight: '600', fontSize: '14px' }}>Machine Type</span>
-                <span style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '14px' }}>Press Machine</span>
-              </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start' }}>
+              <h2 style={{ fontSize: '1.25rem', margin: 0, color: '#f8fafc', lineHeight: '1.2' }}>Press Machine {machineNo}</h2>
+              <span style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', backgroundColor: `${statusColor}20`, color: statusColor, border: `1px solid ${statusColor}40`, display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '10px' }}>●</span> {machineStatus}
+              </span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px dashed #334155' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px dashed #334155' }}>
+              <span style={{ color: '#94a3b8', fontWeight: '600', fontSize: '14px' }}>Machine Type</span>
+              <span style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '14px' }}>Press Machine</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px dashed #334155' }}>
               <span style={{ color: '#94a3b8', fontWeight: '600', fontSize: '14px' }}>Company</span>
               <span style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '14px' }}>{spec.company}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px dashed #334155' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px dashed #334155' }}>
               <span style={{ color: '#94a3b8', fontWeight: '600', fontSize: '14px' }}>Capacity</span>
               <span style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '14px' }}>{spec.capacity !== 'N/A' ? `${spec.capacity} TON` : 'N/A'}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#94a3b8', fontWeight: '600', fontSize: '14px' }}>Plant</span>
               <span style={{ color: '#f8fafc', fontWeight: 'bold', fontSize: '14px' }}>{plant === 'plant1' ? 'Plant 1' : 'Plant 2'}</span>
             </div>
@@ -620,82 +893,485 @@ export default function MachineHistory() {
         </div>
 
         {/* ROW 3/4 Continuation: Shut Height Change, Tool Change, ON/OFF Status, Operator Timeline */}
+
+        {/* =================================================================== */}
+        {/* 1. SHUT HEIGHT CHANGE CARD (WITH SPECIFIC DATE & RANGE FILTER)      */}
+        {/* =================================================================== */}
         <div className="card">
-          <h3 className="section-title">Shut Height Change ({shutHeightChanges.length})</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <h3 className="section-title" style={{ margin: 0 }}>
+              Shut Height Change ({shutHeightChanges.length})
+            </h3>
+            <select
+              value={shFilterMode}
+              onChange={(e) => setShFilterMode(e.target.value)}
+              style={{
+                padding: '5px 8px',
+                fontSize: '11px',
+                fontWeight: '600',
+                borderRadius: '6px',
+                background: '#0f172a',
+                color: '#34d399',
+                border: '1px solid #334155',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              <option value="1">Today</option>
+              <option value="specific_date">Specific Date</option>
+              <option value="2">Last 2 Days</option>
+              <option value="5">Last 5 Days</option>
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 30 Days</option>
+              <option value="custom">Custom Date Range</option>
+            </select>
+          </div>
+
+          {/* Single Calendar Picker when 'Specific Date' is selected */}
+          {shFilterMode === 'specific_date' && (
+            <div
+              style={{
+                display: 'flex',
+                gap: '8px',
+                marginTop: '10px',
+                padding: '8px',
+                background: 'rgba(15, 23, 42, 0.6)',
+                borderRadius: '8px',
+                border: '1px solid #334155',
+                alignItems: 'center'
+              }}
+            >
+              <span style={{ color: '#34d399', fontSize: '11px', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                Select Date:
+              </span>
+              <input
+                type="date"
+                value={shSpecificDate}
+                onChange={(e) => setShSpecificDate(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '4px 8px',
+                  fontSize: '11px',
+                  borderRadius: '6px',
+                  background: '#1e293b',
+                  color: '#fff',
+                  border: '1px solid #475569',
+                  colorScheme: 'dark'
+                }}
+              />
+            </div>
+          )}
+
+          {/* From - To Calendar Pickers when 'Custom Date Range' is selected */}
+          {shFilterMode === 'custom' && (
+            <div
+              style={{
+                display: 'flex',
+                gap: '6px',
+                marginTop: '10px',
+                padding: '8px',
+                background: 'rgba(15, 23, 42, 0.6)',
+                borderRadius: '8px',
+                border: '1px solid #334155',
+                alignItems: 'center',
+                flexWrap: 'wrap'
+              }}
+            >
+              <input
+                type="date"
+                value={shStartDate}
+                onChange={(e) => setShStartDate(e.target.value)}
+                style={{
+                  flex: 1,
+                  minWidth: '110px',
+                  padding: '4px 6px',
+                  fontSize: '11px',
+                  borderRadius: '6px',
+                  background: '#1e293b',
+                  color: '#fff',
+                  border: '1px solid #475569',
+                  colorScheme: 'dark'
+                }}
+              />
+              <span style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 'bold' }}>to</span>
+              <input
+                type="date"
+                value={shEndDate}
+                onChange={(e) => setShEndDate(e.target.value)}
+                style={{
+                  flex: 1,
+                  minWidth: '110px',
+                  padding: '4px 6px',
+                  fontSize: '11px',
+                  borderRadius: '6px',
+                  background: '#1e293b',
+                  color: '#fff',
+                  border: '1px solid #475569',
+                  colorScheme: 'dark'
+                }}
+              />
+            </div>
+          )}
+
           <div className="timeline" style={{ padding: '20px 10px', maxHeight: '350px', overflowY: 'auto' }}>
-            {shutHeightChanges.length > 0 ? (
-              <>
-                {shutHeightChanges.map((change, idx) => (
-                  <div key={idx} className="timeline-item" style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
-                    <div className="tl-dot" style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#10b981', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" /></svg>
-                    </div>
-                    <div className="tl-content">
-                      <p className="tl-time text-sm text-gray-400">{formatChangeTime(change.time || change.timestamp, selectedDate)}</p>
-                      <p className="tl-title text-white font-semibold mt-1">{change.title || 'Height Changed'}</p>
-                      <p className="text-muted text-xs mt-1" style={{ wordBreak: 'break-word' }}>
-                        {change.details ? change.details.split(' | Tool:')[0] : ''}
-                      </p>
-                      {(change.shut_height !== undefined || change.part_name) && (
-                        <div style={{ marginTop: '6px', padding: '6px 8px', borderRadius: '6px', background: 'rgba(16,185,129,0.08)', color: '#cbd5e1', fontSize: '11px' }}>
-                          <b style={{ color: '#34d399' }}>Details:</b> {change.shut_height ? `Height: ${change.shut_height} ` : ''}
-                          {change.part_name ? `| Part: ${change.part_name}` : ''}
-                        </div>
-                      )}
-                    </div>
+
+            {/* CURRENT SHUT HEIGHT SABSE UPAR (TOP PAR) */}
+            <div
+              className="timeline-item"
+              style={{
+                display: 'flex',
+                gap: '20px',
+                marginBottom: '20px',
+                paddingBottom: '16px',
+                borderBottom: '1px dashed #334155'
+              }}
+            >
+              <div
+                className="tl-dot"
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background:
+                    currentShutHeightDisplay !== '--' && currentShutHeightDisplay !== 'Failed'
+                      ? '#10b981'
+                      : '#475569',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  fontWeight: 'bold'
+                }}
+              >
+                ●
+              </div>
+              <div className="tl-content" style={{ flex: 1 }}>
+                <p className="tl-time text-sm text-gray-400">Current Shut Height</p>
+                <p
+                  className="tl-title font-semibold mt-1"
+                  style={{
+                    color:
+                      currentShutHeightDisplay === 'Failed'
+                        ? '#ef4444'
+                        : currentShutHeightDisplay !== '--'
+                        ? '#fbbf24'
+                        : '#94a3b8',
+                    fontSize: '18px',
+                    fontWeight: '800'
+                  }}
+                >
+                  {currentShutHeightDisplay}
+                </p>
+                <div
+                  style={{
+                    marginTop: '6px',
+                    padding: '6px 8px',
+                    borderRadius: '6px',
+                    background: 'rgba(16,185,129,0.08)',
+                    color: '#cbd5e1',
+                    fontSize: '11px'
+                  }}
+                >
+                  <b style={{ color: '#34d399' }}>Part:</b>{' '}
+                  {currentPartName ? currentPartName : 'No Tag'}
+                </div>
+              </div>
+            </div>
+
+            {/* SHUT HEIGHT CHANGE HISTORY NEECHE */}
+            {shLoading ? (
+              <div style={{ color: '#94a3b8', fontSize: '12px', paddingLeft: '52px' }}>
+                Loading shut height history...
+              </div>
+            ) : shutHeightChanges.length > 0 ? (
+              shutHeightChanges.map((change, idx) => (
+                <div
+                  key={change.id || idx}
+                  className="timeline-item"
+                  style={{
+                    display: 'flex',
+                    gap: '20px',
+                    marginBottom: idx === shutHeightChanges.length - 1 ? '0px' : '20px'
+                  }}
+                >
+                  <div className="tl-dot" style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#10b981', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" /></svg>
                   </div>
-                ))}
-                <div className="timeline-item" style={{ display: 'flex', gap: '20px' }}>
-                  <div className="tl-dot" style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#475569', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>-</div>
-                  <div className="tl-content">
-                    <p className="tl-time text-sm text-gray-400">Current</p>
-                    <p className="tl-title text-muted font-semibold mt-1">Stable</p>
+                  <div className="tl-content" style={{ flex: 1 }}>
+                    <p className="tl-time text-sm text-gray-400">
+                      {change.display_time || formatChangeTime(change.time || change.timestamp, change.date || selectedDate)}
+                    </p>
+                    <p className="tl-title text-white font-semibold mt-1">{change.title || 'Height Changed'}</p>
+                    <p className="text-muted text-xs mt-1" style={{ wordBreak: 'break-word' }}>
+                      {change.details ? change.details.split(' | Tool:')[0] : ''}
+                    </p>
+                    {(change.shut_height !== undefined || change.part_name || change.tool_name) && (
+                      <div style={{ marginTop: '6px', padding: '6px 8px', borderRadius: '6px', background: 'rgba(16,185,129,0.08)', color: '#cbd5e1', fontSize: '11px' }}>
+                        <b style={{ color: '#34d399' }}>Details:</b>{' '}
+                        {change.old_height && change.new_height
+                          ? `${change.old_height} → ${change.new_height} `
+                          : change.shut_height
+                          ? `Height: ${change.shut_height} `
+                          : ''}
+                        {change.part_name ? `| Part: ${change.part_name}` : ''}
+                        {change.tool_name ? ` | Tool: ${change.tool_name}` : ''}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </>
+              ))
             ) : (
-              <div style={{ textAlign: 'center', color: '#94a3b8', padding: '20px' }}>
-                <p>No shut height changes recorded for this date.</p>
+              <div style={{ color: '#94a3b8', fontSize: '12px', paddingLeft: '52px' }}>
+                No shut height changes recorded for {shFilterLabel.toLowerCase()}.
               </div>
             )}
           </div>
         </div>
 
+        {/* =================================================================== */}
+        {/* 2. TOOL CHANGE CARD (WITH SPECIFIC DATE & RANGE FILTER)             */}
+        {/* =================================================================== */}
         <div className="card">
-          <h3 className="section-title">Tool Change ({toolChanges.length})</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <h3 className="section-title" style={{ margin: 0 }}>
+              Tool Change ({toolChanges.length})
+            </h3>
+            <select
+              value={toolFilterMode}
+              onChange={(e) => setToolFilterMode(e.target.value)}
+              style={{
+                padding: '5px 8px',
+                fontSize: '11px',
+                fontWeight: '600',
+                borderRadius: '6px',
+                background: '#0f172a',
+                color: '#93c5fd',
+                border: '1px solid #334155',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              <option value="1">Today</option>
+              <option value="specific_date">Specific Date</option>
+              <option value="2">Last 2 Days</option>
+              <option value="5">Last 5 Days</option>
+              <option value="7">Last 7 Days</option>
+              <option value="30">Last 30 Days</option>
+              <option value="custom">Custom Date Range</option>
+            </select>
+          </div>
+
+          {/* Single Calendar Picker when 'Specific Date' is selected */}
+          {toolFilterMode === 'specific_date' && (
+            <div
+              style={{
+                display: 'flex',
+                gap: '8px',
+                marginTop: '10px',
+                padding: '8px',
+                background: 'rgba(15, 23, 42, 0.6)',
+                borderRadius: '8px',
+                border: '1px solid #334155',
+                alignItems: 'center'
+              }}
+            >
+              <span style={{ color: '#93c5fd', fontSize: '11px', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                Select Date:
+              </span>
+              <input
+                type="date"
+                value={toolSpecificDate}
+                onChange={(e) => setToolSpecificDate(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '4px 8px',
+                  fontSize: '11px',
+                  borderRadius: '6px',
+                  background: '#1e293b',
+                  color: '#fff',
+                  border: '1px solid #475569',
+                  colorScheme: 'dark'
+                }}
+              />
+            </div>
+          )}
+
+          {/* From - To Calendar Pickers when 'Custom Date Range' is selected */}
+          {toolFilterMode === 'custom' && (
+            <div
+              style={{
+                display: 'flex',
+                gap: '6px',
+                marginTop: '10px',
+                padding: '8px',
+                background: 'rgba(15, 23, 42, 0.6)',
+                borderRadius: '8px',
+                border: '1px solid #334155',
+                alignItems: 'center',
+                flexWrap: 'wrap'
+              }}
+            >
+              <input
+                type="date"
+                value={toolStartDate}
+                onChange={(e) => setToolStartDate(e.target.value)}
+                style={{
+                  flex: 1,
+                  minWidth: '110px',
+                  padding: '4px 6px',
+                  fontSize: '11px',
+                  borderRadius: '6px',
+                  background: '#1e293b',
+                  color: '#fff',
+                  border: '1px solid #475569',
+                  colorScheme: 'dark'
+                }}
+              />
+              <span style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 'bold' }}>to</span>
+              <input
+                type="date"
+                value={toolEndDate}
+                onChange={(e) => setToolEndDate(e.target.value)}
+                style={{
+                  flex: 1,
+                  minWidth: '110px',
+                  padding: '4px 6px',
+                  fontSize: '11px',
+                  borderRadius: '6px',
+                  background: '#1e293b',
+                  color: '#fff',
+                  border: '1px solid #475569',
+                  colorScheme: 'dark'
+                }}
+              />
+            </div>
+          )}
+
           <div className="timeline" style={{ padding: '20px 10px', maxHeight: '350px', overflowY: 'auto' }}>
-            {toolChanges.length > 0 ? (
-              <>
-                {toolChanges.map((change, idx) => (
-                  <div key={idx} className="timeline-item" style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
-                    <div className="tl-dot" style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
+
+            {/* CURRENT RUNNING TOOL SABSE UPAR (WITHOUT TOOL ID) */}
+            <div
+              className="timeline-item"
+              style={{
+                display: 'flex',
+                gap: '20px',
+                marginBottom: '20px',
+                paddingBottom: '16px',
+                borderBottom: '1px dashed #334155'
+              }}
+            >
+              <div
+                className="tl-dot"
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: hasCurrentToolData ? '#3b82f6' : '#475569',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  fontWeight: 'bold'
+                }}
+              >
+                ●
+              </div>
+              <div className="tl-content" style={{ flex: 1 }}>
+                <p className="tl-time text-sm text-gray-400">Current Running Tool</p>
+                {hasCurrentToolData ? (
+                  <>
+                    <p className="tl-title text-white font-semibold mt-1">
+                      {currentToolName || currentPartName || 'Active Tool'}
+                    </p>
+                    <div
+                      style={{
+                        marginTop: '6px',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        background: 'rgba(59,130,246,0.08)',
+                        border: '1px solid rgba(59,130,246,0.2)',
+                        color: '#cbd5e1',
+                        fontSize: '11px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px'
+                      }}
+                    >
+                      <div>
+                        <b style={{ color: '#93c5fd' }}>Customer:</b> {currentCustomer || 'N/A'} |{' '}
+                        <b style={{ color: '#93c5fd' }}>Model:</b> {currentModel || 'N/A'}
+                      </div>
+                      <div>
+                        <b style={{ color: '#93c5fd' }}>Part Name:</b> {currentPartName || 'N/A'}
+                      </div>
+                      <div>
+                        <b style={{ color: '#93c5fd' }}>Tool Name:</b> {currentToolName || 'N/A'} |{' '}
+                        <b style={{ color: '#93c5fd' }}>Part No:</b> {currentPartNumber || 'N/A'}
+                      </div>
                     </div>
-                    <div className="tl-content">
-                      <p className="tl-time text-sm text-gray-400">{formatChangeTime(change.time || change.timestamp, selectedDate)}</p>
-                      <p className="tl-title text-white font-semibold mt-1">{change.title || 'Tool Changed'}</p>
-                      <p className="text-muted text-xs mt-1" style={{ wordBreak: 'break-word' }}>
-                        {change.details ? change.details.split(' | Shut Height:')[0] : ''}
-                      </p>
-                      {(change.part_name || change.part_number || change.model_name || change.tool_name) && (
-                        <div style={{ marginTop: '6px', padding: '6px 8px', borderRadius: '6px', background: 'rgba(59,130,246,0.08)', color: '#cbd5e1', fontSize: '11px' }}>
-                          <b style={{ color: '#93c5fd' }}>Details:</b> {change.customer_name || change.customer || 'N/A'} | {change.model_name || change.model || 'N/A'} | {change.part_name || 'N/A'} | Part No: {change.part_number || 'N/A'} | Tool: {change.tool_name || 'N/A'}
-                        </div>
-                      )}
-                    </div>
+                  </>
+                ) : (
+                  <div
+                    style={{
+                      marginTop: '6px',
+                      display: 'inline-block',
+                      padding: '4px 12px',
+                      borderRadius: '6px',
+                      background: 'rgba(239, 68, 68, 0.12)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      color: '#f87171',
+                      fontWeight: '700',
+                      fontSize: '13px'
+                    }}
+                  >
+                    No Tag
                   </div>
-                ))}
-                <div className="timeline-item" style={{ display: 'flex', gap: '20px' }}>
-                  <div className="tl-dot" style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#475569', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>-</div>
-                  <div className="tl-content">
-                    <p className="tl-time text-sm text-gray-400">Current</p>
-                    <p className="tl-title text-muted font-semibold mt-1">No further changes</p>
+                )}
+              </div>
+            </div>
+
+            {/* TOOL CHANGE HISTORY NEECHE */}
+            {toolHistoryLoading ? (
+              <div style={{ color: '#94a3b8', fontSize: '12px', paddingLeft: '52px' }}>
+                Loading tool history...
+              </div>
+            ) : toolChanges.length > 0 ? (
+              toolChanges.map((change, idx) => (
+                <div
+                  key={change.id || idx}
+                  className="timeline-item"
+                  style={{
+                    display: 'flex',
+                    gap: '20px',
+                    marginBottom: idx === toolChanges.length - 1 ? '0px' : '20px'
+                  }}
+                >
+                  <div className="tl-dot" style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
+                  </div>
+                  <div className="tl-content" style={{ flex: 1 }}>
+                    <p className="tl-time text-sm text-gray-400">
+                      {change.display_time || formatChangeTime(change.time || change.timestamp, change.date || selectedDate)}
+                    </p>
+                    <p className="tl-title text-white font-semibold mt-1">
+                      {change.tool_name || change.part_name || change.title || 'Tool Changed'}
+                    </p>
+                    <p className="text-muted text-xs mt-1" style={{ wordBreak: 'break-word' }}>
+                      {change.details ? change.details.split(' | Shut Height:')[0] : ''}
+                    </p>
+                    {(change.part_name || change.part_number || change.model_name || change.tool_name || change.customer_name || change.customer) && (
+                      <div style={{ marginTop: '6px', padding: '6px 8px', borderRadius: '6px', background: 'rgba(59,130,246,0.08)', color: '#cbd5e1', fontSize: '11px' }}>
+                        <b style={{ color: '#93c5fd' }}>Details:</b> {change.customer_name || change.customer || 'N/A'} | {change.model_name || change.model || 'N/A'} | {change.part_name || 'N/A'} | Part No: {change.part_number || 'N/A'} | Tool: {change.tool_name || 'N/A'}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </>
+              ))
             ) : (
-              <div style={{ textAlign: 'center', color: '#94a3b8', padding: '20px' }}>
-                <p>No tool changes recorded for this date.</p>
+              <div style={{ color: '#94a3b8', fontSize: '12px', paddingLeft: '52px' }}>
+                No tool changes recorded for {toolFilterLabel.toLowerCase()}.
               </div>
             )}
           </div>
@@ -744,9 +1420,9 @@ export default function MachineHistory() {
                 const isLastItem = idx === operatorTimeline.length - 1;
                 const operatorName = op.operator_name || 'No Operator';
                 const initial = operatorName !== 'No Operator' ? operatorName.charAt(0).toUpperCase() : '';
-                
+
                 const isCurrent = op.is_current === true || op.is_current === 'true' || op.is_current === 1;
-                
+
                 const dotBg = operatorName === 'No Operator' ? '#475569' : (isCurrent ? '#3b82f6' : '#a855f7');
 
                 let startTimeFormatted = formatTimeOnly(op.start_time);
@@ -762,7 +1438,7 @@ export default function MachineHistory() {
                         {startTimeFormatted} - {endTimeFormatted}
                       </p>
                       <p className="tl-title font-semibold mt-1 text-white">
-                        {operatorName} 
+                        {operatorName}
                         {op.production_count !== undefined && (
                           <span className="text-muted font-normal text-sm ml-2">- {op.production_count} Pcs</span>
                         )}
