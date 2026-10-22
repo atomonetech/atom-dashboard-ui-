@@ -217,25 +217,219 @@ export default function Sidebar({ onLogout }) {
   const fullLogo = "/logo1.jpg";
   const smallLogo = "/bhai.jpg";
 
-  const userRole = user?.role || localStorage.getItem("user_role") || "User";
-  const userGroups = user?.groups || JSON.parse(localStorage.getItem("user_groups") || "[]");
-  const userName = user?.email || localStorage.getItem("username") || "";
-  const fullName = user?.fullName || localStorage.getItem("full_name") || userName;
-  const profileImage = user?.profileImage || localStorage.getItem("profile_image") || "";
+  const userRole =
+    user?.role ||
+    localStorage.getItem("user_role") ||
+    "User";
 
-  // Access Control
+
+  const userName =
+    localStorage.getItem("username") ||
+    user?.email ||
+    "";
+
+  const fullName =
+    user?.fullName ||
+    localStorage.getItem("full_name") ||
+    userName;
+
+  const profileImage =
+    user?.profileImage ||
+    localStorage.getItem("profile_image") ||
+    "";
+
+
+  // =====================================================
+  // SAFE GROUP READER
+  // =====================================================
+
+  let storedGroups = [];
+
+  try {
+    const parsedGroups = JSON.parse(
+      localStorage.getItem("user_groups") || "[]"
+    );
+
+    storedGroups = Array.isArray(parsedGroups)
+      ? parsedGroups
+      : [];
+  } catch (error) {
+    console.error(
+      "Invalid user_groups in localStorage:",
+      error
+    );
+
+    storedGroups = [];
+  }
+
+
+  const contextGroups =
+    Array.isArray(user?.groups)
+      ? user.groups
+      : [];
+
+
+  // ✅ IMPORTANT:
+  // Context + localStorage BOTH are considered.
+  // Empty context array cannot hide localStorage permissions.
+  const userGroups = [
+    ...new Set([
+      ...storedGroups,
+      ...contextGroups,
+    ]),
+  ];
+
+
+  // =====================================================
+  // NORMALIZE GROUP NAME
+  //
+  // Supports:
+  // QA_Hub
+  // QA Hub
+  // qa_hub
+  // QA-Hub
+  // =====================================================
+
+  const normalizeAccessName = (value = "") =>
+    String(value)
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, "_")
+      .replace(/_+/g, "_");
+
+
+  // All groups normalized once
+  const normalizedGroups =
+    userGroups.map(normalizeAccessName);
+
+
+  // Check one or many groups
+  const hasGroup = (...groupNames) => {
+    return groupNames.some((groupName) =>
+      normalizedGroups.includes(
+        normalizeAccessName(groupName)
+      )
+    );
+  };
+
+
+  // Legacy single-role support
+  const normalizedRole =
+    normalizeAccessName(userRole);
+
+
+  // =====================================================
+  // ACCESS CONTROL
+  // =====================================================
+
   const hasAccess = (path) => {
-    if (userRole === "Admin") return true;
-    if (path === "/dashboard") return userGroups.includes("Dashboard_Users");
-    if (path === "/plant1-live") return userGroups.includes("Plant_1_User");
-    if (path === "/plant2-live") return userGroups.includes("Plant_2_User");
+    const normalizedPath =
+      String(path || "").toLowerCase();
 
-    switch (userRole) {
-      case "QA_Hub": return ["/qa-hub", "/qms"].includes(path);
-      case "Production_Hub": return ["/production-hub"].includes(path);
-      case "Maintenance_Hub": return ["/maintenance-hub"].includes(path);
-      default: return false;
+    // Admin = full access
+    if (normalizedRole === "admin") {
+      return true;
     }
+
+    // Dashboard
+    if (normalizedPath === "/dashboard") {
+      return (
+        hasGroup("Dashboard_Users") ||
+        normalizedRole === "dashboard_users"
+      );
+    }
+
+    // Plant 1
+    if (normalizedPath === "/plant1-live") {
+      return (
+        hasGroup("Plant_1_User") ||
+        normalizedRole === "plant_1_user"
+      );
+    }
+
+    // Plant 2
+    if (normalizedPath === "/plant2-live") {
+      return (
+        hasGroup("Plant_2_User") ||
+        normalizedRole === "plant_2_user"
+      );
+    }
+
+    // Operations
+    if (
+      normalizedPath === "/operations" ||
+      normalizedPath.startsWith("/operations/")
+    ) {
+      return hasGroup("Operations_Users");
+    }
+
+    // Idle Case
+    if (normalizedPath === "/idle-case") {
+      return hasGroup(
+        "Idle_Reason_Responder"
+      );
+    }
+
+    // QA
+    if (
+      normalizedPath === "/qa-hub" ||
+      normalizedPath.startsWith("/qa-hub/") ||
+      normalizedPath === "/qms" ||
+      normalizedPath.startsWith("/qms/")
+    ) {
+      return (
+        hasGroup("QA_Hub") ||
+        normalizedRole === "qa_hub"
+      );
+    }
+
+    // Production
+    if (
+      normalizedPath === "/production-hub" ||
+      normalizedPath.startsWith(
+        "/production-hub/"
+      )
+    ) {
+      return (
+        hasGroup("Production_Hub") ||
+        normalizedRole ===
+        "production_hub"
+      );
+    }
+
+    // Maintenance
+    if (
+      normalizedPath === "/maintenance-hub" ||
+      normalizedPath.startsWith(
+        "/maintenance/"
+      )
+    ) {
+      return (
+        hasGroup("Maintenance_Hub") ||
+        normalizedRole ===
+        "maintenance_hub"
+      );
+    }
+
+    // App.js currently allows
+    // Manager/Supervisor for adminOnly pages
+    if (
+      [
+        "/hiring-departments",
+        "/production-history",
+        "/analysis-hub",
+        "/attendance",
+        "/machines-status",
+        "/machine-assignments",
+      ].includes(normalizedPath)
+    ) {
+      return (
+        normalizedRole === "manager" ||
+        normalizedRole === "supervisor"
+      );
+    }
+
+    return false;
   };
 
   // NAYA CODE: Operations ke andar subItems add kiye gaye hain
@@ -289,13 +483,13 @@ export default function Sidebar({ onLogout }) {
       color: "yellow",
       badge: idleCasePendingCount > 0 ? idleCasePendingCount : null,
     },
-    {
-      label: "QMS",
-      icon: ShieldCheck,
-      path: "/qms",
-      color: "yellow",
-      badge: null,
-    },
+    // {
+    //   label: "QMS",
+    //   icon: ShieldCheck,
+    //   path: "/qms",
+    //   color: "yellow",
+    //   badge: null,
+    // },
     {
       label: "Maintenance Hub",
       icon: Wrench,
@@ -503,11 +697,10 @@ export default function Sidebar({ onLogout }) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             onClick={openSidebar}
-            className={`fixed ${getButtonPosition()} z-50 p-2 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ${
-              theme === "light"
-                ? "bg-white border border-slate-200 text-blue-600 shadow-lg shadow-slate-200/50"
-                : "bg-gradient-to-br from-[#1e293b] to-[#0f172a] border-2 border-indigo-500/40 text-indigo-400 shadow-2xl shadow-indigo-500/30"
-            }`}
+            className={`fixed ${getButtonPosition()} z-50 p-2 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer ${theme === "light"
+              ? "bg-white border border-slate-200 text-blue-600 shadow-lg shadow-slate-200/50"
+              : "bg-gradient-to-br from-[#1e293b] to-[#0f172a] border-2 border-indigo-500/40 text-indigo-400 shadow-2xl shadow-indigo-500/30"
+              }`}
             aria-label="Open menu"
             style={{ backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}
           >
@@ -547,9 +740,8 @@ export default function Sidebar({ onLogout }) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={closeSidebar}
-            className={`absolute top-3 right-3 z-50 p-1.5 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border ${
-              theme === "light" ? "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200" : "bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 border-indigo-500/30"
-            }`}
+            className={`absolute top-3 right-3 z-50 p-1.5 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border ${theme === "light" ? "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200" : "bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 border-indigo-500/30"
+              }`}
             aria-label="Go back"
           >
             <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -566,9 +758,8 @@ export default function Sidebar({ onLogout }) {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={toggleCollapse}
-            className={`absolute right-[10px] top-5 z-50 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer ${
-              theme === "light" ? "bg-white border border-slate-200 shadow-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50" : "bg-gradient-to-br from-indigo-500 to-indigo-600 border-2 border-[#0f172a] shadow-lg shadow-indigo-500/50 hover:shadow-indigo-500/80 text-white"
-            }`}
+            className={`absolute right-[10px] top-5 z-50 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 cursor-pointer ${theme === "light" ? "bg-white border border-slate-200 shadow-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50" : "bg-gradient-to-br from-indigo-500 to-indigo-600 border-2 border-[#0f172a] shadow-lg shadow-indigo-500/50 hover:shadow-indigo-500/80 text-white"
+              }`}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isCollapsed ? <ChevronRight className="w-2.5 h-2.5" /> : <ChevronLeft className="w-2.5 h-2.5" />}
@@ -600,10 +791,10 @@ export default function Sidebar({ onLogout }) {
           {menuItems.map((item, index) => {
             const hasSubItems = !!item.subItems;
             const isDropdownOpen = openDropdown === item.label;
-            
+
             // Item tab active hoga jab khud ka route hit ho ya iska koi child route hit ho
             const isActive = location.pathname === item.path || (hasSubItems && item.subItems.some(sub => location.pathname.includes(sub.path)));
-            
+
             const Icon = item.icon;
             const colors = getColors(item.color);
             const showLabel = shouldShowLabels();
@@ -622,19 +813,30 @@ export default function Sidebar({ onLogout }) {
               >
                 <motion.button
                   onClick={() => {
-                    // Agar dropdown hai to sirf toggle karo
-                    if (hasSubItems) {
-                      if (isCollapsed) setIsCollapsed(false);
-                      setOpenDropdown(isDropdownOpen ? "" : item.label);
-                    } else {
-                      // Agar dropdown nahi hai to direct navigate karo
-                      if (!hasAccess(item.path)) {
-                        toast.error("You do not have permission to access this page.");
-                        return;
-                      }
-                      navigate(item.path);
-                      closeSidebar();
+                    // FIRST check permission for every item
+                    if (!hasAccess(item.path)) {
+                      toast.error(
+                        "You do not have permission to access this page."
+                      );
+                      return;
                     }
+
+                    // Dropdown item
+                    if (hasSubItems) {
+                      if (isCollapsed) {
+                        setIsCollapsed(false);
+                      }
+
+                      setOpenDropdown(
+                        isDropdownOpen ? "" : item.label
+                      );
+
+                      return;
+                    }
+
+                    // Normal item
+                    navigate(item.path);
+                    closeSidebar();
                   }}
                   whileHover={{ x: showLabel ? 3 : 0, scale: isCentered ? 1.02 : 1 }}
                   whileTap={{ scale: 0.98 }}
@@ -658,11 +860,18 @@ export default function Sidebar({ onLogout }) {
                   </AnimatePresence>
 
                   {/* Agar dropdown hai toh arrow dikhao */}
-                  {hasSubItems && showLabel && (
-                    <ChevronRight className={`relative z-10 w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? "rotate-90" : ""}`} />
-                  )}
+                  {hasSubItems &&
+                    showLabel &&
+                    hasAccess(item.path) && (
+                      <ChevronRight
+                        className={`relative z-10 w-4 h-4 transition-transform duration-200 ${isDropdownOpen
+                          ? "rotate-90"
+                          : ""
+                          }`}
+                      />
+                    )}
 
-                  {!hasSubItems && !hasAccess(item.path) && (
+                  {!hasAccess(item.path) && (
                     <div className="relative z-10 flex items-center justify-center w-7 h-7">
                       <LockIcon sx={{ color: theme === "light" ? "#94a3b8" : "#FFFFFF", fontSize: 16, opacity: theme === "light" ? 0.7 : 0.9 }} />
                     </div>
@@ -693,11 +902,10 @@ export default function Sidebar({ onLogout }) {
                               navigate(sub.path);
                               closeSidebar();
                             }}
-                            className={`text-left text-xs py-2 px-3 rounded-md transition-all duration-200 ${
-                              isSubActive
-                                ? (theme === "light" ? "bg-blue-50 text-blue-600 font-semibold" : "bg-indigo-500/20 text-indigo-400 font-semibold")
-                                : (theme === "light" ? "text-slate-600 hover:bg-slate-100" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50")
-                            }`}
+                            className={`text-left text-xs py-2 px-3 rounded-md transition-all duration-200 ${isSubActive
+                              ? (theme === "light" ? "bg-blue-50 text-blue-600 font-semibold" : "bg-indigo-500/20 text-indigo-400 font-semibold")
+                              : (theme === "light" ? "text-slate-600 hover:bg-slate-100" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50")
+                              }`}
                           >
                             {sub.label}
                           </button>
@@ -721,8 +929,8 @@ export default function Sidebar({ onLogout }) {
               theme === "light"
                 ? { hoverGlow: "bg-slate-100/60", badge: "bg-red-100 text-red-600 border-red-200", inactiveText: "text-slate-600 hover:text-blue-600 hover:bg-slate-50/50" }
                 : item.color === "indigo"
-                ? { hoverGlow: "bg-gradient-to-r from-indigo-500/10 to-transparent", badge: "bg-red-500/20 text-red-400 border-red-500/30", inactiveText: "text-slate-400 hover:text-slate-200" }
-                : { hoverGlow: "bg-gradient-to-r from-yellow-500/10 to-transparent", badge: "bg-red-500/20 text-red-400 border-red-500/30", inactiveText: "text-slate-400 hover:text-slate-200" };
+                  ? { hoverGlow: "bg-gradient-to-r from-indigo-500/10 to-transparent", badge: "bg-red-500/20 text-red-400 border-red-500/30", inactiveText: "text-slate-400 hover:text-slate-200" }
+                  : { hoverGlow: "bg-gradient-to-r from-yellow-500/10 to-transparent", badge: "bg-red-500/20 text-red-400 border-red-500/30", inactiveText: "text-slate-400 hover:text-slate-200" };
 
             const showLabel = shouldShowLabels();
             const isCentered = !showLabel;

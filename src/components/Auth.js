@@ -243,7 +243,7 @@ export default function Auth({ onLogin }) {
         // Save authentication data
         localStorage.setItem("access_token", data.access);
         localStorage.setItem("refresh_token", data.refresh);
-        localStorage.setItem("user_role", data.role);
+        // localStorage.setItem("user_role", data.role);
         localStorage.setItem("username", data.username);
         localStorage.setItem(
           "user_groups",
@@ -281,11 +281,44 @@ export default function Auth({ onLogin }) {
         localStorage.setItem("profile_image", profileImage);
 
         // Update UserContext immediately
+        const loginGroups =
+          Array.isArray(profileData.groups) && profileData.groups.length > 0
+            ? profileData.groups
+            : Array.isArray(data.groups)
+              ? data.groups
+              : [];
+
+        const finalRole = data.is_superuser
+          ? "Admin"
+          : (
+            profileData.role ||
+            profileData.user_role ||
+            data.role ||
+            "Default_User"
+          );
+
+        localStorage.setItem(
+          "user_role",
+          finalRole
+        );
+
+        // always keep final groups in localStorage
+        localStorage.setItem(
+          "user_groups",
+          JSON.stringify(loginGroups)
+        );
+
+        // Update UserContext immediately
         setUser({
           fullName: fullName,
           email: email,
           profileImage: profileImage,
-          role: profileData.role || profileData.user_role || data.role,
+
+          role: finalRole,
+
+          // ✅ IMPORTANT
+          groups: loginGroups,
+
           department: profileData.department || "",
           designation: profileData.designation || "",
           phone: profileData.mobile_no || "",
@@ -299,10 +332,56 @@ export default function Auth({ onLogin }) {
 
         if (onLogin) onLogin();
 
-        if (data.role === "QA_Hub") navigate("/qa-hub");
-        else if (data.role === "Production_Hub") navigate("/production-hub");
-        else if (data.role === "Maintenance_Hub") navigate("/maintenance-hub");
-        else navigate("/dashboard");
+        // =====================================================
+        // LOGIN KE BAAD CORRECT LANDING PAGE
+        // Multiple group access supported
+        // =====================================================
+
+        const normalizedLoginGroups = loginGroups.map(
+          (group) => String(group).trim().toLowerCase()
+        );
+
+        const hasLoginGroup = (groupName) =>
+          normalizedLoginGroups.includes(
+            String(groupName).trim().toLowerCase()
+          );
+
+
+        if (finalRole === "Admin") {
+          navigate("/dashboard");
+        }
+
+        else if (hasLoginGroup("Dashboard_Users")) {
+          navigate("/dashboard");
+        }
+
+        else if (hasLoginGroup("QA_Hub")) {
+          navigate("/qa-hub");
+        }
+
+        else if (hasLoginGroup("Production_Hub")) {
+          navigate("/production-hub");
+        }
+
+        else if (hasLoginGroup("Maintenance_Hub")) {
+          navigate("/maintenance-hub");
+        }
+
+        else if (hasLoginGroup("Plant_1_User")) {
+          navigate("/plant1-live");
+        }
+
+        else if (hasLoginGroup("Plant_2_User")) {
+          navigate("/plant2-live");
+        }
+
+        else if (hasLoginGroup("Operations_Users")) {
+          navigate("/operations");
+        }
+
+        else {
+          navigate("/profile");
+        }
       } else if (response.status === 401) {
         setErrorMessage("Incorrect username or password.");
       } else {

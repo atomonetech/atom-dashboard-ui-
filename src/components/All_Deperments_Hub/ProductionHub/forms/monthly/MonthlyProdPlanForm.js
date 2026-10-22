@@ -5,21 +5,28 @@ import { getApiUrl } from '../../../../../config/api';
 import axios from "axios";
 
 
-
 const getItemText = (item) => {
     if (!item) return "";
-    return typeof item === 'string' ? item : (item.name || item.operation || item.part_name || "");
+
+    return typeof item === 'string'
+        ? item
+        : (item.name || item.operation || item.part_name || "");
 };
+
 
 // 🔥 PURE SORTING FUNCTION WITHOUT REMOVING KEYWORDS
 const sortArrayAlphabetically = (arr) => {
     const cleanArray = Array.isArray(arr) ? arr : [];
+
     return [...cleanArray].sort((a, b) => {
         const strA = getItemText(a).toLowerCase().trim();
         const strB = getItemText(b).toLowerCase().trim();
+
         return strA.localeCompare(strB);
     });
 };
+
+
 const MonthlyProdPlanForm = () => {
     const navigate = useNavigate();
 
@@ -28,47 +35,72 @@ const MonthlyProdPlanForm = () => {
 
     // Dropdown options state
     const [partsList, setPartsList] = useState([]);
-    const [customersList, setCustomersList] = useState([]); // Naya state Customers ke liye
+    const [customersList, setCustomersList] = useState([]);
+
 
     useEffect(() => {
         const today = new Date();
+
         const formattedDate = today.toLocaleDateString('en-IN', {
             weekday: 'long',
             day: 'numeric',
             month: 'long',
             year: 'numeric'
         });
+
         setCurrentDate(formattedDate);
+
 
         // Fetching Parts from Backend API
         const fetchParts = async () => {
             try {
-                const response = await fetch(getApiUrl('/api/master-dropdown/?filter=all_parts'));
+                const response = await fetch(
+                    getApiUrl('/api/master-dropdown/?filter=all_parts')
+                );
+
                 if (response.ok) {
                     const data = await response.json();
-                    setPartsList(sortArrayAlphabetically(data));
+
+                    setPartsList(
+                        sortArrayAlphabetically(data)
+                    );
                 }
             } catch (error) {
-                console.error("Error fetching parts list:", error);
+                console.error(
+                    "Error fetching parts list:",
+                    error
+                );
             }
         };
+
 
         // Fetching Customers from Backend API
         const fetchCustomers = async () => {
             try {
-                const response = await fetch(getApiUrl('/api/master-dropdown/?filter=customer'));
+                const response = await fetch(
+                    getApiUrl('/api/master-dropdown/?filter=customer')
+                );
+
                 if (response.ok) {
                     const data = await response.json();
-                    setCustomersList(sortArrayAlphabetically(data));
+
+                    setCustomersList(
+                        sortArrayAlphabetically(data)
+                    );
                 }
             } catch (error) {
-                console.error("Error fetching customers list:", error);
+                console.error(
+                    "Error fetching customers list:",
+                    error
+                );
             }
         };
 
+
         fetchParts();
-        fetchCustomers(); // Customer fetch call
+        fetchCustomers();
     }, []);
+
 
     const initialState = {
         date: new Date().toISOString().split('T')[0],
@@ -82,19 +114,29 @@ const MonthlyProdPlanForm = () => {
         approvedBy: ''
     };
 
+
     const [formData, setFormData] = useState(initialState);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
     };
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         setIsSubmitting(true);
 
-        const currentUser = localStorage.getItem("username") || "Unknown User";
+        const currentUser =
+            localStorage.getItem("username") ||
+            "Unknown User";
 
         const payload = {
             ...formData,
@@ -103,31 +145,103 @@ const MonthlyProdPlanForm = () => {
         };
 
         try {
-            const response = await fetch(getApiUrl('/api/monthly-prod-plan/save/'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            });
+            const response = await fetch(
+                getApiUrl('/api/monthly-prod-plan/save/'),
+                {
+                    method: 'POST',
+
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+
+                    body: JSON.stringify(payload)
+                }
+            );
 
             if (response.ok) {
-                alert("Success! Monthly Production Plan has been saved.");
+                alert(
+                    "Success! Monthly Production Plan has been saved."
+                );
+
                 setFormData(initialState);
             } else {
-                const errorData = await response.json();
-                alert("Failed to save production plan: " + JSON.stringify(errorData));
+                const errorData =
+                    await response.json();
+
+                alert(
+                    "Failed to save production plan: " +
+                    JSON.stringify(errorData)
+                );
             }
         } catch (error) {
-            console.error("Error saving data:", error);
-            alert("An error occurred while saving the data.");
+            console.error(
+                "Error saving data:",
+                error
+            );
+
+            alert(
+                "An error occurred while saving the data."
+            );
         } finally {
             setIsSubmitting(false);
         }
     };
 
+
     return (
-        <div className="min-h-screen bg-[#f8fafc] font-sans text-slate-900 flex flex-col items-center pb-20">
+        <div className="monthly-prod-form-scope min-h-screen bg-[#f8fafc] font-sans text-slate-900 flex flex-col items-center pb-20">
+
+            {/* =====================================================
+                IMPORTANT:
+                Force all light-form controls to use dark text.
+                This prevents global dark-theme CSS from making
+                input/dropdown text white on white.
+            ====================================================== */}
+            <style>{`
+                .monthly-prod-form-scope input,
+                .monthly-prod-form-scope select,
+                .monthly-prod-form-scope textarea {
+                    color: #0f172a !important;
+                    -webkit-text-fill-color: #0f172a !important;
+                    color-scheme: light !important;
+                }
+
+                .monthly-prod-form-scope select option {
+                    color: #0f172a !important;
+                    -webkit-text-fill-color: #0f172a !important;
+                    background-color: #ffffff !important;
+                }
+
+                .monthly-prod-form-scope select option:checked {
+                    color: #0f172a !important;
+                    background-color: #e2e8f0 !important;
+                }
+
+                .monthly-prod-form-scope input::placeholder,
+                .monthly-prod-form-scope textarea::placeholder {
+                    color: #64748b !important;
+                    -webkit-text-fill-color: #64748b !important;
+                    opacity: 1 !important;
+                }
+
+                .monthly-prod-form-scope input:disabled,
+                .monthly-prod-form-scope select:disabled,
+                .monthly-prod-form-scope textarea:disabled {
+                    color: #475569 !important;
+                    -webkit-text-fill-color: #475569 !important;
+                    opacity: 1 !important;
+                }
+
+                .monthly-prod-form-scope select {
+                    background-color: #f8fafc !important;
+                }
+
+                .monthly-prod-form-scope input,
+                .monthly-prod-form-scope textarea {
+                    caret-color: #0f172a !important;
+                }
+            `}</style>
+
 
             <div className="w-full max-w-4xl px-4 mt-8">
 
@@ -142,174 +256,332 @@ const MonthlyProdPlanForm = () => {
                     </button>
                 </div>
 
+
                 {/* --- Main Card with Gradient Header --- */}
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{
+                        opacity: 0,
+                        y: 20
+                    }}
+                    animate={{
+                        opacity: 1,
+                        y: 0
+                    }}
                     className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200 border border-slate-100 overflow-hidden"
                 >
+
                     <div className="w-full bg-gradient-to-br from-[#3b82f6] via-[#4f46e5] to-[#312e81] p-10 md:p-14 text-center border-b border-white/10 relative overflow-hidden">
 
                         <div className="absolute top-[-20%] left-[-10%] w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+
                         <div className="absolute bottom-[-20%] right-[-10%] w-40 h-40 bg-indigo-400/20 rounded-full blur-3xl"></div>
 
+
                         <div className="absolute top-4 right-4 md:top-6 md:right-6 bg-white/20 backdrop-blur-sm border border-white/30 text-white text-[10px] md:text-xs font-bold px-4 py-2 rounded-full z-20 shadow-lg flex items-center gap-2">
-                            <i className="bi bi-calendar3"></i> {currentDate}
+                            <i className="bi bi-calendar3"></i>
+
+                            {currentDate}
                         </div>
 
+
                         <h1 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase italic relative z-10 leading-tight mt-4 md:mt-0">
-                            Monthly Production <span className="text-blue-200 block md:inline not-italic">Plan</span>
+                            Monthly Production{" "}
+
+                            <span className="text-blue-200 block md:inline not-italic">
+                                Plan
+                            </span>
                         </h1>
+
+
                         <p className="text-blue-100/70 text-[10px] md:text-xs font-black mt-4 tracking-[0.4em] uppercase underline decoration-blue-400 decoration-2 underline-offset-8 relative z-10">
                             AtomOne Manufacturing Intelligence
                         </p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="p-8 md:p-14 space-y-10">
 
-                        {/* Section 1: Identification */}
+                    <form
+                        onSubmit={handleSubmit}
+                        className="p-8 md:p-14 space-y-10"
+                    >
+
+                        {/* =========================================
+                            SECTION 1: IDENTIFICATION
+                        ========================================== */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-                            {/* DYNAMIC DROPDOWN FOR PART INFO */}
+                            {/* Part Dropdown */}
                             <div className="flex flex-col gap-2.5">
-                                <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">Part Number & Name</label>
+                                <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">
+                                    Part Number & Name
+                                </label>
+
                                 <select
                                     name="partName"
                                     required
-                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 focus:border-[#3b82f6] focus:bg-white rounded-2xl transition-all outline-none text-sm font-bold shadow-inner cursor-pointer appearance-none"
+                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 focus:border-[#3b82f6] focus:bg-white rounded-2xl transition-all outline-none text-sm text-[#0f172a] font-bold shadow-inner cursor-pointer appearance-none"
                                     value={formData.partName}
                                     onChange={handleInputChange}
                                 >
-                                    <option value="" disabled>-- Select Part --</option>
-                                    {partsList.map((part, index) => (
-                                        <option key={index} value={`${part[1]} - ${part[0]}`}>
-                                            {part[1]} - {part[0]}
-                                        </option>
-                                    ))}
+                                    <option
+                                        value=""
+                                        disabled
+                                        style={{
+                                            color: '#0f172a',
+                                            backgroundColor: '#ffffff'
+                                        }}
+                                    >
+                                        -- Select Part --
+                                    </option>
+
+                                    {partsList.map(
+                                        (part, index) => (
+                                            <option
+                                                key={index}
+                                                value={`${part[1]} - ${part[0]}`}
+                                                style={{
+                                                    color: '#0f172a',
+                                                    backgroundColor: '#ffffff'
+                                                }}
+                                            >
+                                                {part[1]} - {part[0]}
+                                            </option>
+                                        )
+                                    )}
                                 </select>
                             </div>
 
-                            {/* DYNAMIC DROPDOWN FOR CUSTOMER NAME */}
+
+                            {/* Customer Dropdown */}
                             <div className="flex flex-col gap-2.5">
-                                <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">Customer Name</label>
+                                <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">
+                                    Customer Name
+                                </label>
+
                                 <select
                                     name="customer"
                                     required
-                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 focus:border-[#3b82f6] focus:bg-white rounded-2xl transition-all outline-none text-sm font-bold shadow-inner cursor-pointer appearance-none"
+                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 focus:border-[#3b82f6] focus:bg-white rounded-2xl transition-all outline-none text-sm text-[#0f172a] font-bold shadow-inner cursor-pointer appearance-none"
                                     value={formData.customer}
                                     onChange={handleInputChange}
                                 >
-                                    <option value="" disabled>-- Select Customer --</option>
-                                    {customersList.map((cust, index) => (
-                                        <option key={index} value={cust}>
-                                            {cust}
-                                        </option>
-                                    ))}
+                                    <option
+                                        value=""
+                                        disabled
+                                        style={{
+                                            color: '#0f172a',
+                                            backgroundColor: '#ffffff'
+                                        }}
+                                    >
+                                        -- Select Customer --
+                                    </option>
+
+                                    {customersList.map(
+                                        (cust, index) => (
+                                            <option
+                                                key={index}
+                                                value={cust}
+                                                style={{
+                                                    color: '#0f172a',
+                                                    backgroundColor: '#ffffff'
+                                                }}
+                                            >
+                                                {cust}
+                                            </option>
+                                        )
+                                    )}
                                 </select>
                             </div>
                         </div>
 
-                        {/* Section 2: Metrics Table View */}
+
+                        {/* =========================================
+                            SECTION 2: METRICS
+                        ========================================== */}
                         <div className="bg-blue-50/40 p-8 rounded-[2.5rem] border border-blue-100/50 space-y-8">
+
                             <h3 className="text-[11px] font-black text-blue-600 uppercase tracking-[0.25em] flex items-center gap-3">
-                                <div className="w-1.5 h-4 bg-blue-500 rounded-full"></div> Target Inventory Data
+
+                                <div className="w-1.5 h-4 bg-blue-500 rounded-full"></div>
+
+                                Target Inventory Data
                             </h3>
+
+
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+
+                                {/* Opening Stock */}
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Opening Stock</label>
+
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">
+                                        Opening Stock
+                                    </label>
+
                                     <input
                                         name="openingStock"
                                         type="number"
                                         placeholder="0"
-                                        className="w-full px-5 py-4 bg-white border border-slate-200 focus:border-[#3b82f6] rounded-2xl outline-none text-sm font-black shadow-sm"
-                                        value={formData.openingStock}
-                                        onChange={handleInputChange}
+                                        className="w-full px-5 py-4 bg-white border border-slate-200 focus:border-[#3b82f6] rounded-2xl outline-none text-sm text-[#0f172a] font-black shadow-sm"
+                                        value={
+                                            formData.openingStock
+                                        }
+                                        onChange={
+                                            handleInputChange
+                                        }
                                     />
                                 </div>
+
+
+                                {/* Schedule Qty */}
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">Schedule Qty</label>
+
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider ml-1">
+                                        Schedule Qty
+                                    </label>
+
                                     <input
                                         name="scheduleQty"
                                         type="number"
                                         placeholder="0"
-                                        className="w-full px-5 py-4 bg-white border border-slate-200 focus:border-[#3b82f6] rounded-2xl outline-none text-sm font-black shadow-sm"
-                                        value={formData.scheduleQty}
-                                        onChange={handleInputChange}
+                                        className="w-full px-5 py-4 bg-white border border-slate-200 focus:border-[#3b82f6] rounded-2xl outline-none text-sm text-[#0f172a] font-black shadow-sm"
+                                        value={
+                                            formData.scheduleQty
+                                        }
+                                        onChange={
+                                            handleInputChange
+                                        }
                                     />
                                 </div>
+
+
+                                {/* Planned Qty */}
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[10px] font-black text-blue-700 uppercase tracking-wider ml-1">Planned Qty</label>
+
+                                    <label className="text-[10px] font-black text-blue-700 uppercase tracking-wider ml-1">
+                                        Planned Qty
+                                    </label>
+
                                     <input
                                         name="plannedQty"
                                         type="number"
                                         required
                                         placeholder="0"
-                                        className="w-full px-5 py-4 bg-blue-100/50 border-2 border-blue-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 rounded-2xl outline-none text-sm font-black text-blue-800 shadow-sm"
-                                        value={formData.plannedQty}
-                                        onChange={handleInputChange}
+                                        className="w-full px-5 py-4 bg-blue-100/50 border-2 border-blue-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 rounded-2xl outline-none text-sm text-[#0f172a] font-black shadow-sm"
+                                        value={
+                                            formData.plannedQty
+                                        }
+                                        onChange={
+                                            handleInputChange
+                                        }
                                     />
                                 </div>
+
                             </div>
                         </div>
 
-                        {/* Section 3: Remarks */}
+
+                        {/* =========================================
+                            SECTION 3: REMARKS
+                        ========================================== */}
                         <div className="flex flex-col gap-2.5">
-                            <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">Special Remarks / Operational Notes</label>
+
+                            <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">
+                                Special Remarks / Operational Notes
+                            </label>
+
                             <textarea
                                 name="remark"
                                 rows="3"
                                 placeholder="Add specific machine or man-power notes..."
-                                className="w-full px-6 py-5 bg-slate-50 border border-slate-200 focus:border-[#3b82f6] focus:bg-white rounded-3xl outline-none resize-none text-sm font-bold shadow-inner transition-all"
+                                className="w-full px-6 py-5 bg-slate-50 border border-slate-200 focus:border-[#3b82f6] focus:bg-white rounded-3xl outline-none resize-none text-sm text-[#0f172a] font-bold shadow-inner transition-all"
                                 value={formData.remark}
                                 onChange={handleInputChange}
                             ></textarea>
+
                         </div>
 
-                        {/* Section 4: Authorization (Prepared By / Approved By) */}
+
+                        {/* =========================================
+                            SECTION 4: AUTHORIZATION
+                        ========================================== */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-slate-100 pt-8 mt-4">
+
+                            {/* Prepared By */}
                             <div className="flex flex-col gap-2.5">
-                                <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">Prepared By</label>
+
+                                <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">
+                                    Prepared By
+                                </label>
+
                                 <input
                                     name="preparedBy"
                                     type="text"
                                     required
                                     placeholder="Enter your name..."
-                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 focus:border-[#3b82f6] focus:bg-white rounded-2xl transition-all outline-none text-sm font-bold shadow-inner"
-                                    value={formData.preparedBy}
-                                    onChange={handleInputChange}
+                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 focus:border-[#3b82f6] focus:bg-white rounded-2xl transition-all outline-none text-sm text-[#0f172a] font-bold shadow-inner"
+                                    value={
+                                        formData.preparedBy
+                                    }
+                                    onChange={
+                                        handleInputChange
+                                    }
                                 />
+
                             </div>
+
+
+                            {/* Approved By */}
                             <div className="flex flex-col gap-2.5">
-                                <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">Approved By</label>
+
+                                <label className="text-[11px] font-black text-slate-800 uppercase tracking-widest ml-1">
+                                    Approved By
+                                </label>
+
                                 <input
                                     name="approvedBy"
                                     type="text"
                                     placeholder="Enter manager/supervisor name..."
-                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 focus:border-[#3b82f6] focus:bg-white rounded-2xl transition-all outline-none text-sm font-bold shadow-inner"
-                                    value={formData.approvedBy}
-                                    onChange={handleInputChange}
+                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 focus:border-[#3b82f6] focus:bg-white rounded-2xl transition-all outline-none text-sm text-[#0f172a] font-bold shadow-inner"
+                                    value={
+                                        formData.approvedBy
+                                    }
+                                    onChange={
+                                        handleInputChange
+                                    }
                                 />
+
                             </div>
                         </div>
 
-                        {/* Submit Button */}
+
+                        {/* =========================================
+                            SUBMIT BUTTON
+                        ========================================== */}
                         <div className="pt-6 flex justify-center md:justify-end">
+
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
                                 className={`w-full sm:w-auto px-13 p-3 py-4.5 rounded-2xl font-black text-white text-[11px] tracking-[0.25em] transition-all shadow-xl active:scale-[0.98] ${isSubmitting
-                                    ? 'bg-slate-300'
-                                    : 'bg-gradient-to-r from-[#3b82f6] to-[#1e40af] hover:shadow-blue-300 hover:-translate-y-0.5'
+                                        ? 'bg-slate-300'
+                                        : 'bg-gradient-to-r from-[#3b82f6] to-[#1e40af] hover:shadow-blue-300 hover:-translate-y-0.5'
                                     }`}
                             >
-                                {isSubmitting ? 'SAVING DATA...' : 'SAVE PROD'}
+                                {isSubmitting
+                                    ? 'SAVING DATA...'
+                                    : 'SAVE PROD'}
                             </button>
+
                         </div>
+
                     </form>
+
                 </motion.div>
+
             </div>
+
         </div>
     );
 };
+
 
 export default MonthlyProdPlanForm;
