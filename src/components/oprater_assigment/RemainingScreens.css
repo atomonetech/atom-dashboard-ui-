@@ -37,6 +37,12 @@
    --card-backdrop: blur(12px);
    --btn-outline-bg: transparent;
    --gray-dot: rgba(255, 255, 255, 0.2);
+   /* Light form controls inside white forms */
+   --light-form-bg: #ffffff;
+   --light-form-text: #0f172a;
+   --light-form-placeholder: #64748b;
+   --light-form-disabled-text: #475569;
+   --light-form-border: #e2e8f0;
 }
 
 /* ==========================================
@@ -96,6 +102,113 @@ body,
    min-height: 100vh;
    margin: 0;
    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* =========================================================
+   GLOBAL LIGHT FORM FIX
+   Dark dashboard remains dark.
+   Inputs inside white/light forms use dark readable text.
+   ========================================================= */
+
+/* White containers */
+.bg-white input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.bg-white select,
+.bg-white textarea,
+
+/* Light slate containers */
+.bg-slate-50 input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.bg-slate-50 select,
+.bg-slate-50 textarea,
+
+.bg-slate-100 input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.bg-slate-100 select,
+.bg-slate-100 textarea {
+   color: var(--light-form-text) !important;
+   -webkit-text-fill-color: var(--light-form-text) !important;
+   color-scheme: light !important;
+}
+
+
+/* =========================================================
+   DROPDOWN OPTIONS
+   ========================================================= */
+
+.bg-white select option,
+.bg-slate-50 select option,
+.bg-slate-100 select option {
+   color: var(--light-form-text) !important;
+   -webkit-text-fill-color: var(--light-form-text) !important;
+   background-color: var(--light-form-bg) !important;
+}
+
+
+/* =========================================================
+   PLACEHOLDER
+   ========================================================= */
+
+.bg-white input::placeholder,
+.bg-white textarea::placeholder,
+.bg-slate-50 input::placeholder,
+.bg-slate-50 textarea::placeholder,
+.bg-slate-100 input::placeholder,
+.bg-slate-100 textarea::placeholder {
+   color: var(--light-form-placeholder) !important;
+   -webkit-text-fill-color: var(--light-form-placeholder) !important;
+   opacity: 1 !important;
+}
+
+
+/* =========================================================
+   DISABLED / READ ONLY
+   ========================================================= */
+
+.bg-white input:disabled,
+.bg-white select:disabled,
+.bg-white textarea:disabled,
+.bg-white input[readonly],
+
+.bg-slate-50 input:disabled,
+.bg-slate-50 select:disabled,
+.bg-slate-50 textarea:disabled,
+.bg-slate-50 input[readonly],
+
+.bg-slate-100 input:disabled,
+.bg-slate-100 select:disabled,
+.bg-slate-100 textarea:disabled,
+.bg-slate-100 input[readonly] {
+   color: var(--light-form-disabled-text) !important;
+   -webkit-text-fill-color: var(--light-form-disabled-text) !important;
+   opacity: 1 !important;
+}
+
+
+/* =========================================================
+   DATE / TIME FIELDS
+   ========================================================= */
+
+.bg-white input[type="date"],
+.bg-white input[type="time"],
+.bg-slate-50 input[type="date"],
+.bg-slate-50 input[type="time"],
+.bg-slate-100 input[type="date"],
+.bg-slate-100 input[type="time"] {
+   color: var(--light-form-text) !important;
+   -webkit-text-fill-color: var(--light-form-text) !important;
+   color-scheme: light !important;
+}
+
+
+/* =========================================================
+   CHROME AUTOFILL
+   ========================================================= */
+
+.bg-white input:-webkit-autofill,
+.bg-white input:-webkit-autofill:hover,
+.bg-white input:-webkit-autofill:focus,
+.bg-slate-50 input:-webkit-autofill,
+.bg-slate-50 input:-webkit-autofill:hover,
+.bg-slate-50 input:-webkit-autofill:focus {
+   -webkit-text-fill-color: var(--light-form-text) !important;
 }
 
 /* ==========================================

@@ -224,51 +224,132 @@ function App() {
     adminOnly,
   }) => {
     if (!isAuthenticated) {
-      return <Navigate to="/login" replace />;
+      return (
+        <Navigate
+          to="/login"
+          replace
+        />
+      );
     }
 
-    const userRole = localStorage.getItem("user_role");
+    const normalizeAccessName = (
+      value = ""
+    ) =>
+      String(value)
+        .trim()
+        .toLowerCase()
+        .replace(/[\s-]+/g, "_")
+        .replace(/_+/g, "_");
 
-    const userGroups = JSON.parse(
-      localStorage.getItem("user_groups") || "[]"
-    );
+    const userRole =
+      localStorage.getItem(
+        "user_role"
+      ) || "User";
 
-    // Admin ko full access hai
-    if (userRole === "Admin") {
+    let userGroups = [];
+
+    try {
+      const parsedGroups =
+        JSON.parse(
+          localStorage.getItem(
+            "user_groups"
+          ) || "[]"
+        );
+
+      userGroups =
+        Array.isArray(parsedGroups)
+          ? parsedGroups
+          : [];
+
+    } catch (error) {
+      console.error(
+        "Invalid user_groups:",
+        error
+      );
+
+      userGroups = [];
+    }
+
+    const normalizedRole =
+      normalizeAccessName(userRole);
+
+    const normalizedGroups =
+      userGroups.map(
+        normalizeAccessName
+      );
+
+    const hasGroup = (group) =>
+      normalizedGroups.includes(
+        normalizeAccessName(group)
+      );
+
+    // Admin = full access
+    if (normalizedRole === "admin") {
       return children;
     }
 
-    // Django Group based access
+    // Django group
     if (
       allowedGroup &&
-      !userGroups.includes(allowedGroup)
+      !hasGroup(allowedGroup)
     ) {
-      return <AccessDeniedScreen onLogout={handleLogout} />;
+      return (
+        <AccessDeniedScreen
+          onLogout={handleLogout}
+        />
+      );
     }
 
-    // Admin / Manager / Supervisor access
+    // Existing Manager / Supervisor rule
     if (adminOnly) {
       if (
-        userRole !== "Manager" &&
-        userRole !== "Supervisor"
+        normalizedRole !== "manager" &&
+        normalizedRole !== "supervisor"
       ) {
-        return <AccessDeniedScreen onLogout={handleLogout} />;
+        return (
+          <AccessDeniedScreen
+            onLogout={handleLogout}
+          />
+        );
       }
     }
 
-    // Multiple roles
-    if (allowedRoles && allowedRoles.length > 0) {
-      if (!allowedRoles.includes(userRole)) {
-        return <AccessDeniedScreen onLogout={handleLogout} />;
+    // Legacy multiple roles
+    if (
+      allowedRoles &&
+      allowedRoles.length > 0
+    ) {
+      const normalizedAllowedRoles =
+        allowedRoles.map(
+          normalizeAccessName
+        );
+
+      if (
+        !normalizedAllowedRoles.includes(
+          normalizedRole
+        )
+      ) {
+        return (
+          <AccessDeniedScreen
+            onLogout={handleLogout}
+          />
+        );
       }
     }
 
-    // Single role
+    // Legacy single role
     else if (
       allowedRole &&
-      userRole !== allowedRole
+      normalizedRole !==
+      normalizeAccessName(
+        allowedRole
+      )
     ) {
-      return <AccessDeniedScreen onLogout={handleLogout} />;
+      return (
+        <AccessDeniedScreen
+          onLogout={handleLogout}
+        />
+      );
     }
 
     return children;
@@ -371,7 +452,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
- 
+
             {/* 櫨 SPECIFIC PLANT ROUTES (Maha Important Fix) 櫨 */}
             <Route
               path="/plant1-live"
@@ -394,7 +475,7 @@ function App() {
             <Route
               path="/qa-hub/*"
               element={
-                <ProtectedRoute allowedRole="QA_Hub">
+                <ProtectedRoute allowedGroup="QA_Hub">
                   <QaRoutes />
                 </ProtectedRoute>
               }
@@ -402,7 +483,7 @@ function App() {
             <Route
               path="/production-hub/*"
               element={
-                <ProtectedRoute allowedRole="Production_Hub">
+                <ProtectedRoute allowedGroup="Production_Hub">
                   <ProductionRoutes />
                 </ProtectedRoute>
               }
@@ -411,7 +492,7 @@ function App() {
             <Route
               path="/maintenance-hub"
               element={
-                <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ProtectedRoute allowedGroup="Maintenance_Hub">
                   <MaintenanceHub />
                 </ProtectedRoute>
               }
@@ -419,7 +500,7 @@ function App() {
             <Route
               path="/Maintenance/Machine/*"
               element={
-                <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ProtectedRoute allowedGroup="Maintenance_Hub">
                   <MachineRoutes />
                 </ProtectedRoute>
               }
@@ -428,7 +509,7 @@ function App() {
             <Route
               path="/Maintenance/Tool/*"
               element={
-                <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ProtectedRoute allowedGroup="Maintenance_Hub">
                   <ToolRoutes />
                 </ProtectedRoute>
               }
@@ -437,7 +518,7 @@ function App() {
             <Route
               path="/Maintenance/Machine"
               element={
-                <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ProtectedRoute allowedGroup="Maintenance_Hub">
                   <MaintenanceHub />
                 </ProtectedRoute>
               }
@@ -445,7 +526,7 @@ function App() {
             <Route
               path="/Maintenance/Tool"
               element={
-                <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ProtectedRoute allowedGroup="Maintenance_Hub">
                   <MaintenanceHub />
                 </ProtectedRoute>
               }
@@ -455,7 +536,7 @@ function App() {
             <Route
               path="/maintenance-view/:formKey"
               element={
-                <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ProtectedRoute allowedGroup="Maintenance_Hub">
                   <MaintenanceView />
                 </ProtectedRoute>
               }
@@ -463,7 +544,7 @@ function App() {
             <Route
               path="/Maintenance/Machine/daily"
               element={
-                <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ProtectedRoute allowedGroup="Maintenance_Hub">
                   <MachineDailyReport />
                 </ProtectedRoute>
               }
@@ -471,7 +552,7 @@ function App() {
             <Route
               path="/Maintenance/Machine/weekly"
               element={
-                <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ProtectedRoute allowedGroup="Maintenance_Hub">
                   <MachineWeeklyReports />
                 </ProtectedRoute>
               }
@@ -479,7 +560,7 @@ function App() {
             <Route
               path="/Maintenance/Tool/daily"
               element={
-                <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ProtectedRoute allowedGroup="Maintenance_Hub">
                   <ToolDailyReports />
                 </ProtectedRoute>
               }
@@ -487,7 +568,7 @@ function App() {
             <Route
               path="/Maintenance/Tool/weekly"
               element={
-                <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ProtectedRoute allowedGroup="Maintenance_Hub">
                   <ToolWeekly />
                 </ProtectedRoute>
               }
@@ -495,7 +576,7 @@ function App() {
             <Route
               path="/Machine-Card-Report"
               element={
-                <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ProtectedRoute allowedGroup="Maintenance_Hub">
                   <MachineHistoryCardprint />
                 </ProtectedRoute>
               }
@@ -503,7 +584,7 @@ function App() {
             <Route
               path="/Machine-Breakdown-Report"
               element={
-                <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ProtectedRoute allowedGroup="Maintenance_Hub">
                   <MachineBreakdownSummaryPrint />
                 </ProtectedRoute>
               }
@@ -511,7 +592,7 @@ function App() {
             <Route
               path="/Daily-PowerPress-Report"
               element={
-                <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ProtectedRoute allowedGroup="Maintenance_Hub">
                   <DailyPowerPressChecksheetprint />
                 </ProtectedRoute>
               }
@@ -520,7 +601,7 @@ function App() {
             <Route
               path="/Maintenance/Machine/*"
               element={
-                <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ProtectedRoute allowedGroup="Maintenance_Hub">
                   <MachineRoutes />
                 </ProtectedRoute>
               }
@@ -528,7 +609,7 @@ function App() {
             <Route
               path="/Maintenance/Tool/*"
               element={
-                <ProtectedRoute allowedRole="Maintenance_Hub">
+                <ProtectedRoute allowedGroup="Maintenance_Hub">
                   <ToolRoutes />
                 </ProtectedRoute>
               }
@@ -537,7 +618,7 @@ function App() {
             <Route
               path="/qms"
               element={
-                <ProtectedRoute allowedRole="QA_Hub">
+                <ProtectedRoute allowedGroup="QA_Hub">
                   <ReportsDashboard />
                 </ProtectedRoute>
               }
@@ -545,7 +626,7 @@ function App() {
             <Route
               path="/ReportsDashboard"
               element={
-                <ProtectedRoute allowedRole="QA_Hub">
+                <ProtectedRoute allowedGroup="QA_Hub">
                   <ReportsDashboard />
                 </ProtectedRoute>
               }
@@ -553,7 +634,7 @@ function App() {
             <Route
               path="/qms-dashboard"
               element={
-                <ProtectedRoute allowedRole="QA_Hub">
+                <ProtectedRoute allowedGroup="QA_Hub">
                   <QMSDashboard onLogout={handleLogout} />
                 </ProtectedRoute>
               }
@@ -561,7 +642,7 @@ function App() {
             <Route
               path="/qms/report/:reportId"
               element={
-                <ProtectedRoute allowedRole="QA_Hub">
+                <ProtectedRoute allowedGroup="QA_Hub">
                   <ReportDetail />
                 </ProtectedRoute>
               }
@@ -569,7 +650,7 @@ function App() {
             <Route
               path="/qms/report/:reportId/edit"
               element={
-                <ProtectedRoute allowedRole="QA_Hub">
+                <ProtectedRoute allowedGroup="QA_Hub">
                   <ReportEditor />
                 </ProtectedRoute>
               }
@@ -577,7 +658,7 @@ function App() {
             <Route
               path="/qms/patrol-inspection"
               element={
-                <ProtectedRoute allowedRole="QA_Hub">
+                <ProtectedRoute allowedGroup="QA_Hub">
                   <PatrolInspection />
                 </ProtectedRoute>
               }
@@ -585,7 +666,7 @@ function App() {
             <Route
               path="/qms/raw-material-form"
               element={
-                <ProtectedRoute allowedRole="QA_Hub">
+                <ProtectedRoute allowedGroup="QA_Hub">
                   <RawMaterialForm />
                 </ProtectedRoute>
               }
@@ -593,7 +674,7 @@ function App() {
             <Route
               path="/qms/pdi-report-form"
               element={
-                <ProtectedRoute allowedRole="QA_Hub">
+                <ProtectedRoute allowedGroup="QA_Hub">
                   <PdiReportForm />
                 </ProtectedRoute>
               }
