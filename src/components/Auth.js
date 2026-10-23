@@ -59,7 +59,7 @@ const THEME_VARS = `
     --bg-soft-2: #172554;
     --surface: #1e293b;
     --surface-2: #172554;
-    --text: #f1f5f9;
+    --text: #ffffff;
     --text-soft: #94a3b8;
     --text-muted: #94a3b8;
     --accent: #06b6d4;
@@ -604,7 +604,7 @@ export default function Auth({ onLogin }) {
 
             {/* Error Banner */}
             {errorMessage && (
-              <div className="bg-[#ffebe9] text-[#ff1100] border border-[rgba(255,129,130,0.4)] px-4 py-3 rounded-lg mb-6 flex justify-between items-center shadow-sm">
+              <div className="bg-[#ffebe9] text-[#ff0000] border border-[rgba(255,129,130,0.4)] px-4 py-3 rounded-lg mb-6 flex justify-between items-center shadow-sm">
                 <span className="text-sm font-medium">{errorMessage}</span>
                 <button
                   type="button"
