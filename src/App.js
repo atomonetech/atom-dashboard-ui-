@@ -12,7 +12,7 @@ import {
 } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import RawMaterialsEntry from "./pages/storeHub/RawMaterialsEntry";
 // Core Components
 import Sidebar from "./components/Sidebar";
 import CodeViewer from "./components/CodeViewer";
@@ -735,6 +735,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/store-hub/raw-materials" element={<RawMaterialsEntry />} />
 
             <Route path="/view-code" element={<CodeViewer />} />
 

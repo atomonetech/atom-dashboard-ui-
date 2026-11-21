@@ -6,7 +6,7 @@ import {
   LayoutDashboard,
   LogOut,
   Settings,
-  User,
+  Users,
   ChevronLeft,
   ChevronRight,
   Bell,
@@ -18,14 +18,16 @@ import {
   ShieldCheck,
   CalendarCheck,
   CircleAlert,
+  Boxes,
   Wrench,
+  PackagePlus,
   ClipboardCheck,
   Package,
-  Users,
   History,
   ArrowRight,
-  Lock,
   BarChart3,
+  Warehouse,
+  UserRoundPlus,
 } from "lucide-react";
 import { useUser } from "../../src/context/UserContext";
 import { toast } from "react-toastify";
@@ -63,7 +65,7 @@ export default function Sidebar({ onLogout }) {
 
   // 🔥 NAYA CODE: Dropdown ko track karne ke liye state
   const [openDropdown, setOpenDropdown] = useState("");
-
+  const [openSubDropdown, setOpenSubDropdown] = useState("");
   const previousCount = useRef(0);
 
   // Theme Sync Observer
@@ -411,6 +413,19 @@ export default function Sidebar({ onLogout }) {
       );
     }
 
+    // Store Hub
+    if (
+      normalizedPath === "/store-hub" ||
+      normalizedPath.startsWith("/store-hub/")
+    ) {
+      return (
+        hasGroup("Store_Hub") ||
+        normalizedRole === "store_hub" ||
+        normalizedRole === "manager" ||
+        normalizedRole === "supervisor"
+      );
+    }
+
     // App.js currently allows
     // Manager/Supervisor for adminOnly pages
     if (
@@ -462,11 +477,10 @@ export default function Sidebar({ onLogout }) {
       color: "indigo",
       badge: null,
       subItems: [
-        { label: "Assign Operator", path: "/operations/assign-operator" },
-        // { label: "Current Assignments", path: "/operations/current-assignments" },
-        { label: "Machine History", path: "/operations/machine-history" },
-        { label: "Operator History", path: "/operations/operator-history" },
-        { label: "Work Plan", path: "/operations/work-plan" },
+        { label: "Assign Operator", icon: UserRoundPlus, path: "/operations/assign-operator" },
+        { label: "Machine History", icon: History, path: "/operations/machine-history" },
+        { label: "Operator History", icon: Users, path: "/operations/operator-history" },
+        { label: "Work Plan", icon: ClipboardList, path: "/operations/work-plan" },
       ]
     },
     // {
@@ -538,6 +552,24 @@ export default function Sidebar({ onLogout }) {
       path: "/analysis-hub",
       color: "cyan",
       badge: null,
+    },
+    {
+      label: "Store Hub",
+      icon: Warehouse,
+      path: "/store-hub",
+      color: "cyan",
+      badge: null,
+      subItems: [
+        {
+          label: "Incoming Materials", icon: PackagePlus, path: "/store-hub/incoming-materials",
+          subItems: [
+            { label: "Inventory", icon: Package, path: "/store-hub/incoming-materials/inventory" },
+            { label: "PR/Bar Code", icon: ClipboardCheck, path: "/store-hub/incoming-materials/pr-bar-code" },
+            { label: "Material Request Slip", icon: ClipboardList, path: "/store-hub/incoming-materials/materials" },
+          ]
+        },
+        { label: "Raw Materials", icon: Boxes, path: "/store-hub/raw-materials" },
+      ]
     },
   ];
 
@@ -891,24 +923,105 @@ export default function Sidebar({ onLogout }) {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden flex flex-col gap-1 mt-1 pl-9 pr-2"
+                      className="overflow-hidden flex flex-col gap-1 mt-1 pl-7 pr-2"
                     >
                       {item.subItems.map((sub) => {
-                        const isSubActive = location.pathname.includes(sub.path);
+                        const SubIcon = sub.icon;
+                        const hasNestedItems = Boolean(sub.subItems?.length);
+                        const subKey = `${item.label}/${sub.path}`;
+                        const isSubOpen = openSubDropdown === subKey;
+
+                        const isSubActive =
+                          location.pathname === sub.path ||
+                          location.pathname.startsWith(`${sub.path}/`);
+
                         return (
-                          <button
-                            key={sub.path}
-                            onClick={() => {
-                              navigate(sub.path);
-                              closeSidebar();
-                            }}
-                            className={`text-left text-xs py-2 px-3 rounded-md transition-all duration-200 ${isSubActive
-                              ? (theme === "light" ? "bg-blue-50 text-blue-600 font-semibold" : "bg-indigo-500/20 text-indigo-400 font-semibold")
-                              : (theme === "light" ? "text-slate-600 hover:bg-slate-100" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50")
-                              }`}
-                          >
-                            {sub.label}
-                          </button>
+                          <div key={sub.path} className="flex flex-col">
+
+                            {/* First Level Submenu */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (hasNestedItems) {
+                                  setOpenSubDropdown(
+                                    isSubOpen ? "" : subKey
+                                  );
+                                } else {
+                                  navigate(sub.path);
+                                  closeSidebar();
+                                }
+                              }}
+                              className={`flex items-center gap-2 text-left text-xs
+                py-2 px-3 rounded-md transition-all duration-200
+                ${isSubActive
+                                  ? theme === "light"
+                                    ? "bg-blue-50 text-blue-600 font-semibold"
+                                    : "bg-indigo-500/20 text-indigo-400 font-semibold"
+                                  : theme === "light"
+                                    ? "text-slate-600 hover:bg-slate-100"
+                                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                                }`}
+                            >
+                              {/* Submenu Icon */}
+                              {SubIcon && (
+                                <SubIcon className="w-4 h-4 flex-shrink-0" />
+                              )}
+
+                              <span className="flex-1">{sub.label}</span>
+
+                              {/* Nested Dropdown Arrow */}
+                              {hasNestedItems && (
+                                <ChevronRight
+                                  className={`w-3.5 h-3.5 transition-transform
+                    ${isSubOpen ? "rotate-90" : ""}`}
+                                />
+                              )}
+                            </button>
+
+                            {/* Second Level Submenu */}
+                            <AnimatePresence>
+                              {hasNestedItems && isSubOpen && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="overflow-hidden flex flex-col ml-5 pl-2 border-l border-slate-500/20"
+                                >
+                                  {sub.subItems.map((nested) => {
+                                    const NestedIcon = nested.icon;
+                                    const isNestedActive =
+                                      location.pathname === nested.path;
+
+                                    return (
+                                      <button
+                                        type="button"
+                                        key={nested.path}
+                                        onClick={() => {
+                                          navigate(nested.path);
+                                          closeSidebar();
+                                        }}
+                                        className={`flex items-center gap-2 text-left
+                          text-xs py-2 px-2 rounded-md transition-all
+                          ${isNestedActive
+                                            ? "text-cyan-400 font-semibold bg-cyan-500/10"
+                                            : theme === "light"
+                                              ? "text-slate-500 hover:bg-slate-100"
+                                              : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                                          }`}
+                                      >
+                                        {NestedIcon && (
+                                          <NestedIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                                        )}
+
+                                        <span>{nested.label}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+
+                          </div>
                         );
                       })}
                     </motion.div>
