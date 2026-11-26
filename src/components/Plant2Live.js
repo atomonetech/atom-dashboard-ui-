@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-
+import { motion } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 // =================================================================================
@@ -304,7 +305,7 @@ export default function Plant2Live() {
     try {
       const saved = localStorage.getItem("reasonLoggedStates_plant2");
       if (saved) return JSON.parse(saved);
-    } catch (e) {}
+    } catch (e) { }
     return {};
   });
 
@@ -671,11 +672,11 @@ export default function Plant2Live() {
                 prevMachines.map((machine) =>
                   sameMachine(machine.machine_no, machineNo)
                     ? {
-                        ...machine,
-                        has_pending_reason: true,
-                        report_status: "SUBMITTED",
-                        submitted_by: liveData.submitted_by || null,
-                      }
+                      ...machine,
+                      has_pending_reason: true,
+                      report_status: "SUBMITTED",
+                      submitted_by: liveData.submitted_by || null,
+                    }
                     : machine,
                 ),
               );
@@ -724,15 +725,15 @@ export default function Plant2Live() {
             return prevMachines.map((machine) =>
               sameMachine(machine.machine_no, liveMachineNo)
                 ? {
-                    ...machine,
-                    current_hour_count: currentHourCountFromDb,
-                    cumulative_count: cumulativeCountFromDb,
-                    machine_on: true,
-                    is_producing: true,
-                    last_activity: new Date().toLocaleTimeString("en-GB", {
-                      hour12: false,
-                    }),
-                  }
+                  ...machine,
+                  current_hour_count: currentHourCountFromDb,
+                  cumulative_count: cumulativeCountFromDb,
+                  machine_on: true,
+                  is_producing: true,
+                  last_activity: new Date().toLocaleTimeString("en-GB", {
+                    hour12: false,
+                  }),
+                }
                 : machine,
             );
           });
@@ -877,10 +878,10 @@ export default function Plant2Live() {
         setSelectedMachine((prev) =>
           prev
             ? {
-                ...prev,
-                last_hour_count: getSafeCount(prev.current_hour_count),
-                current_hour_count: 0,
-              }
+              ...prev,
+              last_hour_count: getSafeCount(prev.current_hour_count),
+              current_hour_count: 0,
+            }
             : prev,
         );
 
@@ -1102,8 +1103,8 @@ export default function Plant2Live() {
       if (!notificationResponse.ok || !notificationData.success) {
         throw new Error(
           notificationData.error ||
-            notificationData.message ||
-            "Could not load current notification.",
+          notificationData.message ||
+          "Could not load current notification.",
         );
       }
 
@@ -1231,9 +1232,9 @@ export default function Plant2Live() {
       if (!response.ok || !data.success) {
         throw new Error(
           data.error ||
-            data.message ||
-            data.detail ||
-            `Reason submission failed (HTTP ${response.status})`,
+          data.message ||
+          data.detail ||
+          `Reason submission failed (HTTP ${response.status})`,
         );
       }
 
@@ -1341,7 +1342,24 @@ export default function Plant2Live() {
         .timeline-container { position: relative; padding: 20px 0; } .timeline-line { position: absolute; left: 24px; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.1); }
         .timeline-item { position: relative; padding-left: 60px; margin-bottom: 30px; } .timeline-icon { position: absolute; left: 12px; top: 0; width: 26px; height: 26px; border-radius: 50%; background: #1e293b; border: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 12px; z-index: 2; }
         .timeline-content { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; }
-      `}</style>
+            `}</style>
+
+      {/* Back Button */}
+      <motion.button
+        type="button"
+        whileHover={{ x: -4 }}
+        whileTap={{ scale: 0.96 }}
+        onClick={() => navigate(-1)}
+        className="inline-flex items-center gap-2 px-4 py-2 mb-6
+                   rounded-lg border border-slate-700
+                   bg-slate-800 text-slate-200
+                   hover:bg-slate-700 hover:border-cyan-400
+                   hover:text-cyan-400 transition-all duration-200
+                   text-sm font-semibold"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back
+      </motion.button>
 
       {/* HEADER SECTION */}
       <div
@@ -2728,11 +2746,10 @@ export default function Plant2Live() {
                                           seg.mode === "OFFLINE"
                                             ? "rgba(100,116,139,0.12)"
                                             : "rgba(245,158,11,0.08)",
-                                        borderLeft: `3px solid ${
-                                          seg.mode === "OFFLINE"
+                                        borderLeft: `3px solid ${seg.mode === "OFFLINE"
                                             ? "#64748b"
                                             : "#f59e0b"
-                                        }`,
+                                          }`,
                                         borderRadius: "6px",
                                       }}
                                     >
@@ -2803,22 +2820,22 @@ export default function Plant2Live() {
                                         ev.part_number ||
                                         ev.model_name ||
                                         ev.tool_name) && (
-                                        <div
-                                          style={{
-                                            marginTop: "2px",
-                                            color: "#cbd5e1",
-                                            fontSize: "clamp(9px, 2vw, 12px)",
-                                          }}
-                                        >
-                                          {ev.customer_name ||
-                                            ev.customer ||
-                                            "N/A"}{" "}
-                                          | {ev.model_name || ev.model || "N/A"}{" "}
-                                          | {ev.part_name || "N/A"} | Part No:{" "}
-                                          {ev.part_number || "N/A"} | Tool:{" "}
-                                          {ev.tool_name || "N/A"}
-                                        </div>
-                                      )}
+                                          <div
+                                            style={{
+                                              marginTop: "2px",
+                                              color: "#cbd5e1",
+                                              fontSize: "clamp(9px, 2vw, 12px)",
+                                            }}
+                                          >
+                                            {ev.customer_name ||
+                                              ev.customer ||
+                                              "N/A"}{" "}
+                                            | {ev.model_name || ev.model || "N/A"}{" "}
+                                            | {ev.part_name || "N/A"} | Part No:{" "}
+                                            {ev.part_number || "N/A"} | Tool:{" "}
+                                            {ev.tool_name || "N/A"}
+                                          </div>
+                                        )}
                                     </div>
                                   );
                                 }
@@ -2853,10 +2870,10 @@ export default function Plant2Live() {
                         const color = isOff
                           ? "#64748b"
                           : isChange
-                          ? "#3b82f6"
-                          : isIdeal
-                          ? "#f59e0b"
-                          : "#10b981";
+                            ? "#3b82f6"
+                            : isIdeal
+                              ? "#f59e0b"
+                              : "#10b981";
                         return (
                           <div key={index} className="timeline-item">
                             <div
@@ -2918,26 +2935,26 @@ export default function Plant2Live() {
                                 event.part_number ||
                                 event.model_name ||
                                 event.tool_name) && (
-                                <div
-                                  style={{
-                                    marginTop: "6px",
-                                    padding: "6px 8px",
-                                    borderRadius: "6px",
-                                    background: "rgba(59,130,246,0.08)",
-                                    color: "#cbd5e1",
-                                    fontSize: "clamp(9px, 2vw, 12px)",
-                                  }}
-                                >
-                                  <b style={{ color: "#93c5fd" }}>TID Map:</b>{" "}
-                                  {event.customer_name ||
-                                    event.customer ||
-                                    "N/A"}{" "}
-                                  | {event.model_name || event.model || "N/A"} |{" "}
-                                  {event.part_name || "N/A"} | Part No:{" "}
-                                  {event.part_number || "N/A"} | Tool:{" "}
-                                  {event.tool_name || "N/A"}
-                                </div>
-                              )}
+                                  <div
+                                    style={{
+                                      marginTop: "6px",
+                                      padding: "6px 8px",
+                                      borderRadius: "6px",
+                                      background: "rgba(59,130,246,0.08)",
+                                      color: "#cbd5e1",
+                                      fontSize: "clamp(9px, 2vw, 12px)",
+                                    }}
+                                  >
+                                    <b style={{ color: "#93c5fd" }}>TID Map:</b>{" "}
+                                    {event.customer_name ||
+                                      event.customer ||
+                                      "N/A"}{" "}
+                                    | {event.model_name || event.model || "N/A"} |{" "}
+                                    {event.part_name || "N/A"} | Part No:{" "}
+                                    {event.part_number || "N/A"} | Tool:{" "}
+                                    {event.tool_name || "N/A"}
+                                  </div>
+                                )}
                               <div
                                 style={{
                                   fontSize: "clamp(9px, 2vw, 11px)",
@@ -3022,11 +3039,10 @@ export default function Plant2Live() {
                           color: selectedMachine.machine_on
                             ? "#34d399"
                             : "#fca5a5",
-                          border: `1px solid ${
-                            selectedMachine.machine_on
+                          border: `1px solid ${selectedMachine.machine_on
                               ? "rgba(16, 185, 129, 0.4)"
                               : "rgba(239, 68, 68, 0.4)"
-                          }`,
+                            }`,
                           marginLeft: "auto",
                         }}
                       >
@@ -3832,11 +3848,10 @@ export default function Plant2Live() {
                         }}
                       >
                         {getMachineSpec(selectedMachine.machine_no).capacity !==
-                        "N/A"
-                          ? `${
-                              getMachineSpec(selectedMachine.machine_no)
-                                .capacity
-                            } TON`
+                          "N/A"
+                          ? `${getMachineSpec(selectedMachine.machine_no)
+                            .capacity
+                          } TON`
                           : "N/A TON"}
                       </span>
                     </div>

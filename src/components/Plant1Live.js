@@ -1,5 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { motion } from 'framer-motion';
+import {
+  ArrowLeft,
+} from 'lucide-react';
 
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
@@ -146,7 +150,6 @@ const CATEGORY_ICONS = {
 const CustomDropdown = ({ value, onChange, options, placeholder, icon }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -159,6 +162,7 @@ const CustomDropdown = ({ value, onChange, options, placeholder, icon }) => {
 
   return (
     <div ref={dropdownRef} style={{ position: "relative", width: "100%" }}>
+
       <div
         onClick={() => setIsOpen(!isOpen)}
         style={{
@@ -181,6 +185,7 @@ const CustomDropdown = ({ value, onChange, options, placeholder, icon }) => {
           userSelect: "none",
         }}
       >
+
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           {value && icon && CATEGORY_ICONS[value] && (
             <i
@@ -315,7 +320,7 @@ export default function Plant1Live() {
     try {
       const saved = localStorage.getItem("reasonLoggedStates_plant1");
       if (saved) return JSON.parse(saved);
-    } catch (e) {}
+    } catch (e) { }
     return {};
   });
 
@@ -536,9 +541,9 @@ export default function Plant1Live() {
                 current_hour_count:
                   currentHour === new Date().getHours()
                     ? Math.max(
-                        getSafeCount(oldMachine.current_hour_count),
-                        getSafeCount(newMachine.current_hour_count),
-                      )
+                      getSafeCount(oldMachine.current_hour_count),
+                      getSafeCount(newMachine.current_hour_count),
+                    )
                     : getSafeCount(newMachine.current_hour_count),
 
                 cumulative_count: Math.max(
@@ -565,9 +570,9 @@ export default function Plant1Live() {
               current_hour_count:
                 currentHour === new Date().getHours()
                   ? Math.max(
-                      getSafeCount(prev.current_hour_count),
-                      getSafeCount(updated.current_hour_count),
-                    )
+                    getSafeCount(prev.current_hour_count),
+                    getSafeCount(updated.current_hour_count),
+                  )
                   : getSafeCount(updated.current_hour_count),
 
               cumulative_count: Math.max(
@@ -647,9 +652,9 @@ export default function Plant1Live() {
               prevMachines.map((machine) =>
                 sameMachine(machine.machine_no, machineNo)
                   ? {
-                      ...machine,
-                      has_pending_reason: true,
-                    }
+                    ...machine,
+                    has_pending_reason: true,
+                  }
                   : machine,
               ),
             );
@@ -691,11 +696,11 @@ export default function Plant1Live() {
                 prevMachines.map((machine) =>
                   sameMachine(machine.machine_no, machineNo)
                     ? {
-                        ...machine,
-                        has_pending_reason: true,
-                        report_status: "SUBMITTED",
-                        submitted_by: liveData.submitted_by || null,
-                      }
+                      ...machine,
+                      has_pending_reason: true,
+                      report_status: "SUBMITTED",
+                      submitted_by: liveData.submitted_by || null,
+                    }
                     : machine,
                 ),
               );
@@ -741,15 +746,15 @@ export default function Plant1Live() {
             return prevMachines.map((machine) =>
               sameMachine(machine.machine_no, liveMachineNo)
                 ? {
-                    ...machine,
-                    current_hour_count: currentHourCountFromDb,
-                    cumulative_count: cumulativeCountFromDb,
-                    machine_on: true,
-                    is_producing: true,
-                    last_activity: new Date().toLocaleTimeString("en-GB", {
-                      hour12: false,
-                    }),
-                  }
+                  ...machine,
+                  current_hour_count: currentHourCountFromDb,
+                  cumulative_count: cumulativeCountFromDb,
+                  machine_on: true,
+                  is_producing: true,
+                  last_activity: new Date().toLocaleTimeString("en-GB", {
+                    hour12: false,
+                  }),
+                }
                 : machine,
             );
           });
@@ -886,10 +891,10 @@ export default function Plant1Live() {
         setSelectedMachine((prev) =>
           prev
             ? {
-                ...prev,
-                last_hour_count: getSafeCount(prev.current_hour_count),
-                current_hour_count: 0,
-              }
+              ...prev,
+              last_hour_count: getSafeCount(prev.current_hour_count),
+              current_hour_count: 0,
+            }
             : prev,
         );
 
@@ -1090,8 +1095,8 @@ export default function Plant1Live() {
       if (!notificationResponse.ok || !notificationData.success) {
         throw new Error(
           notificationData.error ||
-            notificationData.message ||
-            "Could not load current notification.",
+          notificationData.message ||
+          "Could not load current notification.",
         );
       }
 
@@ -1137,8 +1142,8 @@ export default function Plant1Live() {
       if (currentNotifications.length === 0) {
         throw new Error(
           "Current idle/offline event is not ready yet. " +
-            "Please wait until the machine remains idle/offline " +
-            "for at least 3 minutes.",
+          "Please wait until the machine remains idle/offline " +
+          "for at least 3 minutes.",
         );
       }
 
@@ -1230,9 +1235,9 @@ export default function Plant1Live() {
       if (!response.ok || !data.success) {
         throw new Error(
           data.error ||
-            data.message ||
-            data.detail ||
-            `Reason submission failed (HTTP ${response.status})`,
+          data.message ||
+          data.detail ||
+          `Reason submission failed (HTTP ${response.status})`,
         );
       }
 
@@ -1339,7 +1344,24 @@ export default function Plant1Live() {
         .timeline-container { position: relative; padding: 20px 0; } .timeline-line { position: absolute; left: 24px; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.1); }
         .timeline-item { position: relative; padding-left: 60px; margin-bottom: 30px; } .timeline-icon { position: absolute; left: 12px; top: 0; width: 26px; height: 26px; border-radius: 50%; background: #1e293b; border: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 12px; z-index: 2; }
         .timeline-content { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; }
-      `}</style>
+            `}</style>
+
+      {/* Back Button */}
+      <motion.button
+        type="button"
+        whileHover={{ x: -4 }}
+        whileTap={{ scale: 0.96 }}
+        onClick={() => navigate(-1)}
+        className="inline-flex items-center gap-2 px-4 py-2 mb-6
+                   rounded-lg border border-slate-700
+                   bg-slate-800 text-slate-200
+                   hover:bg-slate-700 hover:border-cyan-400
+                   hover:text-cyan-400 transition-all duration-200
+                   text-sm font-semibold"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back
+      </motion.button>
 
       {/* HEADER SECTION */}
       <div
@@ -1944,22 +1966,22 @@ export default function Plant1Live() {
         <div onClick={closeModal} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(2, 6, 23, 0.85)', backdropFilter: 'blur(8px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: 'clamp(10px, 2vw, 20px)' }}>
           <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: '#0f172a', borderRadius: '20px', padding: 0, maxWidth: '800px', width: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)', border: `1px solid rgba(255,255,255,0.1)` }}>
             <div style={{ padding: 'clamp(14px, 3vw, 30px)', background: `linear-gradient(135deg, ${getMachineColor(selectedMachine)} 0%, #0f172a 150%)`, borderTopLeftRadius: '20px', borderTopRightRadius: '20px' }}>
-              
+
               {/* FIXED RESPONSIVE HEADER START */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'clamp(8px, 2vw, 15px)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 10px)', flexWrap: 'wrap', flex: 1 }}>
-                  
+
                   <div style={{ fontSize: 'clamp(18px, 5vw, 32px)', fontWeight: '900', color: 'white', wordBreak: 'break-word' }}>
                     PP-{String(selectedMachine.machine_no).trim().padStart(2, '0')}
                   </div>
-                  
+
                   {!showHistoryView && <div style={{ padding: 'clamp(4px, 1vw, 8px) clamp(10px, 2vw, 20px)', fontSize: 'clamp(10px, 2.5vw, 14px)', backgroundColor: 'rgba(0,0,0,0.3)', color: 'white', borderRadius: '30px', fontWeight: '800', whiteSpace: 'nowrap' }}>{getMachineStatus(selectedMachine)}</div>}
                   <div title={showHistoryView ? "Back to Dashboard" : "View Timeline History"} style={{ position: 'relative', cursor: 'pointer', padding: 'clamp(4px, 1vw, 10px) clamp(10px, 2vw, 15px)', fontSize: 'clamp(10px, 2.5vw, 14px)', backgroundColor: showHistoryView ? '#10b981' : 'rgba(0,0,0,0.3)', color: 'white', borderRadius: '30px', fontWeight: '700', border: '1px solid rgba(255,255,255,0.1)', transition: 'all 0.2s', display: 'flex', gap: '6px', alignItems: 'center', whiteSpace: 'nowrap' }} onClick={toggleHistoryView}>
                     <span style={{ display: 'flex', alignItems: 'center' }}>
                       {showHistoryView ? (
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
                       ) : (
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" /></svg>
                       )}
                     </span>
                     <span>{showHistoryView ? "Live View" : "History"}</span>
@@ -2019,7 +2041,7 @@ export default function Plant1Live() {
                     <h3 style={{ margin: '0 0 12px 0', color: '#f8fafc', fontSize: 'clamp(14px, 3.5vw, 18px)' }}>Hourly Shift Story</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
                       {historyHourlySummary.map((hour, index) => {
-                        
+
                         const combinedEvents = [];
                         (hour.ideal_segments || []).forEach(seg => combinedEvents.push({ type: 'IDEAL', timeStr: seg.start_time, data: seg }));
                         (hour.on_off_events || []).forEach(ev => combinedEvents.push({ type: 'ON_OFF', timeStr: ev.time, data: ev }));
@@ -2040,7 +2062,7 @@ export default function Plant1Live() {
                         combinedEvents.sort((a, b) => {
                           const timeA = parseTimeToSeconds(a.timeStr);
                           const timeB = parseTimeToSeconds(b.timeStr);
-                          
+
                           if (Math.abs(timeA - timeB) <= 2) {
                             const priority = { 'ON_OFF': 1, 'TOOL_CHANGE': 2, 'SHUT_HEIGHT_CHANGE': 3, 'IDEAL': 4 };
                             return (priority[a.type] || 5) - (priority[b.type] || 5);
@@ -2191,9 +2213,9 @@ export default function Plant1Live() {
                   </div>
                   <div style={{ marginTop: '12px', padding: 'clamp(8px, 2vw, 16px)', background: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', fontSize: 'clamp(11px, 2.5vw, 14px)' }}><span style={{ color: '#94a3b8' }}>Status</span><span style={{ fontWeight: 'bold', color: selectedMachine.is_producing ? '#10b981' : '#f59e0b' }}>{selectedMachine.is_producing ? '✅ Currently Producing' : '⚠️ Idle / Offline'}</span></div>
                 </div>
-                
+
                 <div style={{ textAlign: 'center', padding: 'clamp(16px, 4vw, 30px)', background: 'linear-gradient(145deg, #1e293b, #0f172a)', borderRadius: '16px', border: `1px solid rgba(255,255,255,0.05)`, boxShadow: `inset 0 4px 20px rgba(0,0,0,0.5)` }}><div style={{ fontSize: 'clamp(10px, 2.5vw, 14px)', color: '#94a3b8', marginBottom: '4px', fontWeight: '700', textTransform: 'uppercase' }}>Current Hour Production</div><div style={{ fontSize: 'clamp(28px, 8vw, 72px)', fontWeight: '900', color: getMachineColor(selectedMachine), textShadow: `0 0 20px ${getMachineColor(selectedMachine)}40`, lineHeight: '1' }}>{selectedMachine.current_hour_count || 0}</div><div style={{ fontSize: 'clamp(9px, 2vw, 12px)', color: '#64748b', marginTop: '6px' }}>Resets every hour at XX:00:00</div></div>
-                
+
                 <div style={{ backgroundColor: '#1e293b', padding: 'clamp(12px, 3vw, 20px)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                   <h3 style={{ margin: '0 0 12px 0', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'clamp(14px, 3.5vw, 18px)' }}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -2224,35 +2246,35 @@ export default function Plant1Live() {
                   </div>
                 </div>
 
-              {/* MACHINE INFORMATION SECTION WITH DYNAMIC MAP */}
-              <div style={{ backgroundColor: '#1e293b', padding: 'clamp(12px, 3vw, 20px)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <h3 style={{ margin: '0 0 12px 0', color: '#fcd34d', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'clamp(14px, 3.5vw, 18px)' }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path>
-                    <path d="M17 18h1"></path>
-                    <path d="M12 18h1"></path>
-                    <path d="M7 18h1"></path>
-                  </svg>
-                  <span>Machine Information</span>
-                </h3>
-                <div style={{ display: 'grid', gap: '8px', fontSize: 'clamp(11px, 2.5vw, 14px)' }}>
-                  
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px)', backgroundColor: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px' }}>
-                    <span style={{ color: '#94a3b8' }}>Machine Company</span>
-                    <span style={{ fontWeight: 'bold', color: '#fff', textAlign: 'right' }}>
-                      {getMachineSpec(selectedMachine.machine_no).company}
-                    </span>
-                  </div>
+                {/* MACHINE INFORMATION SECTION WITH DYNAMIC MAP */}
+                <div style={{ backgroundColor: '#1e293b', padding: 'clamp(12px, 3vw, 20px)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <h3 style={{ margin: '0 0 12px 0', color: '#fcd34d', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'clamp(14px, 3.5vw, 18px)' }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"></path>
+                      <path d="M17 18h1"></path>
+                      <path d="M12 18h1"></path>
+                      <path d="M7 18h1"></path>
+                    </svg>
+                    <span>Machine Information</span>
+                  </h3>
+                  <div style={{ display: 'grid', gap: '8px', fontSize: 'clamp(11px, 2.5vw, 14px)' }}>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px)', backgroundColor: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px' }}>
-                    <span style={{ color: '#94a3b8' }}>Machine Capacity</span>
-                    <span style={{ fontWeight: 'bold', color: '#fcd34d', textAlign: 'right' }}>
-                      {getMachineSpec(selectedMachine.machine_no).capacity !== 'N/A' ? `${getMachineSpec(selectedMachine.machine_no).capacity} TON` : 'N/A TON'}
-                    </span>
-                  </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px)', backgroundColor: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px' }}>
+                      <span style={{ color: '#94a3b8' }}>Machine Company</span>
+                      <span style={{ fontWeight: 'bold', color: '#fff', textAlign: 'right' }}>
+                        {getMachineSpec(selectedMachine.machine_no).company}
+                      </span>
+                    </div>
 
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 16px)', backgroundColor: 'rgba(2, 6, 23, 0.4)', borderRadius: '8px' }}>
+                      <span style={{ color: '#94a3b8' }}>Machine Capacity</span>
+                      <span style={{ fontWeight: 'bold', color: '#fcd34d', textAlign: 'right' }}>
+                        {getMachineSpec(selectedMachine.machine_no).capacity !== 'N/A' ? `${getMachineSpec(selectedMachine.machine_no).capacity} TON` : 'N/A TON'}
+                      </span>
+                    </div>
+
+                  </div>
                 </div>
-              </div>
 
                 {/* FIXED RESPONSIVE BOTTOM GRID START */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '10px' }}>

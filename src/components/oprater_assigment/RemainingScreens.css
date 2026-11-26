@@ -89,6 +89,10 @@ strong {
    color: var(--text-dark);
 }
 
+.custom-text span{
+  color: #d32f2f !important;
+}
+
 /* THE ULTIMATE BACKGROUND FIX */
 html,
 body,
