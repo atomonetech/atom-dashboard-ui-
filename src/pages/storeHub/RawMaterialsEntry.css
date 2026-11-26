@@ -15,17 +15,85 @@
 /* Form width & section spacing */
 .rm-detail-grid > .rm-card { margin-bottom: 0; }
 .rm-additional { margin-top: 18px; }
-.rm-footer-actions { padding-top: 8px; padding-bottom: 12px; }
+.rm-footer-actions { padding-top: 18px; padding-bottom: 12px; }
+
 /* Laptop and desktop - always 90% */
 .rm-shell {
   width: 90%;
+  min-height: 90vh;
   max-width: none;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* Mobile - full width */
 @media (max-width: 767px) {
   .rm-shell {
     width: 100%;
+    height: auto;
+    min-height: 100vh;
+    overflow-y: visible;
+  }
+}
+
+/* ================================
+   BACK BUTTON - TOP LEFT
+================================ */
+
+.rm-back-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
+.rm-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  padding: 7px 14px;
+  min-height: 32px;
+
+  background: var(--rm-card);
+  color: var(--rm-text);
+
+  border: 1px solid var(--rm-outline);
+  border-radius: 7px;
+
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.rm-back-btn:hover {
+  background: #0891b2;
+  border-color: #22d3ee;
+  color: #ffffff;
+  transform: translateX(-3px);
+}
+
+.rm-back-btn:active {
+  transform: scale(0.97);
+}
+
+.rm-back-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Mobile Responsive */
+@media (max-width: 767px) {
+  .rm-back-container {
+    margin-bottom: 10px;
+  }
+
+  .rm-back-btn {
+    padding: 7px 12px;
+    font-size: 11px;
   }
 }

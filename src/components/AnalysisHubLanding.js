@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   TrendingUp,
@@ -8,6 +9,7 @@ import {
   Bell,
   User,
   Sparkles,
+  ArrowLeft,
   ArrowUpRight,
 } from 'lucide-react';
 
@@ -16,6 +18,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 export default function AnalysisHubLanding({ onAnalysisClick }) {
   const [liveAnalyses, setLiveAnalyses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   // Define your plant structures paired with the backend keys mapping to their respective department heads
   const plantConfiguration = [
@@ -27,7 +30,7 @@ export default function AnalysisHubLanding({ onAnalysisClick }) {
       icon: LayoutDashboard,
       accent: 'indigo',
       departments: 3,
-      heads: ['Hitesh@atomone.in', 'Rajesh.dhiman@atomone.in','Sanjay@atomone.in']
+      heads: ['Hitesh@atomone.in', 'Rajesh.dhiman@atomone.in', 'Sanjay@atomone.in']
     },
     {
       id: 'Quality Analysis',
@@ -37,7 +40,7 @@ export default function AnalysisHubLanding({ onAnalysisClick }) {
       icon: TrendingUp,
       accent: 'emerald',
       departments: 3,
-      heads: ['Ashok@atomone.in', 'Senthil@atomone','Sanjay@atomone.in']
+      heads: ['Ashok@atomone.in', 'Senthil@atomone', 'Sanjay@atomone.in']
     }
   ];
 
@@ -176,7 +179,24 @@ export default function AnalysisHubLanding({ onAnalysisClick }) {
         </div>
       </div> */}
 
-      <div className="relative z-10 w-full px-6 md:px-10 pt-14 pb-20">
+      <div className="relative z-10 w-full px-6 md:px-10 pt-6 pb-20">
+
+        {/* Back Button */}
+        <motion.button
+          type="button"
+          whileHover={{ x: -4 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-2 px-4 py-2 mb-6
+               rounded-lg border border-slate-700
+               bg-slate-800 text-slate-200
+               hover:bg-slate-700 hover:border-cyan-400
+               hover:text-cyan-400 transition-all duration-200
+               text-sm font-semibold"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </motion.button>
 
         {/* Hero */}
         <motion.div

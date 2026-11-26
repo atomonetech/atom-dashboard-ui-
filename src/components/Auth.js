@@ -604,7 +604,7 @@ export default function Auth({ onLogin }) {
 
             {/* Error Banner */}
             {errorMessage && (
-              <div className="bg-[#ffebe9] text-[#ff0000] border border-[rgba(255,129,130,0.4)] px-4 py-3 rounded-lg mb-6 flex justify-between items-center shadow-sm">
+             <div className="bg-[#ffebe9] custom-text border border-[rgba(255,129,130,0.4)] px-4 py-3 rounded-lg mb-6 flex justify-between items-center">
                 <span className="text-sm font-medium">{errorMessage}</span>
                 <button
                   type="button"

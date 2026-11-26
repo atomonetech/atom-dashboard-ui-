@@ -490,13 +490,13 @@ export default function Sidebar({ onLogout }) {
     //   color: "indigo",
     //   badge: null,
     // },
-    {
-      label: "Idle Case",
-      icon: CircleAlert,
-      path: "/idle-case",
-      color: "yellow",
-      badge: idleCasePendingCount > 0 ? idleCasePendingCount : null,
-    },
+    // {
+    //   label: "Idle Case",
+    //   icon: CircleAlert,
+    //   path: "/idle-case",
+    //   color: "yellow",
+    //   badge: idleCasePendingCount > 0 ? idleCasePendingCount : null,
+    // },
     // {
     //   label: "QMS",
     //   icon: ShieldCheck,
@@ -564,7 +564,7 @@ export default function Sidebar({ onLogout }) {
           label: "Incoming Materials", icon: PackagePlus, path: "/store-hub/incoming-materials",
           subItems: [
             { label: "Inventory", icon: Package, path: "/store-hub/incoming-materials/inventory" },
-            { label: "PR/Bar Code", icon: ClipboardCheck, path: "/store-hub/incoming-materials/pr-bar-code" },
+            { label: "QR/Bar Code", icon: ClipboardCheck, path: "/store-hub/incoming-materials/pr-bar-code" },
             { label: "Material Request Slip", icon: ClipboardList, path: "/store-hub/incoming-materials/materials" },
           ]
         },
